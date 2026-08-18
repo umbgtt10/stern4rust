@@ -17,5 +17,22 @@ pub trait Rule {
     // reads as the thing being required rather than the thing being forbidden.
     fn name(&self) -> &'static str;
 
-    fn check(&self, file: &SourceFile) -> Vec<Offence>;
+    // What is wrong with this one file, judged on its own.
+    fn check(&self, _file: &SourceFile) -> Vec<Offence> {
+        Vec::new()
+    }
+
+    // What is wrong with the set of files taken together.
+    //
+    // Some rules are not about a file at all. "There is exactly one all_tests.rs"
+    // and "every subfolder has a mod.rs" are facts about a tree, and the file
+    // that would carry the offence is precisely the one that does not exist --
+    // so there is nothing for check() to be handed.
+    //
+    // Both methods default to reporting nothing, so a rule implements whichever
+    // question it actually answers and the registry calls both without caring
+    // which.
+    fn check_workspace(&self, _files: &[SourceFile]) -> Vec<Offence> {
+        Vec::new()
+    }
 }

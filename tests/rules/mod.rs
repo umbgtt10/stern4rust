@@ -4,3 +4,4 @@
 
 pub mod header_rule_tests;
 pub mod test_file_structure_rule_tests;
+pub mod tests_layout_rule_tests;

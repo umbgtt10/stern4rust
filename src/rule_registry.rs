@@ -7,6 +7,7 @@ use crate::offence::Offence;
 use crate::rule::Rule;
 use crate::rules::header_rule::HeaderRule;
 use crate::rules::test_file_structure_rule::TestFileStructureRule;
+use crate::rules::tests_layout_rule::TestsLayoutRule;
 use crate::source_file::SourceFile;
 
 // The one place that knows which rules exist. Adding a rule is a line here and a
@@ -24,7 +25,10 @@ impl RuleRegistry {
         // The structure rule needs nothing configured, so it holds from the
         // first run. The header rule cannot: it has no idea what your header
         // says until you tell it.
-        let mut rules: Vec<Box<dyn Rule>> = vec![Box::new(TestFileStructureRule::new())];
+        let mut rules: Vec<Box<dyn Rule>> = vec![
+            Box::new(TestFileStructureRule::new()),
+            Box::new(TestsLayoutRule::new()),
+        ];
         if !config.expected_header.is_empty() {
             rules.push(Box::new(HeaderRule::new(config.expected_header.clone())));
         }
@@ -47,6 +51,15 @@ impl RuleRegistry {
         self.rules
             .iter()
             .flat_map(|rule| rule.check(file))
+            .collect()
+    }
+
+    // Asked once, after every file has been read, for the rules whose subject is
+    // the tree rather than a file in it.
+    pub fn check_workspace(&self, files: &[SourceFile]) -> Vec<Offence> {
+        self.rules
+            .iter()
+            .flat_map(|rule| rule.check_workspace(files))
             .collect()
     }
 }

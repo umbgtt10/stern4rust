@@ -46,11 +46,19 @@ impl Runner {
         let mut files_scanned = 0usize;
 
         for root in &roots {
+            // Read the whole package before judging it. Rules whose subject is
+            // the tree -- "there is exactly one all_tests.rs" -- cannot be
+            // answered a file at a time, and the file that carries the offence
+            // is often the one that does not exist.
+            let mut files = Vec::new();
             for path in SourceWalker::walk(root) {
-                let file = Self::read(root, &path)?;
-                files_scanned += 1;
-                offences.extend(registry.check(&file));
+                files.push(Self::read(root, &path)?);
             }
+            files_scanned += files.len();
+            for file in &files {
+                offences.extend(registry.check(file));
+            }
+            offences.extend(registry.check_workspace(&files));
         }
 
         Self::report(files_scanned, &offences);
