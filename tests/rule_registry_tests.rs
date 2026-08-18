@@ -50,6 +50,23 @@ impl Rule for NeverOffends {
     }
 }
 
+struct OffendsPerWorkspace;
+
+impl Rule for OffendsPerWorkspace {
+    fn name(&self) -> &'static str {
+        "workspace"
+    }
+
+    fn check_workspace(&self, files: &[SourceFile]) -> Vec<Offence> {
+        vec![Offence::new(
+            "absent.rs",
+            1,
+            "workspace",
+            format!("saw {} files", files.len()),
+        )]
+    }
+}
+
 #[test]
 fn check_collects_the_offences_of_every_registered_rule() {
     // Arrange
@@ -60,6 +77,21 @@ fn check_collects_the_offences_of_every_registered_rule() {
 
     // Assert
     assert_eq!(offences.len(), 2);
+}
+
+// The two doors stay separate. A rule whose subject is the tree implements only
+// check_workspace and inherits a no-op check, so the per-file pass must not
+// report its offence a second time.
+#[test]
+fn check_of_a_workspace_only_rule_reports_nothing() {
+    // Arrange
+    let registry = RuleRegistry::new(vec![Box::new(OffendsPerWorkspace)]);
+
+    // Act
+    let offences = registry.check(&file());
+
+    // Assert
+    assert!(offences.is_empty());
 }
 
 #[test]
@@ -86,6 +118,23 @@ fn check_reports_the_broken_rule_when_another_is_satisfied() {
     // Assert
     assert_eq!(offences.len(), 1);
     assert_eq!(offences[0].rule, "always");
+}
+
+// The registry asks both questions of every rule, so a rule that answers only
+// the workspace one is still reached -- and is handed the whole set of files
+// rather than one at a time.
+#[test]
+fn check_workspace_collects_the_offences_of_every_registered_rule() {
+    // Arrange
+    let registry = RuleRegistry::new(vec![Box::new(AlwaysOffends), Box::new(OffendsPerWorkspace)]);
+
+    // Act
+    let offences = registry.check_workspace(&[file(), file()]);
+
+    // Assert
+    assert_eq!(offences.len(), 1);
+    assert_eq!(offences[0].rule, "workspace");
+    assert_eq!(offences[0].description, "saw 2 files");
 }
 
 // The header rule cannot hold until it is told what the header says, so it joins

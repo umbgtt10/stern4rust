@@ -115,6 +115,13 @@ Only `2` is a finding. A script that treats every non-zero code the same cannot
 distinguish "your code has a problem" from "I could not look at your code",
 which is the difference between a real failure and a broken CI step.
 
+## Design decisions
+
+Every rule has an ADR in [`docs/ADRs`](docs/ADRs/README.md) — one per rule,
+because a rule is the unit a reader argues with when it fails their build. Each
+records what the rule requires, what was rejected on the way there, and — the
+part that matters most for a checking tool — what it does **not** catch.
+
 ## Licence
 
 MIT — see [LICENSE](LICENSE).
