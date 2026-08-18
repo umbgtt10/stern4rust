@@ -17,6 +17,12 @@ pub struct Args {
 
     #[arg(long = "package")]
     pub packages: Vec<String>,
+
+    /// File holding the header every .rs file must open with. It is data rather
+    /// than a built-in constant because it is never the same twice: MIT here,
+    /// Apache 2.0 in a sibling repository, and a different year again next year.
+    #[arg(long)]
+    pub header_file: Option<PathBuf>,
 }
 
 impl Args {

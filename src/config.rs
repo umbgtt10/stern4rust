@@ -8,4 +8,5 @@ use std::path::PathBuf;
 pub struct Config {
     pub manifest_path: Option<PathBuf>,
     pub packages: Vec<String>,
+    pub expected_header: Vec<String>,
 }

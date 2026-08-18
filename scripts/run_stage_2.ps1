@@ -92,6 +92,36 @@ function Invoke-Twin4RustGate {
     }
 }
 
+function Invoke-Stern4RustSelfGate {
+    Write-Host "Own rules stern4rust..." -ForegroundColor Cyan
+
+    $manifestPath = (Resolve-Path (Join-Path $PSScriptRoot "..\Cargo.toml")).Path
+    $headerPath = (Resolve-Path (Join-Path $PSScriptRoot "..\docs\header.txt")).Path
+
+    # Built from source rather than run from whatever is installed. The gate has
+    # to judge the tree it is standing in, not the last version that happened to
+    # be published.
+    $previousErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    $output = & cargo run --quiet --manifest-path $manifestPath -- --manifest-path $manifestPath --header-file $headerPath 2>&1
+    $ErrorActionPreference = $previousErrorActionPreference
+    $exitCode = $LASTEXITCODE
+    $output | ForEach-Object { Write-Host $_ }
+
+    # 2 is the tool's own "a rule was broken"; anything else non-zero means it
+    # could not run at all, which is a different failure and worth saying so.
+    if ($exitCode -eq 2) {
+        Write-Host "`nFailed: Own rules stern4rust (a rule was broken)" -ForegroundColor Red
+        Pop-Location
+        exit 1
+    }
+    if ($exitCode -ne 0) {
+        Write-Host "`nFailed: Own rules stern4rust (exit code $exitCode)" -ForegroundColor Red
+        Pop-Location
+        exit 1
+    }
+}
+
 function Invoke-Iceberg4RustGate {
     param(
         [string]$Label,
@@ -151,7 +181,20 @@ Invoke-Twin4RustGate "Mirrored tests stern4rust" @("cargo-stern4rust")
 # File risk gate
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# File risk gate
+# ---------------------------------------------------------------------------
+
 Invoke-Iceberg4RustGate "File risk stern4rust" @("cargo-stern4rust") -Threshold "20"
+
+# ---------------------------------------------------------------------------
+# Own rules (self-analysis)
+#
+# A tool that enforces a rule it does not satisfy is not worth installing, so
+# every .rs file here carries the header in docs/header.txt.
+# ---------------------------------------------------------------------------
+
+Invoke-Stern4RustSelfGate
 
 # ---------------------------------------------------------------------------
 

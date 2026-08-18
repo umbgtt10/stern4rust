@@ -4,4 +4,14 @@
 
 pub mod args;
 pub mod config;
+pub mod header_source;
+pub mod manifest_resolver;
+pub mod offence;
+pub mod report_printer;
+pub mod rule;
+pub mod rule_registry;
+pub mod rules;
+pub mod run_outcome;
 pub mod runner;
+pub mod source_file;
+pub mod source_walker;
