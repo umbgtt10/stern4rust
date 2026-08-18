@@ -8,6 +8,7 @@ use crate::rule::Rule;
 use crate::rules::header_rule::HeaderRule;
 use crate::rules::readable_source_rule::ReadableSourceRule;
 use crate::rules::test_file_structure_rule::TestFileStructureRule;
+use crate::rules::test_free_source_rule::TestFreeSourceRule;
 use crate::rules::tests_layout_rule::TestsLayoutRule;
 use crate::source_file::SourceFile;
 
@@ -31,6 +32,7 @@ impl RuleRegistry {
         let mut rules: Vec<Box<dyn Rule>> = vec![
             Box::new(ReadableSourceRule::new()),
             Box::new(TestFileStructureRule::new()),
+            Box::new(TestFreeSourceRule::new()),
             Box::new(TestsLayoutRule::new()),
         ];
         if !config.expected_header.is_empty() {

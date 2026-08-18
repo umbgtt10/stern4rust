@@ -1,35 +1,51 @@
 # Architecture Decision Records
 
 Each ADR documents one load-bearing decision behind `cargo-stern4rust` —
-succinct, self-contained, citable on its own. As in `crap4rust` and
-`twin4rust`, and unlike the larger `etheram` ecosystem repositories, these
-are not priority-tiered: `stern4rust` is a single-crate CLI tool with a
-small enough decision surface that a flat list is sufficient.
+succinct, self-contained, citable on its own.
 
-There is one ADR per rule. A rule is the unit a reader argues with — "why
-does this fail my build?" — so it is also the unit that has to justify
-itself. Decisions that are not rules (the shape of the `Rule` trait, the
-exit-code contract) are recorded inside the ADR of the rule that forced
-them, next to the evidence, rather than in an abstract document of their
-own.
+There are two kinds, and the filename says which.
 
-Numbers are allocated in the order the rules were built and are never reused.
-A superseded ADR keeps its number and says what replaced it, so a reference
-to `002` in a commit message or a code comment stays resolvable forever.
+**`R<NNN>-ADR-<Name>.md` — one per rule.** A rule is the unit a reader argues
+with when it fails their build, so it is the unit that has to justify itself.
+The number is the rule's identity: it is allocated in the order the rules were
+built, never reused, and a superseded ADR keeps its number and says what
+replaced it, so a reference to `R002` in a commit message or a code comment
+stays resolvable forever. A rule also has an identity *outside* these docs —
+it prints its own name in every offence it emits — which is what the number
+indexes onto.
 
-## Index
+**`ADR-<Name>.md` — everything else.** The exit-code contract, the shape of
+the report, the seams in the `Rule` trait. These are unnumbered, as in
+`crap4rust` and `twin4rust`, because they have no external referent to index
+against and the name is a better identifier than a number would be:
+`ADR-ExitCodeContract` says more than `A002` ever could.
+
+The split is also legible in a directory listing. Anything with an `R` is a
+rule; anything without is the machinery the rules run on.
+
+## Rules
+
+| ADR | Rule | Decision |
+|---|---|---|
+| [R001](R001-ADR-HeaderRule.md) | `header` | The expected header is data supplied by `--header-file`, not a constant; a file satisfies the rule when its first N lines match exactly after normalisation, and exactly one offence — the first divergence — is reported per file. |
+| [R002](R002-ADR-TestFileStructureRule.md) | `test-file-structure` | A test file is four sections in a fixed order, each alphabetical, with spacing as part of the shape — and `Helpers` is defined by exclusion so the set of item kinds stays closed. |
+| [R003](R003-ADR-TestsLayoutRule.md) | `tests-layout` | A tests folder is reached through exactly one `all_tests.rs` and a `mod.rs` in every subfolder on the way down. |
+| [R004](R004-ADR-ReadableSourceRule.md) | `readable-source` | Every `.rs` file must be readable and must parse, and failing either is an offence rather than a reason to say nothing — a file the tool cannot read otherwise reads as a file with nothing wrong with it. |
+| [R005](R005-ADR-TestFreeSourceRule.md) | `test-free-source` | Tests live in `tests/` and the production source tree carries none of them; `#[cfg(test)]`, `#[cfg_attr(...)]` in every form, and test-attributed functions are all offences outside `tests/`. |
+
+## Everything else
 
 | ADR | Decision |
 |---|---|
-| [001-ADR-HeaderRule](001-ADR-HeaderRule.md) | The expected header is data supplied by `--header-file`, not a constant; a file satisfies the rule when its first N lines match exactly after normalisation, and exactly one offence — the first divergence — is reported per file. |
-| [002-ADR-TestFileStructureRule](002-ADR-TestFileStructureRule.md) | A test file is four sections in a fixed order, each alphabetical, with spacing as part of the shape — and `Helpers` is defined by exclusion so the set of item kinds stays closed. |
-| [003-ADR-TestsLayoutRule](003-ADR-TestsLayoutRule.md) | A tests folder is reached through exactly one `all_tests.rs` and a `mod.rs` in every subfolder on the way down; this is the rule that forced `Rule::check_workspace`, because the offending file is usually the one that does not exist. |
-| [004-ADR-ReadableSourceRule](004-ADR-ReadableSourceRule.md) | Every `.rs` file must be readable and must parse, and failing either is an offence rather than a reason to say nothing — a file the tool cannot read otherwise reads as a file with nothing wrong with it. |
+| [ADR-ExitCodeContract](ADR-ExitCodeContract.md) | `0` clean, `1` could-not-run, `2` rule-broken, and the line between `1` and `2` is whether the work can still be enumerated — a bad manifest is a `1`, one unreadable file among fifty is a `2`. |
+| [ADR-MachineReadableReport](ADR-MachineReadableReport.md) | The table stays the default and `--format json` renders the same run as a document; every offence carries a required `correction` alongside its description, because a report worth reading is not the same as a report worth acting on. |
+| [ADR-WorkspaceRuleSeam](ADR-WorkspaceRuleSeam.md) | `Rule` carries `check_workspace` beside `check`, both defaulting to reporting nothing, because some offences are about a tree rather than a file — and the file that carries such an offence is usually the one that does not exist. |
 
 ## Template
 
 ```markdown
-# NNN-ADR-<Name>
+# R<NNN>-ADR-<Name>   (a rule)
+# ADR-<Name>          (anything else)
 
 - **Status:** Accepted | Proposed | Superseded by <ADR>
 - **Date:** YYYY-MM-DD
@@ -63,13 +79,16 @@ snapshot of the decision as it stands today, not a changelog — state the
 current shape as fact, don't narrate what an earlier version of this
 document used to say.
 
-A rule ADR carries two obligations the template does not spell out.
+## Two obligations specific to rule ADRs
 
-It must say what the rule **does not** catch. A checking tool is read as
-exhaustive by default, and a gap nobody wrote down is indistinguishable from
-a gap nobody has yet hit.
+An `R` ADR must say what the rule **does not** catch. A checking tool is read
+as exhaustive by default, and a gap nobody wrote down is indistinguishable
+from a gap nobody has yet hit.
 
-It must say what each of the rule's offences tells the reader to **do**.
+It must also say what each of the rule's offences tells the reader to **do**.
 `Offence::correction` is a required field rather than an optional one, so
-every offence a rule can emit has an answer to "and now what?", and the ADR
+every offence a rule can emit has an answer to "and now what?" — and the ADR
 is where the wording of those answers is argued about rather than in a diff.
+
+Neither obligation applies to the unnumbered ADRs, which decide how the tool
+behaves rather than what it requires of a codebase.

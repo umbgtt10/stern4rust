@@ -1,4 +1,4 @@
-# 004-ADR-ReadableSourceRule
+# R004-ADR-ReadableSourceRule
 
 - **Status:** Accepted
 - **Date:** 2026-08-18
@@ -7,7 +7,7 @@
 
 Two of the three rules that existed before this one parse the file they judge,
 and both give up in silence when the parse fails. That was a deliberate
-choice, recorded in [002-ADR-TestFileStructureRule](002-ADR-TestFileStructureRule.md):
+choice, recorded in [R002-ADR-TestFileStructureRule](R002-ADR-TestFileStructureRule.md):
 `rustc` reports broken source far more clearly than this tool could, and
 inferring a shape from source that does not parse piles noise on top of a
 compile error.
@@ -71,19 +71,16 @@ would each report the same file, and the reader would be told three times that
 one file does not parse. One rule owning the question means one row.
 
 **Make the unreadable file keep its exit-1 status while still reporting.**
-Rejected: it would mean a run that both found offences and could-not-run, and
-the exit code can only say one thing. The line drawn instead is whether the
-work can still be enumerated — a bad manifest leaves nothing to judge and stays
-a 1; one unreadable file among fifty leaves forty-nine files worth reporting on.
+Rejected — see [ADR-ExitCodeContract](ADR-ExitCodeContract.md), which this rule
+forced a change to and which argues the case properly.
 
 ## Consequences
 
-**The exit-code contract moved**, and this is the part to be careful about. An
-unreadable source file used to exit 1 and now exits 2. A gate script that
-distinguishes them — which the whole contract exists to allow — will now treat
-that case as a finding rather than as a broken CI step. That is the intended
-reading, but it is a behavioural change to a documented interface, not an
-addition.
+**The exit-code contract moved because of this rule.** An unreadable source file
+used to exit 1 and now exits 2. That is a change to a published interface rather
+than an addition to it, and it is argued and recorded in
+[ADR-ExitCodeContract](ADR-ExitCodeContract.md) rather than here — a consumer
+checking what a code means should not have to read a rule ADR to find out.
 
 The rule depends on `syn` accepting the file, so source using syntax newer than
 this crate's `syn` would be reported as unparseable when `rustc` is perfectly
@@ -115,10 +112,10 @@ no configuration to hold.
 
 ## Related
 
-- [002-ADR-TestFileStructureRule](002-ADR-TestFileStructureRule.md) — records
+- [R002-ADR-TestFileStructureRule](R002-ADR-TestFileStructureRule.md) — records
   the give-up-in-silence decision this rule is the counterweight to. Both still
   stand: the structure rule stays quiet about source it cannot parse, and this
   rule makes sure the file is named anyway.
-- [003-ADR-TestsLayoutRule](003-ADR-TestsLayoutRule.md) — same shape of failure
+- [R003-ADR-TestsLayoutRule](R003-ADR-TestsLayoutRule.md) — same shape of failure
   one level up: a test that is never compiled cannot fail, and a file that is
   never parsed cannot offend.

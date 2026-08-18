@@ -1,4 +1,4 @@
-# 002-ADR-TestFileStructureRule
+# R002-ADR-TestFileStructureRule
 
 - **Status:** Accepted
 - **Date:** 2026-08-18
@@ -104,7 +104,7 @@ Pinned by `check_a_file_outside_the_tests_tree_reports_nothing`.
 **Apply it to `all_tests.rs` and `mod.rs`.** Rejected: those are registries,
 not test files. Demanding a blank line between each `pub mod` entry would
 make the one file whose entire job is to be scannable the hardest one in the
-tree to scan. Their shape is [003-ADR-TestsLayoutRule](003-ADR-TestsLayoutRule.md)'s
+tree to scan. Their shape is [R003-ADR-TestsLayoutRule](R003-ADR-TestsLayoutRule.md)'s
 business instead — which is the reason that rule exists as a separate rule
 rather than as a branch inside this one.
 
@@ -158,7 +158,7 @@ caught this crate's own new test file breaking the rule while the rule for
 
 ## Related
 
-- [001-ADR-HeaderRule](001-ADR-HeaderRule.md) — takes the opposite decision on
+- [R001-ADR-HeaderRule](R001-ADR-HeaderRule.md) — takes the opposite decision on
   offences-per-file, for a reason that does not apply here.
-- [003-ADR-TestsLayoutRule](003-ADR-TestsLayoutRule.md) — owns the shape of the
+- [R003-ADR-TestsLayoutRule](R003-ADR-TestsLayoutRule.md) — owns the shape of the
   registry files this rule deliberately skips.

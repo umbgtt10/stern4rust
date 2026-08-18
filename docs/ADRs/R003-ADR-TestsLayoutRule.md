@@ -1,4 +1,4 @@
-# 003-ADR-TestsLayoutRule
+# R003-ADR-TestsLayoutRule
 
 - **Status:** Accepted
 - **Date:** 2026-08-18
@@ -54,12 +54,11 @@ tool alike.
 **This is the rule that widened the `Rule` trait.** The first two rules judge
 one file at a time, but here the offending file is usually the one that
 *does not exist* — so there is nothing for `check(&SourceFile)` to be handed,
-and the report has to name a path no walker ever produced. `Rule` therefore
-carries a second method, `check_workspace(&[SourceFile])`, taking the whole
-package at once. Both methods default to returning nothing, so each rule
-implements only the question it actually answers and `RuleRegistry` calls
-both without caring which. `Runner` now reads every file in a package before
-judging any of them.
+and the report has to name a path no walker ever produced. The seam that
+resolves it, `Rule::check_workspace`, is argued in
+[ADR-WorkspaceRuleSeam](ADR-WorkspaceRuleSeam.md) rather than here: it
+outlived the rule that forced it, so it belongs where a reader looking for the
+trait's shape would think to look.
 
 ## Forcing constraints / Evidence
 
@@ -185,7 +184,7 @@ subject to it.
 
 ## Related
 
-- [002-ADR-TestFileStructureRule](002-ADR-TestFileStructureRule.md) — skips the two
+- [R002-ADR-TestFileStructureRule](R002-ADR-TestFileStructureRule.md) — skips the two
   registry files precisely because their shape is decided here.
-- [001-ADR-HeaderRule](001-ADR-HeaderRule.md) — the registries are subject to it,
+- [R001-ADR-HeaderRule](R001-ADR-HeaderRule.md) — the registries are subject to it,
   since "header plus `pub mod` declarations" still begins with the header.

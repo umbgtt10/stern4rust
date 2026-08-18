@@ -15,7 +15,7 @@ already own correctness. These are the things a reviewer would otherwise have to
 say by hand, every time, forever — and the ones that quietly stop being true
 across a codebase the moment nobody is checking.
 
-> **Status: four rules, more coming.** The set below is what is implemented and
+> **Status: five rules, more coming.** The set below is what is implemented and
 > gated. `stern4rust` runs against its own tree on every build, so a rule that
 > would fail this repository cannot be merged into it.
 
@@ -87,6 +87,21 @@ Order is what makes a test file skimmable without reading it. Once a constant
 sits below a helper, the file has no shape and every later addition goes
 wherever the last one happened to end.
 [002](docs/ADRs/002-ADR-TestFileStructureRule.md)
+
+### `test-free-source`
+
+Tests live in `tests/`, and the production source tree carries none of them. A
+`#[cfg(test)] mod tests` inside `src/` is invisible to everything else here: it
+is not the mirrored test file `twin4rust` looks for, it is not declared from
+`all_tests.rs`, it has no required shape, and it is compiled under a
+configuration the shipped build never uses.
+
+`#[cfg_attr(...)]` is forbidden in **every** form, not only
+`cfg_attr(test, ...)` — its whole purpose is to make what is applied depend on
+the build, and permitting the non-test spellings would commit the rule to
+deciding which conditional compilation is the acceptable kind. Plain
+`#[cfg(feature = "...")]` stays allowed: it gates whether code exists, which is
+legible in the source. [R005](docs/ADRs/R005-ADR-TestFreeSourceRule.md)
 
 ### `tests-layout`
 

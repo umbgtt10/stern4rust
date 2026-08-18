@@ -1,4 +1,4 @@
-# 001-ADR-HeaderRule
+# R001-ADR-HeaderRule
 
 - **Status:** Accepted
 - **Date:** 2026-08-18
@@ -147,8 +147,8 @@ new file added here without a header fails this crate's own build.
 
 ## Related
 
-- [002-ADR-TestFileStructureRule](002-ADR-TestFileStructureRule.md) — takes the
+- [R002-ADR-TestFileStructureRule](R002-ADR-TestFileStructureRule.md) — takes the
   opposite decision on how many offences to report per file, for a reason
   spelled out there.
-- [003-ADR-TestsLayoutRule](003-ADR-TestsLayoutRule.md) — the rule that widened the
+- [R003-ADR-TestsLayoutRule](R003-ADR-TestsLayoutRule.md) — the rule that widened the
   `Rule` trait this one is built on.

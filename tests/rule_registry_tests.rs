@@ -157,6 +157,7 @@ fn from_config_with_a_header_registers_the_header_rule_alongside_the_others() {
         [
             "readable-source",
             "test-file-structure",
+            "test-free-source",
             "tests-layout",
             "header"
         ]
@@ -173,7 +174,12 @@ fn from_config_without_a_header_registers_the_rules_that_need_no_configuration()
     // Assert
     assert_eq!(
         registry.names(),
-        ["readable-source", "test-file-structure", "tests-layout"]
+        [
+            "readable-source",
+            "test-file-structure",
+            "test-free-source",
+            "tests-layout"
+        ]
     );
 }
 
