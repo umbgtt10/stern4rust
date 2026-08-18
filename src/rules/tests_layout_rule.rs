@@ -4,9 +4,8 @@
 
 use std::collections::BTreeSet;
 
-use syn::Item;
-
 use crate::offence::Offence;
+use crate::registry_parser::RegistryParser;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;
 
@@ -121,31 +120,25 @@ impl TestsLayoutRule {
         path == "tests/all_tests.rs" || path.ends_with("/mod.rs")
     }
 
+    // Each stray reported at its own line, named. "Something in this file is not
+    // a declaration" is true of the whole file and actionable nowhere in it.
     fn declarations_only(&self, file: &SourceFile) -> Vec<Offence> {
-        let Ok(syntax) = syn::parse_file(&file.contents()) else {
-            return Vec::new();
-        };
-        syntax
-            .items
-            .iter()
-            .filter(|item| !Self::is_declaration(item))
-            .map(|_| {
+        RegistryParser::strays(file)
+            .unwrap_or_default()
+            .into_iter()
+            .map(|stray| {
                 Offence::new(
                     file.relative_path(),
-                    1,
+                    stray.line,
                     self.name(),
-                    "a registry holds nothing but the header and pub mod \
-                     declarations"
-                        .to_string(),
+                    format!(
+                        "{} does not belong in a registry, which holds the header \
+                         and pub mod declarations only",
+                        stray.label
+                    ),
                 )
             })
             .collect()
-    }
-
-    // A declaration points at a file. A module with a body is code hiding in the
-    // one file a reader scans expecting a list.
-    fn is_declaration(item: &Item) -> bool {
-        matches!(item, Item::Mod(module) if module.content.is_none())
     }
 }
 

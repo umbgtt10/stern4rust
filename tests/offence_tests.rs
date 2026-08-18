@@ -30,3 +30,26 @@ fn offences_differing_only_by_line_are_not_equal() {
     // Assert
     assert_ne!(first, second);
 }
+
+// Offences are found in whatever order the rules happen to run, which puts the
+// tree-wide ones after every per-file one. Grouping by file is what lets a
+// reader -- or a tool consuming the report -- fix one file at a time.
+#[test]
+fn sort_key_groups_offences_by_file_before_line() {
+    // Arrange & Act
+    let first = Offence::new("src/a.rs", 90, "header", "x".to_string());
+    let second = Offence::new("src/b.rs", 2, "header", "x".to_string());
+
+    // Assert
+    assert!(first.sort_key() < second.sort_key());
+}
+
+#[test]
+fn sort_key_orders_two_offences_in_the_same_file_by_line() {
+    // Arrange & Act
+    let first = Offence::new("src/a.rs", 2, "header", "x".to_string());
+    let second = Offence::new("src/a.rs", 10, "header", "x".to_string());
+
+    // Assert
+    assert!(first.sort_key() < second.sort_key());
+}

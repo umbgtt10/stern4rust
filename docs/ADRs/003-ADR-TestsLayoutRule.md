@@ -1,4 +1,4 @@
-# ADR-TestsLayoutRule
+# 003-ADR-TestsLayoutRule
 
 - **Status:** Accepted
 - **Date:** 2026-08-18
@@ -40,6 +40,16 @@ Four checks implement that sentence: the top-level door must exist
 is reported as such (`stray_doors`); every folder beneath `tests/` must have
 a `mod.rs` (`missing_mod_files`); and every registry's items must all be
 declarations (`registry_contents`).
+
+Each stray in a registry is reported **at its own line and by its own name** —
+"the constant `LIMIT`", "the import `use std::fmt;`" — rather than as a
+repeated statement that the file contains something it should not.
+`RegistryParser` exists for that naming and for nothing else. The first
+version of this rule discarded the offending item and emitted one fixed
+sentence per stray, so a registry holding four of them produced four
+byte-identical rows all pointing at line 1: a report asserting that a file
+had four problems while naming none of them, and useless to a reader and a
+tool alike.
 
 **This is the rule that widened the `Rule` trait.** The first two rules judge
 one file at a time, but here the offending file is usually the one that
@@ -102,9 +112,14 @@ cannot deliver, and no `pub mod` will ever reach it. Pinned by
 
 **Allow an inline `mod name { ... }` in a registry.** Rejected: a
 declaration points at a file; a module with a body is code, and it is code
-placed in the one file a reader scans expecting a list. `is_declaration`
-therefore requires `Item::Mod` with `content.is_none()`. Pinned by
+placed in the one file a reader scans expecting a list.
+`RegistryParser::is_declaration` therefore requires `Item::Mod` with
+`content.is_none()`. Pinned by
 `check_workspace_a_registry_holding_an_inline_module_reports_it`.
+
+**Require `pub` on a declaration.** Rejected: a private `mod name;` compiles
+that file just as well, and being compiled is the entire concern of this
+rule. Pinned by `strays_of_a_private_mod_declaration_returns_nothing`.
 
 **Permit `extern crate` in a registry.** Rejected as unnecessary: the strict
 form is header plus `pub mod` and nothing else, and neither this crate nor
@@ -157,6 +172,11 @@ covering each of the four checks, the nested and intermediate folder cases,
 the source-tree exclusion, the empty registry, the multiple-offence case,
 and the single-file no-op.
 
+`tests/registry_parser_tests.rs` — 13 tests — covers the naming of every item
+kind a registry can wrongly hold, including
+`strays_reports_each_stray_at_its_own_line`, which is the regression test for
+the byte-identical-rows defect.
+
 `tests/rule_registry_tests.rs::check_workspace_collects_the_offences_of_every_registered_rule`
 pins that the registry actually fans the workspace question out to every
 rule and hands it the whole file set, and `run_stage_2.ps1` runs the compiled
@@ -165,7 +185,7 @@ subject to it.
 
 ## Related
 
-- [ADR-TestFileStructureRule](ADR-TestFileStructureRule.md) — skips the two
+- [002-ADR-TestFileStructureRule](002-ADR-TestFileStructureRule.md) — skips the two
   registry files precisely because their shape is decided here.
-- [ADR-HeaderRule](ADR-HeaderRule.md) — the registries are subject to it,
+- [001-ADR-HeaderRule](001-ADR-HeaderRule.md) — the registries are subject to it,
   since "header plus `pub mod` declarations" still begins with the header.

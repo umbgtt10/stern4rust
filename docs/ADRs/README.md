@@ -13,18 +13,22 @@ exit-code contract) are recorded inside the ADR of the rule that forced
 them, next to the evidence, rather than in an abstract document of their
 own.
 
+Numbers are allocated in the order the rules were built and are never reused.
+A superseded ADR keeps its number and says what replaced it, so a reference
+to `002` in a commit message or a code comment stays resolvable forever.
+
 ## Index
 
 | ADR | Decision |
 |---|---|
-| [ADR-HeaderRule](ADR-HeaderRule.md) | The expected header is data supplied by `--header-file`, not a constant; a file satisfies the rule when its first N lines match exactly after normalisation, and exactly one offence — the first divergence — is reported per file. |
-| [ADR-TestFileStructureRule](ADR-TestFileStructureRule.md) | A test file is four sections in a fixed order, each alphabetical, with spacing as part of the shape — and `Helpers` is defined by exclusion so the set of item kinds stays closed. |
-| [ADR-TestsLayoutRule](ADR-TestsLayoutRule.md) | A tests folder is reached through exactly one `all_tests.rs` and a `mod.rs` in every subfolder on the way down; this is the rule that forced `Rule::check_workspace`, because the offending file is usually the one that does not exist. |
+| [001-ADR-HeaderRule](001-ADR-HeaderRule.md) | The expected header is data supplied by `--header-file`, not a constant; a file satisfies the rule when its first N lines match exactly after normalisation, and exactly one offence — the first divergence — is reported per file. |
+| [002-ADR-TestFileStructureRule](002-ADR-TestFileStructureRule.md) | A test file is four sections in a fixed order, each alphabetical, with spacing as part of the shape — and `Helpers` is defined by exclusion so the set of item kinds stays closed. |
+| [003-ADR-TestsLayoutRule](003-ADR-TestsLayoutRule.md) | A tests folder is reached through exactly one `all_tests.rs` and a `mod.rs` in every subfolder on the way down; this is the rule that forced `Rule::check_workspace`, because the offending file is usually the one that does not exist. |
 
 ## Template
 
 ```markdown
-# ADR-<Name>
+# NNN-ADR-<Name>
 
 - **Status:** Accepted | Proposed | Superseded by <ADR>
 - **Date:** YYYY-MM-DD

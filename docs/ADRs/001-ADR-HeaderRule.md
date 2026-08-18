@@ -1,4 +1,4 @@
-# ADR-HeaderRule
+# 001-ADR-HeaderRule
 
 - **Status:** Accepted
 - **Date:** 2026-08-18
@@ -83,7 +83,7 @@ repository name, to be used anywhere else.
 produces one offence per header line — three rows for this repository's
 header, more for a longer one — burying every other file in the workspace
 behind a single offender. Pinned by `check_reports_only_the_first_divergence`.
-This is the opposite of the choice made in `ADR-TestFileStructureRule`, and
+This is the opposite of the choice made in `002-ADR-TestFileStructureRule`, and
 deliberately so: there the offences are independent facts about different
 items, and a reader fixing the file wants all of them at once.
 
@@ -140,8 +140,8 @@ new file added here without a header fails this crate's own build.
 
 ## Related
 
-- [ADR-TestFileStructureRule](ADR-TestFileStructureRule.md) — takes the
+- [002-ADR-TestFileStructureRule](002-ADR-TestFileStructureRule.md) — takes the
   opposite decision on how many offences to report per file, for a reason
   spelled out there.
-- [ADR-TestsLayoutRule](ADR-TestsLayoutRule.md) — the rule that widened the
+- [003-ADR-TestsLayoutRule](003-ADR-TestsLayoutRule.md) — the rule that widened the
   `Rule` trait this one is built on.

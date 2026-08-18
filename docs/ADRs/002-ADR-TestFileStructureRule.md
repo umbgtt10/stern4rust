@@ -1,4 +1,4 @@
-# ADR-TestFileStructureRule
+# 002-ADR-TestFileStructureRule
 
 - **Status:** Accepted
 - **Date:** 2026-08-18
@@ -90,7 +90,7 @@ them. Caught only because a backup was taken first.
 lands in whichever `match` arm is the default, silently and wrongly. The
 exclusion definition has no default arm to be wrong.
 
-**Report only the first offence per file**, as `ADR-HeaderRule` does.
+**Report only the first offence per file**, as `001-ADR-HeaderRule` does.
 Rejected: these are independent facts about different items, and somebody
 fixing the file wants the whole list in one pass. The header rule's reason
 for the opposite choice — that one missing header would emit one row per
@@ -104,7 +104,7 @@ Pinned by `check_a_file_outside_the_tests_tree_reports_nothing`.
 **Apply it to `all_tests.rs` and `mod.rs`.** Rejected: those are registries,
 not test files. Demanding a blank line between each `pub mod` entry would
 make the one file whose entire job is to be scannable the hardest one in the
-tree to scan. Their shape is [ADR-TestsLayoutRule](ADR-TestsLayoutRule.md)'s
+tree to scan. Their shape is [003-ADR-TestsLayoutRule](003-ADR-TestsLayoutRule.md)'s
 business instead — which is the reason that rule exists as a separate rule
 rather than as a branch inside this one.
 
@@ -154,11 +154,11 @@ rule can be wrong are ways the parser can be wrong:
 
 Dogfooded through the compiled binary in `run_stage_2.ps1`, which is what
 caught this crate's own new test file breaking the rule while the rule for
-`ADR-TestsLayoutRule` was being written.
+`003-ADR-TestsLayoutRule` was being written.
 
 ## Related
 
-- [ADR-HeaderRule](ADR-HeaderRule.md) — takes the opposite decision on
+- [001-ADR-HeaderRule](001-ADR-HeaderRule.md) — takes the opposite decision on
   offences-per-file, for a reason that does not apply here.
-- [ADR-TestsLayoutRule](ADR-TestsLayoutRule.md) — owns the shape of the
+- [003-ADR-TestsLayoutRule](003-ADR-TestsLayoutRule.md) — owns the shape of the
   registry files this rule deliberately skips.

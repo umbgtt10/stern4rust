@@ -61,6 +61,11 @@ impl Runner {
             offences.extend(registry.check_workspace(&files));
         }
 
+        // Rules run in registration order and the tree-wide pass runs last, so
+        // without this the report jumps between files. Sorting is the report's
+        // business rather than any rule's -- a rule states facts, and their
+        // order on the page is not one of them.
+        offences.sort_by(|left, right| left.sort_key().cmp(&right.sort_key()));
         Self::report(files_scanned, &offences);
         Ok(RunOutcome::of(offences.len()))
     }

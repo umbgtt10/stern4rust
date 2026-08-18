@@ -6,6 +6,8 @@ pub mod args_tests;
 pub mod header_source_tests;
 pub mod manifest_resolver_tests;
 pub mod offence_tests;
+pub mod registry_item_tests;
+pub mod registry_parser_tests;
 pub mod report_printer_tests;
 pub mod rule_registry_tests;
 pub mod rules;

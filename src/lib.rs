@@ -7,6 +7,8 @@ pub mod config;
 pub mod header_source;
 pub mod manifest_resolver;
 pub mod offence;
+pub mod registry_item;
+pub mod registry_parser;
 pub mod report_printer;
 pub mod rule;
 pub mod rule_registry;

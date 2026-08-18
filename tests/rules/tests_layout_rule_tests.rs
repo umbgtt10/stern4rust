@@ -124,6 +124,12 @@ fn check_workspace_a_registry_holding_a_constant_reports_it() {
     // Assert
     assert_eq!(offences.len(), 1);
     assert_eq!(offences[0].file, "tests/rules/mod.rs");
+    assert_eq!(offences[0].line, 5);
+    assert!(
+        offences[0].description.contains("the constant `LIMIT`"),
+        "got {}",
+        offences[0].description
+    );
 }
 
 #[test]
@@ -137,6 +143,12 @@ fn check_workspace_a_registry_holding_a_function_reports_it() {
     // Assert
     assert_eq!(offences.len(), 1);
     assert_eq!(offences[0].file, "tests/all_tests.rs");
+    assert_eq!(offences[0].line, 7);
+    assert!(
+        offences[0].description.contains("the function `helper`"),
+        "got {}",
+        offences[0].description
+    );
 }
 
 #[test]
@@ -149,6 +161,12 @@ fn check_workspace_a_registry_holding_an_import_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
+    assert_eq!(offences[0].line, 5);
+    assert!(
+        offences[0].description.contains("use alpha::One;"),
+        "got {}",
+        offences[0].description
+    );
 }
 
 // A declaration points at a file. A module with a body is code hiding in the one
@@ -160,6 +178,43 @@ fn check_workspace_a_registry_holding_an_inline_module_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
+    assert!(
+        offences[0]
+            .description
+            .contains("the inline module `alpha_tests`"),
+        "got {}",
+        offences[0].description
+    );
+}
+
+// The defect this rule shipped with. Four strays produced four rows that were
+// byte-identical, every one of them pointing at line 1 -- a report claiming a
+// file has four problems while naming none of them.
+#[test]
+fn check_workspace_a_registry_holding_several_strays_reports_each_at_its_own_line() {
+    // Arrange
+    let body =
+        "use std::fmt;\n\nconst LIMIT: usize = 1;\n\nfn helper() {}\n\npub mod alpha_tests;\n";
+
+    // Act
+    let offences = check(&[("tests/all_tests.rs", body)]);
+
+    // Assert
+    assert_eq!(offences.len(), 3);
+    assert_eq!(
+        offences
+            .iter()
+            .map(|offence| offence.line)
+            .collect::<Vec<usize>>(),
+        [5, 7, 9]
+    );
+    assert_eq!(
+        offences
+            .iter()
+            .filter(|offence| offence.description == offences[0].description)
+            .count(),
+        1
+    );
 }
 
 #[test]
