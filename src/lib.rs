@@ -5,8 +5,10 @@
 pub mod args;
 pub mod config;
 pub mod header_source;
+pub mod json_printer;
 pub mod manifest_resolver;
 pub mod offence;
+pub mod output_format;
 pub mod registry_item;
 pub mod registry_parser;
 pub mod report_printer;
@@ -17,6 +19,7 @@ pub mod run_outcome;
 pub mod runner;
 pub mod section;
 pub mod source_file;
+pub mod source_reader;
 pub mod source_walker;
 pub mod test_file_item;
 pub mod test_file_parser;

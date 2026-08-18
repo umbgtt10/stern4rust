@@ -4,15 +4,25 @@
 
 use std::fmt::Debug;
 
+use serde::Serialize;
+
 // One thing wrong with one file. Every rule reports in this currency, so the
 // report is a single table rather than one section per rule, and a new rule
 // costs nothing in the printer.
-#[derive(Debug, Clone, PartialEq, Eq)]
+//
+// `subject` and `expected` are what make the JSON report worth consuming rather
+// than only reading. The description is a sentence for a person; the subject is
+// the thing the offence is about, and `expected` is the correct text where the
+// rule knows it. A rule opts into both, so a rule with nothing precise to add
+// says nothing rather than repeating its own prose in another field.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Offence {
     pub file: String,
     pub line: usize,
     pub rule: &'static str,
     pub description: String,
+    pub subject: Option<String>,
+    pub expected: Option<String>,
 }
 
 impl Offence {
@@ -22,6 +32,22 @@ impl Offence {
             line,
             rule,
             description,
+            subject: None,
+            expected: None,
+        }
+    }
+
+    pub fn with_subject(self, subject: &str) -> Self {
+        Self {
+            subject: Some(subject.to_string()),
+            ..self
+        }
+    }
+
+    pub fn with_expected(self, expected: &str) -> Self {
+        Self {
+            expected: Some(expected.to_string()),
+            ..self
         }
     }
 

@@ -36,6 +36,10 @@ impl HeaderRule {
             self.name(),
             "file is empty, so it carries no header".to_string(),
         )
+        .with_expected(&self.expected.join(
+            "
+",
+        ))
     }
 
     fn ends_early(&self, file: &SourceFile) -> Offence {
@@ -49,6 +53,10 @@ impl HeaderRule {
                 self.expected.len()
             ),
         )
+        .with_expected(&self.expected.join(
+            "
+",
+        ))
     }
 
     fn line_differs(&self, file: &SourceFile, index: usize) -> Offence {
@@ -62,6 +70,10 @@ impl HeaderRule {
                 file.lines()[index]
             ),
         )
+        .with_expected(&self.expected.join(
+            "
+",
+        ))
     }
 }
 

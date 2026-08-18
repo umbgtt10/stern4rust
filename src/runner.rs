@@ -2,21 +2,19 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::fs;
-use std::path::Path;
-
-use anyhow::Context;
 use anyhow::Result;
 
 use crate::args::Args;
 use crate::config::Config;
 use crate::header_source::HeaderSource;
+use crate::json_printer::JsonPrinter;
 use crate::manifest_resolver::ManifestResolver;
 use crate::offence::Offence;
+use crate::output_format::OutputFormat;
 use crate::report_printer::ReportPrinter;
 use crate::rule_registry::RuleRegistry;
 use crate::run_outcome::RunOutcome;
-use crate::source_file::SourceFile;
+use crate::source_reader::SourceReader;
 use crate::source_walker::SourceWalker;
 
 // Exit codes are the whole contract with a gate script:
@@ -28,6 +26,12 @@ use crate::source_walker::SourceWalker;
 // 2 is kept distinct from 1 on purpose. A script that treats every non-zero code
 // alike cannot tell "your code has a problem" from "I could not read your code",
 // and the second one silently passing is how a gate stops meaning anything.
+//
+// The line between the two is what can still be enumerated. A bad manifest or an
+// unknown package is a 1: without it there is no list of files to judge. A single
+// unreadable file is a 2, reported against readable-source like any other
+// finding -- it is a fact about the tree, and aborting on it would hide every
+// offence already found in every other file.
 pub struct Runner;
 
 impl Runner {
@@ -52,9 +56,12 @@ impl Runner {
             // is often the one that does not exist.
             let mut files = Vec::new();
             for path in SourceWalker::walk(root) {
-                files.push(Self::read(root, &path)?);
+                files_scanned += 1;
+                match SourceReader::read(root, &path) {
+                    Ok(file) => files.push(file),
+                    Err(offence) => offences.push(offence),
+                }
             }
-            files_scanned += files.len();
             for file in &files {
                 offences.extend(registry.check(file));
             }
@@ -66,7 +73,7 @@ impl Runner {
         // business rather than any rule's -- a rule states facts, and their
         // order on the page is not one of them.
         offences.sort_by(|left, right| left.sort_key().cmp(&right.sort_key()));
-        Self::report(files_scanned, &offences);
+        Self::report(config.format, files_scanned, &offences);
         Ok(RunOutcome::of(offences.len()))
     }
 
@@ -79,19 +86,14 @@ impl Runner {
             manifest_path: args.manifest_path,
             packages: args.packages,
             expected_header,
+            format: args.format,
         })
     }
 
-    fn read(root: &Path, path: &Path) -> Result<SourceFile> {
-        let contents = fs::read_to_string(path)
-            .with_context(|| format!("failed to read source file {}", path.display()))?;
-        Ok(SourceFile::new(
-            &ManifestResolver::relative_to(root, path),
-            &contents,
-        ))
-    }
-
-    fn report(files_scanned: usize, offences: &[Offence]) {
-        ReportPrinter::new(files_scanned).print(offences);
+    fn report(format: OutputFormat, files_scanned: usize, offences: &[Offence]) {
+        match format {
+            OutputFormat::Text => ReportPrinter::new(files_scanned).print(offences),
+            OutputFormat::Json => JsonPrinter::new(files_scanned).print(offences),
+        }
     }
 }

@@ -53,6 +53,13 @@ true, and useless, when the actionable fact is that line 1 is not the header.
 **An empty expected header means no opinion.** Without `--header-file` the
 rule is not registered at all, rather than registered and vacuously passing.
 
+**Every offence carries the whole expected header** in its `expected` field,
+not only the one line that diverged. This is what keeps one-offence-per-file
+from forcing an iterative fix: a consumer of the JSON report replaces lines
+1..N in one pass instead of correcting line 1, re-running to discover line 3,
+and correcting again. The rule knows the entire answer, so it hands over the
+entire answer.
+
 ## Forcing constraints / Evidence
 
 The normalisation cases are not hypothetical, and each is pinned:

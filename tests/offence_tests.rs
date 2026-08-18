@@ -21,6 +21,18 @@ fn new_keeps_every_field_it_was_given() {
     assert_eq!(offence.description, "expected something");
 }
 
+// A rule opts into the machine-readable extras, so every existing construction
+// site keeps working and a rule that has nothing precise to add says nothing.
+#[test]
+fn new_leaves_the_machine_readable_fields_empty() {
+    // Arrange & Act
+    let offence = Offence::new("src/a.rs", 12, "header", "expected something".to_string());
+
+    // Assert
+    assert_eq!(offence.subject, None);
+    assert_eq!(offence.expected, None);
+}
+
 #[test]
 fn offences_differing_only_by_line_are_not_equal() {
     // Arrange & Act
@@ -52,4 +64,27 @@ fn sort_key_orders_two_offences_in_the_same_file_by_line() {
 
     // Assert
     assert!(first.sort_key() < second.sort_key());
+}
+
+// The correct text, where the rule knows it. This is what turns a report into
+// something that can be applied rather than only read: the header rule knows the
+// whole header, so it can hand it over instead of describing one wrong line.
+#[test]
+fn with_expected_attaches_the_text_the_rule_knows_is_correct() {
+    // Arrange & Act
+    let offence = Offence::new("src/a.rs", 1, "header", "x".to_string())
+        .with_expected("// Copyright\n// MIT");
+
+    // Assert
+    assert_eq!(offence.expected, Some("// Copyright\n// MIT".to_string()));
+}
+
+#[test]
+fn with_subject_names_the_thing_the_offence_is_about() {
+    // Arrange & Act
+    let offence =
+        Offence::new("src/a.rs", 1, "header", "x".to_string()).with_subject("the constant `LIMIT`");
+
+    // Assert
+    assert_eq!(offence.subject, Some("the constant `LIMIT`".to_string()));
 }

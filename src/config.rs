@@ -4,9 +4,12 @@
 
 use std::path::PathBuf;
 
+use crate::output_format::OutputFormat;
+
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Config {
     pub manifest_path: Option<PathBuf>,
     pub packages: Vec<String>,
     pub expected_header: Vec<String>,
+    pub format: OutputFormat,
 }

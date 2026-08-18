@@ -15,8 +15,9 @@ already own correctness. These are the things a reviewer would otherwise have to
 say by hand, every time, forever — and the ones that quietly stop being true
 across a codebase the moment nobody is checking.
 
-> **Status: scaffold.** The packaging, CLI and test harness are in place and the
-> crate publishes. No rule is implemented yet, so a run reports that and exits 0.
+> **Status: four rules, more coming.** The set below is what is implemented and
+> gated. `stern4rust` runs against its own tree on every build, so a rule that
+> would fail this repository cannot be merged into it.
 
 ## Install
 
@@ -28,26 +29,45 @@ cargo install cargo-stern4rust
 
 ```bash
 cargo stern4rust
-cargo stern4rust --package my-crate
+cargo stern4rust --header-file docs/header.txt
 cargo stern4rust --manifest-path path/to/Cargo.toml --package a --package b
+cargo stern4rust --format json
 ```
 
 | flag | meaning |
 |---|---|
 | `--manifest-path <PATH>` | workspace manifest to analyse; defaults to the one in the current directory |
 | `--package <NAME>` | restrict to these packages; repeatable. Omit to take the manifest's own package |
+| `--header-file <PATH>` | the header every `.rs` file must open with. Without it the header rule does not run, and the report says which rules did |
+| `--format <text\|json>` | `text` (default) is the table below; `json` is the same run as a document |
 
 ## The rules
 
 Each rule is independent, names itself in the report, and can be pointed at a
-whole workspace or one package. The set is open — these are the first two.
+whole workspace or one package. Every one has an ADR recording why it exists,
+what was rejected, and — the part that matters for a checking tool — what it
+does **not** catch.
 
-### AAA structure in tests
+### `readable-source`
 
-A test reads as three movements: set the world up, do the one thing, check what
-happened. When the marker comments are missing, the boundary between them stops
-being visible, and a test that quietly asserts in its arrange section or acts
-twice looks exactly like one that does not.
+Every `.rs` file can be read and parsed. This one exists because silence is
+indistinguishable from success: a corrupted file produces no rows, and a file
+with no rows looks exactly like a clean file. See
+[004](docs/ADRs/004-ADR-ReadableSourceRule.md) for the incident that forced it.
+
+### `header`
+
+Every `.rs` file opens with the repository's header, supplied by
+`--header-file` because it is never the same twice — MIT here, Apache 2.0 in a
+sibling repository, a different year again next year. The offence carries the
+whole correct header, not only the line that diverged, so a fix is one pass
+rather than a loop. [001](docs/ADRs/001-ADR-HeaderRule.md)
+
+### `test-file-structure`
+
+A test file reads top to bottom in one order: header, imports, constants,
+helpers, tests. Each group is alphabetical; imports run together and everything
+else is separated by exactly one blank line.
 
 ```rust
 #[test]
@@ -63,19 +83,18 @@ fn poll_with_an_empty_queue_returns_nothing() {
 }
 ```
 
-Two contractions are part of the rule rather than exceptions to it:
+Order is what makes a test file skimmable without reading it. Once a constant
+sits below a helper, the file has no shape and every later addition goes
+wherever the last one happened to end.
+[002](docs/ADRs/002-ADR-TestFileStructureRule.md)
 
-- `// Arrange & Act` when there is nothing to set up separately
-- `// Act & Assert` when the call and the check are one expression
+### `tests-layout`
 
-### At most one struct with an impl block per file
-
-A file holds one behaviour-bearing type. Plain data declarations sitting beside
-it are fine; a second type that carries methods is a second subject, and a file
-with two subjects has no name that describes it.
-
-This is what keeps a mirrored test file meaningful — `src/foo.rs` answering to
-`tests/foo_tests.rs` only says something when `foo.rs` has one subject to test.
+A tests folder is reached through exactly one door: `tests/all_tests.rs`, plus a
+`mod.rs` in every subfolder on the way down. Miss one and the files beneath it
+are never compiled — they still exist, still look like tests, and nothing runs
+them. The failure is silent by construction, because a test that is never
+compiled cannot fail. [003](docs/ADRs/003-ADR-TestsLayoutRule.md)
 
 ## Output
 
@@ -87,19 +106,51 @@ stern4rust report
 All rules are satisfied.
 ```
 
-Broken:
+Broken — grouped by file, then by line:
 
 ```text
 stern4rust report
 
-file                          line  rule              offence
-----------------------------  ----  ----------------  ----------------------------------
-src/peer_registry.rs            41  one-struct-file   second struct with an impl block
-tests/peer_registry_tests.rs    18  aaa-structure     no Act section
-tests/peer_registry_tests.rs    57  aaa-structure     Assert before Act
+file                     line  rule          offence
+-----------------------  ----  ------------  ------------------------------------------------------
+tests/all_tests.rs          1  tests-layout  the import `use std::fmt;` does not belong in a registry
+tests/all_tests.rs          3  tests-layout  the constant `LIMIT` does not belong in a registry
+tests/rules/deep/mod.rs     1  tests-layout  a tests subfolder has no mod.rs, so nothing in it is compiled
 
-summary: files_scanned=42 offences=3 rules_broken=2
+summary: files_scanned=4 offences=3 rules_broken=1
 ```
+
+Every offence names the thing it is about. "Something in this file is not a
+declaration" is true of the whole file and actionable nowhere in it.
+
+### `--format json`
+
+The table is sized to its contents and meant for a person; nothing can parse it
+reliably, since paths and descriptions both contain spaces. `--format json`
+renders the same run as a document:
+
+```json
+{
+  "files_scanned": 4,
+  "offences_found": 3,
+  "rules_broken": 1,
+  "offences": [
+    {
+      "file": "tests/all_tests.rs",
+      "line": 3,
+      "rule": "tests-layout",
+      "description": "the constant `LIMIT` does not belong in a registry, ...",
+      "subject": "the constant `LIMIT`",
+      "expected": null
+    }
+  ]
+}
+```
+
+`subject` is the thing the offence is about; `expected` is the correct text
+where the rule knows it — the header rule puts the entire header there, so a
+consumer applies the fix in one pass instead of re-running to find the next
+wrong line. Both keys are always present, so the shape does not vary.
 
 ## Exit codes
 
@@ -108,12 +159,18 @@ The family shares one contract, so a wrapper script can tell the two apart:
 | code | meaning |
 |---|---|
 | `0` | every rule satisfied |
-| `1` | the tool could not run — bad manifest, unknown package, unreadable source |
+| `1` | the tool could not run — bad manifest, unknown package |
 | `2` | at least one rule was broken |
 
 Only `2` is a finding. A script that treats every non-zero code the same cannot
 distinguish "your code has a problem" from "I could not look at your code",
 which is the difference between a real failure and a broken CI step.
+
+The line between `1` and `2` is whether the work can still be enumerated. A bad
+manifest leaves no list of files to judge and is a `1`. A single unreadable file
+is a `2`, reported against `readable-source` like any other finding — it is a
+fact about the tree, and aborting on it would discard every offence already
+found in every other file.
 
 ## Design decisions
 

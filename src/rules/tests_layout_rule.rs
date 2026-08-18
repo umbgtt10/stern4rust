@@ -43,14 +43,17 @@ impl TestsLayoutRule {
         {
             return Vec::new();
         }
-        vec![Offence::new(
-            "tests/all_tests.rs",
-            1,
-            self.name(),
-            "a tests folder is present but has no all_tests.rs, so nothing in it \
+        vec![
+            Offence::new(
+                "tests/all_tests.rs",
+                1,
+                self.name(),
+                "a tests folder is present but has no all_tests.rs, so nothing in it \
              is compiled"
-                .to_string(),
-        )]
+                    .to_string(),
+            )
+            .with_subject("tests/all_tests.rs"),
+        ]
     }
 
     // A second one below the top is not a door; it is a file with a misleading
@@ -71,6 +74,7 @@ impl TestsLayoutRule {
                      reached"
                         .to_string(),
                 )
+                .with_subject(file.relative_path())
             })
             .collect()
     }
@@ -88,6 +92,7 @@ impl TestsLayoutRule {
                     self.name(),
                     "a tests subfolder has no mod.rs, so nothing in it is compiled".to_string(),
                 )
+                .with_subject(&expected)
             })
             .collect()
     }
@@ -137,6 +142,7 @@ impl TestsLayoutRule {
                         stray.label
                     ),
                 )
+                .with_subject(&stray.label)
             })
             .collect()
     }

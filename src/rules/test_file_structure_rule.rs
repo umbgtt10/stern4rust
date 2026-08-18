@@ -101,7 +101,7 @@ impl TestFileStructureRule {
     }
 
     fn offence(&self, item: &TestFileItem, description: String) -> Offence {
-        Offence::new("", item.first_line, self.name(), description)
+        Offence::new("", item.first_line, self.name(), description).with_subject(&item.name)
     }
 }
 
@@ -136,13 +136,9 @@ impl Rule for TestFileStructureRule {
         }
         offences
             .into_iter()
-            .map(|offence| {
-                Offence::new(
-                    file.relative_path(),
-                    offence.line,
-                    offence.rule,
-                    offence.description,
-                )
+            .map(|offence| Offence {
+                file: file.relative_path().to_string(),
+                ..offence
             })
             .collect()
     }

@@ -24,6 +24,7 @@ to `002` in a commit message or a code comment stays resolvable forever.
 | [001-ADR-HeaderRule](001-ADR-HeaderRule.md) | The expected header is data supplied by `--header-file`, not a constant; a file satisfies the rule when its first N lines match exactly after normalisation, and exactly one offence — the first divergence — is reported per file. |
 | [002-ADR-TestFileStructureRule](002-ADR-TestFileStructureRule.md) | A test file is four sections in a fixed order, each alphabetical, with spacing as part of the shape — and `Helpers` is defined by exclusion so the set of item kinds stays closed. |
 | [003-ADR-TestsLayoutRule](003-ADR-TestsLayoutRule.md) | A tests folder is reached through exactly one `all_tests.rs` and a `mod.rs` in every subfolder on the way down; this is the rule that forced `Rule::check_workspace`, because the offending file is usually the one that does not exist. |
+| [004-ADR-ReadableSourceRule](004-ADR-ReadableSourceRule.md) | Every `.rs` file must be readable and must parse, and failing either is an offence rather than a reason to say nothing — a file the tool cannot read otherwise reads as a file with nothing wrong with it. |
 
 ## Template
 

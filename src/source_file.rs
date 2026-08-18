@@ -14,6 +14,7 @@
 //   - a leading UTF-8 byte order mark is stripped, because editors add one
 //     invisibly and it would otherwise sit in front of the first character of
 //     line 1
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SourceFile {
     relative_path: String,
     lines: Vec<String>,

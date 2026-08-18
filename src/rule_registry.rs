@@ -6,6 +6,7 @@ use crate::config::Config;
 use crate::offence::Offence;
 use crate::rule::Rule;
 use crate::rules::header_rule::HeaderRule;
+use crate::rules::readable_source_rule::ReadableSourceRule;
 use crate::rules::test_file_structure_rule::TestFileStructureRule;
 use crate::rules::tests_layout_rule::TestsLayoutRule;
 use crate::source_file::SourceFile;
@@ -25,7 +26,10 @@ impl RuleRegistry {
         // The structure rule needs nothing configured, so it holds from the
         // first run. The header rule cannot: it has no idea what your header
         // says until you tell it.
+        // readable-source comes first because it is the one rule whose failure
+        // explains every other rule's silence on the same file.
         let mut rules: Vec<Box<dyn Rule>> = vec![
+            Box::new(ReadableSourceRule::new()),
             Box::new(TestFileStructureRule::new()),
             Box::new(TestsLayoutRule::new()),
         ];

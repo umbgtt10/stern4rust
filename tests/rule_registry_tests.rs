@@ -147,7 +147,12 @@ fn from_config_with_a_header_registers_the_header_rule_alongside_the_others() {
     // Assert
     assert_eq!(
         registry.names(),
-        ["test-file-structure", "tests-layout", "header"]
+        [
+            "readable-source",
+            "test-file-structure",
+            "tests-layout",
+            "header"
+        ]
     );
 }
 
@@ -159,7 +164,10 @@ fn from_config_without_a_header_registers_the_rules_that_need_no_configuration()
     let registry = RuleRegistry::from_config(&Config::default());
 
     // Assert
-    assert_eq!(registry.names(), ["test-file-structure", "tests-layout"]);
+    assert_eq!(
+        registry.names(),
+        ["readable-source", "test-file-structure", "tests-layout"]
+    );
 }
 
 #[test]

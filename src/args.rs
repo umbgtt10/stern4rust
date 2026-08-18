@@ -6,6 +6,8 @@ use std::path::PathBuf;
 
 use clap::Parser;
 
+use crate::output_format::OutputFormat;
+
 #[derive(Debug, Parser)]
 #[command(name = "cargo-stern4rust")]
 #[command(bin_name = "cargo stern4rust")]
@@ -23,6 +25,12 @@ pub struct Args {
     /// Apache 2.0 in a sibling repository, and a different year again next year.
     #[arg(long)]
     pub header_file: Option<PathBuf>,
+
+    /// How to report. The table is for a person; `json` is the same run as a
+    /// document, for a gate script or an agent that would otherwise have to
+    /// guess where one column of the table ends and the next begins.
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    pub format: OutputFormat,
 }
 
 impl Args {
