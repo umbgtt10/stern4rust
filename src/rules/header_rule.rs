@@ -29,17 +29,31 @@ impl HeaderRule {
         &self.expected
     }
 
+    // The same instruction for all three failures, because the fix is the same
+    // one: whatever is at the top of the file now, the header replaces it. The
+    // whole expected text travels on the offence, so the correction does not
+    // have to repeat it -- and a consumer applies it in one pass rather than
+    // fixing one line, re-running, and finding the next.
+    fn correction(&self) -> String {
+        format!(
+            "make the first {} lines of the file match the expected header",
+            self.expected.len()
+        )
+    }
+
+    fn expected_text(&self) -> String {
+        self.expected.join("\n")
+    }
+
     fn missing_entirely(&self, file: &SourceFile) -> Offence {
         Offence::new(
             file.relative_path(),
             1,
             self.name(),
             "file is empty, so it carries no header".to_string(),
+            self.correction(),
         )
-        .with_expected(&self.expected.join(
-            "
-",
-        ))
+        .with_expected(&self.expected_text())
     }
 
     fn ends_early(&self, file: &SourceFile) -> Offence {
@@ -52,11 +66,9 @@ impl HeaderRule {
                 file.lines().len(),
                 self.expected.len()
             ),
+            self.correction(),
         )
-        .with_expected(&self.expected.join(
-            "
-",
-        ))
+        .with_expected(&self.expected_text())
     }
 
     fn line_differs(&self, file: &SourceFile, index: usize) -> Offence {
@@ -69,11 +81,9 @@ impl HeaderRule {
                 self.expected[index],
                 file.lines()[index]
             ),
+            self.correction(),
         )
-        .with_expected(&self.expected.join(
-            "
-",
-        ))
+        .with_expected(&self.expected_text())
     }
 }
 

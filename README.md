@@ -106,7 +106,8 @@ stern4rust report
 All rules are satisfied.
 ```
 
-Broken — grouped by file, then by line:
+Broken — grouped by file, then by line, each offence followed by what to do
+about it:
 
 ```text
 stern4rust report
@@ -114,14 +115,20 @@ stern4rust report
 file                     line  rule          offence
 -----------------------  ----  ------------  ------------------------------------------------------
 tests/all_tests.rs          1  tests-layout  the import `use std::fmt;` does not belong in a registry
+                                             fix: move the import `use std::fmt;` out of the registry into the file that needs it
 tests/all_tests.rs          3  tests-layout  the constant `LIMIT` does not belong in a registry
+                                             fix: move the constant `LIMIT` out of the registry into the file that needs it
 tests/rules/deep/mod.rs     1  tests-layout  a tests subfolder has no mod.rs, so nothing in it is compiled
+                                             fix: create tests/rules/deep/mod.rs with the header and one `pub mod` line per file in that folder
 
 summary: files_scanned=4 offences=3 rules_broken=1
 ```
 
-Every offence names the thing it is about. "Something in this file is not a
-declaration" is true of the whole file and actionable nowhere in it.
+Two things every offence carries. It **names the thing it is about** — "something
+in this file is not a declaration" is true of the whole file and actionable
+nowhere in it. And it carries a **correction**: what to do, not only what is
+wrong. That field is required rather than optional, so a rule that can say what
+is broken has to say how to fix it.
 
 ### `--format json`
 
@@ -140,6 +147,7 @@ renders the same run as a document:
       "line": 3,
       "rule": "tests-layout",
       "description": "the constant `LIMIT` does not belong in a registry, ...",
+      "correction": "move the constant `LIMIT` out of the registry into the file that needs it",
       "subject": "the constant `LIMIT`",
       "expected": null
     }
@@ -147,10 +155,11 @@ renders the same run as a document:
 }
 ```
 
-`subject` is the thing the offence is about; `expected` is the correct text
+`correction` is what to do about the offence, and is always present.
+`subject` is the thing the offence is about. `expected` is the correct text
 where the rule knows it — the header rule puts the entire header there, so a
 consumer applies the fix in one pass instead of re-running to find the next
-wrong line. Both keys are always present, so the shape does not vary.
+wrong line. Every key is always present, so the shape does not vary.
 
 ## Exit codes
 

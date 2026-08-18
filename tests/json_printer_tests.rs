@@ -22,7 +22,13 @@ fn parsed(files_scanned: usize, offences: &[Offence]) -> Value {
 }
 
 fn plain() -> Offence {
-    Offence::new("src/a.rs", 12, "header", "expected something".to_string())
+    Offence::new(
+        "src/a.rs",
+        12,
+        "header",
+        "expected something".to_string(),
+        "fix it".to_string(),
+    )
 }
 
 // Two offences from one rule are one broken rule, the same count the table's
@@ -47,6 +53,7 @@ fn render_escapes_a_description_containing_quotes() {
         1,
         "header",
         r#"expected "// Copyright" but found "// nope""#.to_string(),
+        r#"make line 1 read "// Copyright""#.to_string(),
     );
 
     // Act
@@ -84,6 +91,7 @@ fn render_names_every_field_of_an_offence() {
     assert_eq!(found["offences"][0]["file"], "src/a.rs");
     assert_eq!(found["offences"][0]["line"], 12);
     assert_eq!(found["offences"][0]["rule"], "header");
+    assert_eq!(found["offences"][0]["correction"], "fix it");
     assert_eq!(found["offences"][0]["subject"], "the constant `LIMIT`");
     assert_eq!(found["offences"][0]["expected"], "// Copyright");
 }
@@ -114,8 +122,20 @@ fn render_of_no_offences_reports_an_empty_list() {
 #[test]
 fn render_of_several_offences_keeps_the_order_it_was_given() {
     // Arrange
-    let first = Offence::new("src/a.rs", 1, "header", "first".to_string());
-    let second = Offence::new("src/b.rs", 2, "header", "second".to_string());
+    let first = Offence::new(
+        "src/a.rs",
+        1,
+        "header",
+        "first".to_string(),
+        "fix it".to_string(),
+    );
+    let second = Offence::new(
+        "src/b.rs",
+        2,
+        "header",
+        "second".to_string(),
+        "fix it".to_string(),
+    );
 
     // Act
     let found = parsed(2, &[first, second]);

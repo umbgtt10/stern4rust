@@ -59,7 +59,7 @@ impl Runner {
                 files_scanned += 1;
                 match SourceReader::read(root, &path) {
                     Ok(file) => files.push(file),
-                    Err(offence) => offences.push(offence),
+                    Err(offence) => offences.push(*offence),
                 }
             }
             for file in &files {

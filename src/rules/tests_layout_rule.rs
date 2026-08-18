@@ -51,6 +51,9 @@ impl TestsLayoutRule {
                 "a tests folder is present but has no all_tests.rs, so nothing in it \
              is compiled"
                     .to_string(),
+                "create tests/all_tests.rs with the header and one `pub mod` line per \
+                 file in tests/"
+                    .to_string(),
             )
             .with_subject("tests/all_tests.rs"),
         ]
@@ -73,6 +76,9 @@ impl TestsLayoutRule {
                     "only tests/all_tests.rs is a registry; this one is never \
                      reached"
                         .to_string(),
+                    "rename it to mod.rs, or delete it and declare its contents from \
+                     tests/all_tests.rs"
+                        .to_string(),
                 )
                 .with_subject(file.relative_path())
             })
@@ -91,6 +97,10 @@ impl TestsLayoutRule {
                     1,
                     self.name(),
                     "a tests subfolder has no mod.rs, so nothing in it is compiled".to_string(),
+                    format!(
+                        "create {expected} with the header and one `pub mod` line per \
+                         file in that folder"
+                    ),
                 )
                 .with_subject(&expected)
             })
@@ -139,6 +149,10 @@ impl TestsLayoutRule {
                     format!(
                         "{} does not belong in a registry, which holds the header \
                          and pub mod declarations only",
+                        stray.label
+                    ),
+                    format!(
+                        "move {} out of the registry into the file that needs it",
                         stray.label
                     ),
                 )

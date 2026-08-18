@@ -21,17 +21,24 @@ use crate::source_file::SourceFile;
 pub struct SourceReader;
 
 impl SourceReader {
-    pub fn read(root: &Path, path: &Path) -> Result<SourceFile, Offence> {
+    // The offence is boxed because it is much larger than the SourceFile it is
+    // returned instead of, and an unboxed Err variant that size makes every
+    // successful read pay for the failing one.
+    pub fn read(root: &Path, path: &Path) -> Result<SourceFile, Box<Offence>> {
         let relative = ManifestResolver::relative_to(root, path);
         match fs::read_to_string(path) {
             Ok(contents) => Ok(SourceFile::new(&relative, &contents)),
-            Err(error) => Err(Offence::new(
-                &relative,
-                1,
-                ReadableSourceRule::NAME,
-                format!("file could not be read: {error}"),
-            )
-            .with_subject(&relative)),
+            Err(error) => Err(Box::new(
+                Offence::new(
+                    &relative,
+                    1,
+                    ReadableSourceRule::NAME,
+                    format!("file could not be read: {error}"),
+                    "check that the file exists and that its permissions allow reading it"
+                        .to_string(),
+                )
+                .with_subject(&relative),
+            )),
         }
     }
 }

@@ -52,6 +52,11 @@ impl TestFileStructureRule {
                 previous.section.label(),
                 item.section.label()
             ),
+            format!(
+                "move `{}` up above the {}s",
+                item.name,
+                previous.section.label()
+            ),
         ))
     }
 
@@ -65,6 +70,7 @@ impl TestFileStructureRule {
                 "{} is out of alphabetic order; it follows {}",
                 item.name, previous.name
             ),
+            format!("move `{}` above `{}`", item.name, previous.name),
         ))
     }
 
@@ -88,6 +94,10 @@ impl TestFileStructureRule {
                 "expected {expected} blank line(s) before {} but found {found}",
                 item.name
             ),
+            format!(
+                "leave exactly {expected} blank line(s) between `{}` and `{}`",
+                previous.name, item.name
+            ),
         ))
     }
 
@@ -100,8 +110,9 @@ impl TestFileStructureRule {
             .count()
     }
 
-    fn offence(&self, item: &TestFileItem, description: String) -> Offence {
-        Offence::new("", item.first_line, self.name(), description).with_subject(&item.name)
+    fn offence(&self, item: &TestFileItem, description: String, correction: String) -> Offence {
+        Offence::new("", item.first_line, self.name(), description, correction)
+            .with_subject(&item.name)
     }
 }
 

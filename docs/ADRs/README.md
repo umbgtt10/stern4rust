@@ -63,7 +63,13 @@ snapshot of the decision as it stands today, not a changelog — state the
 current shape as fact, don't narrate what an earlier version of this
 document used to say.
 
-A rule ADR carries one obligation the template does not spell out: it must
-say what the rule **does not** catch. A checking tool is read as exhaustive
-by default, and a gap nobody wrote down is indistinguishable from a gap
-nobody has yet hit.
+A rule ADR carries two obligations the template does not spell out.
+
+It must say what the rule **does not** catch. A checking tool is read as
+exhaustive by default, and a gap nobody wrote down is indistinguishable from
+a gap nobody has yet hit.
+
+It must say what each of the rule's offences tells the reader to **do**.
+`Offence::correction` is a required field rather than an optional one, so
+every offence a rule can emit has an answer to "and now what?", and the ADR
+is where the wording of those answers is argued about rather than in a diff.

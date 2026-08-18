@@ -23,7 +23,13 @@ impl Rule for AlwaysOffends {
     }
 
     fn check(&self, file: &SourceFile) -> Vec<Offence> {
-        vec![Offence::new(file.relative_path(), 1, "always", "no".into())]
+        vec![Offence::new(
+            file.relative_path(),
+            1,
+            "always",
+            "no".into(),
+            "fix it".into(),
+        )]
     }
 }
 
@@ -63,6 +69,7 @@ impl Rule for OffendsPerWorkspace {
             1,
             "workspace",
             format!("saw {} files", files.len()),
+            "fix it".to_string(),
         )]
     }
 }

@@ -15,23 +15,35 @@ use serde::Serialize;
 // the thing the offence is about, and `expected` is the correct text where the
 // rule knows it. A rule opts into both, so a rule with nothing precise to add
 // says nothing rather than repeating its own prose in another field.
+// `correction` is required rather than optional, and that is the point. A rule
+// that can say what is wrong can say what to do about it, and making the field
+// optional would let a future rule quietly omit the half of the report that is
+// worth acting on -- the exact shape of silent gap this tool exists to catch.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Offence {
     pub file: String,
     pub line: usize,
     pub rule: &'static str,
     pub description: String,
+    pub correction: String,
     pub subject: Option<String>,
     pub expected: Option<String>,
 }
 
 impl Offence {
-    pub fn new(file: &str, line: usize, rule: &'static str, description: String) -> Self {
+    pub fn new(
+        file: &str,
+        line: usize,
+        rule: &'static str,
+        description: String,
+        correction: String,
+    ) -> Self {
         Self {
             file: file.to_string(),
             line,
             rule,
             description,
+            correction,
             subject: None,
             expected: None,
         }

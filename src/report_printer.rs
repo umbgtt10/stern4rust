@@ -19,57 +19,76 @@ impl ReportPrinter {
     }
 
     pub fn print(&self, offences: &[Offence]) {
-        println!("stern4rust report");
-        println!();
+        println!("{}", self.render(offences));
+    }
 
+    // Returns the report rather than writing it, so the shape is assertable in a
+    // test instead of being checked for not panicking.
+    pub fn render(&self, offences: &[Offence]) -> String {
+        let mut report = String::from("stern4rust report\n\n");
         if offences.is_empty() {
-            println!("All rules are satisfied.");
-            println!();
-            self.print_summary(offences);
-            return;
+            report.push_str("All rules are satisfied.\n\n");
+            report.push_str(&self.summary(offences));
+            return report;
         }
 
         let widths = ColumnWidths::of(offences);
-        println!(
-            "{:<file$}  {:>line$}  {:<rule$}  offence",
+        report.push_str(&Self::heading(&widths));
+        for offence in offences {
+            report.push_str(&Self::row(offence, &widths));
+            report.push_str(&Self::correction_row(offence, &widths));
+        }
+        report.push('\n');
+        report.push_str(&self.summary(offences));
+        report
+    }
+
+    fn heading(widths: &ColumnWidths) -> String {
+        format!(
+            "{:<file$}  {:>line$}  {:<rule$}  offence\n{}  {}  {}  {}\n",
             "file",
             "line",
             "rule",
-            file = widths.file,
-            line = widths.line,
-            rule = widths.rule
-        );
-        println!(
-            "{}  {}  {}  {}",
             "-".repeat(widths.file),
             "-".repeat(widths.line),
             "-".repeat(widths.rule),
-            "-".repeat(widths.description)
-        );
-        for offence in offences {
-            println!(
-                "{:<file$}  {:>line$}  {:<rule$}  {}",
-                offence.file,
-                offence.line,
-                offence.rule,
-                offence.description,
-                file = widths.file,
-                line = widths.line,
-                rule = widths.rule
-            );
-        }
-        println!();
-        self.print_summary(offences);
+            "-".repeat(widths.description),
+            file = widths.file,
+            line = widths.line,
+            rule = widths.rule
+        )
     }
 
-    fn print_summary(&self, offences: &[Offence]) {
+    fn row(offence: &Offence, widths: &ColumnWidths) -> String {
+        format!(
+            "{:<file$}  {:>line$}  {:<rule$}  {}\n",
+            offence.file,
+            offence.line,
+            offence.rule,
+            offence.description,
+            file = widths.file,
+            line = widths.line,
+            rule = widths.rule
+        )
+    }
+
+    // On its own line beneath the offence rather than in a fifth column. The
+    // description column is already the widest thing in the report, and a
+    // correction is a sentence rather than a field -- side by side, neither
+    // would be readable.
+    fn correction_row(offence: &Offence, widths: &ColumnWidths) -> String {
+        let indent = widths.file + widths.line + widths.rule + 6;
+        format!("{}fix: {}\n", " ".repeat(indent), offence.correction)
+    }
+
+    fn summary(&self, offences: &[Offence]) -> String {
         let broken: BTreeSet<&str> = offences.iter().map(|offence| offence.rule).collect();
-        println!(
+        format!(
             "summary: files_scanned={} offences={} rules_broken={}",
             self.files_scanned,
             offences.len(),
             broken.len()
-        );
+        )
     }
 }
 

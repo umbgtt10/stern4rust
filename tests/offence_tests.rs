@@ -12,13 +12,20 @@ use stern4rust::offence::Offence;
 #[test]
 fn new_keeps_every_field_it_was_given() {
     // Arrange & Act
-    let offence = Offence::new("src/a.rs", 12, "header", "expected something".to_string());
+    let offence = Offence::new(
+        "src/a.rs",
+        12,
+        "header",
+        "expected something".to_string(),
+        "fix it like this".to_string(),
+    );
 
     // Assert
     assert_eq!(offence.file, "src/a.rs");
     assert_eq!(offence.line, 12);
     assert_eq!(offence.rule, "header");
     assert_eq!(offence.description, "expected something");
+    assert_eq!(offence.correction, "fix it like this");
 }
 
 // A rule opts into the machine-readable extras, so every existing construction
@@ -26,7 +33,13 @@ fn new_keeps_every_field_it_was_given() {
 #[test]
 fn new_leaves_the_machine_readable_fields_empty() {
     // Arrange & Act
-    let offence = Offence::new("src/a.rs", 12, "header", "expected something".to_string());
+    let offence = Offence::new(
+        "src/a.rs",
+        12,
+        "header",
+        "expected something".to_string(),
+        "fix".to_string(),
+    );
 
     // Assert
     assert_eq!(offence.subject, None);
@@ -36,8 +49,20 @@ fn new_leaves_the_machine_readable_fields_empty() {
 #[test]
 fn offences_differing_only_by_line_are_not_equal() {
     // Arrange & Act
-    let first = Offence::new("src/a.rs", 1, "header", "same".to_string());
-    let second = Offence::new("src/a.rs", 2, "header", "same".to_string());
+    let first = Offence::new(
+        "src/a.rs",
+        1,
+        "header",
+        "same".to_string(),
+        "fix".to_string(),
+    );
+    let second = Offence::new(
+        "src/a.rs",
+        2,
+        "header",
+        "same".to_string(),
+        "fix".to_string(),
+    );
 
     // Assert
     assert_ne!(first, second);
@@ -49,8 +74,8 @@ fn offences_differing_only_by_line_are_not_equal() {
 #[test]
 fn sort_key_groups_offences_by_file_before_line() {
     // Arrange & Act
-    let first = Offence::new("src/a.rs", 90, "header", "x".to_string());
-    let second = Offence::new("src/b.rs", 2, "header", "x".to_string());
+    let first = Offence::new("src/a.rs", 90, "header", "x".to_string(), "fix".to_string());
+    let second = Offence::new("src/b.rs", 2, "header", "x".to_string(), "fix".to_string());
 
     // Assert
     assert!(first.sort_key() < second.sort_key());
@@ -59,8 +84,8 @@ fn sort_key_groups_offences_by_file_before_line() {
 #[test]
 fn sort_key_orders_two_offences_in_the_same_file_by_line() {
     // Arrange & Act
-    let first = Offence::new("src/a.rs", 2, "header", "x".to_string());
-    let second = Offence::new("src/a.rs", 10, "header", "x".to_string());
+    let first = Offence::new("src/a.rs", 2, "header", "x".to_string(), "fix".to_string());
+    let second = Offence::new("src/a.rs", 10, "header", "x".to_string(), "fix".to_string());
 
     // Assert
     assert!(first.sort_key() < second.sort_key());
@@ -72,7 +97,7 @@ fn sort_key_orders_two_offences_in_the_same_file_by_line() {
 #[test]
 fn with_expected_attaches_the_text_the_rule_knows_is_correct() {
     // Arrange & Act
-    let offence = Offence::new("src/a.rs", 1, "header", "x".to_string())
+    let offence = Offence::new("src/a.rs", 1, "header", "x".to_string(), "fix".to_string())
         .with_expected("// Copyright\n// MIT");
 
     // Assert
@@ -82,8 +107,8 @@ fn with_expected_attaches_the_text_the_rule_knows_is_correct() {
 #[test]
 fn with_subject_names_the_thing_the_offence_is_about() {
     // Arrange & Act
-    let offence =
-        Offence::new("src/a.rs", 1, "header", "x".to_string()).with_subject("the constant `LIMIT`");
+    let offence = Offence::new("src/a.rs", 1, "header", "x".to_string(), "fix".to_string())
+        .with_subject("the constant `LIMIT`");
 
     // Assert
     assert_eq!(offence.subject, Some("the constant `LIMIT`".to_string()));

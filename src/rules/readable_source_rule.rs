@@ -56,6 +56,9 @@ impl Rule for ReadableSourceRule {
                     Self::line_of(&error),
                     self.name(),
                     format!("file does not parse as Rust: {error}"),
+                    "correct the syntax error rustc reports for this file, or restore \
+                     the file if it is corrupted"
+                        .to_string(),
                 )
                 .with_subject(file.relative_path()),
             ],
