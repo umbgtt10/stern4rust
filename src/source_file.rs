@@ -39,6 +39,16 @@ impl SourceFile {
         &self.lines
     }
 
+    // Rejoined from the normalised lines rather than kept alongside them, so a
+    // parser and a line-counting rule can never disagree about what the file
+    // says.
+    pub fn contents(&self) -> String {
+        self.lines.join(
+            "
+",
+        )
+    }
+
     // An empty file splits into one empty line, which is not the same as having
     // a line of content.
     pub fn is_empty(&self) -> bool {

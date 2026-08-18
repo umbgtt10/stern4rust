@@ -13,6 +13,18 @@ fn offence(file: &str, line: usize, rule: &'static str) -> Offence {
     Offence::new(file, line, rule, "something is wrong".to_string())
 }
 
+// Columns are sized to their contents, so a path longer than the heading must
+// widen the column rather than overflow it.
+#[test]
+fn print_with_a_path_far_wider_than_its_heading_does_not_panic() {
+    // Arrange
+    let printer = ReportPrinter::new(1);
+    let long = "crates/deeply/nested/package/src/module/submodule/subject.rs";
+
+    // Act & Assert
+    printer.print(&[offence(long, 1234, "header")]);
+}
+
 #[test]
 fn print_with_no_offences_does_not_panic() {
     // Arrange
@@ -20,15 +32,6 @@ fn print_with_no_offences_does_not_panic() {
 
     // Act & Assert
     printer.print(&[]);
-}
-
-#[test]
-fn print_with_one_offence_does_not_panic() {
-    // Arrange
-    let printer = ReportPrinter::new(1);
-
-    // Act & Assert
-    printer.print(&[offence("src/a.rs", 1, "header")]);
 }
 
 #[test]
@@ -44,14 +47,11 @@ fn print_with_offences_from_several_rules_does_not_panic() {
     ]);
 }
 
-// Columns are sized to their contents, so a path longer than the heading must
-// widen the column rather than overflow it.
 #[test]
-fn print_with_a_path_far_wider_than_its_heading_does_not_panic() {
+fn print_with_one_offence_does_not_panic() {
     // Arrange
     let printer = ReportPrinter::new(1);
-    let long = "crates/deeply/nested/package/src/module/submodule/subject.rs";
 
     // Act & Assert
-    printer.print(&[offence(long, 1234, "header")]);
+    printer.print(&[offence("src/a.rs", 1, "header")]);
 }

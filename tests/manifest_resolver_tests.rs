@@ -22,28 +22,15 @@ fn config_for(packages: &[&str]) -> Config {
 }
 
 #[test]
-fn package_roots_without_a_named_package_returns_this_crate() {
+fn package_roots_names_the_package_it_could_not_find() {
     // Arrange
-    let config = config_for(&[]);
+    let config = config_for(&["no-such-package"]);
 
     // Act
-    let roots = ManifestResolver::package_roots(&config).expect("resolve");
+    let error = ManifestResolver::package_roots(&config).expect_err("an error");
 
     // Assert
-    assert_eq!(roots.len(), 1);
-}
-
-#[test]
-fn package_roots_of_this_crate_by_name_returns_its_directory() {
-    // Arrange
-    let config = config_for(&["cargo-stern4rust"]);
-
-    // Act
-    let roots = ManifestResolver::package_roots(&config).expect("resolve");
-
-    // Assert
-    assert_eq!(roots.len(), 1);
-    assert!(roots[0].join("Cargo.toml").exists());
+    assert!(error.to_string().contains("no-such-package"));
 }
 
 // A typo must fail loudly rather than scan nothing and pass.
@@ -60,28 +47,41 @@ fn package_roots_of_an_unknown_package_is_an_error() {
 }
 
 #[test]
-fn package_roots_names_the_package_it_could_not_find() {
+fn package_roots_of_this_crate_by_name_returns_its_directory() {
     // Arrange
-    let config = config_for(&["no-such-package"]);
+    let config = config_for(&["cargo-stern4rust"]);
 
     // Act
-    let error = ManifestResolver::package_roots(&config).expect_err("an error");
+    let roots = ManifestResolver::package_roots(&config).expect("resolve");
 
     // Assert
-    assert!(error.to_string().contains("no-such-package"));
+    assert_eq!(roots.len(), 1);
+    assert!(roots[0].join("Cargo.toml").exists());
 }
 
 #[test]
-fn relative_to_strips_the_root_prefix() {
+fn package_roots_without_a_named_package_returns_this_crate() {
+    // Arrange
+    let config = config_for(&[]);
+
+    // Act
+    let roots = ManifestResolver::package_roots(&config).expect("resolve");
+
+    // Assert
+    assert_eq!(roots.len(), 1);
+}
+
+#[test]
+fn relative_to_a_path_outside_the_root_returns_the_whole_path() {
     // Arrange
     let root = Path::new("/workspace/crate");
-    let path = Path::new("/workspace/crate/src/a.rs");
+    let path = Path::new("/elsewhere/a.rs");
 
     // Act
     let relative = ManifestResolver::relative_to(root, path);
 
     // Assert
-    assert_eq!(relative, "src/a.rs");
+    assert!(relative.ends_with("a.rs"));
 }
 
 // Reports are read by people and pasted into scripts, so a path looks the same
@@ -100,14 +100,14 @@ fn relative_to_reports_forward_slashes() {
 }
 
 #[test]
-fn relative_to_a_path_outside_the_root_returns_the_whole_path() {
+fn relative_to_strips_the_root_prefix() {
     // Arrange
     let root = Path::new("/workspace/crate");
-    let path = Path::new("/elsewhere/a.rs");
+    let path = Path::new("/workspace/crate/src/a.rs");
 
     // Act
     let relative = ManifestResolver::relative_to(root, path);
 
     // Assert
-    assert!(relative.ends_with("a.rs"));
+    assert_eq!(relative, "src/a.rs");
 }

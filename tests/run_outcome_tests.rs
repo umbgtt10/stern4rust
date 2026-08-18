@@ -9,24 +9,6 @@
 use stern4rust::run_outcome::RunOutcome;
 
 #[test]
-fn of_no_offences_is_clean() {
-    // Arrange & Act
-    let outcome = RunOutcome::of(0);
-
-    // Assert
-    assert_eq!(outcome, RunOutcome::Clean);
-}
-
-#[test]
-fn of_a_single_offence_is_rules_broken() {
-    // Arrange & Act
-    let outcome = RunOutcome::of(1);
-
-    // Assert
-    assert_eq!(outcome, RunOutcome::RulesBroken);
-}
-
-#[test]
 fn exit_code_of_clean_is_zero() {
     // Arrange & Act
     let code = RunOutcome::Clean.exit_code();
@@ -44,4 +26,22 @@ fn exit_code_of_rules_broken_is_two() {
 
     // Assert
     assert_eq!(code, 2);
+}
+
+#[test]
+fn of_a_single_offence_is_rules_broken() {
+    // Arrange & Act
+    let outcome = RunOutcome::of(1);
+
+    // Assert
+    assert_eq!(outcome, RunOutcome::RulesBroken);
+}
+
+#[test]
+fn of_no_offences_is_clean() {
+    // Arrange & Act
+    let outcome = RunOutcome::of(0);
+
+    // Assert
+    assert_eq!(outcome, RunOutcome::Clean);
 }

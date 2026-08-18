@@ -14,6 +14,18 @@ use std::path::Path;
 use std::path::PathBuf;
 use stern4rust::source_walker::SourceWalker;
 
+fn names(root: &Path) -> Vec<String> {
+    SourceWalker::walk(root)
+        .iter()
+        .map(|path| {
+            path.strip_prefix(root)
+                .unwrap_or(path)
+                .to_string_lossy()
+                .replace('\\', "/")
+        })
+        .collect()
+}
+
 fn temp_root(name: &str) -> PathBuf {
     let root = std::env::temp_dir().join(format!("stern4rust_walker_{name}"));
     let _ = fs::remove_dir_all(&root);
@@ -27,16 +39,17 @@ fn write(root: &Path, relative: &str) {
     fs::write(path, "// file").expect("write the file");
 }
 
-fn names(root: &Path) -> Vec<String> {
-    SourceWalker::walk(root)
-        .iter()
-        .map(|path| {
-            path.strip_prefix(root)
-                .unwrap_or(path)
-                .to_string_lossy()
-                .replace('\\', "/")
-        })
-        .collect()
+#[test]
+fn walk_descends_into_nested_directories() {
+    // Arrange
+    let root = temp_root("nested");
+    write(&root, "src/rules/deep/subject.rs");
+
+    // Act
+    let found = names(&root);
+
+    // Assert
+    assert_eq!(found, ["src/rules/deep/subject.rs"]);
 }
 
 #[test]
@@ -67,19 +80,6 @@ fn walk_finds_rust_files_under_src_and_tests_alike() {
 }
 
 #[test]
-fn walk_descends_into_nested_directories() {
-    // Arrange
-    let root = temp_root("nested");
-    write(&root, "src/rules/deep/subject.rs");
-
-    // Act
-    let found = names(&root);
-
-    // Assert
-    assert_eq!(found, ["src/rules/deep/subject.rs"]);
-}
-
-#[test]
 fn walk_ignores_files_that_are_not_rust() {
     // Arrange
     let root = temp_root("non_rust");
@@ -94,19 +94,30 @@ fn walk_ignores_files_that_are_not_rust() {
     assert_eq!(found, ["src/a.rs"]);
 }
 
-// Generated code nobody wrote. Judging it would drown every real finding.
 #[test]
-fn walk_skips_the_target_directory() {
+fn walk_of_a_directory_that_does_not_exist_returns_nothing() {
     // Arrange
-    let root = temp_root("target");
-    write(&root, "src/a.rs");
-    write(&root, "target/debug/build/generated.rs");
+    let root = std::env::temp_dir().join("stern4rust_walker_absent");
+    let _ = fs::remove_dir_all(&root);
+
+    // Act
+    let found = SourceWalker::walk(&root);
+
+    // Assert
+    assert!(found.is_empty());
+}
+
+#[test]
+fn walk_of_a_directory_without_rust_files_returns_nothing() {
+    // Arrange
+    let root = temp_root("empty");
+    write(&root, "docs/notes.md");
 
     // Act
     let found = names(&root);
 
     // Assert
-    assert_eq!(found, ["src/a.rs"]);
+    assert!(found.is_empty());
 }
 
 #[test]
@@ -124,28 +135,17 @@ fn walk_returns_paths_in_a_stable_order() {
     assert_eq!(found, ["src/a.rs", "src/m.rs", "src/z.rs"]);
 }
 
+// Generated code nobody wrote. Judging it would drown every real finding.
 #[test]
-fn walk_of_a_directory_without_rust_files_returns_nothing() {
+fn walk_skips_the_target_directory() {
     // Arrange
-    let root = temp_root("empty");
-    write(&root, "docs/notes.md");
+    let root = temp_root("target");
+    write(&root, "src/a.rs");
+    write(&root, "target/debug/build/generated.rs");
 
     // Act
     let found = names(&root);
 
     // Assert
-    assert!(found.is_empty());
-}
-
-#[test]
-fn walk_of_a_directory_that_does_not_exist_returns_nothing() {
-    // Arrange
-    let root = std::env::temp_dir().join("stern4rust_walker_absent");
-    let _ = fs::remove_dir_all(&root);
-
-    // Act
-    let found = SourceWalker::walk(&root);
-
-    // Assert
-    assert!(found.is_empty());
+    assert_eq!(found, ["src/a.rs"]);
 }

@@ -43,12 +43,20 @@ fn run_with_header(name: &str, contents: &str) -> RunOutcome {
     .expect("the run itself should succeed")
 }
 
-// A run with no rules configured would report "all rules satisfied" having
-// checked nothing, so it is an error rather than a clean verdict.
+// A typo in a gate script must fail loudly rather than scan nothing and pass.
 #[test]
-fn run_without_any_rule_configured_is_an_error() {
+fn run_against_an_unknown_package_is_an_error() {
     // Arrange
-    let args = args_from(&["cargo-stern4rust", "--manifest-path", "Cargo.toml"]);
+    let path = header_file("unknown_package", "// Copyright 2025\n");
+    let args = args_from(&[
+        "cargo-stern4rust",
+        "--manifest-path",
+        "Cargo.toml",
+        "--package",
+        "no-such-package",
+        "--header-file",
+        &path.to_string_lossy(),
+    ]);
 
     // Act
     let result = Runner::run(args);
@@ -58,15 +66,12 @@ fn run_without_any_rule_configured_is_an_error() {
 }
 
 #[test]
-fn run_without_any_rule_configured_says_which_flag_would_enable_one() {
-    // Arrange
-    let args = args_from(&["cargo-stern4rust", "--manifest-path", "Cargo.toml"]);
-
-    // Act
-    let error = Runner::run(args).expect_err("an error");
+fn run_against_this_crate_with_a_header_it_does_not_carry_reports_rules_broken() {
+    // Arrange & Act
+    let outcome = run_with_header("foreign", "// Copyright 1999 Someone Else\n");
 
     // Assert
-    assert!(error.to_string().contains("--header-file"));
+    assert_eq!(outcome, RunOutcome::RulesBroken);
 }
 
 // This crate keeps its own rule, so pointing stern4rust at itself with its own
@@ -83,15 +88,6 @@ fn run_against_this_crate_with_its_own_header_is_clean() {
 
     // Assert
     assert_eq!(outcome, RunOutcome::Clean);
-}
-
-#[test]
-fn run_against_this_crate_with_a_header_it_does_not_carry_reports_rules_broken() {
-    // Arrange & Act
-    let outcome = run_with_header("foreign", "// Copyright 1999 Someone Else\n");
-
-    // Assert
-    assert_eq!(outcome, RunOutcome::RulesBroken);
 }
 
 #[test]
@@ -114,24 +110,18 @@ fn run_with_an_unreadable_header_file_is_an_error() {
     assert!(result.is_err());
 }
 
-// A typo in a gate script must fail loudly rather than scan nothing and pass.
+// Without --header-file the header rule cannot hold, but the structure rule
+// needs nothing and still does. A tool that reported "all rules satisfied"
+// having checked nothing would be worse than one that says so, which is why the
+// registry leaves an unconfigurable rule out rather than registering it silent.
 #[test]
-fn run_against_an_unknown_package_is_an_error() {
+fn run_without_a_header_file_still_applies_the_rules_that_need_no_configuration() {
     // Arrange
-    let path = header_file("unknown_package", "// Copyright 2025\n");
-    let args = args_from(&[
-        "cargo-stern4rust",
-        "--manifest-path",
-        "Cargo.toml",
-        "--package",
-        "no-such-package",
-        "--header-file",
-        &path.to_string_lossy(),
-    ]);
+    let args = args_from(&["cargo-stern4rust", "--manifest-path", "Cargo.toml"]);
 
     // Act
     let result = Runner::run(args);
 
     // Assert
-    assert!(result.is_err());
+    assert!(result.is_ok());
 }

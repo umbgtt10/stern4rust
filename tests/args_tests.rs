@@ -16,6 +16,47 @@ fn argv(parts: &[&str]) -> Vec<String> {
 }
 
 #[test]
+fn parse_from_collects_every_package_flag() {
+    // Arrange & Act
+    let args = Args::parse_from(argv(&[
+        "cargo-stern4rust",
+        "--package",
+        "alpha",
+        "--package",
+        "beta",
+    ]));
+
+    // Assert
+    assert_eq!(args.packages, vec!["alpha".to_string(), "beta".to_string()]);
+}
+
+#[test]
+fn parse_from_defaults_to_no_packages_and_no_manifest_path() {
+    // Arrange & Act
+    let args = Args::parse_from(argv(&["cargo-stern4rust"]));
+
+    // Assert
+    assert!(args.packages.is_empty());
+    assert!(args.manifest_path.is_none());
+}
+
+#[test]
+fn parse_from_reads_the_manifest_path() {
+    // Arrange & Act
+    let args = Args::parse_from(argv(&[
+        "cargo-stern4rust",
+        "--manifest-path",
+        "/tmp/Cargo.toml",
+    ]));
+
+    // Assert
+    assert_eq!(
+        args.manifest_path.as_deref(),
+        Some(std::path::Path::new("/tmp/Cargo.toml"))
+    );
+}
+
+#[test]
 fn without_cargo_subcommand_drops_the_name_cargo_inserts() {
     // Arrange
     let args = argv(&["cargo-stern4rust", "stern4rust", "--package", "alpha"]);
@@ -28,15 +69,24 @@ fn without_cargo_subcommand_drops_the_name_cargo_inserts() {
 }
 
 #[test]
-fn without_cargo_subcommand_leaves_a_direct_invocation_untouched() {
+fn without_cargo_subcommand_handles_a_bare_binary_name() {
     // Arrange
-    let args = argv(&["cargo-stern4rust", "--package", "alpha"]);
+    let args = argv(&["cargo-stern4rust"]);
 
     // Act
     let forwarded = Args::without_cargo_subcommand(args.clone());
 
     // Assert
     assert_eq!(forwarded, args);
+}
+
+#[test]
+fn without_cargo_subcommand_handles_being_given_nothing() {
+    // Arrange & Act
+    let forwarded = Args::without_cargo_subcommand(Vec::new());
+
+    // Assert
+    assert!(forwarded.is_empty());
 }
 
 // The strip is positional. Dropping every occurrence would silently discard a
@@ -46,6 +96,18 @@ fn without_cargo_subcommand_leaves_a_direct_invocation_untouched() {
 fn without_cargo_subcommand_keeps_a_package_that_happens_to_be_named_stern4rust() {
     // Arrange
     let args = argv(&["cargo-stern4rust", "--package", "stern4rust"]);
+
+    // Act
+    let forwarded = Args::without_cargo_subcommand(args.clone());
+
+    // Assert
+    assert_eq!(forwarded, args);
+}
+
+#[test]
+fn without_cargo_subcommand_leaves_a_direct_invocation_untouched() {
+    // Arrange
+    let args = argv(&["cargo-stern4rust", "--package", "alpha"]);
 
     // Act
     let forwarded = Args::without_cargo_subcommand(args.clone());
@@ -66,67 +128,5 @@ fn without_cargo_subcommand_strips_only_the_first_occurrence() {
     assert_eq!(
         forwarded,
         argv(&["cargo-stern4rust", "--package", "stern4rust"])
-    );
-}
-
-#[test]
-fn without_cargo_subcommand_handles_being_given_nothing() {
-    // Arrange & Act
-    let forwarded = Args::without_cargo_subcommand(Vec::new());
-
-    // Assert
-    assert!(forwarded.is_empty());
-}
-
-#[test]
-fn without_cargo_subcommand_handles_a_bare_binary_name() {
-    // Arrange
-    let args = argv(&["cargo-stern4rust"]);
-
-    // Act
-    let forwarded = Args::without_cargo_subcommand(args.clone());
-
-    // Assert
-    assert_eq!(forwarded, args);
-}
-
-#[test]
-fn parse_from_defaults_to_no_packages_and_no_manifest_path() {
-    // Arrange & Act
-    let args = Args::parse_from(argv(&["cargo-stern4rust"]));
-
-    // Assert
-    assert!(args.packages.is_empty());
-    assert!(args.manifest_path.is_none());
-}
-
-#[test]
-fn parse_from_collects_every_package_flag() {
-    // Arrange & Act
-    let args = Args::parse_from(argv(&[
-        "cargo-stern4rust",
-        "--package",
-        "alpha",
-        "--package",
-        "beta",
-    ]));
-
-    // Assert
-    assert_eq!(args.packages, vec!["alpha".to_string(), "beta".to_string()]);
-}
-
-#[test]
-fn parse_from_reads_the_manifest_path() {
-    // Arrange & Act
-    let args = Args::parse_from(argv(&[
-        "cargo-stern4rust",
-        "--manifest-path",
-        "/tmp/Cargo.toml",
-    ]));
-
-    // Assert
-    assert_eq!(
-        args.manifest_path.as_deref(),
-        Some(std::path::Path::new("/tmp/Cargo.toml"))
     );
 }

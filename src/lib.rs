@@ -13,5 +13,8 @@ pub mod rule_registry;
 pub mod rules;
 pub mod run_outcome;
 pub mod runner;
+pub mod section;
 pub mod source_file;
 pub mod source_walker;
+pub mod test_file_item;
+pub mod test_file_parser;

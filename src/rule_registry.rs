@@ -6,6 +6,7 @@ use crate::config::Config;
 use crate::offence::Offence;
 use crate::rule::Rule;
 use crate::rules::header_rule::HeaderRule;
+use crate::rules::test_file_structure_rule::TestFileStructureRule;
 use crate::source_file::SourceFile;
 
 // The one place that knows which rules exist. Adding a rule is a line here and a
@@ -20,7 +21,10 @@ pub struct RuleRegistry {
 
 impl RuleRegistry {
     pub fn from_config(config: &Config) -> Self {
-        let mut rules: Vec<Box<dyn Rule>> = Vec::new();
+        // The structure rule needs nothing configured, so it holds from the
+        // first run. The header rule cannot: it has no idea what your header
+        // says until you tell it.
+        let mut rules: Vec<Box<dyn Rule>> = vec![Box::new(TestFileStructureRule::new())];
         if !config.expected_header.is_empty() {
             rules.push(Box::new(HeaderRule::new(config.expected_header.clone())));
         }

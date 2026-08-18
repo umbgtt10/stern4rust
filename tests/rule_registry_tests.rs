@@ -27,18 +27,6 @@ impl Rule for AlwaysOffends {
     }
 }
 
-struct NeverOffends;
-
-impl Rule for NeverOffends {
-    fn name(&self) -> &'static str {
-        "never"
-    }
-
-    fn check(&self, _file: &SourceFile) -> Vec<Offence> {
-        Vec::new()
-    }
-}
-
 fn config_with_header(lines: &[&str]) -> Config {
     Config {
         expected_header: lines.iter().map(|line| (*line).to_string()).collect(),
@@ -50,22 +38,16 @@ fn file() -> SourceFile {
     SourceFile::new("src/a.rs", "pub struct A;")
 }
 
-#[test]
-fn from_config_without_a_header_registers_no_rules() {
-    // Arrange & Act
-    let registry = RuleRegistry::from_config(&Config::default());
+struct NeverOffends;
 
-    // Assert
-    assert!(registry.is_empty());
-}
+impl Rule for NeverOffends {
+    fn name(&self) -> &'static str {
+        "never"
+    }
 
-#[test]
-fn from_config_with_a_header_registers_the_header_rule() {
-    // Arrange & Act
-    let registry = RuleRegistry::from_config(&config_with_header(&["// header"]));
-
-    // Assert
-    assert_eq!(registry.names(), ["header"]);
+    fn check(&self, _file: &SourceFile) -> Vec<Offence> {
+        Vec::new()
+    }
 }
 
 #[test]
@@ -104,6 +86,28 @@ fn check_reports_the_broken_rule_when_another_is_satisfied() {
     // Assert
     assert_eq!(offences.len(), 1);
     assert_eq!(offences[0].rule, "always");
+}
+
+// The header rule cannot hold until it is told what the header says, so it joins
+// the set only once there is one to compare against.
+#[test]
+fn from_config_with_a_header_registers_the_header_rule_alongside_the_others() {
+    // Arrange & Act
+    let registry = RuleRegistry::from_config(&config_with_header(&["// header"]));
+
+    // Assert
+    assert_eq!(registry.names(), ["test-file-structure", "header"]);
+}
+
+// The structure rule needs nothing configured, so it holds from the first run.
+// A tool that does nothing until it is given a flag is a tool nobody switches on.
+#[test]
+fn from_config_without_a_header_registers_the_rules_that_need_no_configuration() {
+    // Arrange & Act
+    let registry = RuleRegistry::from_config(&Config::default());
+
+    // Assert
+    assert_eq!(registry.names(), ["test-file-structure"]);
 }
 
 #[test]

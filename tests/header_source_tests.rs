@@ -10,12 +10,12 @@
 use stern4rust::header_source::HeaderSource;
 
 #[test]
-fn parse_splits_the_header_into_lines() {
+fn parse_drops_several_trailing_blank_lines() {
     // Arrange & Act
-    let header = HeaderSource::parse("// one\n// two");
+    let header = HeaderSource::parse("// one\n\n\n   \n");
 
     // Assert
-    assert_eq!(header, ["// one", "// two"]);
+    assert_eq!(header, ["// one"]);
 }
 
 #[test]
@@ -25,15 +25,6 @@ fn parse_drops_the_trailing_newline_every_editor_adds() {
 
     // Assert
     assert_eq!(header.len(), 2);
-}
-
-#[test]
-fn parse_drops_several_trailing_blank_lines() {
-    // Arrange & Act
-    let header = HeaderSource::parse("// one\n\n\n   \n");
-
-    // Assert
-    assert_eq!(header, ["// one"]);
 }
 
 // A blank line inside the header is part of it, unlike one at the end.
@@ -56,19 +47,28 @@ fn parse_normalises_windows_line_endings() {
 }
 
 #[test]
-fn parse_strips_a_leading_byte_order_mark() {
-    // Arrange & Act
-    let header = HeaderSource::parse("\u{feff}// one\n");
-
-    // Assert
-    assert_eq!(header, ["// one"]);
-}
-
-#[test]
 fn parse_of_an_empty_file_returns_no_lines() {
     // Arrange & Act
     let header = HeaderSource::parse("\n\n");
 
     // Assert
     assert!(header.is_empty());
+}
+
+#[test]
+fn parse_splits_the_header_into_lines() {
+    // Arrange & Act
+    let header = HeaderSource::parse("// one\n// two");
+
+    // Assert
+    assert_eq!(header, ["// one", "// two"]);
+}
+
+#[test]
+fn parse_strips_a_leading_byte_order_mark() {
+    // Arrange & Act
+    let header = HeaderSource::parse("\u{feff}// one\n");
+
+    // Assert
+    assert_eq!(header, ["// one"]);
 }

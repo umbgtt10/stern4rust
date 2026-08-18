@@ -11,5 +11,8 @@ pub mod rule_registry_tests;
 pub mod rules;
 pub mod run_outcome_tests;
 pub mod runner_tests;
+pub mod section_tests;
 pub mod source_file_tests;
 pub mod source_walker_tests;
+pub mod test_file_item_tests;
+pub mod test_file_parser_tests;
