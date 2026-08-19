@@ -6,7 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-Nothing yet.
+### Fixed
+
+- **A shared helper inside the tests tree made a file unsatisfiable.** Everything
+  under `tests/` is one crate rooted at `all_tests.rs`, so a sibling reaches a
+  helper through `use crate::support::...`. rustfmt sorts `self`, `super` and
+  `crate` ahead of every other path -- and an uppercase-initial path behind them
+  all -- so demanding the alphabet there put `cargo fmt` and
+  `test-file-structure` in a loop neither could win, with stage 1 running the
+  formatter first. The alphabetic check now stands down on any import pair
+  involving such a path and still orders everything else.
 
 ## [0.3.0]
 

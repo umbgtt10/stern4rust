@@ -4,6 +4,7 @@
 
 pub mod args_tests;
 pub mod header_source_tests;
+pub mod import_path_tests;
 pub mod json_printer_tests;
 pub mod manifest_resolver_tests;
 pub mod offence_tests;

@@ -5,6 +5,7 @@
 pub mod args;
 pub mod config;
 pub mod header_source;
+pub mod import_path;
 pub mod json_printer;
 pub mod manifest_resolver;
 pub mod offence;

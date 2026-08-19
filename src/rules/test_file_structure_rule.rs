@@ -2,8 +2,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::import_path::ImportPath;
 use crate::offence::Offence;
 use crate::rule::Rule;
+use crate::section::Section;
 use crate::source_file::SourceFile;
 use crate::test_file_item::TestFileItem;
 use crate::test_file_parser::TestFileParser;
@@ -64,6 +66,9 @@ impl TestFileStructureRule {
         if previous.section != item.section || item.sort_key() >= previous.sort_key() {
             return None;
         }
+        if Self::ordered_by_rustfmt(previous, item) {
+            return None;
+        }
         Some(self.offence(
             item,
             format!(
@@ -72,6 +77,15 @@ impl TestFileStructureRule {
             ),
             format!("move `{}` above `{}`", item.name, previous.name),
         ))
+    }
+
+    // A pair whose order rustfmt decides is not this rule's to judge. Demanding
+    // the alphabet there would make the file unsatisfiable rather than merely
+    // wrong: the formatter runs first and writes the other order back.
+    fn ordered_by_rustfmt(previous: &TestFileItem, item: &TestFileItem) -> bool {
+        item.section == Section::Imports
+            && (ImportPath::is_specially_ordered(&previous.name)
+                || ImportPath::is_specially_ordered(&item.name))
     }
 
     fn spacing(

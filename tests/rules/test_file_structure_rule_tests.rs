@@ -363,6 +363,44 @@ fn check_helpers_out_of_alphabetic_order_reports_the_later_one() {
     assert!(offences[0].description.contains("alpha"));
 }
 
+// rustfmt sorts crate/self/super ahead of every other path, so demanding the
+// alphabet here would make the file unsatisfiable: cargo fmt writes one order,
+// this rule demands the other, and stage 1 runs the formatter first. The rule
+// stands down on that pair rather than start a fight it cannot win.
+//
+// The shape this exists for is a shared helper inside the tests tree, reached
+// from a sibling as `use crate::support::...`.
+#[test]
+fn check_imports_out_of_alphabetic_order_around_a_crate_path_reports_nothing() {
+    // Arrange
+    let contents = "use crate::support::builders;\n\
+                    use anyhow::Result;\n";
+
+    // Act
+    let offences = check(contents);
+
+    // Assert
+    assert!(offences.is_empty(), "expected none, got {offences:?}");
+}
+
+// Standing down on the keyword pair does not mean standing down on the file.
+// Among ordinary paths rustfmt's comparator and the alphabet agree, so those
+// are still ordered.
+#[test]
+fn check_imports_out_of_alphabetic_order_beside_a_crate_path_still_reports_them() {
+    // Arrange
+    let contents = "use crate::support::builders;\n\
+                    use zebra::Z;\n\
+                    use anyhow::Result;\n";
+
+    // Act
+    let offences = check(contents);
+
+    // Assert
+    assert_eq!(offences.len(), 1);
+    assert!(offences[0].description.contains("anyhow::Result"));
+}
+
 #[test]
 fn check_imports_out_of_alphabetic_order_reports_the_later_one() {
     // Arrange

@@ -84,6 +84,15 @@ conditionally-declared test file counts as reached.
 run is not silent overall — but the registry-specific offences are simply
 absent, and nothing says they were skipped rather than satisfied.
 
+## Import ordering agrees with rustfmt only for ordinary paths
+
+The alphabetic check stands down on any import pair involving `self`, `super`,
+`crate` or an uppercase-initial path, because rustfmt orders those by its own
+rules and `cargo fmt` runs first. That is deliberate, and the cost is that a
+genuinely scrambled import list containing such a path goes unreported at that
+pair. Verified against the sibling tools' 168 distinct import lines, which
+rustfmt leaves exactly as an alphabetic sort produces them.
+
 ## There is no configuration file
 
 `--rule`, `--skip` and `--offence-threshold` all have to be repeated at every

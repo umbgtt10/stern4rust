@@ -90,6 +90,15 @@ registries, and demanding a blank line between each `pub mod` would make the one
 file whose whole job is to be scannable the hardest to scan. Their shape is
 `tests-layout`'s business.
 
+**Imports whose order rustfmt decides are left alone.** rustfmt sorts `self`,
+`super` and `crate` ahead of every other path, and an uppercase-initial path
+behind them all -- neither matches the alphabet. Demanding the alphabet there
+would make the file unsatisfiable rather than merely wrong, since `cargo fmt`
+runs first and writes the other order back. So the alphabetic check stands down
+on any pair involving such a path, and still orders everything else. This is
+what lets a shared helper live inside the tests tree: a sibling reaches it as
+`use crate::support::builders::a_widget;`, which is exactly the trigger.
+
 | offence | correction |
 |---|---|
 | a `constant` follows a `helper` | move \`X\` up above the helpers |
