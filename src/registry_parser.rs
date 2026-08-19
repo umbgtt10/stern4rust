@@ -6,6 +6,7 @@ use syn::Item;
 use syn::spanned::Spanned;
 
 use crate::registry_item::RegistryItem;
+use crate::registry_policy::RegistryPolicy;
 use crate::source_file::SourceFile;
 
 // Finds what does not belong in a registry file, and names it.
@@ -19,24 +20,16 @@ pub struct RegistryParser;
 impl RegistryParser {
     // None means the file does not parse. That is rustc's to report, far more
     // clearly than this could.
-    pub fn strays(file: &SourceFile) -> Option<Vec<RegistryItem>> {
+    pub fn strays(file: &SourceFile, policy: RegistryPolicy) -> Option<Vec<RegistryItem>> {
         let syntax = syn::parse_file(&file.contents()).ok()?;
         Some(
             syntax
                 .items
                 .iter()
-                .filter(|item| !Self::is_declaration(item))
+                .filter(|item| !policy.is_declaration(item))
                 .map(|item| Self::stray(file, item))
                 .collect(),
         )
-    }
-
-    // A declaration points at a file, whether or not it is `pub` -- a private
-    // `mod name;` compiles that file just as well, and being compiled is the
-    // whole point. A module with a body declares nothing: it is code hiding in
-    // the one file a reader scans expecting a list.
-    fn is_declaration(item: &Item) -> bool {
-        matches!(item, Item::Mod(module) if module.content.is_none())
     }
 
     fn stray(file: &SourceFile, item: &Item) -> RegistryItem {

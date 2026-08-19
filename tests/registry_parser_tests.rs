@@ -12,6 +12,7 @@
 
 use stern4rust::registry_item::RegistryItem;
 use stern4rust::registry_parser::RegistryParser;
+use stern4rust::registry_policy::RegistryPolicy;
 use stern4rust::source_file::SourceFile;
 
 fn labels(body: &str) -> Vec<String> {
@@ -19,7 +20,11 @@ fn labels(body: &str) -> Vec<String> {
 }
 
 fn strays(body: &str) -> Vec<RegistryItem> {
-    RegistryParser::strays(&SourceFile::new("tests/all_tests.rs", body)).expect("parses")
+    RegistryParser::strays(
+        &SourceFile::new("tests/all_tests.rs", body),
+        RegistryPolicy::tests(),
+    )
+    .expect("parses")
 }
 
 #[test]
@@ -105,7 +110,10 @@ fn strays_names_an_inline_module_with_its_identifier() {
 #[test]
 fn strays_of_a_file_that_does_not_parse_returns_nothing() {
     // Arrange & Act
-    let found = RegistryParser::strays(&SourceFile::new("tests/all_tests.rs", "mod broken {\n"));
+    let found = RegistryParser::strays(
+        &SourceFile::new("tests/all_tests.rs", "mod broken {\n"),
+        RegistryPolicy::tests(),
+    );
 
     // Assert
     assert!(found.is_none());

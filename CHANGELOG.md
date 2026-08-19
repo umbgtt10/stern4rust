@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **`module-registry`**, the sixth rule. A `lib.rs` or `mod.rs` outside `tests/`
+  is an index: it holds the header, the crate's inner attributes,
+  `extern crate alloc;` and `pub mod` declarations, and nothing else.
+
+  Inner attributes need no exception, because `syn` keeps `#![no_std]` on the
+  file rather than among its items -- so a no_std crate root passes without the
+  rule maintaining a list of attribute names. `extern crate alloc;` is the one
+  non-`mod` item allowed, since a no_std crate has to say it somewhere and the
+  crate root is where it belongs. `pub` is required, because a private `mod`
+  hides part of the crate's shape from the file whose job is to state it.
+
+  The sharpest thing it catches is the re-export shim -- `pub use` in a registry
+  -- which these standards forbid outright and which forms in exactly this file.
+  Measured across seven repositories it finds 24 offences in two: 17 `pub use`
+  lines in `slotgate`, and 5 imports plus two entry-point functions in
+  `crap4rust`'s crate root.
+
+  `tests/` is left to `tests-layout`, which asks a different question of the
+  same filenames and gives a different answer about a private `mod`. That
+  disagreement is why `RegistryPolicy` is a type rather than a boolean threaded
+  through a call site.
+
 ### Changed
 
 - **The walker no longer skips a directory holding its own `Cargo.toml`.** That

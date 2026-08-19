@@ -3,6 +3,17 @@
 What `cargo-stern4rust` does today. Anything not listed here is not built, and
 the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
+## Version 0.4.0
+
+### Rules
+
+- **`module-registry`** -- a `lib.rs` or `mod.rs` outside `tests/` holds the
+  header, inner attributes, `extern crate alloc;` and `pub mod` declarations
+  only. Catches the re-export shim where it forms.
+  [R006](ADRs/R006-ADR-ModuleRegistryRule.md)
+- `RegistryPolicy` -- the shared seam letting one parser answer the registry
+  question differently for `src/` and `tests/`.
+
 ## Version 0.3.0
 
 ### Rule selection

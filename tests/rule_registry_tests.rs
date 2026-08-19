@@ -157,6 +157,7 @@ fn from_config_with_a_header_registers_the_header_rule_alongside_the_others() {
         registry.names(),
         [
             "readable-source",
+            "module-registry",
             "test-file-structure",
             "test-free-source",
             "tests-layout",
@@ -196,7 +197,12 @@ fn from_config_with_a_skip_leaves_that_rule_out() {
     // Assert
     assert_eq!(
         registry.names(),
-        ["readable-source", "test-free-source", "tests-layout"]
+        [
+            "readable-source",
+            "module-registry",
+            "test-free-source",
+            "tests-layout"
+        ]
     );
 }
 
@@ -212,6 +218,7 @@ fn from_config_without_a_header_registers_the_rules_that_need_no_configuration()
         registry.names(),
         [
             "readable-source",
+            "module-registry",
             "test-file-structure",
             "test-free-source",
             "tests-layout"
@@ -231,6 +238,7 @@ fn known_names_lists_every_rule_the_tool_has() {
         known,
         [
             "readable-source",
+            "module-registry",
             "test-file-structure",
             "test-free-source",
             "tests-layout",

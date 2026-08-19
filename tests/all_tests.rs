@@ -12,6 +12,7 @@ pub mod offence_threshold_tests;
 pub mod output_format_tests;
 pub mod registry_item_tests;
 pub mod registry_parser_tests;
+pub mod registry_policy_tests;
 pub mod report_printer_tests;
 pub mod rule_registry_tests;
 pub mod rule_selection_tests;

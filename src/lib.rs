@@ -13,6 +13,7 @@ pub mod offence_threshold;
 pub mod output_format;
 pub mod registry_item;
 pub mod registry_parser;
+pub mod registry_policy;
 pub mod report_printer;
 pub mod rule;
 pub mod rule_registry;

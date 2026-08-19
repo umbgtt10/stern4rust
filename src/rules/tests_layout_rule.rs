@@ -6,6 +6,7 @@ use std::collections::BTreeSet;
 
 use crate::offence::Offence;
 use crate::registry_parser::RegistryParser;
+use crate::registry_policy::RegistryPolicy;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;
 
@@ -138,7 +139,7 @@ impl TestsLayoutRule {
     // Each stray reported at its own line, named. "Something in this file is not
     // a declaration" is true of the whole file and actionable nowhere in it.
     fn declarations_only(&self, file: &SourceFile) -> Vec<Offence> {
-        RegistryParser::strays(file)
+        RegistryParser::strays(file, RegistryPolicy::tests())
             .unwrap_or_default()
             .into_iter()
             .map(|stray| {

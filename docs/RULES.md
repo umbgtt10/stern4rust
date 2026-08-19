@@ -13,6 +13,7 @@ without answering it.
 | `test-file-structure` | [R002](ADRs/R002-ADR-TestFileStructureRule.md) | no |
 | `test-free-source` | [R005](ADRs/R005-ADR-TestFreeSourceRule.md) | no |
 | `tests-layout` | [R003](ADRs/R003-ADR-TestsLayoutRule.md) | no |
+| `module-registry` | [R006](ADRs/R006-ADR-ModuleRegistryRule.md) | no |
 | `header` | [R001](ADRs/R001-ADR-HeaderRule.md) | `--header-file` |
 
 `--rule <NAME>` applies only the named rules; `--skip <NAME>` subtracts. Both
@@ -153,6 +154,38 @@ The correction names the **mirrored file** — `src/<path>.rs` maps to
 **Does not catch:** a test-only helper carrying no test attribute and no gate —
 an ordinary `pub fn make_test_widget()` — is invisible, because nothing in the
 source distinguishes it from production code.
+
+## `module-registry`
+
+A `lib.rs` or `mod.rs` outside `tests/` is an index of the modules beneath it,
+and holds nothing else: the header, the crate's inner attributes,
+`extern crate alloc;`, and `pub mod` declarations.
+
+Inner attributes need no exception -- `syn` keeps `#![no_std]` on the file
+rather than among its items, so a no_std crate root passes without the rule
+knowing which attributes exist. `extern crate alloc;` is the one non-`mod` item
+allowed: a no_std crate has to say it somewhere and the crate root is where it
+belongs. `pub` is required, because a private `mod` hides part of the crate's
+shape from the file whose job is to state it.
+
+The sharpest thing it catches is the **re-export shim** -- `pub use` in a
+registry -- which these standards forbid outright and which forms in exactly
+this file.
+
+| offence | correction |
+|---|---|
+| the import `use std::ffi::OsString;` | move the import into a module of its own |
+| the function `run` | *(same)* |
+| the module `hidden` (private) | *(same)* |
+| the inline module `alpha` | *(same)* |
+
+`tests/` is left to `tests-layout`, which asks a different question of the same
+filenames and gives a different answer about a private `mod`.
+
+**Does not catch:** whether the declarations are *complete* or *ordered* -- a
+`lib.rs` omitting a module that exists on disk passes, the same gap
+`tests-layout` has. It says nothing about `main.rs`, which is an entry point
+rather than an index and legitimately holds code.
 
 ## `tests-layout`
 
