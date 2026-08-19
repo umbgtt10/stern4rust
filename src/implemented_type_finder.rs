@@ -5,6 +5,7 @@
 use std::collections::BTreeSet;
 
 use syn::Item;
+use syn::ItemMod;
 use syn::Type;
 use syn::parse_file;
 use syn::spanned::Spanned;
@@ -28,46 +29,54 @@ impl ImplementedTypeFinder {
     // None means the file does not parse. readable-source reports that.
     pub fn find(file: &SourceFile) -> Option<Vec<ImplementedType>> {
         let syntax = parse_file(&file.contents()).ok()?;
-        let mut declared = Vec::new();
-        let mut implemented = BTreeSet::new();
-        Self::walk(&syntax.items, &mut declared, &mut implemented);
+        let implemented = Self::implemented(&syntax.items);
         Some(
-            declared
+            Self::declared(&syntax.items)
                 .into_iter()
-                .filter(|(name, _)| implemented.contains(name))
-                .map(|(name, line)| ImplementedType::new(&name, line))
+                .filter(|candidate| implemented.contains(&candidate.name))
                 .collect(),
         )
     }
 
-    // Descends into inline modules: a nested type with behaviour is still a
+    // The two halves are gathered separately rather than in one pass with two
+    // accumulators handed down. Each answers one question and returns it, which
+    // is what lets the recursion be an expression instead of a side effect.
+    //
+    // Both descend into inline modules: a nested type with behaviour is still a
     // second subject in the same file.
-    fn walk(
-        items: &[Item],
-        declared: &mut Vec<(String, usize)>,
-        implemented: &mut BTreeSet<String>,
-    ) {
-        for item in items {
-            match item {
-                Item::Struct(inner) => {
-                    declared.push((inner.ident.to_string(), item.span().start().line));
-                }
-                Item::Enum(inner) => {
-                    declared.push((inner.ident.to_string(), item.span().start().line));
-                }
-                Item::Impl(inner) => {
-                    if let Some(name) = Self::implemented_name(&inner.self_ty) {
-                        implemented.insert(name);
-                    }
-                }
-                Item::Mod(module) => {
-                    if let Some((_, inner)) = &module.content {
-                        Self::walk(inner, declared, implemented);
-                    }
-                }
-                _ => {}
-            }
-        }
+    fn declared(items: &[Item]) -> Vec<ImplementedType> {
+        items
+            .iter()
+            .flat_map(|item| match item {
+                Item::Struct(inner) => vec![Self::at(&inner.ident.to_string(), item)],
+                Item::Enum(inner) => vec![Self::at(&inner.ident.to_string(), item)],
+                Item::Mod(module) => Self::inside(module).map(Self::declared).unwrap_or_default(),
+                _ => Vec::new(),
+            })
+            .collect()
+    }
+
+    fn implemented(items: &[Item]) -> BTreeSet<String> {
+        items
+            .iter()
+            .flat_map(|item| match item {
+                Item::Impl(inner) => Self::implemented_name(&inner.self_ty)
+                    .into_iter()
+                    .collect::<BTreeSet<String>>(),
+                Item::Mod(module) => Self::inside(module)
+                    .map(Self::implemented)
+                    .unwrap_or_default(),
+                _ => BTreeSet::new(),
+            })
+            .collect()
+    }
+
+    fn at(name: &str, item: &Item) -> ImplementedType {
+        ImplementedType::new(name, item.span().start().line)
+    }
+
+    fn inside(module: &ItemMod) -> Option<&[Item]> {
+        module.content.as_ref().map(|(_, items)| items.as_slice())
     }
 
     fn implemented_name(target: &Type) -> Option<String> {

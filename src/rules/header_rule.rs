@@ -94,6 +94,11 @@ impl Rule for HeaderRule {
         Self::NAME
     }
 
+    // The one rule that can be selected and still have nothing to work from.
+    fn is_configured(&self) -> bool {
+        !self.expected.is_empty()
+    }
+
     // The overlap is compared before the length, so a file whose very first line
     // is wrong is reported at line 1 rather than at its end. Checking length
     // first would tell a file with no header at all that it was "too short",

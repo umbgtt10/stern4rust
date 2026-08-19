@@ -233,6 +233,27 @@ fn expected_returns_the_header_the_rule_was_built_with() {
     assert_eq!(expected[2], "// SPDX-License-Identifier: MIT");
 }
 
+// The registry drops a rule that answers false rather than registering it to
+// pass silently, so this is what keeps `--header-file` from being optional in
+// effect.
+#[test]
+fn is_configured_with_a_header_is_true() {
+    // Arrange & Act
+    let configured = rule().is_configured();
+
+    // Assert
+    assert!(configured);
+}
+
+#[test]
+fn is_configured_without_a_header_is_false() {
+    // Arrange & Act
+    let configured = HeaderRule::new(Vec::new()).is_configured();
+
+    // Assert
+    assert!(!configured);
+}
+
 #[test]
 fn name_is_the_kebab_case_rule_name_used_in_the_report() {
     // Arrange & Act

@@ -35,4 +35,19 @@ pub trait Rule {
     fn check_workspace(&self, _files: &[SourceFile]) -> Vec<Offence> {
         Vec::new()
     }
+
+    // Whether this rule has what it needs to say anything.
+    //
+    // Most rules always do, so the default is true. The header rule does not:
+    // it has no idea what your header says until `--header-file` tells it, and
+    // registering it anyway would let a run report "all rules satisfied" for a
+    // rule that never looked at a single file.
+    //
+    // A rule answers this for itself so the registry does not have to name any
+    // rule in particular. The alternative -- an `if` in the registry that knows
+    // about the header rule -- is how the registry ends up with a second,
+    // hand-maintained idea of which rules exist.
+    fn is_configured(&self) -> bool {
+        true
+    }
 }

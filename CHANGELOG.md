@@ -33,6 +33,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- **`RuleRegistry` kept the rule set in two hand-maintained lists.** `from_config`
+  built one and `known_names` built another, so a rule added to only one of them
+  was applied by a default run while `--rule <name>` rejected it as unknown --
+  which is exactly what `imported-paths` did on registration. There is now a
+  single `all()` list that `from_config` narrows and `known_names` reads.
+
+  The registry no longer names any rule in particular either: whether a rule has
+  what it needs is asked through a new `Rule::is_configured`, defaulting to true
+  and answered false by `HeaderRule` without a header. The `if` that knew about
+  the header rule was how the second list started.
+- **`ImplementedTypeFinder::walk` took two `&mut` accumulators**, against the
+  house standard preferring return values. The two halves are now gathered by
+  `declared()` and `implemented()`, each answering one question and returning
+  it, which makes the recursion an expression rather than a side effect.
+
 - **`test-file-structure` could demand an import order `cargo fmt` refuses to
   write.** The stand-down for orders that rustfmt rather than the alphabet
   decides was keyed on an import's *first* segment, so it missed a pair that

@@ -255,6 +255,22 @@ fn known_names_lists_every_rule_the_tool_has() {
     );
 }
 
+// The regression this closes. known_names once kept its own list of rules
+// beside the one from_config builds, so a rule added to only one of them was
+// applied by a default run while `--rule <name>` rejected it as unknown. Both
+// now read the same list, and this fails if they stop doing so.
+#[test]
+fn known_names_matches_what_a_fully_configured_run_applies() {
+    // Arrange
+    let config = config_with_header(&["// Copyright"]);
+
+    // Act
+    let applied = RuleRegistry::from_config(&config).names();
+
+    // Assert
+    assert_eq!(applied, RuleRegistry::known_names());
+}
+
 #[test]
 fn names_lists_every_registered_rule() {
     // Arrange

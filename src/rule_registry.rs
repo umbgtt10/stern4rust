@@ -27,13 +27,16 @@ pub struct RuleRegistry {
 }
 
 impl RuleRegistry {
-    pub fn from_config(config: &Config) -> Self {
-        // The structure rule needs nothing configured, so it holds from the
-        // first run. The header rule cannot: it has no idea what your header
-        // says until you tell it.
-        // readable-source comes first because it is the one rule whose failure
-        // explains every other rule's silence on the same file.
-        let mut candidates: Vec<Box<dyn Rule>> = vec![
+    // Every rule this tool has, in report order. The single list: `from_config`
+    // narrows it and `known_names` reads its names, so neither can hold an idea
+    // of the rule set that the other does not share.
+    //
+    // readable-source comes first because it is the one rule whose failure
+    // explains every other rule's silence on the same file. The header rule is
+    // built here even without a header, so that it can still name itself -- it
+    // answers `is_configured` with false and `from_config` drops it.
+    fn all(expected_header: Vec<String>) -> Vec<Box<dyn Rule>> {
+        vec![
             Box::new(ReadableSourceRule::new()),
             Box::new(ImportedPathsRule::new()),
             Box::new(ModuleRegistryRule::new()),
@@ -41,13 +44,14 @@ impl RuleRegistry {
             Box::new(TestFileStructureRule::new()),
             Box::new(TestFreeSourceRule::new()),
             Box::new(TestsLayoutRule::new()),
-        ];
-        if !config.expected_header.is_empty() {
-            candidates.push(Box::new(HeaderRule::new(config.expected_header.clone())));
-        }
-        let rules = candidates
+            Box::new(HeaderRule::new(expected_header)),
+        ]
+    }
+
+    pub fn from_config(config: &Config) -> Self {
+        let rules = Self::all(config.expected_header.clone())
             .into_iter()
-            .filter(|rule| config.selection.includes(rule.name()))
+            .filter(|rule| rule.is_configured() && config.selection.includes(rule.name()))
             .collect();
         Self { rules }
     }
@@ -57,19 +61,13 @@ impl RuleRegistry {
     }
 
     // Every rule this tool has, whether or not this run configured or selected
-    // it. Built by asking each rule its own name, so the list cannot drift from
-    // the rules themselves.
+    // it. Read off the same list `from_config` narrows, so a rule cannot be
+    // applied by a default run while `--rule <name>` calls it unknown.
     pub fn known_names() -> Vec<&'static str> {
-        vec![
-            ReadableSourceRule::new().name(),
-            ImportedPathsRule::new().name(),
-            ModuleRegistryRule::new().name(),
-            SingleImplementedTypeRule::new().name(),
-            TestFileStructureRule::new().name(),
-            TestFreeSourceRule::new().name(),
-            TestsLayoutRule::new().name(),
-            HeaderRule::NAME,
-        ]
+        Self::all(Vec::new())
+            .iter()
+            .map(|rule| rule.name())
+            .collect()
     }
 
     // What the switches turned off, which is not the same as what went
