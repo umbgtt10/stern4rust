@@ -44,7 +44,7 @@ crates.io still carries the ruleless `0.1.0` scaffold. Everything below waits on
 this. The changelog must call out that an unreadable source file moved from exit
 `1` to exit `2`, which is a change to a published interface.
 
-### Phase 2: Excludability
+### Phase 2: Excludability — shipped
 
 `--exclude <glob>`, repeatable, matched against the package-relative path, for
 trees a repository cannot move: vendored source, generated output.

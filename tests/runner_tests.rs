@@ -93,6 +93,36 @@ fn run_against_this_crate_with_its_own_header_is_clean() {
 
 // A switch that quietly matched nothing would look exactly like a switch that
 // worked, which is the whole reason this is an error rather than a no-op.
+// The end-to-end proof that an exclusion removes files from judgement rather
+// than merely from the report: the same run that reports offences against a
+// header this crate does not carry finds nothing once every file is excluded.
+#[test]
+fn run_with_an_exclusion_covering_every_file_finds_nothing_to_judge() {
+    // Arrange
+    let path = header_file(
+        "excluded",
+        "// nobody carries this header
+",
+    );
+
+    // Act
+    let outcome = Runner::run(args_from(&[
+        "cargo-stern4rust",
+        "--manifest-path",
+        "Cargo.toml",
+        "--package",
+        THIS_CRATE,
+        "--header-file",
+        &path.to_string_lossy(),
+        "--exclude",
+        "**/*.rs",
+    ]))
+    .expect("the run itself should succeed");
+
+    // Assert
+    assert_eq!(outcome, RunOutcome::Clean);
+}
+
 #[test]
 fn run_with_an_unknown_rule_name_is_an_error() {
     // Arrange
@@ -134,6 +164,26 @@ fn run_with_an_unreadable_header_file_is_an_error() {
 // Asking for a rule by name and getting an empty run is worse than not asking:
 // the registry's usual habit of leaving an unconfigurable rule out silently is
 // right for an omission and wrong for a request.
+// An unusable pattern is a 1, not a silent run that excludes nothing: a gate
+// whose exclude glob has a typo would otherwise judge the tree it was told to
+// leave alone and report offences nobody asked about.
+#[test]
+fn run_with_an_unusable_exclude_pattern_is_an_error() {
+    // Arrange & Act
+    let outcome = Runner::run(args_from(&[
+        "cargo-stern4rust",
+        "--manifest-path",
+        "Cargo.toml",
+        "--package",
+        THIS_CRATE,
+        "--exclude",
+        "fixture/[",
+    ]));
+
+    // Assert
+    assert!(outcome.is_err());
+}
+
 #[test]
 fn run_with_the_header_rule_selected_but_no_header_file_is_an_error() {
     // Arrange

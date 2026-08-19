@@ -35,6 +35,29 @@ fn plain() -> Offence {
 
 // Two offences from one rule are one broken rule, the same count the table's
 // summary line reports.
+// A consumer that could not see the exclusions would read "no offences" as
+// "nothing wrong" about a tree the run was told not to look at. The zero-count
+// pattern is carried too, since that is a stale exclusion rather than a
+// working one.
+#[test]
+fn render_carries_every_exclusion_with_its_count() {
+    // Arrange
+    let printer = JsonPrinter::new(4).with_exclusions(vec![
+        ("fixture/**".to_string(), 27),
+        ("gone/**".to_string(), 0),
+    ]);
+
+    // Act
+    let document: Value = from_str(&printer.render(&[])).expect("valid json");
+
+    // Assert
+    assert_eq!(document["files_excluded"], 27);
+    assert_eq!(document["exclusions"][0]["pattern"], "fixture/**");
+    assert_eq!(document["exclusions"][0]["files_excluded"], 27);
+    assert_eq!(document["exclusions"][1]["pattern"], "gone/**");
+    assert_eq!(document["exclusions"][1]["files_excluded"], 0);
+}
+
 #[test]
 fn render_counts_one_broken_rule_for_two_offences_of_the_same_rule() {
     // Arrange & Act

@@ -5,6 +5,9 @@
 pub mod args;
 pub mod column_widths;
 pub mod config;
+pub mod exclusion;
+pub mod exclusion_outcome;
+pub mod exclusion_set;
 pub mod header_source;
 pub mod implemented_type;
 pub mod implemented_type_finder;

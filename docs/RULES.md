@@ -309,8 +309,15 @@ declarations are treated as ordinary ones.
 - `target/` — generated code nobody wrote
 - `.git/`
 
-Nothing else. A nested package with its own `Cargo.toml` is walked like any
-other directory: a manifest is a fact about cargo, not about whose conventions
+`--exclude <GLOB>` removes further paths, repeatable and matched against the
+package-relative path. It is not a silent skip: every pattern is named in the
+report with the number of files it removed, `files_excluded=N` sits in the
+summary, and a pattern that matched **nothing** is called out by name so a dead
+exclusion can be deleted rather than trusted. An uncompilable pattern is an
+error. See [ADR-ExclusionsAreCounted](ADRs/ADR-ExclusionsAreCounted.md).
+
+Nothing else is skipped by default. A nested package with its own `Cargo.toml`
+is walked like any other directory: a manifest is a fact about cargo, not about whose conventions
 apply, and skipping on sight let a whole tree go unreported with nothing in the
 report saying so. Sample code a tool analyses belongs beside the package rather
 than inside it — see

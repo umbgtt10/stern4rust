@@ -17,6 +17,7 @@ pub struct ReportPrinter {
     applied: Vec<String>,
     skipped: Vec<String>,
     unconfigured: Vec<String>,
+    exclusions: Vec<(String, usize)>,
 }
 
 impl ReportPrinter {
@@ -27,7 +28,12 @@ impl ReportPrinter {
             applied: Vec::new(),
             skipped: Vec::new(),
             unconfigured: Vec::new(),
+            exclusions: Vec::new(),
         }
+    }
+
+    pub fn with_exclusions(self, exclusions: Vec<(String, usize)>) -> Self {
+        Self { exclusions, ..self }
     }
 
     pub fn with_rules(
@@ -60,6 +66,7 @@ impl ReportPrinter {
             report.push_str(self.clean_verdict());
             report.push_str("\n\n");
             report.push_str(&self.roster());
+            report.push_str(&self.exclusion_roster());
             report.push_str(&self.summary(offences));
             return report;
         }
@@ -76,6 +83,7 @@ impl ReportPrinter {
         report.push('\n');
         report.push_str(&self.omission(offences));
         report.push_str(&self.roster());
+        report.push_str(&self.exclusion_roster());
         report.push_str(&self.summary(offences));
         report
     }
@@ -108,6 +116,39 @@ impl ReportPrinter {
         }
         roster.push('\n');
         roster
+    }
+
+    // Every pattern with the number of files it removed, including zero. A
+    // pattern that matched nothing is the one the reader most needs to see:
+    // it names a tree that has moved or been deleted, and until somebody is
+    // told, it goes on looking like it is doing work.
+    fn exclusion_roster(&self) -> String {
+        if self.exclusions.is_empty() {
+            return String::new();
+        }
+        let listed: Vec<String> = self
+            .exclusions
+            .iter()
+            .map(|(pattern, count)| format!("{pattern} ({count} files)"))
+            .collect();
+        let mut roster = format!("  excluded: {}\n", listed.join(", "));
+        let dead = self.unmatched();
+        if !dead.is_empty() {
+            roster.push_str(&format!(
+                "  matched nothing: {} -- delete the pattern or correct it\n",
+                dead.join(", ")
+            ));
+        }
+        roster.push('\n');
+        roster
+    }
+
+    fn unmatched(&self) -> Vec<&str> {
+        self.exclusions
+            .iter()
+            .filter(|(_, count)| *count == 0)
+            .map(|(pattern, _)| pattern.as_str())
+            .collect()
     }
 
     // Skipped and unconfigured are both "did not run" and are not the same
@@ -179,12 +220,17 @@ impl ReportPrinter {
         format!("{}fix: {}\n", " ".repeat(indent), offence.correction)
     }
 
+    fn excluded_total(&self) -> usize {
+        self.exclusions.iter().map(|(_, count)| count).sum()
+    }
+
     fn summary(&self, offences: &[Offence]) -> String {
         let broken: BTreeSet<&str> = offences.iter().map(|offence| offence.rule).collect();
         format!(
-            "summary: files_scanned={} offences={} rules_broken={} rules_applied={} \
-             rules_skipped={} rules_unconfigured={}",
+            "summary: files_scanned={} files_excluded={} offences={} rules_broken={} \
+             rules_applied={} rules_skipped={} rules_unconfigured={}",
             self.files_scanned,
+            self.excluded_total(),
             offences.len(),
             broken.len(),
             self.applied.len(),

@@ -5,6 +5,17 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
 ## Version 0.4.0
 
+### Excludability
+
+- `--exclude <GLOB>`, repeatable, matched as a glob against the package-relative
+  path, separators normalised so a checked-in pattern works on every platform.
+- Every pattern is named in the report with the files it removed, including
+  zero; `files_excluded=N` in the summary and an `exclusions` array in the JSON.
+- A pattern that matched nothing is called out by name. An uncompilable pattern
+  is an error, exit `1`.
+- Exclusion happens after the walk rather than by pruning it, because a tree
+  that is never entered cannot be counted.
+
 ### Rules
 
 - **`imported-paths`** -- a function is called through a name the file imported,

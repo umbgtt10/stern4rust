@@ -8,6 +8,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **`--exclude <GLOB>`**, repeatable, matched against the package-relative path,
+  for the tree a repository cannot move -- vendored source, generated output.
+  Separators are normalised, so a pattern checked in on one platform works on
+  every other.
+
+  **It is not a silent skip.** Every pattern is named in the report with the
+  number of files it removed, `files_excluded=N` joins the summary line, and the
+  JSON carries an `exclusions` array. A pattern that matched **nothing** is
+  called out by name -- that is the case a bare total would hide, since an
+  exclusion naming a tree that has moved or been deleted goes on looking like it
+  is doing work.
+
+  Exclusion happens after the walk rather than by pruning it: a tree that is
+  never entered cannot be counted, and the count is the point. An uncompilable
+  pattern is an error rather than a switch that quietly matches nothing.
+
+  This is deliberately the opposite of the nested-package skip removed in
+  `0.4.0`, which hid 27 files with no line accounting for them. See
+  `docs/ADRs/ADR-ExclusionsAreCounted.md`.
+
 - **`imported-paths`**, the eighth rule, and the first that applies to test
   files as well as productive ones. A function is called through a name the file
   imported, not through a path: `syn::parse_file(...)` compiles with nothing in
@@ -70,6 +90,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- **The summary line gained `files_excluded=N`**, between `files_scanned` and
+  `offences`, always present including as `files_excluded=0`. A gate script
+  matching on the summary text will need updating.
 - **The walker no longer skips a directory holding its own `Cargo.toml`.** That
   skip shipped in `0.2.0` and was silence: a run reported `files_scanned=67`
   where the tree held 94 `.rs` files, with no line accounting for the other 27.

@@ -48,6 +48,14 @@ pub struct Args {
     #[arg(long = "rule")]
     pub rules: Vec<String>,
 
+    /// Keep these paths out of the run; repeatable, matched as a glob against
+    /// the package-relative path. For a tree the repository cannot move --
+    /// vendored source, generated output. Every pattern is named in the report
+    /// with how many files it removed, including zero, so an exclusion is
+    /// something the reader can see rather than a silence.
+    #[arg(long = "exclude")]
+    pub excludes: Vec<String>,
+
     /// Do not apply these rules; repeatable. Subtracted from whatever --rule
     /// selected, so skipping wins over selecting.
     #[arg(long = "skip")]

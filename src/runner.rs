@@ -6,6 +6,8 @@ use anyhow::Result;
 
 use crate::args::Args;
 use crate::config::Config;
+use crate::exclusion_outcome::ExclusionOutcome;
+use crate::exclusion_set::ExclusionSet;
 use crate::header_source::HeaderSource;
 use crate::json_printer::JsonPrinter;
 use crate::manifest_resolver::ManifestResolver;
@@ -50,16 +52,19 @@ impl Runner {
         }
 
         let roots = ManifestResolver::package_roots(&config)?;
+        let exclusions = ExclusionSet::new(&config.excludes)?;
         let mut offences = Vec::new();
         let mut files_scanned = 0usize;
+        let mut excluded = Vec::new();
 
         for root in &roots {
             // Read the whole package before judging it. Rules whose subject is
             // the tree -- "there is exactly one all_tests.rs" -- cannot be
             // answered a file at a time, and the file that carries the offence
             // is often the one that does not exist.
+            let outcome = exclusions.apply(SourceWalker::walk(root), root);
             let mut files = Vec::new();
-            for path in SourceWalker::walk(root) {
+            for path in outcome.kept {
                 files_scanned += 1;
                 match SourceReader::read(root, &path) {
                     Ok(file) => files.push(file),
@@ -70,6 +75,7 @@ impl Runner {
                 offences.extend(registry.check(file));
             }
             offences.extend(registry.check_workspace(&files));
+            excluded.push(outcome.excluded);
         }
 
         // Rules run in registration order and the tree-wide pass runs last, so
@@ -77,7 +83,13 @@ impl Runner {
         // business rather than any rule's -- a rule states facts, and their
         // order on the page is not one of them.
         offences.sort_by(|left, right| left.sort_key().cmp(&right.sort_key()));
-        Self::report(&config, &registry, files_scanned, &offences);
+        Self::report(
+            &config,
+            &registry,
+            files_scanned,
+            &Self::merged(excluded),
+            &offences,
+        );
         Ok(RunOutcome::of(offences.len()))
     }
 
@@ -114,6 +126,7 @@ impl Runner {
         Ok(Config {
             manifest_path: args.manifest_path,
             packages: args.packages,
+            excludes: args.excludes,
             expected_header,
             format: args.format,
             offence_threshold: OffenceThreshold::new(args.offence_threshold),
@@ -121,10 +134,28 @@ impl Runner {
         })
     }
 
+    // One package's exclusions say nothing on their own: a pattern matching
+    // nothing in package A and forty files in package B has done its job, and
+    // reporting it as dead for A would be a wrong answer rather than a missing
+    // one. So the counts are summed across roots before anybody looks at them.
+    fn merged(per_root: Vec<Vec<(String, usize)>>) -> ExclusionOutcome {
+        let mut totals: Vec<(String, usize)> = Vec::new();
+        for counts in per_root {
+            for (pattern, count) in counts {
+                match totals.iter_mut().find(|(known, _)| *known == pattern) {
+                    Some(entry) => entry.1 += count,
+                    None => totals.push((pattern, count)),
+                }
+            }
+        }
+        ExclusionOutcome::new(Vec::new(), totals)
+    }
+
     fn report(
         config: &Config,
         registry: &RuleRegistry,
         files_scanned: usize,
+        excluded: &ExclusionOutcome,
         offences: &[Offence],
     ) {
         let threshold = config.offence_threshold;
@@ -135,10 +166,12 @@ impl Runner {
             OutputFormat::Text => ReportPrinter::new(files_scanned)
                 .with_threshold(threshold)
                 .with_rules(applied.clone(), skipped.clone(), unconfigured.clone())
+                .with_exclusions(excluded.excluded.clone())
                 .print(offences),
             OutputFormat::Json => JsonPrinter::new(files_scanned)
                 .with_threshold(threshold)
                 .with_rules(applied, skipped, unconfigured)
+                .with_exclusions(excluded.excluded.clone())
                 .print(offences),
         }
     }

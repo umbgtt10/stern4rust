@@ -15,7 +15,7 @@ already own correctness. These are the things a reviewer would otherwise have to
 say by hand, every time, forever — and the ones that quietly stop being true
 across a codebase the moment nobody is checking.
 
-> **Status: five rules, more coming.** The set below is what is implemented and
+> **Status: eight rules, more coming.** The set below is what is implemented and
 > gated. `stern4rust` runs against its own tree on every build, so a rule that
 > would fail this repository cannot be merged into it.
 
@@ -43,12 +43,28 @@ cargo stern4rust --format json
 | `--offence-threshold <N>` | how many offences the report prints. Default `100`, `0` for all. The cap is on what is *shown*, never on what is counted |
 | `--rule <NAME>` | apply only these rules; repeatable. Omit to apply every rule |
 | `--skip <NAME>` | do not apply these rules; repeatable. Subtracted from whatever `--rule` selected |
+| `--exclude <GLOB>` | keep these paths out of the run; repeatable, matched against the package-relative path. Every pattern is named in the report with how many files it removed, including zero |
 
-Only `target/` and `.git/` are skipped. Everything else under the package is
-judged, including a nested package with its own `Cargo.toml` — a linter that
-quietly declines to look at part of a tree is the silence this tool exists to
-refuse. Sample code a tool analyses belongs beside the package rather than
-inside it; see [ADR-WalkEveryFileInThePackage](docs/ADRs/ADR-WalkEveryFileInThePackage.md).
+Only `target/` and `.git/` are skipped by default. Everything else under the
+package is judged, including a nested package with its own `Cargo.toml` — a
+linter that quietly declines to look at part of a tree is the silence this tool
+exists to refuse. Sample code a tool analyses belongs beside the package rather
+than inside it; see
+[ADR-WalkEveryFileInThePackage](docs/ADRs/ADR-WalkEveryFileInThePackage.md).
+
+`--exclude` covers the tree that genuinely cannot move, and is not a silent
+skip: every pattern is named in the report with the files it removed, and one
+that matched **nothing** is called out so a dead exclusion can be deleted rather
+than trusted.
+
+```text
+  excluded: tests/** (31 files), nothing_here/** (0 files)
+  matched nothing: nothing_here/** -- delete the pattern or correct it
+
+summary: files_scanned=36 files_excluded=31 offences=8 ...
+```
+
+See [ADR-ExclusionsAreCounted](docs/ADRs/ADR-ExclusionsAreCounted.md).
 
 ## The rules
 

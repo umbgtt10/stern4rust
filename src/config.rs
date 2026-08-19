@@ -16,6 +16,7 @@ use crate::rule_selection::RuleSelection;
 pub struct Config {
     pub manifest_path: Option<PathBuf>,
     pub packages: Vec<String>,
+    pub excludes: Vec<String>,
     pub expected_header: Vec<String>,
     pub format: OutputFormat,
     pub offence_threshold: OffenceThreshold,

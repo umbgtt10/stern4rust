@@ -72,8 +72,43 @@ fn print_with_one_offence_does_not_panic() {
     printer.print(&[offence("src/a.rs", 1, "header")]);
 }
 
+// The case a bare total would hide: a pattern naming a tree that has moved or
+// been deleted goes on looking like it is doing work.
+#[test]
+fn render_names_a_pattern_that_matched_nothing_as_such() {
+    // Arrange
+    let printer = ReportPrinter::new(4)
+        .with_exclusions(vec![("gone/**".to_string(), 0), ("live/**".to_string(), 3)]);
+
+    // Act
+    let report = printer.render(&[]);
+
+    // Assert
+    assert!(report.contains("matched nothing: gone/**"), "{report}");
+    assert!(!report.contains("matched nothing: live/**"), "{report}");
+}
+
 // A count answers "how many", which is only useful to a reader who already
 // knows how many there are. The names answer what was actually checked.
+// An exclusion is only acceptable if the reader can see it. A tree removed
+// from the report with no number beside it is the silent skip the walker had
+// until 0.4.0.
+#[test]
+fn render_names_each_exclusion_with_the_files_it_removed() {
+    // Arrange
+    let printer = ReportPrinter::new(4).with_exclusions(vec![("fixture/**".to_string(), 27)]);
+
+    // Act
+    let report = printer.render(&[]);
+
+    // Assert
+    assert!(
+        report.contains("excluded: fixture/** (27 files)"),
+        "{report}"
+    );
+    assert!(report.contains("files_excluded=27"), "{report}");
+}
+
 #[test]
 fn render_names_the_rules_that_were_applied() {
     // Arrange & Act
@@ -149,7 +184,7 @@ fn render_of_no_offences_says_every_rule_is_satisfied() {
 
     // Assert
     assert!(report.contains("All rules are satisfied."));
-    assert!(report.contains("files_scanned=9 offences=0 rules_broken=0"));
+    assert!(report.contains("files_scanned=9 files_excluded=0 offences=0 rules_broken=0"));
 }
 
 // "All rules are satisfied" is only true when all of them ran.
@@ -265,7 +300,7 @@ fn render_summarises_two_offences_of_one_rule_as_one_broken_rule() {
     ]);
 
     // Assert
-    assert!(report.contains("files_scanned=5 offences=2 rules_broken=1"));
+    assert!(report.contains("files_scanned=5 files_excluded=0 offences=2 rules_broken=1"));
 }
 
 // The cap is on what is shown, never on what is counted. A summary that said
@@ -280,7 +315,7 @@ fn render_summary_counts_every_offence_even_when_some_are_not_shown() {
 
     // Assert
     assert!(
-        report.contains("files_scanned=1 offences=10 rules_broken=1"),
+        report.contains("files_scanned=1 files_excluded=0 offences=10 rules_broken=1"),
         "got {report}"
     );
 }
