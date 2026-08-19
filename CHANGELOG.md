@@ -4,9 +4,38 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.4.0] - 2026-08-19
 
 ### Added
+
+- **`--fix`.** Repairs `test-file-structure` offences -- item order within a
+  section, section order and blank lines -- then reports everything it could not
+  repair, unchanged. The checks run against the repaired tree, so the report
+  after `--fix` is the truth after fixing rather than before, and `fixed=N`
+  joins the summary.
+
+  It exists because doing this by hand four times in one day produced three
+  separate string-handling bugs. A rewriter working from `syn` spans cannot make
+  them: it moves whole line ranges without reading them, so a string literal
+  containing something that looks like Rust travels like any other line.
+
+  Three constraints, each of which the first version violated and each now
+  pinned by a test:
+
+  - **It never edits a file no rule governs.** The first version rewrote thirty
+    `src/` files, merging their grouped imports into one alphabetical block --
+    a convention no rule checks, so no rule would have restored it, and the run
+    went green over a tree nobody had reviewed.
+  - **It never writes an order `cargo fmt` will undo.** The second version
+    sorted imports and put `use serde_json::Value` above
+    `use serde_json::from_str`, which is precisely the pair
+    `test-file-structure` stands down on. Imports are now moved as a block and
+    never reordered.
+  - **It never loses content.** The preamble and any trailing comment are kept.
+
+  Both bugs were found by running it and reading the diff, not by the suite,
+  which was green for both -- nothing tested the blast radius. See
+  `docs/ADRs/ADR-FixOnlyWhatIsSafe.md`.
 
 - **Baselines.** `--write-baseline` records the current offences and exits
   clean; later runs judge against the recorded set and fail only on what is new.
@@ -165,6 +194,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   default" -- without that, `stern4rust.toml` could never set the threshold,
   since every run would look like the reader had asked for 100. The default is
   unchanged at 100 and is applied after the config file is merged.
+- **The summary line gained `fixed=N`** as well, after `baselined`.
 - **The summary line gained `baselined=N`** as well, after `offences`. Always
   present, including as `baselined=0`.
 - **The summary line gained `files_excluded=N`**, between `files_scanned` and

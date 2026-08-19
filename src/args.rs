@@ -2,12 +2,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::output_format::OutputFormat;
+use clap::Parser;
 use std::env;
 use std::path::PathBuf;
-
-use clap::Parser;
-
-use crate::output_format::OutputFormat;
 
 #[derive(Debug, Parser)]
 #[command(name = "cargo-stern4rust")]
@@ -50,6 +48,13 @@ pub struct Args {
     /// hundreds of offences gate on one rule today and the rest as it goes.
     #[arg(long = "rule")]
     pub rules: Vec<String>,
+
+    /// Repair what can be repaired mechanically, then report what is left.
+    /// Only test-file-structure offences are fixable today: item order, section
+    /// order and blank lines. Everything else is reported unchanged, and the
+    /// report says how many offences were fixed and how many were not.
+    #[arg(long)]
+    pub fix: bool,
 
     /// Offences recorded here are not reported and do not fail the run. What
     /// lets a codebase with hundreds of existing offences enforce every rule

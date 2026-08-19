@@ -39,5 +39,6 @@ pub mod source_reader_tests;
 pub mod source_walker_tests;
 pub mod test_file_item_tests;
 pub mod test_file_parser_tests;
+pub mod test_file_rewriter_tests;
 pub mod unit_test_finder_tests;
 pub mod unit_test_site_tests;

@@ -2,10 +2,6 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use anyhow::Result;
-use std::path::Path;
-use std::path::PathBuf;
-
 use crate::args::Args;
 use crate::baseline::Baseline;
 use crate::baseline_outcome::BaselineOutcome;
@@ -24,8 +20,15 @@ use crate::rule_registry::RuleRegistry;
 use crate::rule_selection::RuleSelection;
 use crate::rules::header_rule::HeaderRule;
 use crate::run_outcome::RunOutcome;
+use crate::source_file::SourceFile;
 use crate::source_reader::SourceReader;
 use crate::source_walker::SourceWalker;
+use crate::test_file_rewriter::TestFileRewriter;
+use anyhow::Context;
+use anyhow::Result;
+use std::fs::write as write_file;
+use std::path::Path;
+use std::path::PathBuf;
 
 // Exit codes are the whole contract with a gate script:
 //
@@ -61,6 +64,7 @@ impl Runner {
         let mut offences = Vec::new();
         let mut files_scanned = 0usize;
         let mut excluded = Vec::new();
+        let mut fixed = 0usize;
 
         for root in &roots {
             // Read the whole package before judging it. Rules whose subject is
@@ -68,13 +72,18 @@ impl Runner {
             // answered a file at a time, and the file that carries the offence
             // is often the one that does not exist.
             let outcome = exclusions.apply(SourceWalker::walk(root), root);
-            let mut files = Vec::new();
+            let mut files: Vec<SourceFile> = Vec::new();
             for path in outcome.kept {
                 files_scanned += 1;
                 match SourceReader::read(root, &path) {
                     Ok(file) => files.push(file),
                     Err(offence) => offences.push(*offence),
                 }
+            }
+            if config.fix {
+                let (rewritten, count) = Self::repair(root, files)?;
+                files = rewritten;
+                fixed += count;
             }
             for file in &files {
                 offences.extend(registry.check(file));
@@ -100,6 +109,7 @@ impl Runner {
             files_scanned,
             &Self::merged(excluded),
             &BaselineOutcome::new(Vec::new(), baselined.suppressed, baselined.stale),
+            fixed,
             &offences,
         );
         Ok(RunOutcome::of(offences.len()))
@@ -164,6 +174,7 @@ impl Runner {
                 .or_else(|| found.and_then(|file| file.baseline_from(&directory)))
                 .or_else(|| Self::discovered_baseline(&directory, args.write_baseline)),
             write_baseline: args.write_baseline,
+            fix: args.fix,
             config_file: found.map(|_| directory.join(ConfigFile::NAME)),
             manifest_path: args.manifest_path,
             packages: args.packages,
@@ -204,6 +215,29 @@ impl Runner {
     }
 
     pub const BASELINE_NAME: &'static str = "stern4rust-baseline.json";
+
+    // Rewrites what can be rewritten and hands back the files as they now are,
+    // so the checks that follow judge the repaired tree. Whatever is still
+    // wrong is reported exactly as it would have been without --fix -- a fixer
+    // that quietly swallowed what it could not fix would be worse than no fixer
+    // at all.
+    fn repair(root: &Path, files: Vec<SourceFile>) -> Result<(Vec<SourceFile>, usize)> {
+        let mut repaired = Vec::with_capacity(files.len());
+        let mut count = 0;
+        for file in files {
+            match TestFileRewriter::rewrite(&file) {
+                Some(contents) => {
+                    let path = root.join(file.relative_path());
+                    write_file(&path, &contents)
+                        .with_context(|| format!("{} could not be rewritten", path.display()))?;
+                    repaired.push(SourceFile::new(file.relative_path(), &contents));
+                    count += 1;
+                }
+                None => repaired.push(file),
+            }
+        }
+        Ok((repaired, count))
+    }
 
     // Recording is not judging. The run exits clean because nothing was
     // assessed -- the offences were written down, which is what was asked for.
@@ -255,6 +289,7 @@ impl Runner {
         files_scanned: usize,
         excluded: &ExclusionOutcome,
         baselined: &BaselineOutcome,
+        fixed: usize,
         offences: &[Offence],
     ) {
         let threshold = config.offence_threshold;
@@ -272,6 +307,7 @@ impl Runner {
                     baselined.suppressed,
                     baselined.stale,
                 )
+                .with_fixed(fixed)
                 .print(offences),
             OutputFormat::Json => JsonPrinter::new(files_scanned)
                 .with_threshold(threshold)
@@ -283,6 +319,7 @@ impl Runner {
                     baselined.suppressed,
                     baselined.stale,
                 )
+                .with_fixed(fixed)
                 .print(offences),
         }
     }

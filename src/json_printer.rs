@@ -2,13 +2,11 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::collections::BTreeSet;
-
-use serde_json::json;
-
 use crate::offence::Offence;
 use crate::offence_threshold::OffenceThreshold;
+use serde_json::json;
 use serde_json::to_string_pretty;
+use std::collections::BTreeSet;
 
 // The same run as data rather than as a table.
 //
@@ -28,6 +26,7 @@ pub struct JsonPrinter {
     baseline: Option<String>,
     suppressed: usize,
     stale: usize,
+    fixed: usize,
 }
 
 impl JsonPrinter {
@@ -43,7 +42,15 @@ impl JsonPrinter {
             baseline: None,
             suppressed: 0,
             stale: 0,
+            fixed: 0,
         }
+    }
+
+    // How many files --fix repaired. Stated alongside what is left, because a
+    // fixer reporting only its successes would be the same silence this tool
+    // refuses everywhere else.
+    pub fn with_fixed(self, fixed: usize) -> Self {
+        Self { fixed, ..self }
     }
 
     pub fn with_baseline(self, baseline: Option<String>, suppressed: usize, stale: usize) -> Self {
@@ -106,6 +113,7 @@ impl JsonPrinter {
         let shown = self.threshold.kept(offences);
         let document = json!({
             "baseline": self.baseline,
+            "files_fixed": self.fixed,
             "baselined": self.suppressed,
             "baseline_stale_entries": self.stale,
             "config_file": self.config_file,

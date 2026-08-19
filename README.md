@@ -43,6 +43,7 @@ cargo stern4rust --format json
 | `--offence-threshold <N>` | how many offences the report prints. Default `100`, `0` for all. The cap is on what is *shown*, never on what is counted |
 | `--rule <NAME>` | apply only these rules; repeatable. Omit to apply every rule |
 | `--skip <NAME>` | do not apply these rules; repeatable. Subtracted from whatever `--rule` selected |
+| `--fix` | repair what can be repaired mechanically, then report what is left. Only `test-file-structure` is fixable today |
 | `--baseline <PATH>` | offences recorded here are not reported and do not fail the run; the suppressed count is always in the summary |
 | `--write-baseline` | record the current offences and exit clean, instead of judging against them |
 | `--exclude <GLOB>` | keep these paths out of the run; repeatable, matched against the package-relative path. Every pattern is named in the report with how many files it removed, including zero |
@@ -67,6 +68,27 @@ summary: files_scanned=36 files_excluded=31 offences=8 ...
 ```
 
 See [ADR-ExclusionsAreCounted](docs/ADRs/ADR-ExclusionsAreCounted.md).
+
+## `--fix`
+
+```bash
+cargo stern4rust --fix
+```
+
+Repairs `test-file-structure` offences — item order, section order, blank lines
+— and then reports everything it could not repair, unchanged. The report after
+`--fix` is exactly the report you would get without it, minus what was fixed.
+
+```text
+  fixed: 12 file(s) rewritten
+
+summary: files_scanned=103 files_excluded=0 offences=4 baselined=0 fixed=12 ...
+```
+
+It works from `syn` spans and never reads the text, so a string literal
+containing something that looks like Rust is moved like any other line. It only
+touches files `test-file-structure` governs, it never reorders imports — that is
+rustfmt's — and it changes your working tree, so read the diff.
 
 ## Adopting it on a codebase that has never run it
 

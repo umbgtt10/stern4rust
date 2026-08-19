@@ -2,11 +2,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::collections::BTreeSet;
-
 use crate::column_widths::ColumnWidths;
 use crate::offence::Offence;
 use crate::offence_threshold::OffenceThreshold;
+use std::collections::BTreeSet;
 
 // One table for every rule. Columns are sized to their contents so the report
 // stays readable when a rule name or a path grows, and the summary line is
@@ -22,6 +21,7 @@ pub struct ReportPrinter {
     baseline: Option<String>,
     suppressed: usize,
     stale: usize,
+    fixed: usize,
 }
 
 impl ReportPrinter {
@@ -37,7 +37,15 @@ impl ReportPrinter {
             baseline: None,
             suppressed: 0,
             stale: 0,
+            fixed: 0,
         }
+    }
+
+    // How many files --fix repaired. Stated alongside what is left, because a
+    // fixer reporting only its successes would be the same silence this tool
+    // refuses everywhere else.
+    pub fn with_fixed(self, fixed: usize) -> Self {
+        Self { fixed, ..self }
     }
 
     // A run that reported nothing while a baseline hid four hundred findings
@@ -99,6 +107,7 @@ impl ReportPrinter {
             report.push_str(&self.exclusion_roster());
             report.push_str(&self.config_line());
             report.push_str(&self.baseline_line());
+            report.push_str(&self.fixed_line());
             report.push_str(&self.summary(offences));
             return report;
         }
@@ -118,6 +127,7 @@ impl ReportPrinter {
         report.push_str(&self.exclusion_roster());
         report.push_str(&self.config_line());
         report.push_str(&self.baseline_line());
+        report.push_str(&self.fixed_line());
         report.push_str(&self.summary(offences));
         report
     }
@@ -150,6 +160,15 @@ impl ReportPrinter {
         }
         roster.push('\n');
         roster
+    }
+
+    // What --fix repaired, stated beside what it could not. A fixer reporting
+    // only its successes would leave the reader believing the file is done.
+    fn fixed_line(&self) -> String {
+        if self.fixed == 0 {
+            return String::new();
+        }
+        format!("  fixed: {} file(s) rewritten\n\n", self.fixed)
     }
 
     // Named with its count, because a run that reported nothing while a

@@ -5,6 +5,17 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
 ## Version 0.4.0
 
+### Autofix
+
+- `--fix` repairs `test-file-structure` offences: item order within a section,
+  section order, and blank lines. Everything else is reported untouched.
+- Works from `syn` spans, moving whole line ranges without reading them, so a
+  string literal holding Rust travels like any other line.
+- Only touches files `test-file-structure` governs; never reorders imports,
+  which is rustfmt's decision; never loses the preamble or a trailing comment.
+- `fixed=N` in the summary and `files_fixed` in the JSON. The checks run against
+  the repaired tree, so the report is the truth after fixing.
+
 ### Baselines
 
 - `--write-baseline` records the current offences and exits clean;

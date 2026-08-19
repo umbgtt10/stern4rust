@@ -2,11 +2,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::path::PathBuf;
-
 use crate::offence_threshold::OffenceThreshold;
 use crate::output_format::OutputFormat;
 use crate::rule_selection::RuleSelection;
+use std::path::PathBuf;
 
 // The threshold is an OffenceThreshold rather than a bare usize precisely so
 // this can stay derived. A usize field would default to zero, which this tool
@@ -16,6 +15,7 @@ use crate::rule_selection::RuleSelection;
 pub struct Config {
     pub baseline: Option<PathBuf>,
     pub config_file: Option<PathBuf>,
+    pub fix: bool,
     pub write_baseline: bool,
     pub manifest_path: Option<PathBuf>,
     pub packages: Vec<String>,
