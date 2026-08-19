@@ -228,12 +228,24 @@ is a `2`, reported against `readable-source` like any other finding — it is a
 fact about the tree, and aborting on it would discard every offence already
 found in every other file.
 
-## Design decisions
+## Documentation
 
-Every rule has an ADR in [`docs/ADRs`](docs/ADRs/README.md) — one per rule,
-because a rule is the unit a reader argues with when it fails their build. Each
-records what the rule requires, what was rejected on the way there, and — the
-part that matters most for a checking tool — what it does **not** catch.
+| document | what it is for |
+|---|---|
+| [RULES.md](docs/RULES.md) | what each rule requires, every offence it can emit, and what it does **not** catch |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | the pipeline, the components, and how to add a rule |
+| [ADRs/](docs/ADRs/README.md) | the load-bearing decisions. `R<NNN>-ADR-` for a rule, unnumbered `ADR-` for the machinery |
+| [IMPLEMENTED-FEATURES.md](docs/IMPLEMENTED-FEATURES.md) | what is built today |
+| [OPEN_POINTS.md](docs/OPEN_POINTS.md) | known gaps in what is built, sharpest first |
+| [ROADMAP.md](docs/ROADMAP.md) | where this is going, and what it will not do |
+
+There is no `FORMULA.md`, unlike `crap4rust`, `iceberg4rust` and `grip4rust`.
+Nothing here is scored: a rule is satisfied or it is not.
+
+Every rule has an ADR, because a rule is the unit a reader argues with when it
+fails their build. Each records what the rule requires, what was rejected on the
+way there, and — the part that matters most for a checking tool — what it does
+**not** catch.
 
 ## Licence
 
