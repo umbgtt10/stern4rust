@@ -3,6 +3,19 @@
 What `cargo-stern4rust` does today. Anything not listed here is not built, and
 the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
+## Version 0.3.0
+
+### Rule selection
+
+- `--rule <NAME>` and `--skip <NAME>`, both repeatable. `--rule` selects,
+  `--skip` subtracts, skipping wins. Default is every rule, nothing excluded.
+- Every report names the rules it applied, and names the ones it did not with
+  the reason: `(skipped)` or `(needs --header-file)`. Three states, not two.
+- `rules_applied`, `rules_skipped`, `rules_unconfigured` in the summary line and
+  the JSON.
+- An unknown rule name and `--rule header` without `--header-file` are both
+  errors (exit `1`) rather than switches that quietly match nothing.
+
 ## Version 0.2.0
 
 ### Rules
@@ -68,9 +81,9 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
 ### Project
 
-- 242 tests, one test file per source file, `autotests = false` with a single
+- 265 tests, one test file per source file, `autotests = false` with a single
   `[[test]] all_tests`.
 - Two gates: stage 1 (fmt, clippy `-D warnings`, tests), stage 2 (`crap4rust`,
   `twin4rust`, `iceberg4rust`, and stern4rust against its own tree).
 - Self-gating: a rule that would fail this repository cannot be merged into it.
-- Nine ADRs — five `R` rule ADRs, four unnumbered.
+- Ten ADRs — five `R` rule ADRs, five unnumbered.

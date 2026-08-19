@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+Nothing yet.
+
+## [0.3.0]
+
+Adoption, and the report finally saying what it did.
+
+### Fixed
+
+- **A run that did not apply every rule said it had.** Without `--header-file`
+  the registry drops the header rule, and the report printed
+  `All rules are satisfied` with `rules_skipped=0` — four rules of five applied,
+  the fifth never named anywhere. That is the exact comfortable lie this tool
+  exists to catch, told by this tool, and `README.md` compounded it by claiming
+  the report said which rules ran. It did not. The bug predates the switches
+  below; adding them is what made it visible.
+- Four ADR links in `README.md` still pointed at the pre-`R`-prefix filenames
+  and were broken. A link check now runs over every markdown file.
+
 ### Added
 
 - **`--rule <NAME>` and `--skip <NAME>`**, both repeatable. Naming any rule with
@@ -19,15 +37,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   — `grip4rust` alone faces 233, which nobody switches on. `--rule header`
   narrows that same run to 6. A gate on one rule is a gate somebody turns on
   this afternoon.
-- `rules_applied` and `rules_skipped` in the summary line and the JSON document,
-  and a `note:` line naming the rules that were not applied. A run with rules
-  switched off reports `All selected rules are satisfied` rather than
-  `All rules are satisfied` — what was not looked at is part of the finding.
+- **Every report now names the rules it applied**, and names the ones it did not
+  along with why. Three states rather than two: *applied*, *skipped* (a choice
+  you made), and *unconfigured* (a flag you did not pass). Calling the third one
+  skipped would blame you for a decision you never took; calling it nothing at
+  all is what produced the bug above.
+
+  ```text
+  All applied rules are satisfied.
+
+    applied: readable-source, test-file-structure, test-free-source, tests-layout
+    not applied: header (needs --header-file)
+  ```
+- `rules_applied`, `rules_skipped` and `rules_unconfigured` in both the summary
+  line and the JSON document.
 - `RuleRegistry::known_names`, built by asking each rule its own name so the
   list the switches validate against cannot drift from the rules themselves.
 
 ### Changed
 
+- **The text report's shape changed**, which matters if you parse it. The clean
+  verdict is `All applied rules are satisfied` rather than
+  `All rules are satisfied` whenever some rule did not run; an `applied:` line
+  and, when relevant, a `not applied:` line precede the summary; and the summary
+  gained `rules_applied=`, `rules_skipped=` and `rules_unconfigured=`. The
+  existing summary prefix is unchanged, so a script matching
+  `files_scanned=… offences=… rules_broken=…` still matches. The JSON gained
+  keys only.
 - An unknown rule name is an error (exit `1`), not a switch that quietly matches
   nothing. `--skip test-file-strucutre` that silently skipped nothing would look
   exactly like a switch that worked. The error lists the valid names.
@@ -35,11 +71,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   habit of leaving an unconfigurable rule out silently is right for an omission
   and wrong for a request: asking for a rule by name and getting an empty run is
   worse than not asking.
-
-### Fixed
-
-- Four ADR links in `README.md` still pointed at the pre-`R`-prefix filenames
-  and were broken.
 
 ## [0.2.0]
 
