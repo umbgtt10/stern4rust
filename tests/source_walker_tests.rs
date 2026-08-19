@@ -52,6 +52,47 @@ fn walk_descends_into_nested_directories() {
     assert_eq!(found, ["src/rules/deep/subject.rs"]);
 }
 
+// A fixture crate nested under tests/ is judged like anything else. The walker
+// once skipped it, which was the wrong place to solve the problem: sample code a
+// tool analyses does not belong inside the package that ships, and a linter
+// quietly declining to look at part of a tree is the silence this tool refuses.
+#[test]
+fn walk_finds_a_fixture_package_nested_under_tests() {
+    // Arrange
+    let root = temp_root("fixture_package");
+    write(&root, "Cargo.toml");
+    write(&root, "tests/a_tests.rs");
+    write(&root, "tests/fixtures/sample/Cargo.toml");
+    write(&root, "tests/fixtures/sample/src/lib.rs");
+
+    // Act
+    let found = names(&root);
+
+    // Assert
+    assert_eq!(
+        found,
+        ["tests/a_tests.rs", "tests/fixtures/sample/src/lib.rs"]
+    );
+}
+
+// A manifest is a fact about cargo, not about whose conventions apply. Skipping
+// on sight let a whole tree go unreported with nothing in the report saying so.
+#[test]
+fn walk_finds_a_nested_package_holding_its_own_manifest() {
+    // Arrange
+    let root = temp_root("nested_package");
+    write(&root, "Cargo.toml");
+    write(&root, "src/a.rs");
+    write(&root, "vendored/other/Cargo.toml");
+    write(&root, "vendored/other/src/b.rs");
+
+    // Act
+    let found = names(&root);
+
+    // Assert
+    assert_eq!(found, ["src/a.rs", "vendored/other/src/b.rs"]);
+}
+
 #[test]
 fn walk_finds_a_rust_file_at_the_root() {
     // Arrange
@@ -94,9 +135,9 @@ fn walk_ignores_files_that_are_not_rust() {
     assert_eq!(found, ["src/a.rs"]);
 }
 
-// The package being walked holds a manifest by definition, so the rule that
-// skips nested packages has to exempt the one it started from -- otherwise the
-// walk skips everything and every run reports a clean tree.
+// A manifest is not a signal to the walker, at the root or anywhere else. This
+// once guarded an exemption from a nested-package skip; it now pins that no such
+// skip exists to need exempting.
 #[test]
 fn walk_keeps_the_root_package_even_though_it_holds_a_manifest() {
     // Arrange
@@ -150,45 +191,6 @@ fn walk_returns_paths_in_a_stable_order() {
 
     // Assert
     assert_eq!(found, ["src/a.rs", "src/m.rs", "src/z.rs"]);
-}
-
-// The shape this was written for: crap4rust and grip4rust both keep sample
-// crates under tests/fixtures/, and judging them produced 154 offences against
-// code that is input data rather than the repository's own.
-#[test]
-fn walk_skips_a_fixture_package_under_tests() {
-    // Arrange
-    let root = temp_root("fixture_package");
-    write(&root, "Cargo.toml");
-    write(&root, "tests/a_tests.rs");
-    write(&root, "tests/fixtures/sample/Cargo.toml");
-    write(&root, "tests/fixtures/sample/src/lib.rs");
-    write(&root, "tests/fixtures/sample/tests/sample_tests.rs");
-
-    // Act
-    let found = names(&root);
-
-    // Assert
-    assert_eq!(found, ["tests/a_tests.rs"]);
-}
-
-// A directory with its own manifest is a different package. Its files are that
-// package's to answer for, under whatever rules it has chosen, and cargo would
-// not compile them as part of this one either.
-#[test]
-fn walk_skips_a_nested_package_holding_its_own_manifest() {
-    // Arrange
-    let root = temp_root("nested_package");
-    write(&root, "Cargo.toml");
-    write(&root, "src/a.rs");
-    write(&root, "vendored/other/Cargo.toml");
-    write(&root, "vendored/other/src/b.rs");
-
-    // Act
-    let found = names(&root);
-
-    // Assert
-    assert_eq!(found, ["src/a.rs"]);
 }
 
 // Generated code nobody wrote. Judging it would drown every real finding.

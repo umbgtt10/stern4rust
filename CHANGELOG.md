@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- **The walker no longer skips a directory holding its own `Cargo.toml`.** That
+  skip shipped in `0.2.0` and was silence: a run reported `files_scanned=67`
+  where the tree held 94 `.rs` files, with no line accounting for the other 27.
+  It also hid real files -- ~40 of the offences written off as `grip4rust`
+  "fixture noise" were that repository's own integration tests, which merely
+  lived under `tests/fixtures/`.
+
+  Sample code a tool analyses is input, and input does not belong inside the
+  package that ships. The fix is layout, not a skip; where a tree genuinely
+  cannot move, an explicit exclusion the reader can see in the report is the
+  answer. See `docs/ADRs/ADR-WalkEveryFileInThePackage.md`.
+
+  **This raises counts for any repository keeping analysis input inside its
+  published package.** `crap4rust` goes from 130 offences to 161.
+
 ### Fixed
 
 - **A shared helper inside the tests tree made a file unsatisfiable.** Everything

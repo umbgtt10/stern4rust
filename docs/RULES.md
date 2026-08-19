@@ -191,13 +191,14 @@ declarations are treated as ordinary ones.
 
 - `target/` — generated code nobody wrote
 - `.git/`
-- **any directory holding its own `Cargo.toml`** — it is a different package,
-  its files are that package's to answer for, and cargo would not compile them
-  as part of this one either. The shape this matters for is a fixture crate
-  under `tests/fixtures/`
 
-A fixture tree *without* a manifest is still walked, and there is currently no
-way to exclude it. See [OPEN_POINTS.md](OPEN_POINTS.md).
+Nothing else. A nested package with its own `Cargo.toml` is walked like any
+other directory: a manifest is a fact about cargo, not about whose conventions
+apply, and skipping on sight let a whole tree go unreported with nothing in the
+report saying so. Sample code a tool analyses belongs beside the package rather
+than inside it — see
+[ADR-WalkEveryFileInThePackage](ADRs/ADR-WalkEveryFileInThePackage.md) and
+[OPEN_POINTS.md](OPEN_POINTS.md).
 
 ## Output
 

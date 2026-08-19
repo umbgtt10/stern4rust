@@ -44,11 +44,11 @@ cargo stern4rust --format json
 | `--rule <NAME>` | apply only these rules; repeatable. Omit to apply every rule |
 | `--skip <NAME>` | do not apply these rules; repeatable. Subtracted from whatever `--rule` selected |
 
-A directory holding its own `Cargo.toml` is not walked: it is a different
-package, its files are that package's to answer for, and cargo would not
-compile them as part of this one either. The shape this matters for is a
-fixture crate under `tests/fixtures/` — sample code a tool analyses rather than
-code it ships.
+Only `target/` and `.git/` are skipped. Everything else under the package is
+judged, including a nested package with its own `Cargo.toml` — a linter that
+quietly declines to look at part of a tree is the silence this tool exists to
+refuse. Sample code a tool analyses belongs beside the package rather than
+inside it; see [ADR-WalkEveryFileInThePackage](docs/ADRs/ADR-WalkEveryFileInThePackage.md).
 
 ## The rules
 

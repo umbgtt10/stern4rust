@@ -7,20 +7,22 @@ why the sharp ones are collected here.
 
 Ordered by how likely they are to mislead somebody.
 
-## A fixture tree without a manifest is still walked
+## A fixture tree inside the package is judged like the package
 
-`SourceWalker` skips any directory holding its own `Cargo.toml`, which covers
-the fixture crates in `crap4rust` — 31 offences against sample code, gone. It
-does nothing for a fixture tree that is *not* a package.
+The walker skips only `target/` and `.git/`. A tree of sample code that a tool
+analyses — fixtures, vendored source, generated output — is judged as though
+this repository had written it, and the report says so plainly rather than
+quietly declining to look.
 
-Measured: `grip4rust` keeps eight fixture directories under `tests/fixtures/`,
-each a plain `src/` and `tests/` tree with **no `Cargo.toml` at all**. 101 of its
-233 offences come from them, and every one is the tool reporting on input data
-as though it were the repository's own code — demanding a `mod.rs` per folder,
-the repository header, and the test-file shape.
+The fix is layout, not a skip: `grip4rust` moved its eight fixture directories
+out of the package into a sibling `fixture/`, which took its count from 233 to
+171 and left the analysis unchanged. `crap4rust` still keeps ten fixture crates
+inside `tests/fixtures/`, and carries 31 offences for it.
 
-Only an `--exclude <glob>` reaches these. Until then, the number a run reports
-for such a repository is inflated and the inflation is invisible.
+Where a tree genuinely cannot be moved — vendored code, generated output — an
+`--exclude <glob>` is the answer, because an exclusion the reader can see in the
+report is not the same as a rule that silently skips. `crap4rust` already
+carries `--exclude-path` for exactly this.
 
 ## The registry rule checks existence, not completeness
 
