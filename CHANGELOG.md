@@ -30,52 +30,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   It found 15 offences in this tool's own source on registration, five of them
   `syn::parse_file` -- one inside the finder implementing the rule.
   `etheram-core`, where the standard was written down, is at 0.
-
-### Fixed
-
-- **`RuleRegistry` kept the rule set in two hand-maintained lists.** `from_config`
-  built one and `known_names` built another, so a rule added to only one of them
-  was applied by a default run while `--rule <name>` rejected it as unknown --
-  which is exactly what `imported-paths` did on registration. There is now a
-  single `all()` list that `from_config` narrows and `known_names` reads.
-
-  The registry no longer names any rule in particular either: whether a rule has
-  what it needs is asked through a new `Rule::is_configured`, defaulting to true
-  and answered false by `HeaderRule` without a header. The `if` that knew about
-  the header rule was how the second list started.
-- **`ImplementedTypeFinder::walk` took two `&mut` accumulators**, against the
-  house standard preferring return values. The two halves are now gathered by
-  `declared()` and `implemented()`, each answering one question and returning
-  it, which makes the recursion an expression rather than a side effect.
-
-- **`test-file-structure` could demand an import order `cargo fmt` refuses to
-  write.** The stand-down for orders that rustfmt rather than the alphabet
-  decides was keyed on an import's *first* segment, so it missed a pair that
-  shares its first segment and diverges later: `use serde_json::Value;` beside
-  `use serde_json::from_str;` left a file that no edit could make green, because
-  stage 1 runs the formatter first and it undid every fix. The decision is now
-  made per pair, standing down where two paths first differ and the segments
-  there are of different case.
-
-  Measuring rustfmt to fix this turned up behaviour worth recording: it treats
-  case as significant in *opposite* directions at the two levels. An
-  uppercase-initial crate sorts behind every lowercase one (`Bbb::gamma` after
-  `zzz::last`), while an uppercase-initial segment later in a path sorts ahead of
-  its lowercase siblings (`serde_json::Value` before `serde_json::from_str`).
-  `cargo fmt` and a standalone `rustfmt <file>` also disagree here; only
-  `cargo fmt` matters, since that is what the gate runs.
-- **A registered rule could be unknown to `--rule`.** `RuleRegistry::known_names`
-  kept its own list of rules beside the one in `from_config`, so `imported-paths`
-  was applied by a default run while `--rule imported-paths` rejected it as an
-  unknown name. The comment claiming the list "cannot drift from the rules
-  themselves" was true only of the names, not of the set.
-
-### Documentation
-
-- README documents all eight rules. `module-registry` and `single-implemented-type`
-  had been added without a section, so the rule list stopped at five while the
-  tool applied seven; the adoption example's offence counts were stale by two
-  rules and are now measured against `braintax4rust`.
 - **`single-implemented-type`**, the seventh rule. A source file outside
   `tests/` holds at most one type that carries behaviour: at most one struct or
   enum both declared in the file and given at least one impl block there.
@@ -133,6 +87,39 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- **`RuleRegistry` kept the rule set in two hand-maintained lists.** `from_config`
+  built one and `known_names` built another, so a rule added to only one of them
+  was applied by a default run while `--rule <name>` rejected it as unknown --
+  which is exactly what `imported-paths` did on registration. There is now a
+  single `all()` list that `from_config` narrows and `known_names` reads.
+
+  The registry no longer names any rule in particular either: whether a rule has
+  what it needs is asked through a new `Rule::is_configured`, defaulting to true
+  and answered false by `HeaderRule` without a header. The `if` that knew about
+  the header rule was how the second list started.
+- **`ImplementedTypeFinder::walk` took two `&mut` accumulators**, against the
+  house standard preferring return values. The two halves are now gathered by
+  `declared()` and `implemented()`, each answering one question and returning
+  it, which makes the recursion an expression rather than a side effect.
+
+- **`test-file-structure` could demand an import order `cargo fmt` refuses to
+  write.** The stand-down for orders that rustfmt rather than the alphabet
+  decides was keyed on an import's *first* segment, so it missed a pair that
+  shares its first segment and diverges later: `use serde_json::Value;` beside
+  `use serde_json::from_str;` left a file that no edit could make green, because
+  stage 1 runs the formatter first and it undid every fix. The decision is now
+  made per pair, standing down where two paths first differ and the segments
+  there are of different case.
+
+  Measuring rustfmt to fix this turned up behaviour worth recording: it treats
+  case as significant in *opposite* directions at the two levels. An
+  uppercase-initial crate sorts behind every lowercase one (`Bbb::gamma` after
+  `zzz::last`), while an uppercase-initial segment later in a path sorts ahead of
+  its lowercase siblings (`serde_json::Value` before `serde_json::from_str`).
+  `cargo fmt` and a standalone `rustfmt <file>` also disagree here; only
+  `cargo fmt` matters, since that is what the gate runs.
+
+
 - **A shared helper inside the tests tree made a file unsatisfiable.** Everything
   under `tests/` is one crate rooted at `all_tests.rs`, so a sibling reaches a
   helper through `use crate::support::...`. rustfmt sorts `self`, `super` and
@@ -141,6 +128,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   `test-file-structure` in a loop neither could win, with stage 1 running the
   formatter first. The alphabetic check now stands down on any import pair
   involving such a path and still orders everything else.
+
+### Documentation
+
+- README documents all eight rules. `module-registry` and `single-implemented-type`
+  had been added without a section, so the rule list stopped at five while the
+  tool applied seven; the adoption example's offence counts were stale by two
+  rules and are now measured against `braintax4rust`.
 
 ## [0.3.0]
 
