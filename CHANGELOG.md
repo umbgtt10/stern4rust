@@ -8,6 +8,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **`stern4rust.toml`**, beside the manifest it configures, holding
+  `header-file`, `offence-threshold`, `rules`, `skip` and `exclude`. Every
+  switch had to be repeated at every invocation, which is tolerable for a person
+  running the tool once and useless for a repository wanting the same run in a
+  gate script, a pre-commit hook and a developer's terminal.
+
+  **The command line wins, per setting**, so one override does not mean
+  restating the rest. For the list settings that is replacement rather than
+  merging: `--rule header` meaning "header plus whatever the file selected"
+  would be the opposite of what naming one rule means everywhere else.
+
+  An unknown key is an error rather than a silently ignored line -- a misspelled
+  `exclude` doing nothing would look exactly like one that worked -- and so is a
+  file that exists and cannot be parsed. A missing file is the ordinary case and
+  is not an error. `header-file` resolves relative to the config file, so a
+  checkout works in any directory.
+
+  **The report names the config it used**, and the JSON carries `config_file`,
+  because a run configured by a file the reader never typed would otherwise have
+  invisible switches in force.
+
 - **`registry-completeness`**, the ninth rule. A registry declares every module
   beside it -- each sibling `.rs` file and each subfolder that has a registry of
   its own -- so nothing in the tree goes uncompiled. This closes the half of the
@@ -115,6 +136,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- **`--offence-threshold` is no longer defaulted by clap.** It had to become
+  optional internally so that "not passed" is distinguishable from "passed the
+  default" -- without that, `stern4rust.toml` could never set the threshold,
+  since every run would look like the reader had asked for 100. The default is
+  unchanged at 100 and is applied after the config file is merged.
 - **The summary line gained `files_excluded=N`**, between `files_scanned` and
   `offences`, always present including as `files_excluded=0`. A gate script
   matching on the summary text will need updating.

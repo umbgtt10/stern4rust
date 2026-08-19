@@ -7,7 +7,6 @@ use std::path::PathBuf;
 
 use clap::Parser;
 
-use crate::offence_threshold::OffenceThreshold;
 use crate::output_format::OutputFormat;
 
 #[derive(Debug, Parser)]
@@ -39,8 +38,12 @@ pub struct Args {
     /// a report. The cap is on what is shown and never on what is counted:
     /// the summary, the omitted count and the exit code all see every offence.
     /// Use 0 for no limit.
-    #[arg(long, default_value_t = OffenceThreshold::DEFAULT)]
-    pub offence_threshold: usize,
+    /// Option rather than a defaulted value so that "not passed" is
+    /// distinguishable from "passed the default": without that, a
+    /// stern4rust.toml could never set the threshold, because every run would
+    /// look like the reader had asked for 100 on the command line.
+    #[arg(long)]
+    pub offence_threshold: Option<usize>,
 
     /// Apply only these rules; repeatable. Omit to apply every rule. Naming one
     /// makes the selection a whitelist, which is what lets a codebase facing

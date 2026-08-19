@@ -57,8 +57,8 @@ that ships. What remains for `--exclude` is the tree that genuinely cannot move,
 and the requirement that an exclusion be **visible in the report** rather than a
 silent skip, which is the mistake the nested-package skip made.
 
-Likely paired with a `stern4rust.toml` so the excludes live with the repository
-rather than in every invocation.
+Paired with `stern4rust.toml`, shipped alongside it, so the excludes live with
+the repository rather than in every invocation.
 
 ### Phase 3: Baselines
 

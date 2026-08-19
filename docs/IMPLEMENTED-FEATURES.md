@@ -5,6 +5,17 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
 ## Version 0.4.0
 
+### Configuration file
+
+- `stern4rust.toml` beside the manifest, holding `header-file`,
+  `offence-threshold`, `rules`, `skip` and `exclude`. Every key optional.
+- The command line wins per setting; for the list settings that is replacement
+  rather than merging.
+- An unknown key or an unparseable file is an error, not a silently ignored
+  line. A missing file is the ordinary case and is not.
+- `header-file` resolves relative to the config, so a checkout works anywhere.
+- The report names the config it used, and the JSON carries `config_file`.
+
 ### Excludability
 
 - `--exclude <GLOB>`, repeatable, matched as a glob against the package-relative

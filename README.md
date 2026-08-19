@@ -66,6 +66,38 @@ summary: files_scanned=36 files_excluded=31 offences=8 ...
 
 See [ADR-ExclusionsAreCounted](docs/ADRs/ADR-ExclusionsAreCounted.md).
 
+## `stern4rust.toml`
+
+Every switch above can live beside the manifest instead of on the command line,
+which is what lets a gate script, a pre-commit hook and a developer's terminal
+run the same check:
+
+```toml
+header-file = "docs/header.txt"
+offence-threshold = 100
+rules = ["header", "tests-layout"]
+skip = ["test-file-structure"]
+exclude = ["vendor/**"]
+```
+
+Every key is optional. **The command line wins, per setting** — override one for
+one run without restating the rest. For the list settings that is replacement
+rather than merging, because `--rule header` meaning "header *plus* whatever the
+file selected" would be the opposite of what naming one rule means everywhere
+else here.
+
+An unknown key is an error, not a silently ignored line: a misspelled `exclude`
+that quietly did nothing would look exactly like one that worked. A file that
+exists and cannot be parsed is an error too — it was written on purpose, and
+running as though it were absent would apply a configuration nobody chose.
+
+**The report names the file it used**, so the switches in force are never
+invisible:
+
+```text
+  config: /path/to/stern4rust.toml
+```
+
 ## The rules
 
 Each rule is independent, names itself in the report, and can be pointed at a

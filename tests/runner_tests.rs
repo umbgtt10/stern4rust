@@ -24,6 +24,35 @@ fn args_from(parts: &[&str]) -> Args {
     Args::parse_from(parts.iter().map(|part| (*part).to_string()))
 }
 
+fn config_directory(name: &str, contents: &str) -> PathBuf {
+    let path = env::temp_dir().join(format!("stern4rust_run_{name}"));
+    let _ = fs::remove_dir_all(&path);
+    fs::create_dir_all(path.join("src")).expect("create the package");
+    fs::write(
+        path.join("Cargo.toml"),
+        "[package]
+name = \"probe\"
+version = \"0.1.0\"
+edition = \"2021\"
+",
+    )
+    .expect("write the manifest");
+    fs::write(
+        path.join("src/lib.rs"),
+        "pub mod widget;
+",
+    )
+    .expect("write the registry");
+    fs::write(
+        path.join("src/widget.rs"),
+        "pub struct Widget;
+",
+    )
+    .expect("write the module");
+    fs::write(path.join("stern4rust.toml"), contents).expect("write the config");
+    path
+}
+
 fn header_file(name: &str, contents: &str) -> PathBuf {
     let path = env::temp_dir().join(format!("stern4rust_header_{name}.txt"));
     fs::write(&path, contents).expect("write the header file");
@@ -96,6 +125,29 @@ fn run_against_this_crate_with_its_own_header_is_clean() {
 // The end-to-end proof that an exclusion removes files from judgement rather
 // than merely from the report: the same run that reports offences against a
 // header this crate does not carry finds nothing once every file is excluded.
+// A repository states its settings once instead of at every invocation, and
+// the report names the file so the switches in force are not invisible.
+#[test]
+fn run_with_a_config_file_applies_its_settings() {
+    // Arrange
+    let path = config_directory(
+        "applies",
+        "rules = [\"tests-layout\"]
+",
+    );
+
+    // Act
+    let outcome = Runner::run(args_from(&[
+        "cargo-stern4rust",
+        "--manifest-path",
+        &path.join("Cargo.toml").to_string_lossy(),
+    ]))
+    .expect("the run itself should succeed");
+
+    // Assert
+    assert_eq!(outcome, RunOutcome::Clean);
+}
+
 #[test]
 fn run_with_an_exclusion_covering_every_file_finds_nothing_to_judge() {
     // Arrange
@@ -121,6 +173,28 @@ fn run_with_an_exclusion_covering_every_file_finds_nothing_to_judge() {
 
     // Assert
     assert_eq!(outcome, RunOutcome::Clean);
+}
+
+// A file that exists and cannot be understood must not be treated as absent:
+// running as though it were would apply a configuration nobody chose.
+#[test]
+fn run_with_an_invalid_config_file_is_an_error() {
+    // Arrange
+    let path = config_directory(
+        "invalid",
+        "rules = 7
+",
+    );
+
+    // Act
+    let outcome = Runner::run(args_from(&[
+        "cargo-stern4rust",
+        "--manifest-path",
+        &path.join("Cargo.toml").to_string_lossy(),
+    ]));
+
+    // Assert
+    assert!(outcome.is_err());
 }
 
 #[test]

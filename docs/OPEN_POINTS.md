@@ -138,12 +138,6 @@ uppercase-named module would pass when it should not. Both are conventions
 violated rarely enough that the trade is worth it, but the failure would arrive
 as a confident wrong answer rather than a missing one, which is the worse shape.
 
-## There is no configuration file
-
-`--rule`, `--skip` and `--offence-threshold` all have to be repeated at every
-invocation. A `stern4rust.toml` is the natural home for a fixed selection, and
-is the same decision that will have to carry `--exclude`.
-
 ## No baseline
 
 There is no way to record the current set of offences and fail only on new ones.

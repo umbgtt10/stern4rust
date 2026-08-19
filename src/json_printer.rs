@@ -24,6 +24,7 @@ pub struct JsonPrinter {
     skipped: Vec<String>,
     unconfigured: Vec<String>,
     exclusions: Vec<(String, usize)>,
+    config_file: Option<String>,
 }
 
 impl JsonPrinter {
@@ -35,6 +36,14 @@ impl JsonPrinter {
             skipped: Vec::new(),
             unconfigured: Vec::new(),
             exclusions: Vec::new(),
+            config_file: None,
+        }
+    }
+
+    pub fn with_config_file(self, config_file: Option<String>) -> Self {
+        Self {
+            config_file,
+            ..self
         }
     }
 
@@ -81,6 +90,7 @@ impl JsonPrinter {
         let broken: BTreeSet<&str> = offences.iter().map(|offence| offence.rule).collect();
         let shown = self.threshold.kept(offences);
         let document = json!({
+            "config_file": self.config_file,
             "files_scanned": self.files_scanned,
             "files_excluded": self.excluded_total(),
             "exclusions": self.exclusions.iter().map(|(pattern, count)| json!({

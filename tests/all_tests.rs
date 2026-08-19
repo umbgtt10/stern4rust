@@ -4,6 +4,7 @@
 
 pub mod args_tests;
 pub mod column_widths_tests;
+pub mod config_file_tests;
 pub mod exclusion_outcome_tests;
 pub mod exclusion_set_tests;
 pub mod exclusion_tests;

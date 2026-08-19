@@ -3,9 +3,12 @@
 // SPDX-License-Identifier: MIT
 
 use anyhow::Result;
+use std::path::Path;
+use std::path::PathBuf;
 
 use crate::args::Args;
 use crate::config::Config;
+use crate::config_file::ConfigFile;
 use crate::exclusion_outcome::ExclusionOutcome;
 use crate::exclusion_set::ExclusionSet;
 use crate::header_source::HeaderSource;
@@ -118,20 +121,59 @@ impl Runner {
         Ok(())
     }
 
+    // The command line wins over the file, every time and per setting. A
+    // repository states its defaults in stern4rust.toml; a person overrides one
+    // of them for one run without having to restate the rest.
+    //
+    // "Wins" is replacement rather than merging for the list settings. Merging
+    // would make `--rule header` mean "header plus whatever the file already
+    // selected", which is the opposite of what naming one rule means everywhere
+    // else in this tool.
     fn config_from(args: Args) -> Result<Config> {
-        let expected_header = match &args.header_file {
+        let directory = Self::manifest_directory(&args.manifest_path);
+        let file = ConfigFile::load(&directory)?;
+        let found = file.as_ref();
+        let header_file = args
+            .header_file
+            .or_else(|| found.and_then(|file| file.header_file_from(&directory)));
+        let expected_header = match &header_file {
             Some(path) => HeaderSource::read(path)?,
             None => Vec::new(),
         };
+        let threshold = args
+            .offence_threshold
+            .or_else(|| found.and_then(|file| file.offence_threshold))
+            .unwrap_or(OffenceThreshold::DEFAULT);
         Ok(Config {
+            config_file: found.map(|_| directory.join(ConfigFile::NAME)),
             manifest_path: args.manifest_path,
             packages: args.packages,
-            excludes: args.excludes,
+            excludes: Self::preferred(args.excludes, found.map(|file| &file.exclude)),
             expected_header,
             format: args.format,
-            offence_threshold: OffenceThreshold::new(args.offence_threshold),
-            selection: RuleSelection::new(args.rules, args.skipped_rules),
+            offence_threshold: OffenceThreshold::new(threshold),
+            selection: RuleSelection::new(
+                Self::preferred(args.rules, found.map(|file| &file.rules)),
+                Self::preferred(args.skipped_rules, found.map(|file| &file.skip)),
+            ),
         })
+    }
+
+    fn preferred(from_args: Vec<String>, from_file: Option<&Vec<String>>) -> Vec<String> {
+        if !from_args.is_empty() {
+            return from_args;
+        }
+        from_file.cloned().unwrap_or_default()
+    }
+
+    // The config lives beside the manifest it configures, so a workspace and a
+    // package in it can hold different ones.
+    fn manifest_directory(manifest_path: &Option<PathBuf>) -> PathBuf {
+        manifest_path
+            .as_ref()
+            .and_then(|path| path.parent())
+            .map(Path::to_path_buf)
+            .unwrap_or_else(|| PathBuf::from("."))
     }
 
     // One package's exclusions say nothing on their own: a pattern matching
@@ -167,13 +209,22 @@ impl Runner {
                 .with_threshold(threshold)
                 .with_rules(applied.clone(), skipped.clone(), unconfigured.clone())
                 .with_exclusions(excluded.excluded.clone())
+                .with_config_file(Self::shown(config))
                 .print(offences),
             OutputFormat::Json => JsonPrinter::new(files_scanned)
                 .with_threshold(threshold)
                 .with_rules(applied, skipped, unconfigured)
                 .with_exclusions(excluded.excluded.clone())
+                .with_config_file(Self::shown(config))
                 .print(offences),
         }
+    }
+
+    fn shown(config: &Config) -> Option<String> {
+        config
+            .config_file
+            .as_ref()
+            .map(|path| path.to_string_lossy().replace('\\', "/"))
     }
 
     fn owned(names: &[&str]) -> Vec<String> {

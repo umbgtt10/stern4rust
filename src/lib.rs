@@ -5,6 +5,7 @@
 pub mod args;
 pub mod column_widths;
 pub mod config;
+pub mod config_file;
 pub mod exclusion;
 pub mod exclusion_outcome;
 pub mod exclusion_set;

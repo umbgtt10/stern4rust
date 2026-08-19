@@ -18,6 +18,7 @@ pub struct ReportPrinter {
     skipped: Vec<String>,
     unconfigured: Vec<String>,
     exclusions: Vec<(String, usize)>,
+    config_file: Option<String>,
 }
 
 impl ReportPrinter {
@@ -29,6 +30,16 @@ impl ReportPrinter {
             skipped: Vec::new(),
             unconfigured: Vec::new(),
             exclusions: Vec::new(),
+            config_file: None,
+        }
+    }
+
+    // A run configured by a file the reader never typed on the command line
+    // must say so, or the switches in force are invisible.
+    pub fn with_config_file(self, config_file: Option<String>) -> Self {
+        Self {
+            config_file,
+            ..self
         }
     }
 
@@ -67,6 +78,7 @@ impl ReportPrinter {
             report.push_str("\n\n");
             report.push_str(&self.roster());
             report.push_str(&self.exclusion_roster());
+            report.push_str(&self.config_line());
             report.push_str(&self.summary(offences));
             return report;
         }
@@ -84,6 +96,7 @@ impl ReportPrinter {
         report.push_str(&self.omission(offences));
         report.push_str(&self.roster());
         report.push_str(&self.exclusion_roster());
+        report.push_str(&self.config_line());
         report.push_str(&self.summary(offences));
         report
     }
@@ -116,6 +129,17 @@ impl ReportPrinter {
         }
         roster.push('\n');
         roster
+    }
+
+    // A run configured by a file the reader never typed must say which file.
+    // Every switch in force would otherwise be invisible, and a report that
+    // applied one rule because of a line in a .toml would look exactly like one
+    // that applied one rule because somebody asked for it.
+    fn config_line(&self) -> String {
+        match &self.config_file {
+            Some(path) => format!("  config: {path}\n\n"),
+            None => String::new(),
+        }
     }
 
     // Every pattern with the number of files it removed, including zero. A

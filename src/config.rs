@@ -14,6 +14,7 @@ use crate::rule_selection::RuleSelection;
 // would only surface on a codebase big enough to need the cap.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Config {
+    pub config_file: Option<PathBuf>,
     pub manifest_path: Option<PathBuf>,
     pub packages: Vec<String>,
     pub excludes: Vec<String>,
