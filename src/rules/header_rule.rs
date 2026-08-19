@@ -21,6 +21,8 @@ pub struct HeaderRule {
 }
 
 impl HeaderRule {
+    pub const NAME: &'static str = "header";
+
     pub fn new(expected: Vec<String>) -> Self {
         Self { expected }
     }
@@ -89,7 +91,7 @@ impl HeaderRule {
 
 impl Rule for HeaderRule {
     fn name(&self) -> &'static str {
-        "header"
+        Self::NAME
     }
 
     // The overlap is compared before the length, so a file whose very first line

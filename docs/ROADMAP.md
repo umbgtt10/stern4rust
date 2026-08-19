@@ -54,16 +54,18 @@ way to keep generated or vendored trees out of the report.
 Likely paired with a `stern4rust.toml` so the excludes live with the repository
 rather than in every invocation.
 
-### Phase 3: Adoption Paths
+### Phase 3: Baselines
 
-Two things a large existing codebase needs before it can gate on this tool at
-all:
+Rule selection shipped and gives a repository a way in: enforce one rule today,
+add the next when it is green. Measured on `grip4rust`, that is the difference
+between a 233-offence report and a 6-offence one.
 
-- **Rule selection** — `--rule` / `--skip`, so a repository can enforce one rule
-  today and the rest next quarter. Today it is all-or-nothing.
-- **A baseline** — record the current offences and fail only on new ones. This
-  is what turns a 600-offence first run from a reason not to adopt into a
-  starting point.
+What it does not give is a way to enforce all five rules against *new* code
+while tolerating what is already there. A baseline — record the current
+offences, fail only on new ones — is what turns a 600-offence first run from a
+reason not to adopt into a starting point. It needs a checked-in state file,
+fingerprints stable across line moves, and a story for when the baseline goes
+stale, which is why it follows rather than leads.
 
 ### Phase 4: The Completeness Rule
 

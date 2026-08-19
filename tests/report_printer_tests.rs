@@ -72,6 +72,34 @@ fn print_with_one_offence_does_not_panic() {
     printer.print(&[offence("src/a.rs", 1, "header")]);
 }
 
+// A run with rules switched off must never read as a run that checked
+// everything. This is the same refusal as the omitted-offence note, one level
+// up: what was not looked at is part of the finding.
+#[test]
+fn render_names_the_rules_that_were_not_applied() {
+    // Arrange & Act
+    let report = ReportPrinter::new(1)
+        .with_rules(
+            vec!["header".to_string()],
+            vec!["tests-layout".to_string(), "test-free-source".to_string()],
+        )
+        .render(&[offence("src/a.rs", 1, "header")]);
+
+    // Assert
+    assert!(
+        report.contains("2 rule(s) were not applied"),
+        "got {report}"
+    );
+    assert!(
+        report.contains("tests-layout, test-free-source"),
+        "got {report}"
+    );
+    assert!(
+        report.contains("rules_applied=1 rules_skipped=2"),
+        "got {report}"
+    );
+}
+
 // Loudly, and naming the flag that raises it. A cap nobody was told about
 // reads as "that was all of them".
 #[test]
@@ -105,6 +133,23 @@ fn render_of_no_offences_says_every_rule_is_satisfied() {
     // Assert
     assert!(report.contains("All rules are satisfied."));
     assert!(report.contains("files_scanned=9 offences=0 rules_broken=0"));
+}
+
+// "All rules are satisfied" is only true when all of them ran.
+#[test]
+fn render_of_no_offences_with_a_skipped_rule_says_selected_rules_are_satisfied() {
+    // Arrange & Act
+    let report = ReportPrinter::new(9)
+        .with_rules(vec!["header".to_string()], vec!["tests-layout".to_string()])
+        .render(&[]);
+
+    // Assert
+    assert!(
+        report.contains("All selected rules are satisfied."),
+        "got {report}"
+    );
+    assert!(!report.contains("All rules are satisfied."), "got {report}");
+    assert!(report.contains("not applied: tests-layout"), "got {report}");
 }
 
 // Every offence carries what to do about it, so every row is followed by one.

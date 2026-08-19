@@ -15,6 +15,13 @@ without answering it.
 | `tests-layout` | [R003](ADRs/R003-ADR-TestsLayoutRule.md) | no |
 | `header` | [R001](ADRs/R001-ADR-HeaderRule.md) | `--header-file` |
 
+`--rule <NAME>` applies only the named rules; `--skip <NAME>` subtracts. Both
+repeatable, both default to everything, and skipping wins over selecting. A run
+that switched rules off reports `All selected rules are satisfied`, names what
+was not applied, and carries `rules_applied` / `rules_skipped`. An unknown rule
+name is an error, as is `--rule header` without `--header-file`. See
+[ADR-RuleSelection](ADRs/ADR-RuleSelection.md).
+
 A rule with nothing to work from is left out of the registry rather than
 registered and silently passing. Without `--header-file` the header rule does
 not run, and the report says which rules were applied — so a clean run cannot be

@@ -84,17 +84,15 @@ conditionally-declared test file counts as reached.
 run is not silent overall — but the registry-specific offences are simply
 absent, and nothing says they were skipped rather than satisfied.
 
-## Rules cannot be selected or disabled
+## There is no configuration file
 
-Every registered rule runs. There is no `--rule` to run one, no `--skip` to
-suppress one, and no configuration file. Adopting the tool on an existing
-codebase is therefore all-or-nothing, which is what makes the first run against
-a large repository produce hundreds of offences. `--offence-threshold` caps the
-*report*; it does not help somebody who wants one rule enforced today and the
-rest next quarter.
+`--rule`, `--skip` and `--offence-threshold` all have to be repeated at every
+invocation. A `stern4rust.toml` is the natural home for a fixed selection, and
+is the same decision that will have to carry `--exclude`.
 
 ## No baseline
 
 There is no way to record the current set of offences and fail only on new ones.
-Combined with the point above, a repository that cannot fix everything at once
-cannot gate on this tool at all — it can only run it and read the output.
+`--rule` now gives a repository a way in — enforce one rule today, add the next
+when it is green — but a repository that wants all five enforced against new
+code while tolerating the existing offences still cannot express that.

@@ -13,6 +13,8 @@ use crate::offence_threshold::OffenceThreshold;
 pub struct ReportPrinter {
     files_scanned: usize,
     threshold: OffenceThreshold,
+    applied: Vec<String>,
+    skipped: Vec<String>,
 }
 
 impl ReportPrinter {
@@ -20,6 +22,16 @@ impl ReportPrinter {
         Self {
             files_scanned,
             threshold: OffenceThreshold::default(),
+            applied: Vec::new(),
+            skipped: Vec::new(),
+        }
+    }
+
+    pub fn with_rules(self, applied: Vec<String>, skipped: Vec<String>) -> Self {
+        Self {
+            applied,
+            skipped,
+            ..self
         }
     }
 
@@ -36,7 +48,9 @@ impl ReportPrinter {
     pub fn render(&self, offences: &[Offence]) -> String {
         let mut report = String::from("stern4rust report\n\n");
         if offences.is_empty() {
-            report.push_str("All rules are satisfied.\n\n");
+            report.push_str(self.clean_verdict());
+            report.push_str("\n\n");
+            report.push_str(&self.deselection());
             report.push_str(&self.summary(offences));
             return report;
         }
@@ -52,8 +66,31 @@ impl ReportPrinter {
         }
         report.push('\n');
         report.push_str(&self.omission(offences));
+        report.push_str(&self.deselection());
         report.push_str(&self.summary(offences));
         report
+    }
+
+    // "All rules are satisfied" is only true when all of them ran. Saying it
+    // after --skip turned two off would be the tool telling the comfortable lie
+    // it exists to catch.
+    fn clean_verdict(&self) -> &'static str {
+        if self.skipped.is_empty() {
+            "All rules are satisfied."
+        } else {
+            "All selected rules are satisfied."
+        }
+    }
+
+    fn deselection(&self) -> String {
+        if self.skipped.is_empty() {
+            return String::new();
+        }
+        format!(
+            "note: {} rule(s) were not applied: {}\n\n",
+            self.skipped.len(),
+            self.skipped.join(", ")
+        )
     }
 
     // Named alongside the flag that raises it. A cap nobody was told about reads
@@ -112,10 +149,13 @@ impl ReportPrinter {
     fn summary(&self, offences: &[Offence]) -> String {
         let broken: BTreeSet<&str> = offences.iter().map(|offence| offence.rule).collect();
         format!(
-            "summary: files_scanned={} offences={} rules_broken={}",
+            "summary: files_scanned={} offences={} rules_broken={} rules_applied={} \
+             rules_skipped={}",
             self.files_scanned,
             offences.len(),
-            broken.len()
+            broken.len(),
+            self.applied.len(),
+            self.skipped.len()
         )
     }
 }

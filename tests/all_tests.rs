@@ -13,6 +13,7 @@ pub mod registry_item_tests;
 pub mod registry_parser_tests;
 pub mod report_printer_tests;
 pub mod rule_registry_tests;
+pub mod rule_selection_tests;
 pub mod rules;
 pub mod run_outcome_tests;
 pub mod runner_tests;

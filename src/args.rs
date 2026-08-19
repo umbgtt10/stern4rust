@@ -40,6 +40,17 @@ pub struct Args {
     /// Use 0 for no limit.
     #[arg(long, default_value_t = OffenceThreshold::DEFAULT)]
     pub offence_threshold: usize,
+
+    /// Apply only these rules; repeatable. Omit to apply every rule. Naming one
+    /// makes the selection a whitelist, which is what lets a codebase facing
+    /// hundreds of offences gate on one rule today and the rest as it goes.
+    #[arg(long = "rule")]
+    pub rules: Vec<String>,
+
+    /// Do not apply these rules; repeatable. Subtracted from whatever --rule
+    /// selected, so skipping wins over selecting.
+    #[arg(long = "skip")]
+    pub skipped_rules: Vec<String>,
 }
 
 impl Args {

@@ -90,6 +90,26 @@ fn run_against_this_crate_with_its_own_header_is_clean() {
     assert_eq!(outcome, RunOutcome::Clean);
 }
 
+// A switch that quietly matched nothing would look exactly like a switch that
+// worked, which is the whole reason this is an error rather than a no-op.
+#[test]
+fn run_with_an_unknown_rule_name_is_an_error() {
+    // Arrange
+    let args = args_from(&[
+        "cargo-stern4rust",
+        "--manifest-path",
+        "Cargo.toml",
+        "--skip",
+        "test-file-strucutre",
+    ]);
+
+    // Act
+    let result = Runner::run(args);
+
+    // Assert
+    assert!(result.is_err());
+}
+
 #[test]
 fn run_with_an_unreadable_header_file_is_an_error() {
     // Arrange
@@ -101,6 +121,27 @@ fn run_with_an_unreadable_header_file_is_an_error() {
         "Cargo.toml",
         "--header-file",
         &absent.to_string_lossy(),
+    ]);
+
+    // Act
+    let result = Runner::run(args);
+
+    // Assert
+    assert!(result.is_err());
+}
+
+// Asking for a rule by name and getting an empty run is worse than not asking:
+// the registry's usual habit of leaving an unconfigurable rule out silently is
+// right for an omission and wrong for a request.
+#[test]
+fn run_with_the_header_rule_selected_but_no_header_file_is_an_error() {
+    // Arrange
+    let args = args_from(&[
+        "cargo-stern4rust",
+        "--manifest-path",
+        "Cargo.toml",
+        "--rule",
+        "header",
     ]);
 
     // Act

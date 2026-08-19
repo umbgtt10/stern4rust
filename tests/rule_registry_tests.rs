@@ -13,6 +13,7 @@ use stern4rust::config::Config;
 use stern4rust::offence::Offence;
 use stern4rust::rule::Rule;
 use stern4rust::rule_registry::RuleRegistry;
+use stern4rust::rule_selection::RuleSelection;
 use stern4rust::source_file::SourceFile;
 
 struct AlwaysOffends;
@@ -164,6 +165,41 @@ fn from_config_with_a_header_registers_the_header_rule_alongside_the_others() {
     );
 }
 
+// Naming one rule is what lets a codebase facing hundreds of offences gate on
+// something today rather than on nothing.
+#[test]
+fn from_config_with_a_selection_registers_only_the_selected_rules() {
+    // Arrange
+    let config = Config {
+        selection: RuleSelection::new(vec!["tests-layout".to_string()], Vec::new()),
+        ..Config::default()
+    };
+
+    // Act
+    let registry = RuleRegistry::from_config(&config);
+
+    // Assert
+    assert_eq!(registry.names(), ["tests-layout"]);
+}
+
+#[test]
+fn from_config_with_a_skip_leaves_that_rule_out() {
+    // Arrange
+    let config = Config {
+        selection: RuleSelection::new(Vec::new(), vec!["test-file-structure".to_string()]),
+        ..Config::default()
+    };
+
+    // Act
+    let registry = RuleRegistry::from_config(&config);
+
+    // Assert
+    assert_eq!(
+        registry.names(),
+        ["readable-source", "test-free-source", "tests-layout"]
+    );
+}
+
 // The structure rule needs nothing configured, so it holds from the first run.
 // A tool that does nothing until it is given a flag is a tool nobody switches on.
 #[test]
@@ -183,6 +219,26 @@ fn from_config_without_a_header_registers_the_rules_that_need_no_configuration()
     );
 }
 
+// Built by asking each rule its own name, so the list cannot drift from the
+// rules themselves -- which is what the switches validate against.
+#[test]
+fn known_names_lists_every_rule_the_tool_has() {
+    // Arrange & Act
+    let known = RuleRegistry::known_names();
+
+    // Assert
+    assert_eq!(
+        known,
+        [
+            "readable-source",
+            "test-file-structure",
+            "test-free-source",
+            "tests-layout",
+            "header"
+        ]
+    );
+}
+
 #[test]
 fn names_lists_every_registered_rule() {
     // Arrange
@@ -193,4 +249,19 @@ fn names_lists_every_registered_rule() {
 
     // Assert
     assert_eq!(names, ["always", "never"]);
+}
+
+// Not the same as what went unregistered: a header rule left out for want of a
+// header file was never deselected by anybody, and saying it was would blame
+// the user for an omission they did not make.
+#[test]
+fn skipped_names_lists_what_the_switches_turned_off() {
+    // Arrange
+    let selection = RuleSelection::new(Vec::new(), vec!["tests-layout".to_string()]);
+
+    // Act
+    let skipped = RuleRegistry::skipped_names(&selection);
+
+    // Assert
+    assert_eq!(skipped, ["tests-layout"]);
 }

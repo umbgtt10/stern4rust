@@ -78,6 +78,24 @@ fn render_includes_the_summary_counts() {
     assert_eq!(found["rules_broken"], 1);
 }
 
+// A consumer that could not tell an all-rules run from a one-rule run would
+// read "no offences" as "nothing wrong", which is only true of the rules that
+// were actually applied.
+#[test]
+fn render_lists_the_rules_applied_and_skipped() {
+    // Arrange & Act
+    let found = serde_json::from_str::<Value>(
+        &JsonPrinter::new(1)
+            .with_rules(vec!["header".to_string()], vec!["tests-layout".to_string()])
+            .render(&[]),
+    )
+    .expect("valid json");
+
+    // Assert
+    assert_eq!(found["rules_applied"][0], "header");
+    assert_eq!(found["rules_skipped"][0], "tests-layout");
+}
+
 #[test]
 fn render_names_every_field_of_an_offence() {
     // Arrange

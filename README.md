@@ -41,6 +41,8 @@ cargo stern4rust --format json
 | `--header-file <PATH>` | the header every `.rs` file must open with. Without it the header rule does not run, and the report says which rules did |
 | `--format <text\|json>` | `text` (default) is the table below; `json` is the same run as a document |
 | `--offence-threshold <N>` | how many offences the report prints. Default `100`, `0` for all. The cap is on what is *shown*, never on what is counted |
+| `--rule <NAME>` | apply only these rules; repeatable. Omit to apply every rule |
+| `--skip <NAME>` | do not apply these rules; repeatable. Subtracted from whatever `--rule` selected |
 
 A directory holding its own `Cargo.toml` is not walked: it is a different
 package, its files are that package's to answer for, and cargo would not
@@ -60,7 +62,7 @@ does **not** catch.
 Every `.rs` file can be read and parsed. This one exists because silence is
 indistinguishable from success: a corrupted file produces no rows, and a file
 with no rows looks exactly like a clean file. See
-[004](docs/ADRs/004-ADR-ReadableSourceRule.md) for the incident that forced it.
+[R004](docs/ADRs/R004-ADR-ReadableSourceRule.md) for the incident that forced it.
 
 ### `header`
 
@@ -68,7 +70,7 @@ Every `.rs` file opens with the repository's header, supplied by
 `--header-file` because it is never the same twice — MIT here, Apache 2.0 in a
 sibling repository, a different year again next year. The offence carries the
 whole correct header, not only the line that diverged, so a fix is one pass
-rather than a loop. [001](docs/ADRs/001-ADR-HeaderRule.md)
+rather than a loop. [R001](docs/ADRs/R001-ADR-HeaderRule.md)
 
 ### `test-file-structure`
 
@@ -93,7 +95,7 @@ fn poll_with_an_empty_queue_returns_nothing() {
 Order is what makes a test file skimmable without reading it. Once a constant
 sits below a helper, the file has no shape and every later addition goes
 wherever the last one happened to end.
-[002](docs/ADRs/002-ADR-TestFileStructureRule.md)
+[R002](docs/ADRs/R002-ADR-TestFileStructureRule.md)
 
 ### `test-free-source`
 
@@ -118,7 +120,7 @@ A tests folder is reached through exactly one door: `tests/all_tests.rs`, plus a
 `mod.rs` in every subfolder on the way down. Miss one and the files beneath it
 are never compiled — they still exist, still look like tests, and nothing runs
 them. The failure is silent by construction, because a test that is never
-compiled cannot fail. [003](docs/ADRs/003-ADR-TestsLayoutRule.md)
+compiled cannot fail. [R003](docs/ADRs/R003-ADR-TestsLayoutRule.md)
 
 ## Output
 
@@ -177,7 +179,44 @@ Because offences are sorted by file then line, what survives the cap is whole
 files from the top rather than a scattering across the tree: fix what is shown,
 re-run, get the next file.
 
-### `--format json`
+### Adopting it on an existing codebase
+
+A first run against a codebase that has never been checked will find hundreds of
+offences, and a gate nobody can turn on is a gate nobody turns on. `--rule`
+narrows the run to what you are ready to enforce:
+
+```bash
+cargo stern4rust --header-file docs/header.txt --rule header
+```
+
+Measured against `grip4rust`, which has never run this tool:
+
+| run | offences |
+|---|---:|
+| all five rules | 233 |
+| `--rule header` | **6** |
+
+233 is a wall; 6 is an afternoon. Enforce one rule today, add the next when the
+first is green.
+
+`--skip` is the other direction — everything except the one that is noisy for
+you. Skipping wins over selecting, so a rule named in both is not applied.
+
+**A run with rules switched off never claims otherwise.** It reports
+`All selected rules are satisfied`, names what was not applied, and carries
+`rules_applied` / `rules_skipped` in the summary and the JSON:
+
+```text
+note: 4 rule(s) were not applied: readable-source, test-file-structure, test-free-source, tests-layout
+
+summary: files_scanned=94 offences=6 rules_broken=1 rules_applied=1 rules_skipped=4
+```
+
+An unknown rule name is an error, not a switch that quietly matches nothing —
+as is `--rule header` without `--header-file`, which would otherwise apply no
+rules at all. Both exit `1`.
+
+## `--format json`
 
 The table is sized to its contents and meant for a person; nothing can parse it
 reliably, since paths and descriptions both contain spaces. `--format json`

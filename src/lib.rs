@@ -15,6 +15,7 @@ pub mod registry_parser;
 pub mod report_printer;
 pub mod rule;
 pub mod rule_registry;
+pub mod rule_selection;
 pub mod rules;
 pub mod run_outcome;
 pub mod runner;

@@ -5,6 +5,7 @@
 use crate::config::Config;
 use crate::offence::Offence;
 use crate::rule::Rule;
+use crate::rule_selection::RuleSelection;
 use crate::rules::header_rule::HeaderRule;
 use crate::rules::readable_source_rule::ReadableSourceRule;
 use crate::rules::test_file_structure_rule::TestFileStructureRule;
@@ -29,20 +30,47 @@ impl RuleRegistry {
         // says until you tell it.
         // readable-source comes first because it is the one rule whose failure
         // explains every other rule's silence on the same file.
-        let mut rules: Vec<Box<dyn Rule>> = vec![
+        let mut candidates: Vec<Box<dyn Rule>> = vec![
             Box::new(ReadableSourceRule::new()),
             Box::new(TestFileStructureRule::new()),
             Box::new(TestFreeSourceRule::new()),
             Box::new(TestsLayoutRule::new()),
         ];
         if !config.expected_header.is_empty() {
-            rules.push(Box::new(HeaderRule::new(config.expected_header.clone())));
+            candidates.push(Box::new(HeaderRule::new(config.expected_header.clone())));
         }
+        let rules = candidates
+            .into_iter()
+            .filter(|rule| config.selection.includes(rule.name()))
+            .collect();
         Self { rules }
     }
 
     pub fn new(rules: Vec<Box<dyn Rule>>) -> Self {
         Self { rules }
+    }
+
+    // Every rule this tool has, whether or not this run configured or selected
+    // it. Built by asking each rule its own name, so the list cannot drift from
+    // the rules themselves.
+    pub fn known_names() -> Vec<&'static str> {
+        vec![
+            ReadableSourceRule::new().name(),
+            TestFileStructureRule::new().name(),
+            TestFreeSourceRule::new().name(),
+            TestsLayoutRule::new().name(),
+            HeaderRule::NAME,
+        ]
+    }
+
+    // What the switches turned off, which is not the same as what went
+    // unregistered: a header rule left out for want of a header file was never
+    // deselected by anybody.
+    pub fn skipped_names(selection: &RuleSelection) -> Vec<&'static str> {
+        Self::known_names()
+            .into_iter()
+            .filter(|name| !selection.includes(name))
+            .collect()
     }
 
     pub fn is_empty(&self) -> bool {

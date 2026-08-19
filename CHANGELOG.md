@@ -6,7 +6,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+
+- **`--rule <NAME>` and `--skip <NAME>`**, both repeatable. Naming any rule with
+  `--rule` makes the selection a whitelist; `--skip` subtracts from whatever is
+  left. The default is unchanged: every rule, nothing excluded. Skipping wins
+  over selecting, because between two readings of a contradictory instruction
+  the one that checks less is the one that cannot quietly claim more.
+
+  This exists for adoption. The survey against the six sibling tools found 717
+  offences across 338 files and not one repository that could gate on this tool
+  — `grip4rust` alone faces 233, which nobody switches on. `--rule header`
+  narrows that same run to 6. A gate on one rule is a gate somebody turns on
+  this afternoon.
+- `rules_applied` and `rules_skipped` in the summary line and the JSON document,
+  and a `note:` line naming the rules that were not applied. A run with rules
+  switched off reports `All selected rules are satisfied` rather than
+  `All rules are satisfied` — what was not looked at is part of the finding.
+- `RuleRegistry::known_names`, built by asking each rule its own name so the
+  list the switches validate against cannot drift from the rules themselves.
+
+### Changed
+
+- An unknown rule name is an error (exit `1`), not a switch that quietly matches
+  nothing. `--skip test-file-strucutre` that silently skipped nothing would look
+  exactly like a switch that worked. The error lists the valid names.
+- `--rule header` without `--header-file` is an error (exit `1`). The registry's
+  habit of leaving an unconfigurable rule out silently is right for an omission
+  and wrong for a request: asking for a rule by name and getting an empty run is
+  worse than not asking.
+
+### Fixed
+
+- Four ADR links in `README.md` still pointed at the pre-`R`-prefix filenames
+  and were broken.
 
 ## [0.2.0]
 

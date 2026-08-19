@@ -19,6 +19,8 @@ use crate::offence_threshold::OffenceThreshold;
 pub struct JsonPrinter {
     files_scanned: usize,
     threshold: OffenceThreshold,
+    applied: Vec<String>,
+    skipped: Vec<String>,
 }
 
 impl JsonPrinter {
@@ -26,6 +28,19 @@ impl JsonPrinter {
         Self {
             files_scanned,
             threshold: OffenceThreshold::default(),
+            applied: Vec::new(),
+            skipped: Vec::new(),
+        }
+    }
+
+    // A consumer that could not tell an all-rules run from a one-rule run would
+    // read "no offences" as "nothing wrong", which is only true of the rules
+    // that were actually applied.
+    pub fn with_rules(self, applied: Vec<String>, skipped: Vec<String>) -> Self {
+        Self {
+            applied,
+            skipped,
+            ..self
         }
     }
 
@@ -49,6 +64,8 @@ impl JsonPrinter {
             "offences_omitted": self.threshold.omitted(offences),
             "offence_threshold": self.threshold.limit(),
             "rules_broken": broken.len(),
+            "rules_applied": self.applied,
+            "rules_skipped": self.skipped,
             "offences": shown,
         });
         serde_json::to_string_pretty(&document).unwrap_or_default()

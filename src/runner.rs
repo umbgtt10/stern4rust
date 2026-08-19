@@ -14,6 +14,8 @@ use crate::offence_threshold::OffenceThreshold;
 use crate::output_format::OutputFormat;
 use crate::report_printer::ReportPrinter;
 use crate::rule_registry::RuleRegistry;
+use crate::rule_selection::RuleSelection;
+use crate::rules::header_rule::HeaderRule;
 use crate::run_outcome::RunOutcome;
 use crate::source_reader::SourceReader;
 use crate::source_walker::SourceWalker;
@@ -38,6 +40,7 @@ pub struct Runner;
 impl Runner {
     pub fn run(args: Args) -> Result<RunOutcome> {
         let config = Self::config_from(args)?;
+        Self::validate_selection(&config)?;
         let registry = RuleRegistry::from_config(&config);
         if registry.is_empty() {
             return Err(anyhow::anyhow!(
@@ -74,8 +77,33 @@ impl Runner {
         // business rather than any rule's -- a rule states facts, and their
         // order on the page is not one of them.
         offences.sort_by(|left, right| left.sort_key().cmp(&right.sort_key()));
-        Self::report(&config, files_scanned, &offences);
+        Self::report(&config, &registry, files_scanned, &offences);
         Ok(RunOutcome::of(offences.len()))
+    }
+
+    // A misspelled rule name is an error rather than a switch that quietly
+    // matches nothing, and asking for the header rule without a header file is
+    // an error rather than an empty run. Both would otherwise look exactly like
+    // a run that worked.
+    fn validate_selection(config: &Config) -> Result<()> {
+        let known = RuleRegistry::known_names();
+        let unknown = config.selection.unknown_in(&known);
+        if !unknown.is_empty() {
+            return Err(anyhow::anyhow!(
+                "unknown rule name(s): {} -- the rules are: {}",
+                unknown.join(", "),
+                known.join(", ")
+            ));
+        }
+        if config.selection.selects_explicitly(HeaderRule::NAME)
+            && config.expected_header.is_empty()
+        {
+            return Err(anyhow::anyhow!(
+                "--rule {} needs --header-file, otherwise the run would apply no rules at all",
+                HeaderRule::NAME
+            ));
+        }
+        Ok(())
     }
 
     fn config_from(args: Args) -> Result<Config> {
@@ -89,18 +117,32 @@ impl Runner {
             expected_header,
             format: args.format,
             offence_threshold: OffenceThreshold::new(args.offence_threshold),
+            selection: RuleSelection::new(args.rules, args.skipped_rules),
         })
     }
 
-    fn report(config: &Config, files_scanned: usize, offences: &[Offence]) {
+    fn report(
+        config: &Config,
+        registry: &RuleRegistry,
+        files_scanned: usize,
+        offences: &[Offence],
+    ) {
         let threshold = config.offence_threshold;
+        let applied = Self::owned(&registry.names());
+        let skipped = Self::owned(&RuleRegistry::skipped_names(&config.selection));
         match config.format {
             OutputFormat::Text => ReportPrinter::new(files_scanned)
                 .with_threshold(threshold)
+                .with_rules(applied, skipped)
                 .print(offences),
             OutputFormat::Json => JsonPrinter::new(files_scanned)
                 .with_threshold(threshold)
+                .with_rules(applied, skipped)
                 .print(offences),
         }
+    }
+
+    fn owned(names: &[&str]) -> Vec<String> {
+        names.iter().map(|name| (*name).to_string()).collect()
     }
 }
