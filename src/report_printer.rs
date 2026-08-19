@@ -4,6 +4,7 @@
 
 use std::collections::BTreeSet;
 
+use crate::column_widths::ColumnWidths;
 use crate::offence::Offence;
 use crate::offence_threshold::OffenceThreshold;
 
@@ -190,35 +191,5 @@ impl ReportPrinter {
             self.skipped.len(),
             self.unconfigured.len()
         )
-    }
-}
-
-struct ColumnWidths {
-    file: usize,
-    line: usize,
-    rule: usize,
-    description: usize,
-}
-
-impl ColumnWidths {
-    fn of(offences: &[Offence]) -> Self {
-        Self {
-            file: Self::widest(offences.iter().map(|offence| offence.file.len()), "file"),
-            line: Self::widest(
-                offences
-                    .iter()
-                    .map(|offence| offence.line.to_string().len()),
-                "line",
-            ),
-            rule: Self::widest(offences.iter().map(|offence| offence.rule.len()), "rule"),
-            description: Self::widest(
-                offences.iter().map(|offence| offence.description.len()),
-                "offence",
-            ),
-        }
-    }
-
-    fn widest<I: Iterator<Item = usize>>(lengths: I, heading: &str) -> usize {
-        lengths.max().unwrap_or(0).max(heading.len())
     }
 }

@@ -14,6 +14,7 @@ without answering it.
 | `test-free-source` | [R005](ADRs/R005-ADR-TestFreeSourceRule.md) | no |
 | `tests-layout` | [R003](ADRs/R003-ADR-TestsLayoutRule.md) | no |
 | `module-registry` | [R006](ADRs/R006-ADR-ModuleRegistryRule.md) | no |
+| `single-implemented-type` | [R007](ADRs/R007-ADR-SingleImplementedTypeRule.md) | no |
 | `header` | [R001](ADRs/R001-ADR-HeaderRule.md) | `--header-file` |
 
 `--rule <NAME>` applies only the named rules; `--skip <NAME>` subtracts. Both
@@ -186,6 +187,35 @@ filenames and gives a different answer about a private `mod`.
 `lib.rs` omitting a module that exists on disk passes, the same gap
 `tests-layout` has. It says nothing about `main.rs`, which is an entry point
 rather than an index and legitimately holds code.
+
+## `single-implemented-type`
+
+A source file outside `tests/` holds at most one type that carries behaviour: at
+most one `struct` or `enum` that is both **declared in the file** and has **at
+least one `impl` block** in it. Structs and enums without impl blocks are
+unlimited -- plain data is not a subject, and a file's payload types belong
+beside the subject that uses them.
+
+Both halves do work. *Declared here*, so an `impl Display for SomeoneElsesType`
+does not make this file that type's home. *At least one impl block*, inherent or
+trait, because both are behaviour -- though `#[derive(...)]` is not an impl block
+in the syntax tree and correctly does not count.
+
+The first implemented type is the subject; every later one is reported, so the
+offence names the type to move. The walk descends into inline modules, since
+wrapping a second subject in `mod detail { ... }` changes nothing a reader cares
+about.
+
+| offence | correction |
+|---|---|
+| `ColumnWidths` is a second type with an impl block; this file's subject is already `ReportPrinter` | move `ColumnWidths` and its impl blocks into `column_widths.rs` |
+
+`tests/` is exempt: a test file legitimately holds several fakes that each carry
+an impl block, which is the shape `test-file-structure` asks for.
+
+**Does not catch:** size. One type with forty methods satisfies this completely
+-- that is `crap4rust`'s question. It says nothing about free functions, and does
+not treat a `trait` with default method bodies as a subject.
 
 ## `tests-layout`
 

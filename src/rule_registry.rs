@@ -9,6 +9,7 @@ use crate::rule_selection::RuleSelection;
 use crate::rules::header_rule::HeaderRule;
 use crate::rules::module_registry_rule::ModuleRegistryRule;
 use crate::rules::readable_source_rule::ReadableSourceRule;
+use crate::rules::single_implemented_type_rule::SingleImplementedTypeRule;
 use crate::rules::test_file_structure_rule::TestFileStructureRule;
 use crate::rules::test_free_source_rule::TestFreeSourceRule;
 use crate::rules::tests_layout_rule::TestsLayoutRule;
@@ -34,6 +35,7 @@ impl RuleRegistry {
         let mut candidates: Vec<Box<dyn Rule>> = vec![
             Box::new(ReadableSourceRule::new()),
             Box::new(ModuleRegistryRule::new()),
+            Box::new(SingleImplementedTypeRule::new()),
             Box::new(TestFileStructureRule::new()),
             Box::new(TestFreeSourceRule::new()),
             Box::new(TestsLayoutRule::new()),
@@ -59,6 +61,7 @@ impl RuleRegistry {
         vec![
             ReadableSourceRule::new().name(),
             ModuleRegistryRule::new().name(),
+            SingleImplementedTypeRule::new().name(),
             TestFileStructureRule::new().name(),
             TestFreeSourceRule::new().name(),
             TestsLayoutRule::new().name(),

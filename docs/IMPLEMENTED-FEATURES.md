@@ -11,6 +11,9 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
   header, inner attributes, `extern crate alloc;` and `pub mod` declarations
   only. Catches the re-export shim where it forms.
   [R006](ADRs/R006-ADR-ModuleRegistryRule.md)
+- **`single-implemented-type`** -- a source file holds at most one type that is
+  both declared there and carries an impl block. Plain data declarations are
+  unlimited. [R007](ADRs/R007-ADR-SingleImplementedTypeRule.md)
 - `RegistryPolicy` -- the shared seam letting one parser answer the registry
   question differently for `src/` and `tests/`.
 

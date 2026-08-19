@@ -8,6 +8,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **`single-implemented-type`**, the seventh rule. A source file outside
+  `tests/` holds at most one type that carries behaviour: at most one struct or
+  enum both declared in the file and given at least one impl block there.
+  Structs and enums without impl blocks are unlimited, because plain data is not
+  a subject and a file's payload types belong beside the subject that uses them.
+
+  Both halves of that conjunction do work. *Declared here* means an
+  `impl Display for SomeoneElsesType` does not make this file that type's home.
+  *At least one impl block* counts trait impls as well as inherent ones, since
+  both are behaviour -- `#[derive(...)]` is not an impl block in the syntax tree
+  and correctly does not count.
+
+  Measured across eight repositories before it was written, exactly one file
+  broke it: this tool's own `src/report_printer.rs`, holding `ReportPrinter` and
+  `ColumnWidths`. `ColumnWidths` now lives in `column_widths.rs` with three
+  tests it never had while it was a private struct in another type's file.
 - **`module-registry`**, the sixth rule. A `lib.rs` or `mod.rs` outside `tests/`
   is an index: it holds the header, the crate's inner attributes,
   `extern crate alloc;` and `pub mod` declarations, and nothing else.

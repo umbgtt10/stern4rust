@@ -31,6 +31,7 @@ rule; anything without is the machinery the rules run on.
 | [R002](R002-ADR-TestFileStructureRule.md) | `test-file-structure` | A test file is four sections in a fixed order, each alphabetical, with spacing as part of the shape — and `Helpers` is defined by exclusion so the set of item kinds stays closed. |
 | [R003](R003-ADR-TestsLayoutRule.md) | `tests-layout` | A tests folder is reached through exactly one `all_tests.rs` and a `mod.rs` in every subfolder on the way down. |
 | [R004](R004-ADR-ReadableSourceRule.md) | `readable-source` | Every `.rs` file must be readable and must parse, and failing either is an offence rather than a reason to say nothing — a file the tool cannot read otherwise reads as a file with nothing wrong with it. |
+| [R007](R007-ADR-SingleImplementedTypeRule.md) | `single-implemented-type` | A source file holds at most one type that is both declared there and carries an impl block. Plain data declarations are unlimited -- they are not subjects. |
 | [R006](R006-ADR-ModuleRegistryRule.md) | `module-registry` | A `lib.rs` or `mod.rs` outside `tests/` holds the header, inner attributes, `extern crate alloc;` and `pub mod` declarations -- nothing else. Catches the re-export shim where it forms. |
 | [R005](R005-ADR-TestFreeSourceRule.md) | `test-free-source` | Tests live in `tests/` and the production source tree carries none of them; `#[cfg(test)]`, `#[cfg_attr(test, ...)]` and test-attributed functions are all offences outside `tests/`. The line is `test` — feature gates ship to somebody and are left alone. |
 
