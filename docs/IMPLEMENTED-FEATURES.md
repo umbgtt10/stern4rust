@@ -7,6 +7,12 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
 ### Rules
 
+- **`imported-paths`** -- a function is called through a name the file imported,
+  not through a path. One imported segment stays legal (`use std::fs;` with
+  `fs::read_to_string(...)`); a path no import names does not. Type qualifiers
+  are left alone, told apart from modules by case. The first rule to apply to
+  test files as well as productive ones.
+  [R008](ADRs/R008-ADR-ImportedPathsRule.md)
 - **`module-registry`** -- a `lib.rs` or `mod.rs` outside `tests/` holds the
   header, inner attributes, `extern crate alloc;` and `pub mod` declarations
   only. Catches the re-export shim where it forms.
@@ -16,6 +22,9 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
   unlimited. [R007](ADRs/R007-ADR-SingleImplementedTypeRule.md)
 - `RegistryPolicy` -- the shared seam letting one parser answer the registry
   question differently for `src/` and `tests/`.
+- `Rule::is_configured` -- a rule answers for itself whether it has what it needs,
+  so the registry names no rule in particular and keeps one list of rules rather
+  than two.
 
 ## Version 0.3.0
 

@@ -1,6 +1,6 @@
 # Rules
 
-Five rules, each independent, each naming itself in the report. This is the
+Eight rules, each independent, each naming itself in the report. This is the
 reference; the reasoning behind each one is in its ADR.
 
 Every offence carries a **correction** as well as a description — what to do,
@@ -10,6 +10,7 @@ without answering it.
 | rule | ADR | needs configuration |
 |---|---|---|
 | `readable-source` | [R004](ADRs/R004-ADR-ReadableSourceRule.md) | no |
+| `imported-paths` | [R008](ADRs/R008-ADR-ImportedPathsRule.md) | no |
 | `test-file-structure` | [R002](ADRs/R002-ADR-TestFileStructureRule.md) | no |
 | `test-free-source` | [R005](ADRs/R005-ADR-TestFreeSourceRule.md) | no |
 | `tests-layout` | [R003](ADRs/R003-ADR-TestsLayoutRule.md) | no |
@@ -93,13 +94,24 @@ file whose whole job is to be scannable the hardest to scan. Their shape is
 `tests-layout`'s business.
 
 **Imports whose order rustfmt decides are left alone.** rustfmt sorts `self`,
-`super` and `crate` ahead of every other path, and an uppercase-initial path
-behind them all -- neither matches the alphabet. Demanding the alphabet there
-would make the file unsatisfiable rather than merely wrong, since `cargo fmt`
-runs first and writes the other order back. So the alphabetic check stands down
-on any pair involving such a path, and still orders everything else. This is
-what lets a shared helper live inside the tests tree: a sibling reaches it as
-`use crate::support::builders::a_widget;`, which is exactly the trigger.
+`super` and `crate` ahead of every other path, and treats case as significant in
+*opposite* directions at the two levels: an uppercase-initial crate sorts behind
+every lowercase one (`Bbb::gamma` after `zzz::last`), while an uppercase-initial
+segment later in a path sorts ahead of its lowercase siblings
+(`serde_json::Value` before `serde_json::from_str`). None of that matches the
+alphabet. Demanding the alphabet there would make the file unsatisfiable rather
+than merely wrong, since `cargo fmt` runs first and writes the other order back.
+
+So the check stands down, and the decision is **per pair** rather than per
+import: where the two paths first differ, if the segments there are of different
+case, rustfmt decides. Keying it on an import's first segment alone was a bug --
+`use serde_json::Value;` beside `use serde_json::from_str;` share theirs and part
+company at the second, which left a file no edit could make green. Everything
+else is still ordered.
+
+Two shapes trigger it: a shared helper inside the tests tree, reached as
+`use crate::support::builders::a_widget;`, and a same-crate pair diverging by
+case.
 
 | offence | correction |
 |---|---|
@@ -111,6 +123,48 @@ what lets a shared helper live inside the tests tree: a sibling reaches it as
 `// Arrange`, `// Act`, `// Assert` inside a body, and the
 `<method>_<description>_<outcome>` naming pattern — is not checked. A file that
 does not parse reports nothing here; `readable-source` reports it instead.
+
+## `imported-paths`
+
+A function is called through a name this file imported, not through a path.
+
+A file's `use` statements are its list of dependencies. `syn::parse_file(...)`
+compiles with nothing in the file mentioning `syn`, so a reader scanning the top
+to find out what this file needs is quietly given a wrong answer.
+`std::env::args()` is a different cost: it spells out at the call site a route
+that belongs at the top, and spells it out again at every other call.
+
+Three shapes are left alone. An **unqualified** call has nothing to import. A
+**type qualifier** -- `Widget::new()`, `Self::inner()` -- is not a path standing
+in for an import, since the type itself was imported and the qualifier says which
+type is being constructed. And **one imported segment** -- `use std::fs;` with
+`fs::read_to_string(...)` -- is the point of the rule rather than an exception to
+it: it names the route once and still says at the call site which module the
+function came from. A bare `read_to_string(...)` would satisfy a stricter rule
+while saying strictly less.
+
+Module and type are told apart by **case**, a convention rather than a
+resolution, because this tool has no type information.
+
+| offence | correction |
+|---|---|
+| `syn::parse_file` is reached through a path | add `use syn::parse_file;` and call `parse_file` |
+| `std::env::args` is reached through a path | add `use std::env;` and call `env::args` |
+
+The two shapes split differently on purpose. A two-segment path imports whole,
+because `use syn;` would be legal and leave the call site unchanged. A longer one
+imports all but the last segment, keeping `env` because `env::args()` reads
+better than a bare `args()`.
+
+Applies to **both** productive and test files -- the only rule so far with no
+`tests/` exemption, because a test file has the same reader and the same list of
+dependencies at its top.
+
+**Does not catch:** paths outside call position. A `let x: std::path::PathBuf` or
+a `std::fmt::Result` return type passes, since the standard is about function and
+method qualifiers. Macros are not checked -- `serde_json::json!(...)` is an
+`ExprMacro`, not a call. And a lowercase-named type or an uppercase-named module
+is judged by its case rather than by what it is.
 
 ## `test-free-source`
 

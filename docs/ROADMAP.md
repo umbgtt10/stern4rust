@@ -46,10 +46,16 @@ this. The changelog must call out that an unreadable source file moved from exit
 
 ### Phase 2: Excludability
 
-The largest source of wrong answers today. `--exclude <glob>`, repeatable,
-matched against the package-relative path. Closes the 101 grip4rust fixture
-offences that the nested-package skip cannot reach, and gives any repository a
-way to keep generated or vendored trees out of the report.
+`--exclude <glob>`, repeatable, matched against the package-relative path, for
+trees a repository cannot move: vendored source, generated output.
+
+The case that motivated it has since been closed by layout instead.
+`grip4rust` and `crap4rust` both moved their fixture trees out of the published
+package into a sibling `fixture/`, which is the better answer where it is
+available -- analysis input is input, and it does not belong inside the package
+that ships. What remains for `--exclude` is the tree that genuinely cannot move,
+and the requirement that an exclusion be **visible in the report** rather than a
+silent skip, which is the mistake the nested-package skip made.
 
 Likely paired with a `stern4rust.toml` so the excludes live with the repository
 rather than in every invocation.
@@ -57,10 +63,10 @@ rather than in every invocation.
 ### Phase 3: Baselines
 
 Rule selection shipped and gives a repository a way in: enforce one rule today,
-add the next when it is green. Measured on `grip4rust`, that is the difference
-between a 233-offence report and a 6-offence one.
+add the next when it is green. Measured on `braintax4rust`, that is the
+difference between a 204-offence report and a 50-offence one.
 
-What it does not give is a way to enforce all five rules against *new* code
+What it does not give is a way to enforce all eight rules against *new* code
 while tolerating what is already there. A baseline — record the current
 offences, fail only on new ones — is what turns a 600-offence first run from a
 reason not to adopt into a starting point. It needs a checked-in state file,
