@@ -32,6 +32,14 @@ impl Rule for AlwaysOffends {
             "fix it".into(),
         )]
     }
+
+    fn check_workspace(&self, _files: &[SourceFile]) -> Vec<Offence> {
+        Vec::new()
+    }
+
+    fn is_configured(&self) -> bool {
+        true
+    }
 }
 
 fn config_with_header(lines: &[&str]) -> Config {
@@ -55,6 +63,14 @@ impl Rule for NeverOffends {
     fn check(&self, _file: &SourceFile) -> Vec<Offence> {
         Vec::new()
     }
+
+    fn check_workspace(&self, _files: &[SourceFile]) -> Vec<Offence> {
+        Vec::new()
+    }
+
+    fn is_configured(&self) -> bool {
+        true
+    }
 }
 
 struct OffendsPerWorkspace;
@@ -62,6 +78,10 @@ struct OffendsPerWorkspace;
 impl Rule for OffendsPerWorkspace {
     fn name(&self) -> &'static str {
         "workspace"
+    }
+
+    fn check(&self, _file: &SourceFile) -> Vec<Offence> {
+        Vec::new()
     }
 
     fn check_workspace(&self, files: &[SourceFile]) -> Vec<Offence> {
@@ -72,6 +92,10 @@ impl Rule for OffendsPerWorkspace {
             format!("saw {} files", files.len()),
             "fix it".to_string(),
         )]
+    }
+
+    fn is_configured(&self) -> bool {
+        true
     }
 }
 
@@ -161,6 +185,7 @@ fn from_config_with_a_header_registers_the_header_rule_alongside_the_others() {
             "directory-subfolder-count",
             "imported-paths",
             "module-registry",
+            "pure-traits",
             "registry-completeness",
             "single-implemented-type",
             "test-file-structure",
@@ -210,6 +235,7 @@ fn from_config_with_a_skip_leaves_that_rule_out() {
             "directory-subfolder-count",
             "imported-paths",
             "module-registry",
+            "pure-traits",
             "registry-completeness",
             "single-implemented-type",
             "test-free-source",
@@ -236,6 +262,7 @@ fn from_config_without_a_header_registers_the_rules_that_need_no_configuration()
             "directory-subfolder-count",
             "imported-paths",
             "module-registry",
+            "pure-traits",
             "registry-completeness",
             "single-implemented-type",
             "test-file-structure",
@@ -263,6 +290,7 @@ fn known_names_lists_every_rule_the_tool_has() {
             "directory-subfolder-count",
             "imported-paths",
             "module-registry",
+            "pure-traits",
             "registry-completeness",
             "single-implemented-type",
             "test-file-structure",

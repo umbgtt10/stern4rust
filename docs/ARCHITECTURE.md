@@ -16,7 +16,7 @@ Args ──▶ Config ──▶ RuleRegistry
                          │
 ManifestResolver ──▶ package roots
                          │
-                   SourceWalker  (skips target/, .git/, nested packages)
+                   SourceWalker  (skips target/ and .git/, nothing else)
                          │
                    SourceReader  ──▶ SourceFile   or  Offence
                          │
@@ -32,7 +32,7 @@ ManifestResolver ──▶ package roots
                     RunOutcome ──▶ exit code
 ```
 
-The whole package is read before any of it is judged. Two of the rules answer
+The whole package is read before any of it is judged. Five of the rules answer
 questions about the *tree* rather than about a file, and one of them reports
 offences against files that do not exist — see
 [ADR-WorkspaceRuleSeam](ADRs/ADR-WorkspaceRuleSeam.md). Reading first also
@@ -46,20 +46,27 @@ happened to return files in.
 | `Args` | clap surface, plus the argv fixup every cargo subcommand needs |
 | `Config` | what a run was asked to do, decoupled from how it was asked |
 | `ManifestResolver` | package name → source root, via `cargo_metadata`; also relativises paths |
-| `SourceWalker` | every `.rs` path under a root, minus `target/`, `.git/` and nested packages |
+| `SourceWalker` | every `.rs` path under a root, minus `target/` and `.git/` |
 | `SourceReader` | path → `SourceFile`, or an `Offence` if it cannot be read |
 | `SourceFile` | normalised contents: BOM stripped, `\r` stripped, path forward-slashed |
-| `Rule` | the seam: `check` for one file, `check_workspace` for the set |
+| `Rule` | the seam: `name`, `check` for one file, `check_workspace` for the set, `is_configured`. No method has a default body, so every rule answers all four |
 | `RuleRegistry` | the one place that knows which rules exist |
 | `Offence` | the currency every rule reports in |
 | `OffenceThreshold` | how much of the report is printed |
 | `ReportPrinter` / `JsonPrinter` | the two renderings |
 | `RunOutcome` | clean or rules-broken, turned into an exit code only by `main` |
 
-Three parsers sit beside the rules, each turning a file into the items one rule
-reasons about: `TestFileParser` (sections and ordering), `RegistryParser`
-(strays in an `all_tests.rs` or `mod.rs`), and `UnitTestFinder` (tests and test
-machinery in the source tree).
+A set of finders and parsers sits beside the rules in `src/finding/`, each
+turning a file into the items one rule reasons about: `TestFileParser` (sections
+and ordering), `RegistryParser` (strays in an `all_tests.rs` or `mod.rs`),
+`UnitTestFinder` (tests and test machinery in the source tree),
+`ImplementedTypeFinder`, `QualifiedCallFinder`, `ModuleDeclarationFinder`,
+`PublicEntryPointFinder` and `CallSiteFinder`. `PackageTree` models the
+directory shape the tree-wide rules ask about.
+
+A rule needs one only when the finding is worth testing on its own. The simplest
+rules — `pure-traits`, `test-naming` — parse the file directly and keep the
+whole answer in one place.
 
 ## Data model
 
@@ -87,13 +94,18 @@ offences — there is no "expected text" for a missing folder.
 
 ## Adding a rule
 
-1. a file under `src/rules/`, implementing `Rule`
-2. one line in `RuleRegistry::from_config`
-3. a mirrored test file under `tests/rules/`
-4. an `R<NNN>-ADR-<Name>.md` in `docs/ADRs/`
+1. a file under `src/rules/`, implementing `Rule` — all four methods, since none
+   of them has a default body
+2. a `pub mod` line in `src/rules/mod.rs`
+3. an import and one entry in `RuleRegistry::all`, the single list both
+   `from_config` and `known_names` read
+4. a mirrored test file under `tests/rules/`, declared in `tests/rules/mod.rs`
+5. an `R<NNN>-ADR-<Name>.md` in `docs/ADRs/`, and a section in `RULES.md`
 
 Nothing else in the tool changes. A rule does not walk, does not print, and does
-not know which other rules exist.
+not know which other rules exist. The rule-name lists in
+`tests/rule_registry_tests.rs` are the one place that has to agree, and they fail
+loudly when it does not.
 
 ## Analysis is AST-structural
 

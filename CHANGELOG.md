@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.6.0] - 2026-08-19
 
 ### Added
 
@@ -36,6 +36,52 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   shipped untested in 0.4.0 -- `with_fixed`, `with_baseline`, `with_config_file`
   on both printers -- and `signature`, a method written minutes earlier in the
   rule's own supporting type.
+
+- **`pure-traits`**, the fourteenth: a trait declares, it does not implement. No
+  method in a `trait` declaration in `src/` may have a default body.
+  [R014](docs/ADRs/R014-ADR-PureTraitsRule.md)
+
+  Only one direction needed code. That every implementor implements every method
+  is `rustc`'s `E0046` and needs no rule -- the same split
+  [R009](docs/ADRs/R009-ADR-RegistryCompletenessRule.md) made, where the
+  missing-file direction was likewise already a compile error.
+
+  Four offences across the family, and three of them were here. `Rule` carried
+  defaults on `check`, `check_workspace` and `is_configured`, so no rule's file
+  said which question it answered -- an absent `check` meant "this rule is about
+  the tree" or "this rule is half-written", indistinguishably. `is_configured`
+  defaulted to `true`, which made every rule in this tool configured because
+  nobody said otherwise: the silent pass this tool exists to catch, in the tool
+  itself. The fourth is `Collection::is_empty` in `etheram-core`.
+
+  The other six repositories hold 21 trait methods between them and not one
+  default body. The standard was already being kept everywhere except in the
+  tool that was going to enforce it.
+
+  Removing the three defaults cost **27 bodies**: an empty `check_workspace` for
+  the nine per-file rules, an empty `check` for the five whose subject is the
+  tree, and `is_configured` returning `true` for the thirteen needing no
+  configuration.
+
+  Associated types and associated constants may still carry defaults -- neither
+  is behaviour. Blanket impls are not caught, and are recorded as the rule's
+  sharpest gap.
+
+### Changed
+
+- **Breaking, for anyone implementing `Rule` outside this crate.** `check`,
+  `check_workspace` and `is_configured` no longer have default bodies, so an
+  existing implementor stops compiling with `E0046` until it supplies all four
+  methods. The fix is mechanical -- `Vec::new()` for whichever of the two check
+  methods that rule does not answer, `true` for `is_configured` unless the rule
+  needs configuration -- and the compiler names every one it is missing.
+
+  This is the rule enforcing itself, and it is the shape of change the tool is
+  meant to force: the trait now states what an implementor must decide instead
+  of deciding it for them. Called out here rather than left to be discovered,
+  the same way 0.2.0 called out an unreadable file moving from exit `1` to exit
+  `2`. The library surface is still uncommitted (Phase 6 in
+  [ROADMAP.md](docs/ROADMAP.md)); this is a pre-1.0 minor bump.
 
 ### Fixed
 

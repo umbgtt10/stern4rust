@@ -100,6 +100,10 @@ impl Rule for RegistryCompletenessRule {
         "registry-completeness"
     }
 
+    fn check(&self, _file: &SourceFile) -> Vec<Offence> {
+        Vec::new()
+    }
+
     // A fact about a directory rather than about a file: the file that proves
     // the offence is the one that is missing a line, and the file that suffers
     // is a different one entirely.
@@ -109,5 +113,9 @@ impl Rule for RegistryCompletenessRule {
             .iter()
             .flat_map(|directory| self.undeclared_in(&tree, files, directory))
             .collect()
+    }
+
+    fn is_configured(&self) -> bool {
+        true
     }
 }

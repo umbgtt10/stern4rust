@@ -32,17 +32,17 @@ moment nobody is checking.
 
 ## Current Baseline
 
-Five rules, two output formats, 242 tests, both gates green. Surveyed against
-six sibling repositories: 338 files, 717 offences, of which 101 are known
-false positives from unmanifested fixture trees.
+Fourteen rules, two output formats, autofix, baselines, exclusions and a config
+file. 510 tests, both gates green, and the tool runs against its own tree on
+every build with zero offences.
 
 ## Planned Phases
 
-### Phase 1: Release 0.2.0
+### Phase 1: Release 0.2.0 — shipped
 
-crates.io still carries the ruleless `0.1.0` scaffold. Everything below waits on
-this. The changelog must call out that an unreadable source file moved from exit
-`1` to exit `2`, which is a change to a published interface.
+The ruleless `0.1.0` scaffold on crates.io was replaced by the first rule set.
+The changelog called out that an unreadable source file moved from exit `1` to
+exit `2`, which is a change to a published interface.
 
 ### Phase 2: Excludability — shipped
 
@@ -82,18 +82,25 @@ version of "a test that is never compiled cannot fail".
 
 ### Phase 5: More Rules
 
-The set is open. Candidates, roughly in order of how often they would have
-caught something:
+The set is open, and most of the original candidate list has since shipped:
+**test naming** as `test-naming`, **one struct with an impl block per file** as
+`single-implemented-type`, **no re-export shims** as `module-registry`, which
+catches the shim in the one file it forms in. `pure-traits` was not on the list
+and arrived from measuring the family.
+
+What remains:
 
 - **AAA structure** — `// Arrange`, `// Act`, `// Assert` present and in order
-  inside a test body. This was the original motivating example and is still
-  unbuilt; `test-file-structure` judges the file's shape, not the body's.
-- **Test naming** — `<method>_<description>_<outcome>`, where `<method>` is the
-  function called in the Act section.
-- **One struct with an impl block per file** — the other original example.
+  inside a test body. This was the original motivating example and is still the
+  oldest unbuilt one; `test-file-structure` judges the file's shape, not the
+  body's.
 - **Header against the manifest** — SPDX identifier agreeing with the `license`
-  field, rather than only matching a text file.
-- **No re-export shims** — a module whose only content is `pub use`.
+  field, rather than only matching a text file. Recorded as a gap in
+  [OPEN_POINTS.md](OPEN_POINTS.md).
+- **Import ordering in `src/`** — `test-file-structure` is scoped to `tests/`,
+  and `imported-paths` now routinely adds imports to productive files with
+  nothing saying where the new line lands. Removing a scope restriction rather
+  than a new rule, but it would arrive as a wave of offences.
 
 ### Phase 6: Library Surface
 
@@ -103,12 +110,6 @@ embedding the rules in their own tool can rely on.
 
 ## Deferred Ideas
 
-- **Autofix.** Every offence already carries a correction precise enough to
-  apply mechanically, and the alphabetic-ordering ones are the bulk of any real
-  run. Deferred rather than rejected: rewriting somebody's test files is a much
-  bigger promise than reporting on them, and the reordering experiments in this
-  repository's own history destroyed file-level comment blocks twice before the
-  edge cases were understood.
 - **Severity levels.** Every offence is currently equal. Ranking them would let
   a report be triaged, but it would also invite arguing about the ranking rather
   than fixing the offence.

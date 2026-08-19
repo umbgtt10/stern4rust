@@ -3,6 +3,29 @@
 What `cargo-stern4rust` does today. Anything not listed here is not built, and
 the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
+## Unreleased
+
+### Rules
+
+- **`pure-traits`** -- a trait declares, it does not implement: no method in a
+  `trait` declaration in `src/` may have a default body. The other direction,
+  that every implementor implements every method, is `rustc`'s `E0046` and needs
+  no rule -- the same split `registry-completeness` made. Four offences across
+  the family, three of them in this crate's own `Rule` trait; the other six
+  repositories hold 21 trait methods and no defaults at all. Associated types
+  and constants may still default; blanket impls are not caught.
+  [R014](ADRs/R014-ADR-PureTraitsRule.md)
+
+### Trait surface
+
+- `Rule` has no default bodies. Every rule answers all four questions in its own
+  file, including the answers that are "nothing" -- 27 bodies, so that a rule's
+  file says which question it is about instead of leaving it to be inferred from
+  an absence.
+- `Rule::is_configured` is answered explicitly by every rule. Its old default of
+  `true` meant a new rule was configured because nobody said otherwise, which is
+  the silent pass this tool exists to catch.
+
 ## Version 0.4.0
 
 ### Rules

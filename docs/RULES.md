@@ -1,6 +1,6 @@
 # Rules
 
-Eleven rules, each independent, each naming itself in the report. This is the
+Fourteen rules, each independent, each naming itself in the report. This is the
 reference; the reasoning behind each one is in its ADR.
 
 Every offence carries a **correction** as well as a description — what to do,
@@ -19,6 +19,9 @@ without answering it.
 | `tests-layout` | [R003](ADRs/R003-ADR-TestsLayoutRule.md) | no |
 | `module-registry` | [R006](ADRs/R006-ADR-ModuleRegistryRule.md) | no |
 | `single-implemented-type` | [R007](ADRs/R007-ADR-SingleImplementedTypeRule.md) | no |
+| `pure-traits` | [R014](ADRs/R014-ADR-PureTraitsRule.md) | no |
+| `test-naming` | — | no |
+| `tested-public-api` | — | no |
 | `header` | [R001](ADRs/R001-ADR-HeaderRule.md) | `--header-file` |
 
 `--rule <NAME>` applies only the named rules; `--skip <NAME>` subtracts. Both
@@ -355,7 +358,47 @@ an impl block, which is the shape `test-file-structure` asks for.
 
 **Does not catch:** size. One type with forty methods satisfies this completely
 -- that is `crap4rust`'s question. It says nothing about free functions, and does
-not treat a `trait` with default method bodies as a subject.
+not treat a `trait` with default method bodies as a subject -- `pure-traits`
+covers the other half of that gap.
+
+## `pure-traits`
+
+A trait declares; it does not implement. **No method in a `trait` declaration in
+`src/` may have a default body.**
+
+A default reads as a convenience and works as a decision nobody made. The
+implementor that says nothing about a method is indistinguishable from the one
+that considered it and found the default right, and the question of which you are
+looking at cannot be answered by reading either file. Make the body a declaration
+and every implementor has to answer, in its own file, where the answer is.
+
+The second half of the requirement -- that every implementor implements every
+method -- **needs no rule**. With no body to fall back on, `rustc` rejects an
+incomplete impl with `E0046`, immediately and more precisely than this tool
+could. Only the half the compiler is silent about is checked here, which is the
+same split [R009](ADRs/R009-ADR-RegistryCompletenessRule.md) made.
+
+Only methods are reported. An associated type and an associated constant may
+carry a default: neither is behaviour, so neither lets an implementor inherit a
+decision while appearing to have made one.
+
+| offence | correction |
+|---|---|
+| `` `Collection::is_empty` has a default body, so an implementor that says nothing about it cannot be told from one that chose it `` | move the body into each implementor |
+
+The offence names the method rather than the trait, because a trait with three
+defaults is three separate edits landing in three different sets of files.
+
+`tests/` is exempt: a test file declares traits to stand in for real ones, and a
+stand-in with a body is the shape those fakes are supposed to have.
+
+**Does not catch:** a **blanket impl**, which puts one body behind every
+implementor at once and is an `Item::Impl` rather than an `Item::Trait` -- a
+trait emptied of defaults can have all of them restored this way and the rule
+will say nothing. Nor a default inherited from a supertrait in another crate, nor
+whether a removed body was moved into the implementors or simply deleted --
+`rustc` guarantees each implementor has *a* body, not the right one. Anything
+inside a macro is invisible, as everywhere else in this tool.
 
 ## `tests-layout`
 

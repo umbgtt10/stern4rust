@@ -15,7 +15,7 @@ already own correctness. These are the things a reviewer would otherwise have to
 say by hand, every time, forever — and the ones that quietly stop being true
 across a codebase the moment nobody is checking.
 
-> **Status: eleven rules, more coming.** The set below is what is implemented and
+> **Status: fourteen rules, more coming.** The set below is what is implemented and
 > gated. `stern4rust` runs against its own tree on every build, so a rule that
 > would fail this repository cannot be merged into it.
 
@@ -251,6 +251,24 @@ block. Structs and enums *without* `impl` blocks are unlimited, so the payload
 types a subject needs stay beside it. The offence names the type to move and the
 file to move it to.
 [R007](docs/ADRs/R007-ADR-SingleImplementedTypeRule.md)
+
+### `pure-traits`
+
+A trait declares; it does not implement. No method in a `trait` declaration in
+`src/` may have a default body.
+
+A default reads as a convenience and works as a decision nobody made: an
+implementor that says nothing about a method is indistinguishable from one that
+considered it and found the default right. Removing the body makes every
+implementor answer in its own file.
+
+The other half — that every implementor implements every method — needs no rule
+here. With no default to fall back on, `rustc` rejects an incomplete impl with
+`E0046`, so only the half the compiler is silent about is checked.
+
+Associated types and associated constants may still carry defaults; neither is
+behaviour. `tests/` is exempt, where a trait with a body is a deliberate fake.
+[R014](docs/ADRs/R014-ADR-PureTraitsRule.md)
 
 ### `test-file-structure`
 

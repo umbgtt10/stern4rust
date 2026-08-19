@@ -62,4 +62,12 @@ impl Rule for ImportedPathsRule {
             .map(|call| self.offence(file, call))
             .collect()
     }
+
+    fn check_workspace(&self, _files: &[SourceFile]) -> Vec<Offence> {
+        Vec::new()
+    }
+
+    fn is_configured(&self) -> bool {
+        true
+    }
 }

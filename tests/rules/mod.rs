@@ -7,6 +7,7 @@ pub mod directory_subfolder_count_rule_tests;
 pub mod header_rule_tests;
 pub mod imported_paths_rule_tests;
 pub mod module_registry_rule_tests;
+pub mod pure_traits_rule_tests;
 pub mod readable_source_rule_tests;
 pub mod registry_completeness_rule_tests;
 pub mod single_implemented_type_rule_tests;

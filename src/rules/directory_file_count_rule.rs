@@ -99,6 +99,10 @@ impl Rule for DirectoryFileCountRule {
         "directory-file-count"
     }
 
+    fn check(&self, _file: &SourceFile) -> Vec<Offence> {
+        Vec::new()
+    }
+
     // A fact about a directory, so it cannot be answered a file at a time: no
     // single file is the one too many.
     fn check_workspace(&self, files: &[SourceFile]) -> Vec<Offence> {
@@ -110,5 +114,9 @@ impl Rule for DirectoryFileCountRule {
                 (found > self.limit).then(|| self.offence(&tree, directory, found))
             })
             .collect()
+    }
+
+    fn is_configured(&self) -> bool {
+        true
     }
 }

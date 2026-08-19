@@ -78,6 +78,10 @@ impl Rule for DirectorySubfolderCountRule {
         "directory-subfolder-count"
     }
 
+    fn check(&self, _file: &SourceFile) -> Vec<Offence> {
+        Vec::new()
+    }
+
     fn check_workspace(&self, files: &[SourceFile]) -> Vec<Offence> {
         let tree = PackageTree::of(files);
         tree.directories()
@@ -87,5 +91,9 @@ impl Rule for DirectorySubfolderCountRule {
                 (found > self.limit).then(|| self.offence(&tree, directory, found))
             })
             .collect()
+    }
+
+    fn is_configured(&self) -> bool {
+        true
     }
 }

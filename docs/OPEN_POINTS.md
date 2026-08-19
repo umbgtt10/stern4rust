@@ -40,6 +40,27 @@ A related limit: the rule resolves names, not the module graph. A `mod.rs` that
 is itself never declared makes its whole subtree unreachable, and each level is
 reported separately rather than as one root cause.
 
+## `pure-traits` does not see a blanket impl
+
+The rule reads `Item::Trait` and reports any method with a default body. A
+blanket impl -- `impl<T: Base> Extended for T { ... }` -- is an `Item::Impl`, so
+none of it is looked at. **A trait emptied of defaults can have every one of them
+restored through a blanket impl and the rule will report nothing.**
+
+That is the same shared body in the same crate reached through a different
+syntax, and it defeats the rule completely wherever somebody reaches for it. It
+is not caught because catching it means deciding when a generic impl is a
+convenience and when it is the whole implementation, which needs the trait
+resolution this tool does not do.
+
+Nothing in the family uses one today, so this is an untested gap rather than an
+observed one. A default inherited from a supertrait in another crate is invisible
+for the same reason, one level further out.
+
+Related: the rule verifies a default body is *gone*, never that it was moved into
+the implementors rather than deleted. `rustc` guarantees each implementor has *a*
+body; nothing guarantees it is the right one.
+
 ## A test-only helper in `src/` is invisible
 
 `test-free-source` catches test attributes and `test` cfg predicates. An

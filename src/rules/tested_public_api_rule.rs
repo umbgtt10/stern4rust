@@ -94,6 +94,10 @@ impl Rule for TestedPublicApiRule {
         "tested-public-api"
     }
 
+    fn check(&self, _file: &SourceFile) -> Vec<Offence> {
+        Vec::new()
+    }
+
     // A fact about the whole package: the entry point is declared in one file
     // and the call that would exercise it lives in another.
     fn check_workspace(&self, files: &[SourceFile]) -> Vec<Offence> {
@@ -103,5 +107,9 @@ impl Rule for TestedPublicApiRule {
             .filter(|(_, entry)| !called.contains(entry))
             .map(|(file, entry)| self.offence(file, entry))
             .collect()
+    }
+
+    fn is_configured(&self) -> bool {
+        true
     }
 }

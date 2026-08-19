@@ -34,6 +34,7 @@ rule; anything without is the machinery the rules run on.
 | [R007](R007-ADR-SingleImplementedTypeRule.md) | `single-implemented-type` | A source file holds at most one type that is both declared there and carries an impl block. Plain data declarations are unlimited -- they are not subjects. |
 | [R006](R006-ADR-ModuleRegistryRule.md) | `module-registry` | A `lib.rs` or `mod.rs` outside `tests/` holds the header, inner attributes, `extern crate alloc;` and `pub mod` declarations -- nothing else. Catches the re-export shim where it forms. |
 | [R005](R005-ADR-TestFreeSourceRule.md) | `test-free-source` | Tests live in `tests/` and the production source tree carries none of them; `#[cfg(test)]`, `#[cfg_attr(test, ...)]` and test-attributed functions are all offences outside `tests/`. The line is `test` — feature gates ship to somebody and are left alone. |
+| [R014](R014-ADR-PureTraitsRule.md) | `pure-traits` | No method in a `trait` declaration may have a default body -- a default hides which question an implementor actually answered. The other half, that every implementor implements every method, is `rustc`'s `E0046` and needs no rule. |
 
 ## Everything else
 
@@ -43,7 +44,7 @@ rule; anything without is the machinery the rules run on.
 | [ADR-MachineReadableReport](ADR-MachineReadableReport.md) | The table stays the default and `--format json` renders the same run as a document; every offence carries a required `correction` alongside its description, because a report worth reading is not the same as a report worth acting on. |
 | [ADR-RuleSelection](ADR-RuleSelection.md) | `--rule` and `--skip`, both repeatable, with skipping winning over selecting; a run that switched rules off never claims all of them are satisfied. |
 | [ADR-WalkEveryFileInThePackage](ADR-WalkEveryFileInThePackage.md) | The walker skips `target/` and `.git/` and nothing else; a nested package with its own manifest is judged like any other directory, because a linter quietly declining to look at part of a tree is the silence this tool refuses. Supersedes the `0.2.0` nested-package skip. |
-| [ADR-WorkspaceRuleSeam](ADR-WorkspaceRuleSeam.md) | `Rule` carries `check_workspace` beside `check`, both defaulting to reporting nothing, because some offences are about a tree rather than a file — and the file that carries such an offence is usually the one that does not exist. |
+| [ADR-WorkspaceRuleSeam](ADR-WorkspaceRuleSeam.md) | `Rule` carries `check_workspace` beside `check`, because some offences are about a tree rather than a file — and the file that carries such an offence is usually the one that does not exist. Both are answered explicitly by every rule; the original defaults were removed by [R014](R014-ADR-PureTraitsRule.md). |
 
 ## Template
 

@@ -68,4 +68,12 @@ impl Rule for TestFreeSourceRule {
             })
             .collect()
     }
+
+    fn check_workspace(&self, _files: &[SourceFile]) -> Vec<Offence> {
+        Vec::new()
+    }
+
+    fn is_configured(&self) -> bool {
+        true
+    }
 }

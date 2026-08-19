@@ -18,9 +18,11 @@ no `check(&SourceFile)` can ever be handed it.
 
 ## Decision
 
-`Rule` carries `check_workspace(&[SourceFile])` beside `check(&SourceFile)`,
-and **both default to reporting nothing**, so each rule implements only the
-question it actually answers and `RuleRegistry` calls both without caring which.
+`Rule` carries `check_workspace(&[SourceFile])` beside `check(&SourceFile)`, and
+`RuleRegistry` asks both of every rule without caring which one that rule is
+about. A rule whose subject is the tree answers the per-file question with no
+offences, **explicitly and in its own file** — neither method has a default body,
+by [R014](R014-ADR-PureTraitsRule.md).
 
 `Runner` reads every file in a package before judging any of them, then asks the
 per-file question of each file and the workspace question once.
@@ -32,9 +34,10 @@ expressed against a single file at all. `missing_door` has no file to be handed
 when `tests/all_tests.rs` is precisely what is absent, and `missing_mod_files`
 cannot know whether a sibling `mod.rs` exists without seeing the other files.
 
-The defaults are what keep the seam cheap. Without them, every existing rule
-would have grown an empty `check_workspace`, and every future rule would have to
-write two methods to use one.
+The seam was originally kept cheap by defaulting both methods to reporting
+nothing. That cheapness was withdrawn deliberately in [R014](R014-ADR-PureTraitsRule.md):
+every rule now writes both methods, which is what makes the choice between them
+readable rather than inferable from an absence.
 
 Reading the whole package before judging it removed a second hazard that was not
 the point of the change: results can no longer depend on the order the walker
@@ -48,8 +51,8 @@ and the per-file rules are the common case.
 
 **A second trait, `WorkspaceRule`, with its own registry.** Rejected: two
 registries, two collection paths in `Runner`, and a rule that wanted both
-questions would have to be two objects. The defaulted-method version costs one
-line per rule and no new machinery.
+questions would have to be two objects. One trait with both methods needs no new
+machinery.
 
 **Have the walker synthesise a placeholder `SourceFile` for paths that do not
 exist.** Rejected: it would require knowing which paths to synthesise, which is
@@ -61,10 +64,10 @@ not the file that is being ignored because of its absence.
 
 ## Consequences
 
-Every future rule faces a choice about which method to implement. The defaults
-make that cheap, but a rule implementing both must be careful not to report the
-same offence twice — which is why `TestsLayoutRule` has a test asserting that
-its `check` says nothing.
+Every future rule faces a choice about which method carries its answer, and must
+now state that choice in both. A rule implementing both with real bodies has to
+be careful not to report the same offence twice — which is why `TestsLayoutRule`
+has a test asserting that its `check` says nothing.
 
 `Runner` holds an entire package's files in memory rather than streaming. For a
 linter over a source tree this is not a meaningful cost.
@@ -89,4 +92,7 @@ pins the same property at the rule.
 ## Related
 
 - [R003-ADR-TestsLayoutRule](R003-ADR-TestsLayoutRule.md) — the rule that forced
-  this seam, and the only one currently using it.
+  this seam. Five rules use it today: `tests-layout`, `registry-completeness`,
+  `tested-public-api`, `directory-file-count` and `directory-subfolder-count`.
+- [R014-ADR-PureTraitsRule](R014-ADR-PureTraitsRule.md) — removed the default
+  bodies this seam was originally built with.

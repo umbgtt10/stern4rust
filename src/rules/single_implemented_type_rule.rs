@@ -84,4 +84,12 @@ impl Rule for SingleImplementedTypeRule {
             .map(|extra| self.offence(file, &subject.name, extra))
             .collect()
     }
+
+    fn check_workspace(&self, _files: &[SourceFile]) -> Vec<Offence> {
+        Vec::new()
+    }
+
+    fn is_configured(&self) -> bool {
+        true
+    }
 }

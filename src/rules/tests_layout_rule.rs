@@ -174,6 +174,10 @@ impl Rule for TestsLayoutRule {
         "tests-layout"
     }
 
+    fn check(&self, _file: &SourceFile) -> Vec<Offence> {
+        Vec::new()
+    }
+
     fn check_workspace(&self, files: &[SourceFile]) -> Vec<Offence> {
         let present = Self::in_tests(files);
         if present.is_empty() {
@@ -184,5 +188,9 @@ impl Rule for TestsLayoutRule {
         offences.extend(self.missing_mod_files(&present));
         offences.extend(self.registry_contents(&present));
         offences
+    }
+
+    fn is_configured(&self) -> bool {
+        true
     }
 }

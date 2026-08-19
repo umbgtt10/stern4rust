@@ -122,4 +122,8 @@ impl Rule for HeaderRule {
         }
         Vec::new()
     }
+
+    fn check_workspace(&self, _files: &[SourceFile]) -> Vec<Offence> {
+        Vec::new()
+    }
 }
