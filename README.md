@@ -40,6 +40,7 @@ cargo stern4rust --format json
 | `--package <NAME>` | restrict to these packages; repeatable. Omit to take the manifest's own package |
 | `--header-file <PATH>` | the header every `.rs` file must open with. Without it the header rule does not run, and the report says which rules did |
 | `--format <text\|json>` | `text` (default) is the table below; `json` is the same run as a document |
+| `--offence-threshold <N>` | how many offences the report prints. Default `100`, `0` for all. The cap is on what is *shown*, never on what is counted |
 
 ## The rules
 
@@ -146,6 +147,29 @@ in this file is not a declaration" is true of the whole file and actionable
 nowhere in it. And it carries a **correction**: what to do, not only what is
 wrong. That field is required rather than optional, so a rule that can say what
 is broken has to say how to fix it.
+
+### `--offence-threshold`
+
+A first run against a large codebase can find a thousand offences, and a
+thousand rows is not a report — it is a wall that gets scrolled past. The
+report prints the first 100 by default:
+
+```text
+... and 47 more offences not shown. Raise --offence-threshold (currently 100, use 0 for all) to see them.
+
+summary: files_scanned=312 offences=147 rules_broken=4
+```
+
+**The cap is on what is shown and never on what is counted.** `offences=147`
+is the true total, the omitted count is stated outright, and the exit code is
+decided from every offence rather than from the printed ones — capping to 1
+still exits `2` if there are 200. A report that quietly said 100 when the tree
+held 147 would be the precise failure this tool exists to catch, and it would
+be this tool committing it.
+
+Because offences are sorted by file then line, what survives the cap is whole
+files from the top rather than a scattering across the tree: fix what is shown,
+re-run, get the next file.
 
 ### `--format json`
 

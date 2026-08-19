@@ -5,17 +5,26 @@
 use std::collections::BTreeSet;
 
 use crate::offence::Offence;
+use crate::offence_threshold::OffenceThreshold;
 
 // One table for every rule. Columns are sized to their contents so the report
 // stays readable when a rule name or a path grows, and the summary line is
 // greppable so a wrapper script can report a count without parsing the table.
 pub struct ReportPrinter {
     files_scanned: usize,
+    threshold: OffenceThreshold,
 }
 
 impl ReportPrinter {
     pub fn new(files_scanned: usize) -> Self {
-        Self { files_scanned }
+        Self {
+            files_scanned,
+            threshold: OffenceThreshold::default(),
+        }
+    }
+
+    pub fn with_threshold(self, threshold: OffenceThreshold) -> Self {
+        Self { threshold, ..self }
     }
 
     pub fn print(&self, offences: &[Offence]) {
@@ -32,15 +41,34 @@ impl ReportPrinter {
             return report;
         }
 
-        let widths = ColumnWidths::of(offences);
+        // Sized to what is shown, so one withheld offence with a very long path
+        // cannot widen a column nothing in the report occupies.
+        let shown = self.threshold.kept(offences);
+        let widths = ColumnWidths::of(shown);
         report.push_str(&Self::heading(&widths));
-        for offence in offences {
+        for offence in shown {
             report.push_str(&Self::row(offence, &widths));
             report.push_str(&Self::correction_row(offence, &widths));
         }
         report.push('\n');
+        report.push_str(&self.omission(offences));
         report.push_str(&self.summary(offences));
         report
+    }
+
+    // Named alongside the flag that raises it. A cap nobody was told about reads
+    // as "that was all of them", which is the one thing this report must never
+    // say when it is not true.
+    fn omission(&self, offences: &[Offence]) -> String {
+        let omitted = self.threshold.omitted(offences);
+        if omitted == 0 {
+            return String::new();
+        }
+        format!(
+            "... and {omitted} more offences not shown. Raise --offence-threshold \
+             (currently {}, use 0 for all) to see them.\n\n",
+            self.threshold.limit()
+        )
     }
 
     fn heading(widths: &ColumnWidths) -> String {

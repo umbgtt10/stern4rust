@@ -7,6 +7,7 @@ pub mod header_source_tests;
 pub mod json_printer_tests;
 pub mod manifest_resolver_tests;
 pub mod offence_tests;
+pub mod offence_threshold_tests;
 pub mod output_format_tests;
 pub mod registry_item_tests;
 pub mod registry_parser_tests;

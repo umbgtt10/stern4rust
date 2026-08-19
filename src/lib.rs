@@ -8,6 +8,7 @@ pub mod header_source;
 pub mod json_printer;
 pub mod manifest_resolver;
 pub mod offence;
+pub mod offence_threshold;
 pub mod output_format;
 pub mod registry_item;
 pub mod registry_parser;

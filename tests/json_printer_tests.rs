@@ -16,6 +16,7 @@
 use serde_json::Value;
 use stern4rust::json_printer::JsonPrinter;
 use stern4rust::offence::Offence;
+use stern4rust::offence_threshold::OffenceThreshold;
 
 fn parsed(files_scanned: usize, offences: &[Offence]) -> Value {
     serde_json::from_str(&JsonPrinter::new(files_scanned).render(offences)).expect("valid json")
@@ -107,6 +108,29 @@ fn render_of_an_offence_without_extras_still_carries_both_keys() {
     // Assert
     assert_eq!(found["offences"][0]["subject"], Value::Null);
     assert_eq!(found["offences"][0]["expected"], Value::Null);
+}
+
+// offences_found stays the true total; the array is what was truncated. A
+// consumer that read only the array would otherwise believe it had them all.
+#[test]
+fn render_of_more_offences_than_the_threshold_reports_both_counts() {
+    // Arrange
+    let offences: Vec<Offence> = (1..=10).map(|_| plain()).collect();
+
+    // Act
+    let found = serde_json::from_str::<Value>(
+        &JsonPrinter::new(1)
+            .with_threshold(OffenceThreshold::new(3))
+            .render(&offences),
+    )
+    .expect("valid json");
+
+    // Assert
+    assert_eq!(found["offences_found"], 10);
+    assert_eq!(found["offences_reported"], 3);
+    assert_eq!(found["offences_omitted"], 7);
+    assert_eq!(found["offence_threshold"], 3);
+    assert_eq!(found["offences"].as_array().expect("array").len(), 3);
 }
 
 #[test]

@@ -6,6 +6,7 @@ use std::path::PathBuf;
 
 use clap::Parser;
 
+use crate::offence_threshold::OffenceThreshold;
 use crate::output_format::OutputFormat;
 
 #[derive(Debug, Parser)]
@@ -31,6 +32,14 @@ pub struct Args {
     /// guess where one column of the table ends and the next begins.
     #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
     pub format: OutputFormat,
+
+    /// How many offences the report prints. A first run against a large
+    /// codebase can find a thousand, and a thousand rows is a wall rather than
+    /// a report. The cap is on what is shown and never on what is counted:
+    /// the summary, the omitted count and the exit code all see every offence.
+    /// Use 0 for no limit.
+    #[arg(long, default_value_t = OffenceThreshold::DEFAULT)]
+    pub offence_threshold: usize,
 }
 
 impl Args {

@@ -10,7 +10,14 @@
 // no offences, one, many, and a path far wider than its column heading.
 
 use stern4rust::offence::Offence;
+use stern4rust::offence_threshold::OffenceThreshold;
 use stern4rust::report_printer::ReportPrinter;
+
+fn many(count: usize) -> Vec<Offence> {
+    (1..=count)
+        .map(|line| offence("src/a.rs", line, "header"))
+        .collect()
+}
 
 fn offence(file: &str, line: usize, rule: &'static str) -> Offence {
     Offence::new(
@@ -63,6 +70,31 @@ fn print_with_one_offence_does_not_panic() {
 
     // Act & Assert
     printer.print(&[offence("src/a.rs", 1, "header")]);
+}
+
+// Loudly, and naming the flag that raises it. A cap nobody was told about
+// reads as "that was all of them".
+#[test]
+fn render_of_more_offences_than_the_threshold_says_how_many_are_not_shown() {
+    // Arrange & Act
+    let report = ReportPrinter::new(1)
+        .with_threshold(OffenceThreshold::new(3))
+        .render(&many(10));
+
+    // Assert
+    assert!(report.contains("7 more"), "got {report}");
+    assert!(report.contains("--offence-threshold"), "got {report}");
+}
+
+#[test]
+fn render_of_more_offences_than_the_threshold_shows_only_the_threshold() {
+    // Arrange & Act
+    let report = ReportPrinter::new(1)
+        .with_threshold(OffenceThreshold::new(3))
+        .render(&many(10));
+
+    // Assert
+    assert_eq!(report.matches("something is wrong").count(), 3);
 }
 
 #[test]
@@ -142,4 +174,21 @@ fn render_summarises_two_offences_of_one_rule_as_one_broken_rule() {
 
     // Assert
     assert!(report.contains("files_scanned=5 offences=2 rules_broken=1"));
+}
+
+// The cap is on what is shown, never on what is counted. A summary that said
+// 3 when the tree holds 10 would be this tool doing the exact thing it exists
+// to catch.
+#[test]
+fn render_summary_counts_every_offence_even_when_some_are_not_shown() {
+    // Arrange & Act
+    let report = ReportPrinter::new(1)
+        .with_threshold(OffenceThreshold::new(3))
+        .render(&many(10));
+
+    // Assert
+    assert!(
+        report.contains("files_scanned=1 offences=10 rules_broken=1"),
+        "got {report}"
+    );
 }

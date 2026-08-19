@@ -10,6 +10,7 @@ use crate::header_source::HeaderSource;
 use crate::json_printer::JsonPrinter;
 use crate::manifest_resolver::ManifestResolver;
 use crate::offence::Offence;
+use crate::offence_threshold::OffenceThreshold;
 use crate::output_format::OutputFormat;
 use crate::report_printer::ReportPrinter;
 use crate::rule_registry::RuleRegistry;
@@ -73,7 +74,7 @@ impl Runner {
         // business rather than any rule's -- a rule states facts, and their
         // order on the page is not one of them.
         offences.sort_by(|left, right| left.sort_key().cmp(&right.sort_key()));
-        Self::report(config.format, files_scanned, &offences);
+        Self::report(&config, files_scanned, &offences);
         Ok(RunOutcome::of(offences.len()))
     }
 
@@ -87,13 +88,19 @@ impl Runner {
             packages: args.packages,
             expected_header,
             format: args.format,
+            offence_threshold: OffenceThreshold::new(args.offence_threshold),
         })
     }
 
-    fn report(format: OutputFormat, files_scanned: usize, offences: &[Offence]) {
-        match format {
-            OutputFormat::Text => ReportPrinter::new(files_scanned).print(offences),
-            OutputFormat::Json => JsonPrinter::new(files_scanned).print(offences),
+    fn report(config: &Config, files_scanned: usize, offences: &[Offence]) {
+        let threshold = config.offence_threshold;
+        match config.format {
+            OutputFormat::Text => ReportPrinter::new(files_scanned)
+                .with_threshold(threshold)
+                .print(offences),
+            OutputFormat::Json => JsonPrinter::new(files_scanned)
+                .with_threshold(threshold)
+                .print(offences),
         }
     }
 }

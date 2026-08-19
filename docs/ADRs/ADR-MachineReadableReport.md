@@ -49,6 +49,14 @@ Offences are sorted by file, then line, then rule before rendering — sorting i
 the report's business rather than any rule's. A rule states facts; their order
 on the page is not one of them.
 
+`--offence-threshold` caps how many offences are **printed**, at 100 by default
+and unlimited at 0. **The cap is on what is shown and never on what is
+counted.** The summary reports the true total, the omitted count is stated
+outright with the flag that raises it, and `RunOutcome` is decided from every
+offence — so capping to 1 still exits `2` when there are 200. Because offences
+are already sorted, what survives is whole files from the top rather than a
+scattering across the tree: fix what is shown, re-run, get the next file.
+
 ## Forcing constraints / Evidence
 
 The four identical rows were real output, reproduced against a throwaway package
@@ -93,6 +101,21 @@ always present so the shape never varies.
 trivial and is not, and the descriptions this tool produces are full of the
 characters that break naive escaping.
 
+**Let the threshold cap the summary and the exit code too.** Rejected
+outright, and it is the only part of the threshold worth arguing about. A run
+that found a thousand offences and reported a hundred would be telling a
+comfortable lie about the codebase, in a tool whose entire purpose is to catch
+comfortable lies. Truncation is a rendering decision and stops at the renderer.
+
+**Default the threshold to unlimited.** Rejected: the default is what a first
+run against an unfamiliar codebase uses, which is exactly the run that produces
+a thousand rows. A cap somebody has to discover after being buried once is a
+cap that arrives too late.
+
+**Sample across rules or files rather than taking the first N.** Rejected: a
+scattering shows a bit of everything and lets nothing be finished. Whole files
+from the top give a reader something completable before the next run.
+
 ## Consequences
 
 A dependency on `serde` and `serde_json`, which is the cost of not hand-rolling
@@ -122,6 +145,12 @@ line is indented past the columns; plus 4 `print` tests pinning that the writing
 path survives no offences, one, many, and an over-wide path.
 
 `tests/offence_tests.rs` pins the sort key and both builders.
+
+`tests/offence_threshold_tests.rs` — 10 tests covering the default of 100,
+zero meaning unlimited, and that `kept` preserves order. The
+never-counted-only-shown property is pinned at both renderers:
+`render_summary_counts_every_offence_even_when_some_are_not_shown` and
+`render_of_more_offences_than_the_threshold_reports_both_counts`.
 
 ## Related
 
