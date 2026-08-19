@@ -13,12 +13,16 @@ use crate::unit_test_site::UnitTestSite;
 
 // Finds tests, and the machinery of tests, in the production source tree.
 //
-// Three shapes. A function carrying a test attribute is the obvious one.
-// `#[cfg(test)]` is the usual one. `#[cfg_attr(...)]` is the third, and it is
-// caught in every form rather than only `cfg_attr(test, ...)` -- the whole
-// point of the attribute is that what it applies depends on the build, so a
-// rule that allowed the non-test spellings would spend its life arguing about
-// which conditional compilation is the acceptable kind.
+// Three shapes, and all three are about the same thing: code that exists only
+// when the tests are being built. A function carrying a test attribute is the
+// obvious one. `#[cfg(test)]` is the usual one. `#[cfg_attr(test, ...)]` is the
+// third, and it is the one worth spelling out -- a type carrying a derive only
+// under test is a type that means one thing to the tests and another to the
+// shipped build.
+//
+// Only the test-gated spelling counts. `#[cfg_attr(feature = "serde", ...)]` is
+// ordinary library work and is left alone, as is `#[cfg(feature = "...")]`:
+// both gate on something the shipped build can also select.
 pub struct UnitTestFinder;
 
 impl UnitTestFinder {
@@ -54,10 +58,10 @@ impl UnitTestFinder {
         let subject = Self::describe(file, item, line);
         let mirror = Self::mirror_of(file.relative_path());
 
-        if attrs.iter().any(Self::is_cfg_attr) {
+        if attrs.iter().any(Self::is_cfg_attr_test) {
             return Some(UnitTestSite::new(
                 line,
-                &format!("the `#[cfg_attr(...)]` on the {subject}"),
+                &format!("the `#[cfg_attr(test, ...)]` on the {subject}"),
                 &format!(
                     "apply the attribute unconditionally, or move what it guards into {mirror}"
                 ),
@@ -80,8 +84,12 @@ impl UnitTestFinder {
         None
     }
 
-    fn is_cfg_attr(attr: &Attribute) -> bool {
-        attr.path().is_ident("cfg_attr")
+    // Only when the predicate gates on test. `cfg_attr` is how a crate applies
+    // a derive behind a feature, which is ordinary library work and none of
+    // this rule's business -- what is forbidden is a type that means one thing
+    // to the tests and another to the shipped build.
+    fn is_cfg_attr_test(attr: &Attribute) -> bool {
+        attr.path().is_ident("cfg_attr") && Self::mentions_test(attr)
     }
 
     // A predicate rather than the literal text, since `any(test, ...)` and

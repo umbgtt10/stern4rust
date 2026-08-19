@@ -8,10 +8,10 @@
 // obvious one. `#[cfg(test)]` is the usual one, and it has to be recognised
 // through a predicate rather than by matching the literal text, since
 // `any(test, ...)` and `not(test)` gate on test just as effectively.
-// `#[cfg_attr(...)]` is the third, and it is caught in every form rather than
-// only `cfg_attr(test, ...)`: the whole point of the attribute is that what it
-// applies depends on the build, and a rule that allowed the non-test spellings
-// would be arguing about which conditional compilation is the acceptable kind.
+// `#[cfg_attr(test, ...)]` is the third, and only in that spelling: a type
+// carrying a derive only under test means one thing to the tests and another to
+// the shipped build. `#[cfg_attr(feature = "serde", ...)]` is ordinary library
+// work and is left alone.
 //
 // A predicate mentioning `test` is found by scanning for an identifier, not a
 // substring, so `#[cfg(feature = "test")]` is a feature named test and not a
@@ -79,18 +79,19 @@ fn sites_of_a_cfg_any_test_predicate_reports_it() {
     assert_eq!(found.len(), 1);
 }
 
-// Every form, not only cfg_attr(test, ...). The attribute exists to make what
-// is applied depend on the build, and allowing the non-test spellings would
-// mean arguing about which conditional compilation is the acceptable kind.
+// Applying a derive behind a feature is ordinary library work -- serde is the
+// obvious case -- and gates on something the shipped build can also select.
 #[test]
-fn sites_of_a_cfg_attr_on_a_feature_reports_it() {
+fn sites_of_a_cfg_attr_on_a_feature_reports_nothing() {
     // Arrange & Act
-    let found = sites("#[cfg_attr(feature = \"extra\", derive(Debug))]\npub struct A;\n");
+    let found = sites("#[cfg_attr(feature = \"serde\", derive(Serialize))]\npub struct A;\n");
 
     // Assert
-    assert_eq!(found.len(), 1);
+    assert!(found.is_empty(), "expected none, got {found:?}");
 }
 
+// A type carrying a derive only under test is a type that means one thing to
+// the tests and another to the shipped build.
 #[test]
 fn sites_of_a_cfg_attr_on_test_reports_it() {
     // Arrange & Act
@@ -98,6 +99,11 @@ fn sites_of_a_cfg_attr_on_test_reports_it() {
 
     // Assert
     assert_eq!(found.len(), 1);
+    assert!(
+        found[0].label.contains("`#[cfg_attr(test, ...)]`"),
+        "got {}",
+        found[0].label
+    );
 }
 
 #[test]

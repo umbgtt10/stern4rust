@@ -15,11 +15,12 @@ use crate::unit_test_finder::UnitTestFinder;
 // never uses -- so the file reads as covered while the coverage lives somewhere
 // nothing else in the toolchain looks.
 //
-// `#[cfg_attr(...)]` is forbidden in every form rather than only in
-// `cfg_attr(test, ...)`. The attribute exists to make what is applied depend on
-// the build, which is the same door under a different name, and a rule that
-// permitted the non-test spellings would spend its life arguing about which
-// conditional compilation is the acceptable kind.
+// `#[cfg_attr(test, ...)]` is the same door under a different name: a type
+// carrying a derive only under test is a type that means one thing to the tests
+// and another to the shipped build. Only the test-gated spelling is forbidden --
+// `#[cfg_attr(feature = "serde", ...)]` is ordinary library work, and so is
+// `#[cfg(feature = "...")]`, because both gate on something the shipped build
+// can also select.
 pub struct TestFreeSourceRule;
 
 impl TestFreeSourceRule {

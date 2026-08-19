@@ -18,12 +18,26 @@ fn check(path: &str, body: &str) -> Vec<stern4rust::offence::Offence> {
     TestFreeSourceRule::new().check(&SourceFile::new(path, body))
 }
 
+// Applying a derive behind a feature is ordinary library work. serde is the
+// case this rule must not break.
 #[test]
-fn check_a_source_file_with_a_cfg_attr_reports_it() {
+fn check_a_source_file_with_a_cfg_attr_on_a_feature_reports_nothing() {
     // Arrange & Act
     let offences = check(
         "src/subject.rs",
-        "#[cfg_attr(feature = \"extra\", derive(Debug))]\npub struct A;\n",
+        "#[cfg_attr(feature = \"serde\", derive(Serialize))]\npub struct A;\n",
+    );
+
+    // Assert
+    assert!(offences.is_empty(), "expected none, got {offences:?}");
+}
+
+#[test]
+fn check_a_source_file_with_a_cfg_attr_on_test_reports_it() {
+    // Arrange & Act
+    let offences = check(
+        "src/subject.rs",
+        "#[cfg_attr(test, derive(Debug))]\npub struct A;\n",
     );
 
     // Assert

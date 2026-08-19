@@ -96,12 +96,14 @@ is not the mirrored test file `twin4rust` looks for, it is not declared from
 `all_tests.rs`, it has no required shape, and it is compiled under a
 configuration the shipped build never uses.
 
-`#[cfg_attr(...)]` is forbidden in **every** form, not only
-`cfg_attr(test, ...)` — its whole purpose is to make what is applied depend on
-the build, and permitting the non-test spellings would commit the rule to
-deciding which conditional compilation is the acceptable kind. Plain
-`#[cfg(feature = "...")]` stays allowed: it gates whether code exists, which is
-legible in the source. [R005](docs/ADRs/R005-ADR-TestFreeSourceRule.md)
+`#[cfg_attr(test, ...)]` is caught for the same reason: a type carrying a derive
+only under test means one thing to the tests and another to the shipped build.
+
+The line is `test`, not conditional compilation. `#[cfg(feature = "...")]` and
+`#[cfg_attr(feature = "serde", derive(Serialize))]` are ordinary library work
+and are left alone — a feature is selectable by the shipped build, so what is
+tested is what somebody runs. `test` is the one predicate no shipped build ever
+sets. [R005](docs/ADRs/R005-ADR-TestFreeSourceRule.md)
 
 ### `tests-layout`
 

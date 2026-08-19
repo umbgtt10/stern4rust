@@ -23,25 +23,33 @@ behind `#[cfg(test)]` can drift out of step with the code it tests without any
 build noticing, because the only build that compiles it is the one that also
 compiles the tests that were written against the drift.
 
-`#[cfg_attr(...)]` is the same door under a different name. Its entire purpose
-is to make *which attribute is applied* depend on the build configuration, so
-the type that ships and the type the tests see are not required to be the same
-type.
+`#[cfg_attr(test, ...)]` is the same door under a different name. A type
+carrying a derive only under test is a type that means one thing to the tests
+and another to the shipped build — the tests can print it, compare it or hash
+it, and the thing that ships cannot.
 
 ## Decision
 
 Tests live in `tests/`, and the production source tree carries none of them.
-`#[cfg(test)]`, `#[cfg_attr(...)]` and test-attributed functions are all
+`#[cfg(test)]`, `#[cfg_attr(test, ...)]` and test-attributed functions are all
 offences under `test-free-source` wherever they appear outside `tests/`.
 
-Three shapes are caught:
+Three shapes are caught, and they have one thing in common: each makes code
+exist only when the tests are being built.
 
 - a function carrying a test attribute, matched on the last path segment so
   `#[tokio::test]` counts without enumerating harnesses
-- `#[cfg(...)]` whose predicate mentions `test`, recognised through the
-  predicate rather than by matching literal text, so `any(test, ...)` and
-  `not(test)` are caught too
-- `#[cfg_attr(...)]`, **in every form**
+- `#[cfg(...)]` whose predicate mentions `test`
+- `#[cfg_attr(...)]` whose predicate mentions `test`
+
+Both `cfg` forms are recognised through the *predicate* rather than by matching
+literal text, so `any(test, ...)` and `not(test)` are caught too.
+
+**Only the test-gated spellings.** `#[cfg_attr(feature = "serde", derive(Serialize))]`
+and `#[cfg(feature = "...")]` are ordinary library work and are left alone: both
+gate on something the shipped build can also select, so the thing that ships and
+the thing under test are the same thing under a configuration the author chose.
+`test` is the one predicate no shipped build ever sets.
 
 The walk descends into inline modules, since nesting is where a gate is easiest
 to miss by eye. An item that is itself an offence is not descended into: the
@@ -54,14 +62,16 @@ the workspace.
 
 ## Forcing constraints / Evidence
 
-**`cfg_attr` is banned in every form, not only `cfg_attr(test, ...)`, and this
-is the decision most worth arguing with.** The narrow version is defensible and
-was rejected because the line it draws cannot be held: once
-`cfg_attr(feature = "x", ...)` is permitted, the rule is committed to deciding
-which conditional compilation is the acceptable kind, on a case-by-case basis,
-forever. `#[cfg(feature = "...")]` remains allowed precisely because it gates
-*whether code exists*, which is legible in the source; `cfg_attr` changes what
-an item *means* while leaving it looking identical.
+**`test` is the line, not `cfg_attr`.** The rule was first written to forbid
+`cfg_attr` in every form, on the argument that a narrower rule would spend its
+life adjudicating which conditional compilation is acceptable. That argument was
+wrong about where the line falls. It is not "conditional versus unconditional";
+it is *which* condition. A feature is selectable by the shipped build, so a
+feature-gated derive ships to somebody and is ordinary library work.
+`test` is the one predicate no shipped build ever sets, which is exactly why
+code behind it can drift without any build noticing. Forbidding
+`cfg_attr(feature = "serde", derive(Serialize))` would have broken a
+near-universal pattern to no purpose.
 
 **The predicate is scanned for an identifier, not a substring.**
 `#[cfg(feature = "test")]` is a feature named test and not a test gate — the
@@ -81,8 +91,12 @@ against its own tree, and the dogfooding run confirms rather than drives it.
 
 ## Rejected alternatives
 
-**Forbid only `cfg_attr(test, ...)`.** Rejected — see above. The narrow rule
-cannot hold its own line.
+**Forbid `#[cfg_attr(...)]` in every form.** Rejected, having first been
+adopted. It would outlaw `#[cfg_attr(feature = "serde", derive(Serialize))]`,
+which is how most of the ecosystem makes serialisation optional and has nothing
+to do with tests. The rule exists to stop the shipped build and the tested build
+diverging, and a feature gate does not do that — the feature-enabled build ships
+to somebody.
 
 **Allow `#[cfg(test)]` for a module that has a mirrored test file anyway.**
 Rejected: it would make this rule depend on `twin4rust`'s answer, and it would
@@ -110,11 +124,10 @@ but it is a real constraint and occasionally an inconvenient one. A genuinely
 private helper that wants direct testing has to become `pub` within the crate,
 or move behind a trait, or be tested through its caller.
 
-**`#[cfg_attr]` is unavailable for legitimate non-test uses**, most obviously
-`#[cfg_attr(feature = "serde", derive(Serialize))]`. A crate that needs optional
-derives must find another shape — a feature-gated `impl`, or an unconditional
-derive. This is the strictest thing this tool asks for and the most likely to be
-revisited.
+**A type that needs `Debug` for its tests must derive it unconditionally.**
+That is the intended trade and the cost is small: the derive ships. The
+alternative was a type whose printable form exists only in a build nobody
+deploys.
 
 **Doctests are unaffected**, since they live in `///` comments and never reach
 the syntax tree.
@@ -129,11 +142,15 @@ mirrors nothing, which is `twin4rust`'s subject.
 ## Enforcement
 
 `tests/unit_test_finder_tests.rs` — 17 tests covering all three shapes, the
-`any(test, ...)` predicate, the feature-named-test non-case, both `cfg_attr`
-spellings, nesting inside an inline module, and the mirrored path in the
-correction.
+`any(test, ...)` predicate, the feature-named-test non-case, nesting inside an
+inline module, and the mirrored path in the correction. Both `cfg_attr`
+spellings are pinned in opposite directions:
+`sites_of_a_cfg_attr_on_test_reports_it` and
+`sites_of_a_cfg_attr_on_a_feature_reports_nothing`, the latter using
+`derive(Serialize)` specifically, because that is the pattern this rule must
+not break.
 
-`tests/rules/test_free_source_rule_tests.rs` — 8 tests covering the rule
+`tests/rules/test_free_source_rule_tests.rs` — 9 tests covering the rule
 itself, including that `tests/` is exempt and that the correction names the
 mirrored file.
 
