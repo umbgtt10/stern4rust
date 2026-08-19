@@ -148,6 +148,68 @@ fn run_with_a_config_file_applies_its_settings() {
     assert_eq!(outcome, RunOutcome::Clean);
 }
 
+// The whole point of a baseline, end to end: a run that failed passes once its
+// offences are recorded, and fails again the moment a new one appears.
+#[test]
+fn run_with_a_written_baseline_forgives_the_old_and_still_fails_on_the_new() {
+    // Arrange
+    let path = config_directory(
+        "baseline",
+        "rules = [\"imported-paths\"]
+",
+    );
+    let widget = path.join("src/widget.rs");
+    fs::write(
+        &widget,
+        "pub struct W;
+impl W { pub fn go() { let _ = std::env::args(); } }
+",
+    )
+    .expect("write the offence");
+    let manifest = path.join("Cargo.toml").to_string_lossy().to_string();
+    let judge = || {
+        Runner::run(args_from(&[
+            "cargo-stern4rust",
+            "--manifest-path",
+            &manifest,
+        ]))
+        .expect("the run itself should succeed")
+    };
+    assert_eq!(
+        judge(),
+        RunOutcome::RulesBroken,
+        "the offence should be seen"
+    );
+
+    // Act
+    Runner::run(args_from(&[
+        "cargo-stern4rust",
+        "--manifest-path",
+        &manifest,
+        "--write-baseline",
+    ]))
+    .expect("writing the baseline should succeed");
+
+    // Assert
+    assert_eq!(
+        judge(),
+        RunOutcome::Clean,
+        "the recorded offence is forgiven"
+    );
+    fs::write(
+        &widget,
+        "pub struct W;
+impl W { pub fn go() { let _ = std::env::args(); let _ = std::env::vars(); } }
+",
+    )
+    .expect("introduce a new offence");
+    assert_eq!(
+        judge(),
+        RunOutcome::RulesBroken,
+        "a new offence still fails"
+    );
+}
+
 #[test]
 fn run_with_an_exclusion_covering_every_file_finds_nothing_to_judge() {
     // Arrange

@@ -60,7 +60,7 @@ silent skip, which is the mistake the nested-package skip made.
 Paired with `stern4rust.toml`, shipped alongside it, so the excludes live with
 the repository rather than in every invocation.
 
-### Phase 3: Baselines
+### Phase 3: Baselines — shipped
 
 Rule selection shipped and gives a repository a way in: enforce one rule today,
 add the next when it is green. Measured on `braintax4rust`, that is the

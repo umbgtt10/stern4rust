@@ -8,6 +8,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Baselines.** `--write-baseline` records the current offences and exits
+  clean; later runs judge against the recorded set and fail only on what is new.
+  `--baseline <PATH>` names one explicitly, `stern4rust-baseline.json` beside
+  the manifest is discovered when nobody does, and `stern4rust.toml` can carry
+  the path.
+
+  `--rule` already let a codebase enforce one rule at a time. What it could not
+  express is every rule against *new* code while tolerating what is already
+  there -- which for a codebase with hundreds of existing offences is the
+  difference between a gate that fails forever and no gate at all.
+
+  **Keyed on file + rule + description, never the line.** An offence that moved
+  because somebody added an import above it is the same offence; a baseline
+  keyed on the line would go stale on the first unrelated edit, which is exactly
+  when it is most needed. Counts are recorded rather than a set, so fixing one
+  of two identical offences and introducing another still passes, while
+  introducing a third does not.
+
+  **Nothing is hidden quietly.** Every run that used a baseline names it and
+  states how many offences it suppressed, `baselined=N` joins the summary, and
+  an entry matching nothing is reported as stale so the file can be refreshed
+  rather than trusted. A baseline that was asked for and is missing is an error,
+  not an empty one.
+
 - **`stern4rust.toml`**, beside the manifest it configures, holding
   `header-file`, `offence-threshold`, `rules`, `skip` and `exclude`. Every
   switch had to be repeated at every invocation, which is tolerable for a person
@@ -141,6 +165,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   default" -- without that, `stern4rust.toml` could never set the threshold,
   since every run would look like the reader had asked for 100. The default is
   unchanged at 100 and is applied after the config file is merged.
+- **The summary line gained `baselined=N`** as well, after `offences`. Always
+  present, including as `baselined=0`.
 - **The summary line gained `files_excluded=N`**, between `files_scanned` and
   `offences`, always present including as `files_excluded=0`. A gate script
   matching on the summary text will need updating.

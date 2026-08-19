@@ -26,6 +26,8 @@ use toml::from_str;
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub struct ConfigFile {
     #[serde(default)]
+    pub baseline: Option<PathBuf>,
+    #[serde(default)]
     pub header_file: Option<PathBuf>,
     #[serde(default)]
     pub offence_threshold: Option<usize>,
@@ -56,8 +58,14 @@ impl ConfigFile {
         Ok(Some(parsed))
     }
 
-    // A header path in the file is relative to the file, so a repository can be
-    // checked out anywhere and cloned into any directory name.
+    // Paths in the file are relative to the file, so a repository can be checked
+    // out anywhere and cloned into any directory name.
+    pub fn baseline_from(&self, directory: &Path) -> Option<PathBuf> {
+        self.baseline
+            .as_ref()
+            .map(|relative| directory.join(relative))
+    }
+
     pub fn header_file_from(&self, directory: &Path) -> Option<PathBuf> {
         self.header_file
             .as_ref()

@@ -43,6 +43,8 @@ cargo stern4rust --format json
 | `--offence-threshold <N>` | how many offences the report prints. Default `100`, `0` for all. The cap is on what is *shown*, never on what is counted |
 | `--rule <NAME>` | apply only these rules; repeatable. Omit to apply every rule |
 | `--skip <NAME>` | do not apply these rules; repeatable. Subtracted from whatever `--rule` selected |
+| `--baseline <PATH>` | offences recorded here are not reported and do not fail the run; the suppressed count is always in the summary |
+| `--write-baseline` | record the current offences and exit clean, instead of judging against them |
 | `--exclude <GLOB>` | keep these paths out of the run; repeatable, matched against the package-relative path. Every pattern is named in the report with how many files it removed, including zero |
 
 Only `target/` and `.git/` are skipped by default. Everything else under the
@@ -66,6 +68,35 @@ summary: files_scanned=36 files_excluded=31 offences=8 ...
 
 See [ADR-ExclusionsAreCounted](docs/ADRs/ADR-ExclusionsAreCounted.md).
 
+## Adopting it on a codebase that has never run it
+
+`--rule` lets you enforce one rule today and the next when it is green. What it
+cannot express is *every* rule against **new** code while tolerating what is
+already there — which for a codebase with hundreds of existing offences is the
+difference between a gate that fails forever and no gate at all.
+
+```bash
+cargo stern4rust --write-baseline    # record what is there today
+cargo stern4rust                     # from now on, only new offences fail
+```
+
+The baseline is keyed on the file, the rule and the description — **not the
+line** — so an offence that moves because somebody added an import above it is
+still the same offence. Counts are recorded rather than a set, so fixing one of
+two identical offences and adding another still passes, while adding a third
+does not.
+
+**Nothing is hidden quietly.** Every run that used a baseline names it and says
+how much it suppressed, and an entry that no longer matches anything is called
+out so the file can be refreshed rather than trusted:
+
+```text
+  baseline: stern4rust-baseline.json (417 suppressed)
+  1 baseline entries matched nothing -- rerun with --write-baseline to refresh it
+
+summary: files_scanned=312 files_excluded=0 offences=2 baselined=417 rules_broken=1 ...
+```
+
 ## `stern4rust.toml`
 
 Every switch above can live beside the manifest instead of on the command line,
@@ -73,6 +104,7 @@ which is what lets a gate script, a pre-commit hook and a developer's terminal
 run the same check:
 
 ```toml
+baseline = "stern4rust-baseline.json"
 header-file = "docs/header.txt"
 offence-threshold = 100
 rules = ["header", "tests-layout"]

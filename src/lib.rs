@@ -3,6 +3,8 @@
 // SPDX-License-Identifier: MIT
 
 pub mod args;
+pub mod baseline;
+pub mod baseline_outcome;
 pub mod column_widths;
 pub mod config;
 pub mod config_file;
@@ -17,6 +19,7 @@ pub mod json_printer;
 pub mod manifest_resolver;
 pub mod module_declaration_finder;
 pub mod offence;
+pub mod offence_fingerprint;
 pub mod offence_threshold;
 pub mod output_format;
 pub mod package_tree;

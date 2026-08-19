@@ -7,6 +7,8 @@ use std::path::Path;
 use std::path::PathBuf;
 
 use crate::args::Args;
+use crate::baseline::Baseline;
+use crate::baseline_outcome::BaselineOutcome;
 use crate::config::Config;
 use crate::config_file::ConfigFile;
 use crate::exclusion_outcome::ExclusionOutcome;
@@ -86,11 +88,18 @@ impl Runner {
         // business rather than any rule's -- a rule states facts, and their
         // order on the page is not one of them.
         offences.sort_by(|left, right| left.sort_key().cmp(&right.sort_key()));
+
+        if config.write_baseline {
+            return Self::record(&config, offences);
+        }
+        let baselined = Self::baselined(&config, offences)?;
+        let offences = baselined.kept;
         Self::report(
             &config,
             &registry,
             files_scanned,
             &Self::merged(excluded),
+            &BaselineOutcome::new(Vec::new(), baselined.suppressed, baselined.stale),
             &offences,
         );
         Ok(RunOutcome::of(offences.len()))
@@ -145,6 +154,16 @@ impl Runner {
             .or_else(|| found.and_then(|file| file.offence_threshold))
             .unwrap_or(OffenceThreshold::DEFAULT);
         Ok(Config {
+            // Discovered beside the manifest when nobody named one, the same
+            // way stern4rust.toml is. Implicit suppression would be
+            // unacceptable if it were invisible; every report that used a
+            // baseline names it and states how many offences it hid, so a
+            // reader can always see that one is in force.
+            baseline: args
+                .baseline
+                .or_else(|| found.and_then(|file| file.baseline_from(&directory)))
+                .or_else(|| Self::discovered_baseline(&directory, args.write_baseline)),
+            write_baseline: args.write_baseline,
             config_file: found.map(|_| directory.join(ConfigFile::NAME)),
             manifest_path: args.manifest_path,
             packages: args.packages,
@@ -157,6 +176,14 @@ impl Runner {
                 Self::preferred(args.skipped_rules, found.map(|file| &file.skip)),
             ),
         })
+    }
+
+    // When writing, the default path is the destination whether or not it
+    // exists yet. When reading, only an existing file counts -- otherwise every
+    // run without a baseline would fail trying to load one.
+    fn discovered_baseline(directory: &Path, writing: bool) -> Option<PathBuf> {
+        let path = directory.join(Self::BASELINE_NAME);
+        (writing || path.exists()).then_some(path)
     }
 
     fn preferred(from_args: Vec<String>, from_file: Option<&Vec<String>>) -> Vec<String> {
@@ -174,6 +201,35 @@ impl Runner {
             .and_then(|path| path.parent())
             .map(Path::to_path_buf)
             .unwrap_or_else(|| PathBuf::from("."))
+    }
+
+    pub const BASELINE_NAME: &'static str = "stern4rust-baseline.json";
+
+    // Recording is not judging. The run exits clean because nothing was
+    // assessed -- the offences were written down, which is what was asked for.
+    fn record(config: &Config, offences: Vec<Offence>) -> Result<RunOutcome> {
+        let path = config
+            .baseline
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("--write-baseline needs a path to write to"))?;
+        let baseline = Baseline::of(&offences);
+        baseline.save(path)?;
+        println!(
+            "stern4rust wrote {} offence(s) to {}",
+            baseline.len(),
+            path.display()
+        );
+        Ok(RunOutcome::Clean)
+    }
+
+    // A baseline that was asked for and is not there is an error rather than an
+    // empty one. A gate whose baseline path has a typo would otherwise report
+    // every existing offence and look like a regression.
+    fn baselined(config: &Config, offences: Vec<Offence>) -> Result<BaselineOutcome> {
+        let Some(path) = &config.baseline else {
+            return Ok(BaselineOutcome::new(offences, 0, 0));
+        };
+        Ok(Baseline::load(path)?.apply(offences))
     }
 
     // One package's exclusions say nothing on their own: a pattern matching
@@ -198,6 +254,7 @@ impl Runner {
         registry: &RuleRegistry,
         files_scanned: usize,
         excluded: &ExclusionOutcome,
+        baselined: &BaselineOutcome,
         offences: &[Offence],
     ) {
         let threshold = config.offence_threshold;
@@ -210,14 +267,31 @@ impl Runner {
                 .with_rules(applied.clone(), skipped.clone(), unconfigured.clone())
                 .with_exclusions(excluded.excluded.clone())
                 .with_config_file(Self::shown(config))
+                .with_baseline(
+                    Self::baseline_shown(config),
+                    baselined.suppressed,
+                    baselined.stale,
+                )
                 .print(offences),
             OutputFormat::Json => JsonPrinter::new(files_scanned)
                 .with_threshold(threshold)
                 .with_rules(applied, skipped, unconfigured)
                 .with_exclusions(excluded.excluded.clone())
                 .with_config_file(Self::shown(config))
+                .with_baseline(
+                    Self::baseline_shown(config),
+                    baselined.suppressed,
+                    baselined.stale,
+                )
                 .print(offences),
         }
+    }
+
+    fn baseline_shown(config: &Config) -> Option<String> {
+        config
+            .baseline
+            .as_ref()
+            .map(|path| path.to_string_lossy().replace('\\', "/"))
     }
 
     fn shown(config: &Config) -> Option<String> {

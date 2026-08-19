@@ -3,6 +3,8 @@
 // SPDX-License-Identifier: MIT
 
 pub mod args_tests;
+pub mod baseline_outcome_tests;
+pub mod baseline_tests;
 pub mod column_widths_tests;
 pub mod config_file_tests;
 pub mod exclusion_outcome_tests;
@@ -15,6 +17,7 @@ pub mod import_path_tests;
 pub mod json_printer_tests;
 pub mod manifest_resolver_tests;
 pub mod module_declaration_finder_tests;
+pub mod offence_fingerprint_tests;
 pub mod offence_tests;
 pub mod offence_threshold_tests;
 pub mod output_format_tests;

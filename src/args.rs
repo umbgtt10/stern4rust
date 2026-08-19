@@ -51,6 +51,19 @@ pub struct Args {
     #[arg(long = "rule")]
     pub rules: Vec<String>,
 
+    /// Offences recorded here are not reported and do not fail the run. What
+    /// lets a codebase with hundreds of existing offences enforce every rule
+    /// against new code without first fixing the old. The count of suppressed
+    /// offences is always in the summary, never hidden.
+    #[arg(long)]
+    pub baseline: Option<PathBuf>,
+
+    /// Record the current offences as the baseline and exit clean, instead of
+    /// judging against one. Writes to --baseline, or to stern4rust-baseline.json
+    /// beside the manifest.
+    #[arg(long)]
+    pub write_baseline: bool,
+
     /// Keep these paths out of the run; repeatable, matched as a glob against
     /// the package-relative path. For a tree the repository cannot move --
     /// vendored source, generated output. Every pattern is named in the report

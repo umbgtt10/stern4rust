@@ -25,6 +25,9 @@ pub struct JsonPrinter {
     unconfigured: Vec<String>,
     exclusions: Vec<(String, usize)>,
     config_file: Option<String>,
+    baseline: Option<String>,
+    suppressed: usize,
+    stale: usize,
 }
 
 impl JsonPrinter {
@@ -37,6 +40,18 @@ impl JsonPrinter {
             unconfigured: Vec::new(),
             exclusions: Vec::new(),
             config_file: None,
+            baseline: None,
+            suppressed: 0,
+            stale: 0,
+        }
+    }
+
+    pub fn with_baseline(self, baseline: Option<String>, suppressed: usize, stale: usize) -> Self {
+        Self {
+            baseline,
+            suppressed,
+            stale,
+            ..self
         }
     }
 
@@ -90,6 +105,9 @@ impl JsonPrinter {
         let broken: BTreeSet<&str> = offences.iter().map(|offence| offence.rule).collect();
         let shown = self.threshold.kept(offences);
         let document = json!({
+            "baseline": self.baseline,
+            "baselined": self.suppressed,
+            "baseline_stale_entries": self.stale,
             "config_file": self.config_file,
             "files_scanned": self.files_scanned,
             "files_excluded": self.excluded_total(),

@@ -5,10 +5,25 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
 ## Version 0.4.0
 
+### Baselines
+
+- `--write-baseline` records the current offences and exits clean;
+  `--baseline <PATH>` judges against one. Discovered as
+  `stern4rust-baseline.json` beside the manifest when nobody names one.
+- Keyed on file + rule + description, **never the line**, so an offence that
+  moved is still the same offence.
+- Counts rather than a set: fixing one of two identical offences and adding
+  another passes; adding a third does not.
+- Every run that used one names it and states how many offences it suppressed;
+  `baselined=N` in the summary and the JSON. Entries matching nothing are
+  reported as stale.
+- A baseline that was asked for and is missing is an error, not an empty one.
+
 ### Configuration file
 
 - `stern4rust.toml` beside the manifest, holding `header-file`,
-  `offence-threshold`, `rules`, `skip` and `exclude`. Every key optional.
+  `offence-threshold`, `rules`, `skip`, `exclude` and `baseline`. Every key
+  optional.
 - The command line wins per setting; for the list settings that is replacement
   rather than merging.
 - An unknown key or an unparseable file is an error, not a silently ignored

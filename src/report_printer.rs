@@ -19,6 +19,9 @@ pub struct ReportPrinter {
     unconfigured: Vec<String>,
     exclusions: Vec<(String, usize)>,
     config_file: Option<String>,
+    baseline: Option<String>,
+    suppressed: usize,
+    stale: usize,
 }
 
 impl ReportPrinter {
@@ -31,6 +34,22 @@ impl ReportPrinter {
             unconfigured: Vec::new(),
             exclusions: Vec::new(),
             config_file: None,
+            baseline: None,
+            suppressed: 0,
+            stale: 0,
+        }
+    }
+
+    // A run that reported nothing while a baseline hid four hundred findings
+    // would be the most comfortable lie this tool could tell, so the count is
+    // in the summary of every run that used one -- including when it is the
+    // whole story and the report itself is empty.
+    pub fn with_baseline(self, baseline: Option<String>, suppressed: usize, stale: usize) -> Self {
+        Self {
+            baseline,
+            suppressed,
+            stale,
+            ..self
         }
     }
 
@@ -79,6 +98,7 @@ impl ReportPrinter {
             report.push_str(&self.roster());
             report.push_str(&self.exclusion_roster());
             report.push_str(&self.config_line());
+            report.push_str(&self.baseline_line());
             report.push_str(&self.summary(offences));
             return report;
         }
@@ -97,6 +117,7 @@ impl ReportPrinter {
         report.push_str(&self.roster());
         report.push_str(&self.exclusion_roster());
         report.push_str(&self.config_line());
+        report.push_str(&self.baseline_line());
         report.push_str(&self.summary(offences));
         report
     }
@@ -129,6 +150,28 @@ impl ReportPrinter {
         }
         roster.push('\n');
         roster
+    }
+
+    // Named with its count, because a run that reported nothing while a
+    // baseline hid four hundred findings would be the most comfortable lie this
+    // tool could tell. A stale entry is called out for the same reason a dead
+    // --exclude pattern is: it describes an offence somebody has since fixed,
+    // and until the file is rewritten it makes the baseline look like it is
+    // still holding something back.
+    fn baseline_line(&self) -> String {
+        let Some(path) = &self.baseline else {
+            return String::new();
+        };
+        let mut line = format!("  baseline: {path} ({} suppressed)\n", self.suppressed);
+        if self.stale > 0 {
+            line.push_str(&format!(
+                "  {} baseline entries matched nothing -- rerun with --write-baseline to \
+                 refresh it\n",
+                self.stale
+            ));
+        }
+        line.push('\n');
+        line
     }
 
     // A run configured by a file the reader never typed must say which file.
