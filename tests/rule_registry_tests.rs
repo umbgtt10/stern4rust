@@ -265,3 +265,35 @@ fn skipped_names_lists_what_the_switches_turned_off() {
     // Assert
     assert_eq!(skipped, ["tests-layout"]);
 }
+
+#[test]
+fn unconfigured_names_does_not_list_a_skipped_rule() {
+    // Arrange
+    let config = Config {
+        selection: RuleSelection::new(Vec::new(), vec!["header".to_string()]),
+        ..Config::default()
+    };
+    let registry = RuleRegistry::from_config(&config);
+
+    // Act
+    let unconfigured = registry.unconfigured_names(&config);
+
+    // Assert
+    assert!(unconfigured.is_empty(), "got {unconfigured:?}");
+}
+
+// A rule dropped for want of configuration is not a rule anybody skipped, and
+// reporting it as skipped would blame the user for a choice they did not make.
+// Reporting it as nothing at all is worse: the run silently checks less than it
+// appears to.
+#[test]
+fn unconfigured_names_lists_a_rule_that_could_not_run() {
+    // Arrange
+    let registry = RuleRegistry::from_config(&Config::default());
+
+    // Act
+    let unconfigured = registry.unconfigured_names(&Config::default());
+
+    // Assert
+    assert_eq!(unconfigured, ["header"]);
+}

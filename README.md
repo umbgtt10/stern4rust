@@ -38,7 +38,7 @@ cargo stern4rust --format json
 |---|---|
 | `--manifest-path <PATH>` | workspace manifest to analyse; defaults to the one in the current directory |
 | `--package <NAME>` | restrict to these packages; repeatable. Omit to take the manifest's own package |
-| `--header-file <PATH>` | the header every `.rs` file must open with. Without it the header rule does not run, and the report says which rules did |
+| `--header-file <PATH>` | the header every `.rs` file must open with. Without it the header rule does not run, and the report names it as not applied |
 | `--format <text\|json>` | `text` (default) is the table below; `json` is the same run as a document |
 | `--offence-threshold <N>` | how many offences the report prints. Default `100`, `0` for all. The cap is on what is *shown*, never on what is counted |
 | `--rule <NAME>` | apply only these rules; repeatable. Omit to apply every rule |
@@ -202,15 +202,23 @@ first is green.
 `--skip` is the other direction — everything except the one that is noisy for
 you. Skipping wins over selecting, so a rule named in both is not applied.
 
-**A run with rules switched off never claims otherwise.** It reports
-`All selected rules are satisfied`, names what was not applied, and carries
-`rules_applied` / `rules_skipped` in the summary and the JSON:
+**A run that did not apply every rule never claims otherwise.** Every report
+names the rules it applied, and names the ones it did not along with why:
 
 ```text
-note: 4 rule(s) were not applied: readable-source, test-file-structure, test-free-source, tests-layout
+All applied rules are satisfied.
 
-summary: files_scanned=94 offences=6 rules_broken=1 rules_applied=1 rules_skipped=4
+  applied: readable-source, test-file-structure, test-free-source, tests-layout
+  not applied: header (needs --header-file)
+
+summary: files_scanned=61 offences=0 rules_broken=0 rules_applied=4 rules_skipped=0 rules_unconfigured=1
 ```
+
+Three states, not two. A rule you turned off with `--skip` is *skipped*; a rule
+that could not run because you did not pass `--header-file` is *unconfigured*.
+Calling the second one skipped would blame you for a choice you did not make;
+calling it nothing at all would let the run check less than it appears to. The
+JSON carries `rules_applied`, `rules_skipped` and `rules_unconfigured`.
 
 An unknown rule name is an error, not a switch that quietly matches nothing —
 as is `--rule header` without `--header-file`, which would otherwise apply no

@@ -16,16 +16,18 @@ without answering it.
 | `header` | [R001](ADRs/R001-ADR-HeaderRule.md) | `--header-file` |
 
 `--rule <NAME>` applies only the named rules; `--skip <NAME>` subtracts. Both
-repeatable, both default to everything, and skipping wins over selecting. A run
-that switched rules off reports `All selected rules are satisfied`, names what
-was not applied, and carries `rules_applied` / `rules_skipped`. An unknown rule
+repeatable, both default to everything, and skipping wins over selecting. Every
+report names the rules it applied; a run that did not apply all of them says
+`All applied rules are satisfied` and names each absence with its reason --
+`(skipped)` or `(needs --header-file)`. The JSON carries `rules_applied`,
+`rules_skipped` and `rules_unconfigured`. An unknown rule
 name is an error, as is `--rule header` without `--header-file`. See
 [ADR-RuleSelection](ADRs/ADR-RuleSelection.md).
 
 A rule with nothing to work from is left out of the registry rather than
-registered and silently passing. Without `--header-file` the header rule does
-not run, and the report says which rules were applied — so a clean run cannot be
-mistaken for "the header rule passed" when it never ran.
+registered and silently passing -- and is then named in the report as not
+applied, so a clean run cannot be mistaken for "the header rule passed" when it
+never ran.
 
 ## `readable-source`
 

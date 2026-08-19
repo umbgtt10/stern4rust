@@ -15,6 +15,7 @@ pub struct ReportPrinter {
     threshold: OffenceThreshold,
     applied: Vec<String>,
     skipped: Vec<String>,
+    unconfigured: Vec<String>,
 }
 
 impl ReportPrinter {
@@ -24,13 +25,20 @@ impl ReportPrinter {
             threshold: OffenceThreshold::default(),
             applied: Vec::new(),
             skipped: Vec::new(),
+            unconfigured: Vec::new(),
         }
     }
 
-    pub fn with_rules(self, applied: Vec<String>, skipped: Vec<String>) -> Self {
+    pub fn with_rules(
+        self,
+        applied: Vec<String>,
+        skipped: Vec<String>,
+        unconfigured: Vec<String>,
+    ) -> Self {
         Self {
             applied,
             skipped,
+            unconfigured,
             ..self
         }
     }
@@ -50,7 +58,7 @@ impl ReportPrinter {
         if offences.is_empty() {
             report.push_str(self.clean_verdict());
             report.push_str("\n\n");
-            report.push_str(&self.deselection());
+            report.push_str(&self.roster());
             report.push_str(&self.summary(offences));
             return report;
         }
@@ -66,31 +74,55 @@ impl ReportPrinter {
         }
         report.push('\n');
         report.push_str(&self.omission(offences));
-        report.push_str(&self.deselection());
+        report.push_str(&self.roster());
         report.push_str(&self.summary(offences));
         report
     }
 
     // "All rules are satisfied" is only true when all of them ran. Saying it
-    // after --skip turned two off would be the tool telling the comfortable lie
-    // it exists to catch.
+    // after --skip turned two off, or after the header rule was dropped for
+    // want of a header file, would be the tool telling the comfortable lie it
+    // exists to catch.
     fn clean_verdict(&self) -> &'static str {
-        if self.skipped.is_empty() {
+        if self.everything_ran() {
             "All rules are satisfied."
         } else {
-            "All selected rules are satisfied."
+            "All applied rules are satisfied."
         }
     }
 
-    fn deselection(&self) -> String {
-        if self.skipped.is_empty() {
+    fn everything_ran(&self) -> bool {
+        self.skipped.is_empty() && self.unconfigured.is_empty()
+    }
+
+    // Named, not counted. A count answers "how many", which is only useful to a
+    // reader who already knows how many there are.
+    fn roster(&self) -> String {
+        if self.applied.is_empty() {
             return String::new();
         }
-        format!(
-            "note: {} rule(s) were not applied: {}\n\n",
-            self.skipped.len(),
-            self.skipped.join(", ")
-        )
+        let mut roster = format!("  applied: {}\n", self.applied.join(", "));
+        if !self.everything_ran() {
+            roster.push_str(&format!("  not applied: {}\n", self.absences().join(", ")));
+        }
+        roster.push('\n');
+        roster
+    }
+
+    // Skipped and unconfigured are both "did not run" and are not the same
+    // thing. One is a choice the reader made; the other is a flag they did not
+    // pass, and saying which is the difference between a note and an
+    // instruction.
+    fn absences(&self) -> Vec<String> {
+        self.skipped
+            .iter()
+            .map(|name| format!("{name} (skipped)"))
+            .chain(
+                self.unconfigured
+                    .iter()
+                    .map(|name| format!("{name} (needs --header-file)")),
+            )
+            .collect()
     }
 
     // Named alongside the flag that raises it. A cap nobody was told about reads
@@ -150,12 +182,13 @@ impl ReportPrinter {
         let broken: BTreeSet<&str> = offences.iter().map(|offence| offence.rule).collect();
         format!(
             "summary: files_scanned={} offences={} rules_broken={} rules_applied={} \
-             rules_skipped={}",
+             rules_skipped={} rules_unconfigured={}",
             self.files_scanned,
             offences.len(),
             broken.len(),
             self.applied.len(),
-            self.skipped.len()
+            self.skipped.len(),
+            self.unconfigured.len()
         )
     }
 }

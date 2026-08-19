@@ -28,9 +28,16 @@ left. The default is every rule and nothing excluded.
 breath is a contradiction, and the safer reading of a contradiction is the
 narrower one.
 
-**A run that switched rules off never says "All rules are satisfied."** It says
-*"All selected rules are satisfied"*, names what was not applied, and carries
-`rules_applied` / `rules_skipped` in both the summary line and the JSON.
+**Every report names the rules it applied**, and a run that did not apply all of
+them says *"All applied rules are satisfied"* rather than *"All rules are
+satisfied"*, naming each absence with its reason.
+
+**There are three states, not two.** A rule turned off with `--skip` is
+*skipped*. A rule that could not run because it had nothing to work from — the
+header rule without `--header-file` — is *unconfigured*. Calling the second one
+skipped blames the reader for a choice they did not make; calling it nothing at
+all lets the run check less than it appears to. Both the summary line and the
+JSON carry all three: `rules_applied`, `rules_skipped`, `rules_unconfigured`.
 
 Two conditions are errors — exit `1`, not silence:
 
@@ -97,6 +104,14 @@ offence, and rule selection addresses the same need without the argument.
 third place the same principle has been applied — after the omitted-offence note
 and after leaving an unconfigured rule out of the registry — and it is becoming
 the tool's defining habit: what was *not* looked at is part of the finding.
+
+Applying it fully exposed a case that had been wrong since before these switches
+existed. A run without `--header-file` printed *"All rules are satisfied"* with
+`rules_skipped=0`, having never applied the header rule and never naming it —
+and `README.md` claimed the report said which rules ran, which it did not. The
+switches did not cause that; they made it visible, because once a report has to
+justify a partial run it can no longer stay silent about the one partial run it
+always allowed.
 
 `rules_applied` and `rules_skipped` join the JSON document, which is a public
 interface as of `0.2.0`. Adding keys is safe; these are additions.

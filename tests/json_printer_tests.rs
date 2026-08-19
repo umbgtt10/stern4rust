@@ -82,11 +82,15 @@ fn render_includes_the_summary_counts() {
 // read "no offences" as "nothing wrong", which is only true of the rules that
 // were actually applied.
 #[test]
-fn render_lists_the_rules_applied_and_skipped() {
+fn render_lists_the_rules_applied_skipped_and_unconfigured() {
     // Arrange & Act
     let found = serde_json::from_str::<Value>(
         &JsonPrinter::new(1)
-            .with_rules(vec!["header".to_string()], vec!["tests-layout".to_string()])
+            .with_rules(
+                vec!["header".to_string()],
+                vec!["tests-layout".to_string()],
+                vec!["readable-source".to_string()],
+            )
             .render(&[]),
     )
     .expect("valid json");
@@ -94,6 +98,7 @@ fn render_lists_the_rules_applied_and_skipped() {
     // Assert
     assert_eq!(found["rules_applied"][0], "header");
     assert_eq!(found["rules_skipped"][0], "tests-layout");
+    assert_eq!(found["rules_unconfigured"][0], "readable-source");
 }
 
 #[test]

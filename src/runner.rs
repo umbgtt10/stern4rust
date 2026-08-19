@@ -130,14 +130,15 @@ impl Runner {
         let threshold = config.offence_threshold;
         let applied = Self::owned(&registry.names());
         let skipped = Self::owned(&RuleRegistry::skipped_names(&config.selection));
+        let unconfigured = Self::owned(&registry.unconfigured_names(config));
         match config.format {
             OutputFormat::Text => ReportPrinter::new(files_scanned)
                 .with_threshold(threshold)
-                .with_rules(applied, skipped)
+                .with_rules(applied.clone(), skipped.clone(), unconfigured.clone())
                 .print(offences),
             OutputFormat::Json => JsonPrinter::new(files_scanned)
                 .with_threshold(threshold)
-                .with_rules(applied, skipped)
+                .with_rules(applied, skipped, unconfigured)
                 .print(offences),
         }
     }

@@ -73,6 +73,18 @@ impl RuleRegistry {
             .collect()
     }
 
+    // Selected, but not registered, because it had nothing to work from. The
+    // third state: neither applied nor skipped. Reporting it as skipped would
+    // blame the reader for a choice they did not make, and reporting it as
+    // nothing at all would let a run check less than it appears to.
+    pub fn unconfigured_names(&self, config: &Config) -> Vec<&'static str> {
+        let applied = self.names();
+        Self::known_names()
+            .into_iter()
+            .filter(|name| config.selection.includes(name) && !applied.contains(name))
+            .collect()
+    }
+
     pub fn is_empty(&self) -> bool {
         self.rules.is_empty()
     }

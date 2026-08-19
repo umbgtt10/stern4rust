@@ -21,6 +21,7 @@ pub struct JsonPrinter {
     threshold: OffenceThreshold,
     applied: Vec<String>,
     skipped: Vec<String>,
+    unconfigured: Vec<String>,
 }
 
 impl JsonPrinter {
@@ -30,16 +31,23 @@ impl JsonPrinter {
             threshold: OffenceThreshold::default(),
             applied: Vec::new(),
             skipped: Vec::new(),
+            unconfigured: Vec::new(),
         }
     }
 
     // A consumer that could not tell an all-rules run from a one-rule run would
     // read "no offences" as "nothing wrong", which is only true of the rules
     // that were actually applied.
-    pub fn with_rules(self, applied: Vec<String>, skipped: Vec<String>) -> Self {
+    pub fn with_rules(
+        self,
+        applied: Vec<String>,
+        skipped: Vec<String>,
+        unconfigured: Vec<String>,
+    ) -> Self {
         Self {
             applied,
             skipped,
+            unconfigured,
             ..self
         }
     }
@@ -66,6 +74,7 @@ impl JsonPrinter {
             "rules_broken": broken.len(),
             "rules_applied": self.applied,
             "rules_skipped": self.skipped,
+            "rules_unconfigured": self.unconfigured,
             "offences": shown,
         });
         serde_json::to_string_pretty(&document).unwrap_or_default()

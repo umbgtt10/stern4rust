@@ -72,6 +72,26 @@ fn print_with_one_offence_does_not_panic() {
     printer.print(&[offence("src/a.rs", 1, "header")]);
 }
 
+// A count answers "how many", which is only useful to a reader who already
+// knows how many there are. The names answer what was actually checked.
+#[test]
+fn render_names_the_rules_that_were_applied() {
+    // Arrange & Act
+    let report = ReportPrinter::new(1)
+        .with_rules(
+            vec!["header".to_string(), "tests-layout".to_string()],
+            Vec::new(),
+            Vec::new(),
+        )
+        .render(&[]);
+
+    // Assert
+    assert!(
+        report.contains("applied: header, tests-layout"),
+        "got {report}"
+    );
+}
+
 // A run with rules switched off must never read as a run that checked
 // everything. This is the same refusal as the omitted-offence note, one level
 // up: what was not looked at is part of the finding.
@@ -82,16 +102,13 @@ fn render_names_the_rules_that_were_not_applied() {
         .with_rules(
             vec!["header".to_string()],
             vec!["tests-layout".to_string(), "test-free-source".to_string()],
+            Vec::new(),
         )
         .render(&[offence("src/a.rs", 1, "header")]);
 
     // Assert
     assert!(
-        report.contains("2 rule(s) were not applied"),
-        "got {report}"
-    );
-    assert!(
-        report.contains("tests-layout, test-free-source"),
+        report.contains("not applied: tests-layout (skipped), test-free-source (skipped)"),
         "got {report}"
     );
     assert!(
@@ -137,15 +154,19 @@ fn render_of_no_offences_says_every_rule_is_satisfied() {
 
 // "All rules are satisfied" is only true when all of them ran.
 #[test]
-fn render_of_no_offences_with_a_skipped_rule_says_selected_rules_are_satisfied() {
+fn render_of_no_offences_with_a_skipped_rule_says_applied_rules_are_satisfied() {
     // Arrange & Act
     let report = ReportPrinter::new(9)
-        .with_rules(vec!["header".to_string()], vec!["tests-layout".to_string()])
+        .with_rules(
+            vec!["header".to_string()],
+            vec!["tests-layout".to_string()],
+            Vec::new(),
+        )
         .render(&[]);
 
     // Assert
     assert!(
-        report.contains("All selected rules are satisfied."),
+        report.contains("All applied rules are satisfied."),
         "got {report}"
     );
     assert!(!report.contains("All rules are satisfied."), "got {report}");
@@ -191,6 +212,32 @@ fn render_puts_the_correction_on_its_own_line_after_the_offence() {
         lines[row + 1].starts_with("    "),
         "got {:?}",
         lines[row + 1]
+    );
+}
+
+// Skipped and unconfigured are both "did not run" and are not the same thing.
+// One is a choice the reader made; the other is a flag they did not pass, and
+// saying which is the difference between a note and an instruction.
+#[test]
+fn render_says_why_each_rule_was_not_applied() {
+    // Arrange & Act
+    let report = ReportPrinter::new(1)
+        .with_rules(
+            vec!["readable-source".to_string()],
+            vec!["tests-layout".to_string()],
+            vec!["header".to_string()],
+        )
+        .render(&[]);
+
+    // Assert
+    assert!(report.contains("tests-layout (skipped)"), "got {report}");
+    assert!(
+        report.contains("header (needs --header-file)"),
+        "got {report}"
+    );
+    assert!(
+        report.contains("rules_applied=1 rules_skipped=1 rules_unconfigured=1"),
+        "got {report}"
     );
 }
 
