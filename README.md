@@ -42,6 +42,12 @@ cargo stern4rust --format json
 | `--format <text\|json>` | `text` (default) is the table below; `json` is the same run as a document |
 | `--offence-threshold <N>` | how many offences the report prints. Default `100`, `0` for all. The cap is on what is *shown*, never on what is counted |
 
+A directory holding its own `Cargo.toml` is not walked: it is a different
+package, its files are that package's to answer for, and cargo would not
+compile them as part of this one either. The shape this matters for is a
+fixture crate under `tests/fixtures/` — sample code a tool analyses rather than
+code it ships.
+
 ## The rules
 
 Each rule is independent, names itself in the report, and can be pointed at a

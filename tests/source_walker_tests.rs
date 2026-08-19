@@ -94,6 +94,23 @@ fn walk_ignores_files_that_are_not_rust() {
     assert_eq!(found, ["src/a.rs"]);
 }
 
+// The package being walked holds a manifest by definition, so the rule that
+// skips nested packages has to exempt the one it started from -- otherwise the
+// walk skips everything and every run reports a clean tree.
+#[test]
+fn walk_keeps_the_root_package_even_though_it_holds_a_manifest() {
+    // Arrange
+    let root = temp_root("root_manifest");
+    write(&root, "Cargo.toml");
+    write(&root, "src/a.rs");
+
+    // Act
+    let found = names(&root);
+
+    // Assert
+    assert_eq!(found, ["src/a.rs"]);
+}
+
 #[test]
 fn walk_of_a_directory_that_does_not_exist_returns_nothing() {
     // Arrange
@@ -133,6 +150,45 @@ fn walk_returns_paths_in_a_stable_order() {
 
     // Assert
     assert_eq!(found, ["src/a.rs", "src/m.rs", "src/z.rs"]);
+}
+
+// The shape this was written for: crap4rust and grip4rust both keep sample
+// crates under tests/fixtures/, and judging them produced 154 offences against
+// code that is input data rather than the repository's own.
+#[test]
+fn walk_skips_a_fixture_package_under_tests() {
+    // Arrange
+    let root = temp_root("fixture_package");
+    write(&root, "Cargo.toml");
+    write(&root, "tests/a_tests.rs");
+    write(&root, "tests/fixtures/sample/Cargo.toml");
+    write(&root, "tests/fixtures/sample/src/lib.rs");
+    write(&root, "tests/fixtures/sample/tests/sample_tests.rs");
+
+    // Act
+    let found = names(&root);
+
+    // Assert
+    assert_eq!(found, ["tests/a_tests.rs"]);
+}
+
+// A directory with its own manifest is a different package. Its files are that
+// package's to answer for, under whatever rules it has chosen, and cargo would
+// not compile them as part of this one either.
+#[test]
+fn walk_skips_a_nested_package_holding_its_own_manifest() {
+    // Arrange
+    let root = temp_root("nested_package");
+    write(&root, "Cargo.toml");
+    write(&root, "src/a.rs");
+    write(&root, "vendored/other/Cargo.toml");
+    write(&root, "vendored/other/src/b.rs");
+
+    // Act
+    let found = names(&root);
+
+    // Assert
+    assert_eq!(found, ["src/a.rs"]);
 }
 
 // Generated code nobody wrote. Judging it would drown every real finding.
