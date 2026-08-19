@@ -2,13 +2,13 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::import_path::ImportPath;
-use crate::offence::Offence;
+use crate::finding::import_path::ImportPath;
+use crate::finding::section::Section;
+use crate::finding::test_file_item::TestFileItem;
+use crate::finding::test_file_parser::TestFileParser;
+use crate::reporting::offence::Offence;
 use crate::rule::Rule;
-use crate::section::Section;
 use crate::source_file::SourceFile;
-use crate::test_file_item::TestFileItem;
-use crate::test_file_parser::TestFileParser;
 
 // A test file reads top to bottom in one order: header, imports, constants,
 // helpers, tests. Each group is alphabetical, and the spacing is part of the

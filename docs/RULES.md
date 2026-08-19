@@ -1,6 +1,6 @@
 # Rules
 
-Nine rules, each independent, each naming itself in the report. This is the
+Eleven rules, each independent, each naming itself in the report. This is the
 reference; the reasoning behind each one is in its ADR.
 
 Every offence carries a **correction** as well as a description — what to do,
@@ -10,6 +10,8 @@ without answering it.
 | rule | ADR | needs configuration |
 |---|---|---|
 | `readable-source` | [R004](ADRs/R004-ADR-ReadableSourceRule.md) | no |
+| `directory-file-count` | [R010](ADRs/R010-ADR-DirectoryFileCountRule.md) | optional, default 20 |
+| `directory-subfolder-count` | [R011](ADRs/R011-ADR-DirectorySubfolderCountRule.md) | optional, default 5 |
 | `imported-paths` | [R008](ADRs/R008-ADR-ImportedPathsRule.md) | no |
 | `registry-completeness` | [R009](ADRs/R009-ADR-RegistryCompletenessRule.md) | no |
 | `test-file-structure` | [R002](ADRs/R002-ADR-TestFileStructureRule.md) | no |
@@ -124,6 +126,57 @@ case.
 `// Arrange`, `// Act`, `// Assert` inside a body, and the
 `<method>_<description>_<outcome>` naming pattern — is not checked. A file that
 does not parse reports nothing here; `readable-source` reports it instead.
+
+## `directory-file-count`
+
+A directory holds at most **20** `.rs` files, not counting its own index.
+`max-files-per-directory` in `stern4rust.toml` changes the limit.
+
+This is the only rule whose number is taste rather than fact, which is why it is
+configuration. It is also the one most in tension with the rest: one struct per
+file, one implemented type per file and one test file per source file all
+manufacture files by design, so the limit has to be generous enough that the
+conventions producing the files are not themselves the offence.
+
+Registries do not count -- a `mod.rs`, `lib.rs` or `all_tests.rs` is an index
+*of* the directory rather than something *in* it. `main.rs` does count: it is an
+entry point holding real code.
+
+| offence | correction |
+|---|---|
+| `src` holds 42 files, more than the 20 a directory may hold | group the files of `src` into subfolders of at most 20 each, each with its own `mod.rs` declared by this index |
+
+Reported against the directory's index, because that is where the `pub mod`
+lines for the new subfolders have to go.
+
+**Does not catch:** size. Twenty files of two thousand lines each satisfy it --
+that is `crap4rust`'s question. Non-`.rs` files are invisible. And it does not
+say *where* to split: a cap forces a division and is silent about which one.
+
+**It cannot be autofixed.** The correction is a `git mv`, a new `mod.rs`, a
+declaration in the parent, and a matching move under `tests/`.
+
+## `directory-subfolder-count`
+
+A directory holds at most **5** subfolders containing source, checked at every
+level so that pushing sprawl one directory down does not escape it.
+`max-subfolders-per-directory` changes the limit.
+
+The counterweight to `directory-file-count`: that rule creates folders, and
+without this one the cheapest way to satisfy it is a folder per file.
+
+| offence | correction |
+|---|---|
+| `src` holds 7 subfolders, more than the 5 a directory may hold | group the subfolders of `src` so that no directory holds more than 5 |
+
+**It finds nothing today.** Across eight repositories the deepest tree is two
+levels and no directory has more than one subfolder. It is a guard against a
+shape the family has not reached, kept because `PackageTree` already models what
+it needs and because the folders it counts are about to be created.
+
+**Does not catch:** what is in the folders -- five subfolders of two hundred
+files each satisfy it, and `directory-file-count` is what catches that. The two
+are only meaningful together.
 
 ## `imported-paths`
 

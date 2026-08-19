@@ -58,7 +58,8 @@ split up.
 ## Forcing constraints / Evidence
 
 Measured across eight repositories before the rule was written, exactly one file
-breaks it — and it is this tool's own `src/report_printer.rs`, holding both
+breaks it — and it is this tool's own `report_printer.rs` (now under
+`src/reporting/`), holding both
 `ReportPrinter` and `ColumnWidths`. Every other repository in the family, and
 `etheram-core`, was already clean.
 

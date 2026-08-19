@@ -2,10 +2,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::config::Config;
-use crate::offence::Offence;
+use crate::reporting::offence::Offence;
 use crate::rule::Rule;
-use crate::rule_selection::RuleSelection;
+use crate::rules::directory_file_count_rule::DirectoryFileCountRule;
+use crate::rules::directory_subfolder_count_rule::DirectorySubfolderCountRule;
 use crate::rules::header_rule::HeaderRule;
 use crate::rules::imported_paths_rule::ImportedPathsRule;
 use crate::rules::module_registry_rule::ModuleRegistryRule;
@@ -15,6 +15,8 @@ use crate::rules::single_implemented_type_rule::SingleImplementedTypeRule;
 use crate::rules::test_file_structure_rule::TestFileStructureRule;
 use crate::rules::test_free_source_rule::TestFreeSourceRule;
 use crate::rules::tests_layout_rule::TestsLayoutRule;
+use crate::settings::config::Config;
+use crate::settings::rule_selection::RuleSelection;
 use crate::source_file::SourceFile;
 
 // The one place that knows which rules exist. Adding a rule is a line here and a
@@ -36,9 +38,19 @@ impl RuleRegistry {
     // explains every other rule's silence on the same file. The header rule is
     // built here even without a header, so that it can still name itself -- it
     // answers `is_configured` with false and `from_config` drops it.
-    fn all(expected_header: Vec<String>) -> Vec<Box<dyn Rule>> {
+    fn all(config: &Config) -> Vec<Box<dyn Rule>> {
         vec![
             Box::new(ReadableSourceRule::new()),
+            Box::new(DirectoryFileCountRule::new(
+                config
+                    .max_files_per_directory
+                    .unwrap_or(DirectoryFileCountRule::DEFAULT_LIMIT),
+            )),
+            Box::new(DirectorySubfolderCountRule::new(
+                config
+                    .max_subfolders_per_directory
+                    .unwrap_or(DirectorySubfolderCountRule::DEFAULT_LIMIT),
+            )),
             Box::new(ImportedPathsRule::new()),
             Box::new(ModuleRegistryRule::new()),
             Box::new(RegistryCompletenessRule::new()),
@@ -46,12 +58,12 @@ impl RuleRegistry {
             Box::new(TestFileStructureRule::new()),
             Box::new(TestFreeSourceRule::new()),
             Box::new(TestsLayoutRule::new()),
-            Box::new(HeaderRule::new(expected_header)),
+            Box::new(HeaderRule::new(config.expected_header.clone())),
         ]
     }
 
     pub fn from_config(config: &Config) -> Self {
-        let rules = Self::all(config.expected_header.clone())
+        let rules = Self::all(config)
             .into_iter()
             .filter(|rule| rule.is_configured() && config.selection.includes(rule.name()))
             .collect();
@@ -66,7 +78,7 @@ impl RuleRegistry {
     // it. Read off the same list `from_config` narrows, so a rule cannot be
     // applied by a default run while `--rule <name>` calls it unknown.
     pub fn known_names() -> Vec<&'static str> {
-        Self::all(Vec::new())
+        Self::all(&Config::default())
             .iter()
             .map(|rule| rule.name())
             .collect()

@@ -15,7 +15,7 @@ already own correctness. These are the things a reviewer would otherwise have to
 say by hand, every time, forever — and the ones that quietly stop being true
 across a codebase the moment nobody is checking.
 
-> **Status: nine rules, more coming.** The set below is what is implemented and
+> **Status: eleven rules, more coming.** The set below is what is implemented and
 > gated. `stern4rust` runs against its own tree on every build, so a rule that
 > would fail this repository cannot be merged into it.
 
@@ -127,6 +127,8 @@ run the same check:
 
 ```toml
 baseline = "stern4rust-baseline.json"
+max-files-per-directory = 20
+max-subfolders-per-directory = 5
 header-file = "docs/header.txt"
 offence-threshold = 100
 rules = ["header", "tests-layout"]
@@ -188,13 +190,36 @@ says at the call site where the function came from. Type qualifiers —
 import to add:
 
 ```text
-src/registry_parser.rs   24  imported-paths  `syn::parse_file` is reached through a path; no import of this file names it
+src/finding/registry_parser.rs  24  imported-paths  `syn::parse_file` is reached through a path; no import of this file names it
                                              fix: add `use syn::parse_file;` and call `parse_file`
-src/args.rs              58  imported-paths  `std::env::args` is reached through a path; no import of this file names it
+src/settings/args.rs     58  imported-paths  `std::env::args` is reached through a path; no import of this file names it
                                              fix: add `use std::env;` and call `env::args`
 ```
 
 [R008](docs/ADRs/R008-ADR-ImportedPathsRule.md)
+
+### `directory-file-count`
+
+A directory holds at most **20** `.rs` files, not counting its own index —
+`max-files-per-directory` in `stern4rust.toml` changes it. This is the only rule
+whose number is taste rather than fact, which is why it is configuration.
+
+It is also the rule most in tension with the others: one struct per file, one
+implemented type per file and one test file per source file all manufacture files
+by design, so the limit has to be generous enough that the conventions producing
+the files are not themselves the offence.
+
+**It cannot be autofixed** — the correction is a `git mv`, a new `mod.rs`, a
+declaration in the parent, and a matching move under `tests/`.
+[R010](docs/ADRs/R010-ADR-DirectoryFileCountRule.md)
+
+### `directory-subfolder-count`
+
+At most **5** subfolders per directory, checked at every level. The counterweight
+to the rule above: that one creates folders, and without this the cheapest way to
+satisfy it is a folder per file. It finds nothing across the family today and
+says so.
+[R011](docs/ADRs/R011-ADR-DirectorySubfolderCountRule.md)
 
 ### `registry-completeness`
 

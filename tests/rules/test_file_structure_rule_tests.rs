@@ -26,7 +26,7 @@ const HEADER: &str = "// Copyright 2025 Umberto Gotti <umberto.gotti@umbertogott
 
 const RULE: &str = "test-file-structure";
 
-fn check(contents: &str) -> Vec<stern4rust::offence::Offence> {
+fn check(contents: &str) -> Vec<stern4rust::reporting::offence::Offence> {
     TestFileStructureRule::new().check(&test_file(contents))
 }
 

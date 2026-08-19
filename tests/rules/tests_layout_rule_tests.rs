@@ -28,7 +28,7 @@ const RULE: &str = "tests-layout";
 
 const TEST_BODY: &str = "#[test]\nfn alpha_does_something() {}\n";
 
-fn check(files: &[(&str, &str)]) -> Vec<stern4rust::offence::Offence> {
+fn check(files: &[(&str, &str)]) -> Vec<stern4rust::reporting::offence::Offence> {
     let files: Vec<SourceFile> = files
         .iter()
         .map(|(path, body)| SourceFile::new(path, &format!("{HEADER}\n{body}")))

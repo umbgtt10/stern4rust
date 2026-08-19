@@ -9,7 +9,7 @@
 // concession: `use std::fs` followed by `fs::read_to_string` states the route
 // once and still names the module where the reader needs it.
 
-use stern4rust::offence::Offence;
+use stern4rust::reporting::offence::Offence;
 use stern4rust::rule::Rule;
 use stern4rust::rules::imported_paths_rule::ImportedPathsRule;
 use stern4rust::source_file::SourceFile;

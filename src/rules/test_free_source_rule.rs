@@ -2,10 +2,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::offence::Offence;
+use crate::finding::unit_test_finder::UnitTestFinder;
+use crate::reporting::offence::Offence;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;
-use crate::unit_test_finder::UnitTestFinder;
 
 // Tests live in tests/, and the production source tree carries none of them.
 //

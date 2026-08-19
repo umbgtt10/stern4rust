@@ -5,6 +5,17 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
 ## Version 0.4.0
 
+### Rules
+
+- **`directory-file-count`** -- a directory holds at most 20 `.rs` files, not
+  counting its own index. `max-files-per-directory` in `stern4rust.toml` changes
+  it; the only rule whose number is taste rather than fact. Ten offences across
+  five of eight repositories. [R010](ADRs/R010-ADR-DirectoryFileCountRule.md)
+- **`directory-subfolder-count`** -- at most 5 subfolders per directory, checked
+  at every level. The counterweight, so splitting is not the answer to
+  everything. Finds nothing today and says so.
+  [R011](ADRs/R011-ADR-DirectorySubfolderCountRule.md)
+
 ### Autofix
 
 - `--fix` repairs `test-file-structure` offences: item order within a section,
@@ -33,7 +44,8 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 ### Configuration file
 
 - `stern4rust.toml` beside the manifest, holding `header-file`,
-  `offence-threshold`, `rules`, `skip`, `exclude` and `baseline`. Every key
+  `offence-threshold`, `rules`, `skip`, `exclude`, `baseline`,
+  `max-files-per-directory` and `max-subfolders-per-directory`. Every key
   optional.
 - The command line wins per setting; for the list settings that is replacement
   rather than merging.

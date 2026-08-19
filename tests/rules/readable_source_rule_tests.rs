@@ -18,7 +18,7 @@ use stern4rust::source_file::SourceFile;
 
 const RULE: &str = "readable-source";
 
-fn check(contents: &str) -> Vec<stern4rust::offence::Offence> {
+fn check(contents: &str) -> Vec<stern4rust::reporting::offence::Offence> {
     ReadableSourceRule::new().check(&SourceFile::new("src/subject.rs", contents))
 }
 

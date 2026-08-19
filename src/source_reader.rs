@@ -5,9 +5,9 @@
 use std::fs;
 use std::path::Path;
 
-use crate::manifest_resolver::ManifestResolver;
-use crate::offence::Offence;
+use crate::reporting::offence::Offence;
 use crate::rules::readable_source_rule::ReadableSourceRule;
+use crate::settings::manifest_resolver::ManifestResolver;
 use crate::source_file::SourceFile;
 
 // Reads a file the walker found, and turns a failure into a finding rather than

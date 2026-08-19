@@ -25,7 +25,7 @@ const HEADER: &str = "// Copyright 2025 Umberto Gotti <umberto.gotti@umbertogott
 
 const RULE: &str = "module-registry";
 
-fn check(path: &str, body: &str) -> Vec<stern4rust::offence::Offence> {
+fn check(path: &str, body: &str) -> Vec<stern4rust::reporting::offence::Offence> {
     ModuleRegistryRule::new().check(&SourceFile::new(path, &format!("{HEADER}\n{body}")))
 }
 

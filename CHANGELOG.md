@@ -4,6 +4,83 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **`directory-file-count`**, the tenth rule. A directory holds at most 20 `.rs`
+  files, not counting its own index. `max-files-per-directory` in
+  `stern4rust.toml` changes the limit -- this is the only rule whose number is a
+  matter of taste rather than a fact about the code, and a rule pretending
+  otherwise would be ignored rather than adjusted.
+
+  20 rather than the 12-15 first considered: measured across eight repositories,
+  12 puts all eight over the line. More to the point, a tighter limit fights the
+  conventions this tool enforces elsewhere -- one struct per file, one
+  implemented type per file, one test file per source file all manufacture files
+  by design, and a limit punishing its own standards gets worked around.
+
+  Registries do not count: a `mod.rs`, `lib.rs` or `all_tests.rs` is an index
+  *of* the directory rather than something *in* it. `main.rs` does count, being
+  an entry point holding real code.
+
+  **Ten offences across five of eight repositories**, and the symmetry is exact:
+  every repository over the line is over it on both sides -- 42/39, 30/37,
+  28/28, 23/24, 23/22 -- because the mirrored-test-file convention means source
+  and test directories grow together. Ten offences are five restructurings done
+  twice.
+
+  **It is the first rule that cannot be satisfied by editing a file**, and the
+  first that `--fix` cannot help with: the correction is a `git mv`, a new
+  `mod.rs`, a `pub mod` line in the parent, and a matching move under `tests/`.
+
+- **`directory-subfolder-count`**, the eleventh. At most 5 subfolders per
+  directory, checked at every level so sprawl cannot be pushed one directory
+  down. `max-subfolders-per-directory` changes the limit.
+
+  It is the counterweight: `directory-file-count` creates folders, and without
+  this the cheapest way to satisfy it is a folder per file. **It finds nothing
+  across the family today** -- the deepest tree is two levels and no directory
+  has more than one subfolder -- and its ADR says so plainly rather than burying
+  it. It is kept because `PackageTree` already models what it needs and because
+  the folders it counts are about to be created.
+
+  Two rules rather than one with two thresholds, so that a repository can adopt
+  the file cap without the folder cap: `--rule` and `--skip` work by name, and
+  here it matters, since one half has ten offences and the other has none.
+
+### Changed
+
+- **This crate's own `src/` and `tests/` were restructured** to satisfy
+  `directory-file-count`, keeping the pattern that every rule so far has been
+  satisfied by the repository that wrote it rather than baselined by it. `src/`
+  now holds 8 files and 5 subfolders -- `finding/`, `reporting/`, `rules/`,
+  `settings/`, `adoption/` -- and `tests/` mirrors it file for file. 33 moves on
+  each side, eight new registries, and every `use` path rewritten.
+
+  `settings/` rather than `config/`, because the folder holds `config.rs` and
+  `crate::config::config::Config` is a path nobody should have to read. Five
+  subfolders is exactly `directory-subfolder-count`'s limit, which is fair
+  warning that the two rules together leave less room than they appear to.
+
+  **This moves every public path in the library.** Anything importing
+  `stern4rust::offence::Offence` now wants
+  `stern4rust::reporting::offence::Offence`.
+
+### Fixed
+
+- **`PackageTree` did not model a directory that held no files of its own.** A
+  `src/` whose sources all live one level down was invisible to the walk, so a
+  rule counting what a directory contains could never ask about it. Ancestors
+  are now keys too, including the package root.
+
+### Changed
+
+- **`stern4rust.toml` gained `max-files-per-directory` and
+  `max-subfolders-per-directory`.** Both optional; the rules supply their own
+  defaults. They are config-file-only rather than CLI flags, because a directory
+  limit is a fact about a repository rather than a choice for one run.
+
 ## [0.4.0] - 2026-08-19
 
 ### Added

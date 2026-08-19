@@ -2,24 +2,24 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::args::Args;
-use crate::baseline::Baseline;
-use crate::baseline_outcome::BaselineOutcome;
-use crate::config::Config;
-use crate::config_file::ConfigFile;
-use crate::exclusion_outcome::ExclusionOutcome;
-use crate::exclusion_set::ExclusionSet;
-use crate::header_source::HeaderSource;
-use crate::json_printer::JsonPrinter;
-use crate::manifest_resolver::ManifestResolver;
-use crate::offence::Offence;
-use crate::offence_threshold::OffenceThreshold;
-use crate::output_format::OutputFormat;
-use crate::report_printer::ReportPrinter;
+use crate::adoption::baseline::Baseline;
+use crate::adoption::baseline_outcome::BaselineOutcome;
+use crate::adoption::exclusion_outcome::ExclusionOutcome;
+use crate::adoption::exclusion_set::ExclusionSet;
+use crate::reporting::json_printer::JsonPrinter;
+use crate::reporting::offence::Offence;
+use crate::reporting::offence_threshold::OffenceThreshold;
+use crate::reporting::output_format::OutputFormat;
+use crate::reporting::report_printer::ReportPrinter;
+use crate::reporting::run_outcome::RunOutcome;
 use crate::rule_registry::RuleRegistry;
-use crate::rule_selection::RuleSelection;
 use crate::rules::header_rule::HeaderRule;
-use crate::run_outcome::RunOutcome;
+use crate::settings::args::Args;
+use crate::settings::config::Config;
+use crate::settings::config_file::ConfigFile;
+use crate::settings::header_source::HeaderSource;
+use crate::settings::manifest_resolver::ManifestResolver;
+use crate::settings::rule_selection::RuleSelection;
 use crate::source_file::SourceFile;
 use crate::source_reader::SourceReader;
 use crate::source_walker::SourceWalker;
@@ -177,6 +177,8 @@ impl Runner {
             fix: args.fix,
             config_file: found.map(|_| directory.join(ConfigFile::NAME)),
             manifest_path: args.manifest_path,
+            max_files_per_directory: found.and_then(|file| file.max_files_per_directory),
+            max_subfolders_per_directory: found.and_then(|file| file.max_subfolders_per_directory),
             packages: args.packages,
             excludes: Self::preferred(args.excludes, found.map(|file| &file.exclude)),
             expected_header,

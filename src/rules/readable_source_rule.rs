@@ -4,7 +4,7 @@
 
 use syn::parse_file;
 
-use crate::offence::Offence;
+use crate::reporting::offence::Offence;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;
 

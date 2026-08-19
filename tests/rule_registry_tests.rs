@@ -9,11 +9,11 @@
 // satisfied" while a rule was never configured is worse than one that says so,
 // because the green is indistinguishable from a real pass.
 
-use stern4rust::config::Config;
-use stern4rust::offence::Offence;
+use stern4rust::reporting::offence::Offence;
 use stern4rust::rule::Rule;
 use stern4rust::rule_registry::RuleRegistry;
-use stern4rust::rule_selection::RuleSelection;
+use stern4rust::settings::config::Config;
+use stern4rust::settings::rule_selection::RuleSelection;
 use stern4rust::source_file::SourceFile;
 
 struct AlwaysOffends;
@@ -157,6 +157,8 @@ fn from_config_with_a_header_registers_the_header_rule_alongside_the_others() {
         registry.names(),
         [
             "readable-source",
+            "directory-file-count",
+            "directory-subfolder-count",
             "imported-paths",
             "module-registry",
             "registry-completeness",
@@ -202,6 +204,8 @@ fn from_config_with_a_skip_leaves_that_rule_out() {
         registry.names(),
         [
             "readable-source",
+            "directory-file-count",
+            "directory-subfolder-count",
             "imported-paths",
             "module-registry",
             "registry-completeness",
@@ -224,6 +228,8 @@ fn from_config_without_a_header_registers_the_rules_that_need_no_configuration()
         registry.names(),
         [
             "readable-source",
+            "directory-file-count",
+            "directory-subfolder-count",
             "imported-paths",
             "module-registry",
             "registry-completeness",
@@ -247,6 +253,8 @@ fn known_names_lists_every_rule_the_tool_has() {
         known,
         [
             "readable-source",
+            "directory-file-count",
+            "directory-subfolder-count",
             "imported-paths",
             "module-registry",
             "registry-completeness",

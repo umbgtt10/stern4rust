@@ -23,7 +23,7 @@ const HEADER: &str = "// Copyright 2025 Umberto Gotti <umberto.gotti@umbertogott
 
 const RULE: &str = "single-implemented-type";
 
-fn check(path: &str, body: &str) -> Vec<stern4rust::offence::Offence> {
+fn check(path: &str, body: &str) -> Vec<stern4rust::reporting::offence::Offence> {
     SingleImplementedTypeRule::new().check(&SourceFile::new(path, &format!("{HEADER}\n{body}")))
 }
 

@@ -14,9 +14,9 @@ use clap::Parser;
 use std::env;
 use std::fs;
 use std::path::PathBuf;
-use stern4rust::args::Args;
-use stern4rust::run_outcome::RunOutcome;
+use stern4rust::reporting::run_outcome::RunOutcome;
 use stern4rust::runner::Runner;
+use stern4rust::settings::args::Args;
 
 const THIS_CRATE: &str = "cargo-stern4rust";
 

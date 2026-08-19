@@ -2,6 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+pub mod directory_file_count_rule;
+pub mod directory_subfolder_count_rule;
 pub mod header_rule;
 pub mod imported_paths_rule;
 pub mod module_registry_rule;

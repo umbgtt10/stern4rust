@@ -2,7 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::offence::Offence;
+use crate::reporting::offence::Offence;
 use crate::source_file::SourceFile;
 
 // One rule, one file, one implementation. A rule sees a single source file and

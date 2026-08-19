@@ -2,9 +2,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::implemented_type::ImplementedType;
-use crate::implemented_type_finder::ImplementedTypeFinder;
-use crate::offence::Offence;
+use crate::finding::implemented_type::ImplementedType;
+use crate::finding::implemented_type_finder::ImplementedTypeFinder;
+use crate::reporting::offence::Offence;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;
 

@@ -4,8 +4,8 @@
 
 use std::process::exit;
 
-use stern4rust::args::Args;
 use stern4rust::runner::Runner;
+use stern4rust::settings::args::Args;
 
 // The only place that turns a verdict into an exit code. A failure to run is an
 // Err, which reaches the shell as 1; a broken rule is a successful run with a

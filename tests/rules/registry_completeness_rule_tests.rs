@@ -9,7 +9,7 @@
 // nothing declares produces no error and no warning. Silence is the failure, so
 // silence is what this looks for.
 
-use stern4rust::offence::Offence;
+use stern4rust::reporting::offence::Offence;
 use stern4rust::rule::Rule;
 use stern4rust::rules::registry_completeness_rule::RegistryCompletenessRule;
 use stern4rust::source_file::SourceFile;

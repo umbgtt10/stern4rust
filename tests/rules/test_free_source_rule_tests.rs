@@ -14,7 +14,7 @@ use stern4rust::source_file::SourceFile;
 
 const RULE: &str = "test-free-source";
 
-fn check(path: &str, body: &str) -> Vec<stern4rust::offence::Offence> {
+fn check(path: &str, body: &str) -> Vec<stern4rust::reporting::offence::Offence> {
     TestFreeSourceRule::new().check(&SourceFile::new(path, body))
 }
 
