@@ -9,6 +9,7 @@
 // target/ is the one exclusion that matters: it holds generated code nobody
 // wrote, and judging it would bury every real finding under thousands of rows.
 
+use std::env;
 use std::fs;
 use std::path::Path;
 use std::path::PathBuf;
@@ -27,7 +28,7 @@ fn names(root: &Path) -> Vec<String> {
 }
 
 fn temp_root(name: &str) -> PathBuf {
-    let root = std::env::temp_dir().join(format!("stern4rust_walker_{name}"));
+    let root = env::temp_dir().join(format!("stern4rust_walker_{name}"));
     let _ = fs::remove_dir_all(&root);
     fs::create_dir_all(&root).expect("create the temp root");
     root
@@ -155,7 +156,7 @@ fn walk_keeps_the_root_package_even_though_it_holds_a_manifest() {
 #[test]
 fn walk_of_a_directory_that_does_not_exist_returns_nothing() {
     // Arrange
-    let root = std::env::temp_dir().join("stern4rust_walker_absent");
+    let root = env::temp_dir().join("stern4rust_walker_absent");
     let _ = fs::remove_dir_all(&root);
 
     // Act

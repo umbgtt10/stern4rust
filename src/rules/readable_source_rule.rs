@@ -2,6 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use syn::parse_file;
+
 use crate::offence::Offence;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;
@@ -48,7 +50,7 @@ impl Rule for ReadableSourceRule {
     }
 
     fn check(&self, file: &SourceFile) -> Vec<Offence> {
-        match syn::parse_file(&file.contents()) {
+        match parse_file(&file.contents()) {
             Ok(_) => Vec::new(),
             Err(error) => vec![
                 Offence::new(

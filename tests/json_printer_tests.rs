@@ -14,12 +14,13 @@
 // tests parse it back and assert on the structure rather than on a substring.
 
 use serde_json::Value;
+use serde_json::from_str;
 use stern4rust::json_printer::JsonPrinter;
 use stern4rust::offence::Offence;
 use stern4rust::offence_threshold::OffenceThreshold;
 
 fn parsed(files_scanned: usize, offences: &[Offence]) -> Value {
-    serde_json::from_str(&JsonPrinter::new(files_scanned).render(offences)).expect("valid json")
+    from_str(&JsonPrinter::new(files_scanned).render(offences)).expect("valid json")
 }
 
 fn plain() -> Offence {
@@ -84,7 +85,7 @@ fn render_includes_the_summary_counts() {
 #[test]
 fn render_lists_the_rules_applied_skipped_and_unconfigured() {
     // Arrange & Act
-    let found = serde_json::from_str::<Value>(
+    let found = from_str::<Value>(
         &JsonPrinter::new(1)
             .with_rules(
                 vec!["header".to_string()],
@@ -141,7 +142,7 @@ fn render_of_more_offences_than_the_threshold_reports_both_counts() {
     let offences: Vec<Offence> = (1..=10).map(|_| plain()).collect();
 
     // Act
-    let found = serde_json::from_str::<Value>(
+    let found = from_str::<Value>(
         &JsonPrinter::new(1)
             .with_threshold(OffenceThreshold::new(3))
             .render(&offences),

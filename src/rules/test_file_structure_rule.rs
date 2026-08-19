@@ -83,9 +83,7 @@ impl TestFileStructureRule {
     // the alphabet there would make the file unsatisfiable rather than merely
     // wrong: the formatter runs first and writes the other order back.
     fn ordered_by_rustfmt(previous: &TestFileItem, item: &TestFileItem) -> bool {
-        item.section == Section::Imports
-            && (ImportPath::is_specially_ordered(&previous.name)
-                || ImportPath::is_specially_ordered(&item.name))
+        item.section == Section::Imports && ImportPath::decides_order(&previous.name, &item.name)
     }
 
     fn spacing(

@@ -13,6 +13,8 @@ pub mod manifest_resolver_tests;
 pub mod offence_tests;
 pub mod offence_threshold_tests;
 pub mod output_format_tests;
+pub mod qualified_call_finder_tests;
+pub mod qualified_call_tests;
 pub mod registry_item_tests;
 pub mod registry_parser_tests;
 pub mod registry_policy_tests;

@@ -6,6 +6,7 @@ use std::collections::BTreeSet;
 
 use syn::Item;
 use syn::Type;
+use syn::parse_file;
 use syn::spanned::Spanned;
 
 use crate::implemented_type::ImplementedType;
@@ -26,7 +27,7 @@ pub struct ImplementedTypeFinder;
 impl ImplementedTypeFinder {
     // None means the file does not parse. readable-source reports that.
     pub fn find(file: &SourceFile) -> Option<Vec<ImplementedType>> {
-        let syntax = syn::parse_file(&file.contents()).ok()?;
+        let syntax = parse_file(&file.contents()).ok()?;
         let mut declared = Vec::new();
         let mut implemented = BTreeSet::new();
         Self::walk(&syntax.items, &mut declared, &mut implemented);

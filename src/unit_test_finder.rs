@@ -6,6 +6,7 @@ use proc_macro2::TokenTree;
 use quote::ToTokens;
 use syn::Attribute;
 use syn::Item;
+use syn::parse_file;
 use syn::spanned::Spanned;
 
 use crate::source_file::SourceFile;
@@ -28,7 +29,7 @@ pub struct UnitTestFinder;
 impl UnitTestFinder {
     // None means the file does not parse. readable-source reports that.
     pub fn sites(file: &SourceFile) -> Option<Vec<UnitTestSite>> {
-        let syntax = syn::parse_file(&file.contents()).ok()?;
+        let syntax = parse_file(&file.contents()).ok()?;
         Some(Self::in_items(file, &syntax.items))
     }
 

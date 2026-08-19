@@ -157,6 +157,7 @@ fn from_config_with_a_header_registers_the_header_rule_alongside_the_others() {
         registry.names(),
         [
             "readable-source",
+            "imported-paths",
             "module-registry",
             "single-implemented-type",
             "test-file-structure",
@@ -200,6 +201,7 @@ fn from_config_with_a_skip_leaves_that_rule_out() {
         registry.names(),
         [
             "readable-source",
+            "imported-paths",
             "module-registry",
             "single-implemented-type",
             "test-free-source",
@@ -220,6 +222,7 @@ fn from_config_without_a_header_registers_the_rules_that_need_no_configuration()
         registry.names(),
         [
             "readable-source",
+            "imported-paths",
             "module-registry",
             "single-implemented-type",
             "test-file-structure",
@@ -241,6 +244,7 @@ fn known_names_lists_every_rule_the_tool_has() {
         known,
         [
             "readable-source",
+            "imported-paths",
             "module-registry",
             "single-implemented-type",
             "test-file-structure",

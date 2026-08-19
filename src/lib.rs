@@ -14,6 +14,8 @@ pub mod manifest_resolver;
 pub mod offence;
 pub mod offence_threshold;
 pub mod output_format;
+pub mod qualified_call;
+pub mod qualified_call_finder;
 pub mod registry_item;
 pub mod registry_parser;
 pub mod registry_policy;

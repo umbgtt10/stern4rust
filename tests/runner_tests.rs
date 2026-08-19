@@ -11,6 +11,7 @@
 // code" reach a gate script as a pass.
 
 use clap::Parser;
+use std::env;
 use std::fs;
 use std::path::PathBuf;
 use stern4rust::args::Args;
@@ -24,7 +25,7 @@ fn args_from(parts: &[&str]) -> Args {
 }
 
 fn header_file(name: &str, contents: &str) -> PathBuf {
-    let path = std::env::temp_dir().join(format!("stern4rust_header_{name}.txt"));
+    let path = env::temp_dir().join(format!("stern4rust_header_{name}.txt"));
     fs::write(&path, contents).expect("write the header file");
     path
 }
@@ -113,7 +114,7 @@ fn run_with_an_unknown_rule_name_is_an_error() {
 #[test]
 fn run_with_an_unreadable_header_file_is_an_error() {
     // Arrange
-    let absent = std::env::temp_dir().join("stern4rust_header_absent.txt");
+    let absent = env::temp_dir().join("stern4rust_header_absent.txt");
     let _ = fs::remove_file(&absent);
     let args = args_from(&[
         "cargo-stern4rust",

@@ -72,6 +72,44 @@ sibling repository, a different year again next year. The offence carries the
 whole correct header, not only the line that diverged, so a fix is one pass
 rather than a loop. [R001](docs/ADRs/R001-ADR-HeaderRule.md)
 
+### `imported-paths`
+
+A function is called through a name this file imported, not through a path. A
+file's `use` statements are its list of dependencies, and
+`syn::parse_file(...)` is a dependency that never reaches that list — the file
+compiles with nothing in it mentioning `syn`.
+
+One imported segment is the point rather than an exception: `use std::fs;`
+followed by `fs::read_to_string(...)` names the route once at the top and still
+says at the call site where the function came from. Type qualifiers —
+`Widget::new()`, `Self::inner()` — are left alone. The correction names the
+import to add:
+
+```text
+src/registry_parser.rs   24  imported-paths  `syn::parse_file` is reached through a path; no import of this file names it
+                                             fix: add `use syn::parse_file;` and call `parse_file`
+src/args.rs              58  imported-paths  `std::env::args` is reached through a path; no import of this file names it
+                                             fix: add `use std::env;` and call `env::args`
+```
+
+[R008](docs/ADRs/R008-ADR-ImportedPathsRule.md)
+
+### `module-registry`
+
+A `mod.rs` or `lib.rs` is a registry and holds nothing else: the header, the
+crate-level attributes, `extern crate alloc`, and `pub mod` declarations. A type
+defined in a registry has no file named after it.
+[R006](docs/ADRs/R006-ADR-ModuleRegistryRule.md)
+
+### `single-implemented-type`
+
+A source file outside `tests/` holds at most one type that carries behaviour —
+one `struct` or `enum` that is both declared in the file and has an `impl`
+block. Structs and enums *without* `impl` blocks are unlimited, so the payload
+types a subject needs stay beside it. The offence names the type to move and the
+file to move it to.
+[R007](docs/ADRs/R007-ADR-SingleImplementedTypeRule.md)
+
 ### `test-file-structure`
 
 A test file reads top to bottom in one order: header, imports, constants,
@@ -189,14 +227,14 @@ narrows the run to what you are ready to enforce:
 cargo stern4rust --header-file docs/header.txt --rule header
 ```
 
-Measured against `grip4rust`, which has never run this tool:
+Measured against `braintax4rust`, which has never been through this tool:
 
 | run | offences |
 |---|---:|
-| all five rules | 233 |
-| `--rule header` | **6** |
+| all eight rules | 204 |
+| `--rule imported-paths` | **50** |
 
-233 is a wall; 6 is an afternoon. Enforce one rule today, add the next when the
+204 is a wall; 50 is an afternoon. Enforce one rule today, add the next when the
 first is green.
 
 `--skip` is the other direction — everything except the one that is noisy for

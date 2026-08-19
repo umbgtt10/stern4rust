@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use syn::Item;
+use syn::parse_file;
 use syn::spanned::Spanned;
 
 use crate::section::Section;
@@ -23,7 +24,7 @@ impl TestFileParser {
     // clearly than this could, and guessing at a shape from broken source would
     // pile noise on top of a compile error.
     pub fn parse(file: &SourceFile) -> Option<Vec<TestFileItem>> {
-        let syntax = syn::parse_file(&file.contents()).ok()?;
+        let syntax = parse_file(&file.contents()).ok()?;
         Some(
             syntax
                 .items

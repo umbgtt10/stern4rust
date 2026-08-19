@@ -15,9 +15,10 @@
 
 use stern4rust::registry_policy::RegistryPolicy;
 use syn::Item;
+use syn::parse_file;
 
 fn item(source: &str) -> Item {
-    syn::parse_file(source).expect("parses").items.remove(0)
+    parse_file(source).expect("parses").items.remove(0)
 }
 
 #[test]

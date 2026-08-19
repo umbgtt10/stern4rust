@@ -2,6 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use std::env;
 use std::path::PathBuf;
 
 use clap::Parser;
@@ -55,7 +56,7 @@ pub struct Args {
 
 impl Args {
     pub fn parse_args() -> Self {
-        Self::parse_from(Self::without_cargo_subcommand(std::env::args()))
+        Self::parse_from(Self::without_cargo_subcommand(env::args()))
     }
 
     /// Cargo invokes `cargo stern4rust` as `cargo-stern4rust stern4rust ...`, so

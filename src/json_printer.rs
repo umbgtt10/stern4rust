@@ -8,6 +8,7 @@ use serde_json::json;
 
 use crate::offence::Offence;
 use crate::offence_threshold::OffenceThreshold;
+use serde_json::to_string_pretty;
 
 // The same run as data rather than as a table.
 //
@@ -77,7 +78,7 @@ impl JsonPrinter {
             "rules_unconfigured": self.unconfigured,
             "offences": shown,
         });
-        serde_json::to_string_pretty(&document).unwrap_or_default()
+        to_string_pretty(&document).unwrap_or_default()
     }
 
     pub fn print(&self, offences: &[Offence]) {

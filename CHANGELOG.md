@@ -8,6 +8,59 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **`imported-paths`**, the eighth rule, and the first that applies to test
+  files as well as productive ones. A function is called through a name the file
+  imported, not through a path: `syn::parse_file(...)` compiles with nothing in
+  the file mentioning `syn`, so a reader scanning the imports to see what this
+  file needs is given a wrong answer.
+
+  One imported segment stays legal and is the shape of the rule rather than an
+  exception to it -- `use std::fs;` followed by `fs::read_to_string(...)` names
+  the route once and still says at the call site which module the function came
+  from. Type qualifiers (`Widget::new()`, `Self::inner()`) are left alone, told
+  apart from modules by case, since the tool has no type information. Macros are
+  not checked.
+
+  The correction names the import to add and what the call then reads as, and
+  the two path shapes split differently: `syn::parse_file` becomes
+  `use syn::parse_file;` and `parse_file(...)`, while `std::env::args` becomes
+  `use std::env;` and `env::args(...)`, keeping the qualifier that says
+  something.
+
+  It found 15 offences in this tool's own source on registration, five of them
+  `syn::parse_file` -- one inside the finder implementing the rule.
+  `etheram-core`, where the standard was written down, is at 0.
+
+### Fixed
+
+- **`test-file-structure` could demand an import order `cargo fmt` refuses to
+  write.** The stand-down for orders that rustfmt rather than the alphabet
+  decides was keyed on an import's *first* segment, so it missed a pair that
+  shares its first segment and diverges later: `use serde_json::Value;` beside
+  `use serde_json::from_str;` left a file that no edit could make green, because
+  stage 1 runs the formatter first and it undid every fix. The decision is now
+  made per pair, standing down where two paths first differ and the segments
+  there are of different case.
+
+  Measuring rustfmt to fix this turned up behaviour worth recording: it treats
+  case as significant in *opposite* directions at the two levels. An
+  uppercase-initial crate sorts behind every lowercase one (`Bbb::gamma` after
+  `zzz::last`), while an uppercase-initial segment later in a path sorts ahead of
+  its lowercase siblings (`serde_json::Value` before `serde_json::from_str`).
+  `cargo fmt` and a standalone `rustfmt <file>` also disagree here; only
+  `cargo fmt` matters, since that is what the gate runs.
+- **A registered rule could be unknown to `--rule`.** `RuleRegistry::known_names`
+  kept its own list of rules beside the one in `from_config`, so `imported-paths`
+  was applied by a default run while `--rule imported-paths` rejected it as an
+  unknown name. The comment claiming the list "cannot drift from the rules
+  themselves" was true only of the names, not of the set.
+
+### Documentation
+
+- README documents all eight rules. `module-registry` and `single-implemented-type`
+  had been added without a section, so the rule list stopped at five while the
+  tool applied seven; the adoption example's offence counts were stale by two
+  rules and are now measured against `braintax4rust`.
 - **`single-implemented-type`**, the seventh rule. A source file outside
   `tests/` holds at most one type that carries behaviour: at most one struct or
   enum both declared in the file and given at least one impl block there.

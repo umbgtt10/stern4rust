@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 pub mod header_rule;
+pub mod imported_paths_rule;
 pub mod module_registry_rule;
 pub mod readable_source_rule;
 pub mod single_implemented_type_rule;

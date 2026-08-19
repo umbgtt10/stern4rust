@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use syn::Item;
+use syn::parse_file;
 use syn::spanned::Spanned;
 
 use crate::registry_item::RegistryItem;
@@ -21,7 +22,7 @@ impl RegistryParser {
     // None means the file does not parse. That is rustc's to report, far more
     // clearly than this could.
     pub fn strays(file: &SourceFile, policy: RegistryPolicy) -> Option<Vec<RegistryItem>> {
-        let syntax = syn::parse_file(&file.contents()).ok()?;
+        let syntax = parse_file(&file.contents()).ok()?;
         Some(
             syntax
                 .items

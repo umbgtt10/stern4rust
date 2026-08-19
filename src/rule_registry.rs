@@ -7,6 +7,7 @@ use crate::offence::Offence;
 use crate::rule::Rule;
 use crate::rule_selection::RuleSelection;
 use crate::rules::header_rule::HeaderRule;
+use crate::rules::imported_paths_rule::ImportedPathsRule;
 use crate::rules::module_registry_rule::ModuleRegistryRule;
 use crate::rules::readable_source_rule::ReadableSourceRule;
 use crate::rules::single_implemented_type_rule::SingleImplementedTypeRule;
@@ -34,6 +35,7 @@ impl RuleRegistry {
         // explains every other rule's silence on the same file.
         let mut candidates: Vec<Box<dyn Rule>> = vec![
             Box::new(ReadableSourceRule::new()),
+            Box::new(ImportedPathsRule::new()),
             Box::new(ModuleRegistryRule::new()),
             Box::new(SingleImplementedTypeRule::new()),
             Box::new(TestFileStructureRule::new()),
@@ -60,6 +62,7 @@ impl RuleRegistry {
     pub fn known_names() -> Vec<&'static str> {
         vec![
             ReadableSourceRule::new().name(),
+            ImportedPathsRule::new().name(),
             ModuleRegistryRule::new().name(),
             SingleImplementedTypeRule::new().name(),
             TestFileStructureRule::new().name(),
