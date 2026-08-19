@@ -102,6 +102,18 @@ fn expected_modules_in_ignores_the_registries_themselves() {
 }
 
 #[test]
+fn files_in_lists_the_files_of_one_directory() {
+    // Arrange
+    let tree = tree(&["src/lib.rs", "src/widget.rs", "tests/all_tests.rs"]);
+
+    // Act
+    let files = tree.files_in(Path::new("src"));
+
+    // Assert
+    assert_eq!(files, [Path::new("src/lib.rs"), Path::new("src/widget.rs")]);
+}
+
+#[test]
 fn registries_in_of_a_directory_without_one_is_empty() {
     // Arrange
     let tree = tree(&["src/widget.rs"]);
@@ -128,4 +140,16 @@ fn registries_in_puts_lib_ahead_of_main() {
         registries,
         [Path::new("src/lib.rs"), Path::new("src/main.rs")]
     );
+}
+
+#[test]
+fn subdirectories_of_lists_only_the_directories_directly_beneath() {
+    // Arrange
+    let tree = tree(&["src/lib.rs", "src/rules/mod.rs", "src/rules/deep/mod.rs"]);
+
+    // Act
+    let found = tree.subdirectories_of(Path::new("src"));
+
+    // Assert
+    assert_eq!(found, [Path::new("src/rules")]);
 }

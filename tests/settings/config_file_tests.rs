@@ -29,6 +29,25 @@ fn directory(name: &str, contents: Option<&str>) -> PathBuf {
 }
 
 #[test]
+fn baseline_from_resolves_against_the_directory_of_the_config() {
+    // Arrange
+    let path = directory(
+        "baseline",
+        Some(
+            "baseline = \"stern4rust-baseline.json\"
+",
+        ),
+    );
+    let loaded = ConfigFile::load(&path).expect("loads").expect("present");
+
+    // Act
+    let baseline = loaded.baseline_from(&path);
+
+    // Assert
+    assert_eq!(baseline, Some(path.join("stern4rust-baseline.json")));
+}
+
+#[test]
 fn header_file_from_resolves_against_the_directory_of_the_config() {
     // Arrange
     let path = directory("header", Some("header-file = \"docs/header.txt\"\n"));

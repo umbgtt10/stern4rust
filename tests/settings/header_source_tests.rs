@@ -7,6 +7,8 @@
 // source file -- and the failure would be reported against line 4 of every file
 // in the workspace, which is a confusing way to learn about a trailing newline.
 
+use std::env;
+use std::fs;
 use stern4rust::settings::header_source::HeaderSource;
 
 #[test]
@@ -71,4 +73,39 @@ fn parse_strips_a_leading_byte_order_mark() {
 
     // Assert
     assert_eq!(header, ["// one"]);
+}
+
+// parse is the half that shapes the text; read is the half that reaches the
+// disk, and a missing file has to be an error rather than an empty header --
+// otherwise a typo in --header-file would silently disable the rule.
+#[test]
+fn read_of_a_file_returns_its_lines() {
+    // Arrange
+    let path = env::temp_dir().join("stern4rust_header_read.txt");
+    fs::write(
+        &path,
+        "// one
+// two
+",
+    )
+    .expect("write the header");
+
+    // Act
+    let header = HeaderSource::read(&path).expect("reads");
+
+    // Assert
+    assert_eq!(header, ["// one", "// two"]);
+}
+
+#[test]
+fn read_of_a_missing_file_is_an_error() {
+    // Arrange
+    let path = env::temp_dir().join("stern4rust_header_absent.txt");
+    let _ = fs::remove_file(&path);
+
+    // Act
+    let header = HeaderSource::read(&path);
+
+    // Assert
+    assert!(header.is_err());
 }

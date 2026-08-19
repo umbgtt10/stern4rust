@@ -313,11 +313,13 @@ impl ReportPrinter {
     fn summary(&self, offences: &[Offence]) -> String {
         let broken: BTreeSet<&str> = offences.iter().map(|offence| offence.rule).collect();
         format!(
-            "summary: files_scanned={} files_excluded={} offences={} rules_broken={} \
-             rules_applied={} rules_skipped={} rules_unconfigured={}",
+            "summary: files_scanned={} files_excluded={} offences={} baselined={} fixed={} \
+             rules_broken={} rules_applied={} rules_skipped={} rules_unconfigured={}",
             self.files_scanned,
             self.excluded_total(),
             offences.len(),
+            self.suppressed,
+            self.fixed,
             broken.len(),
             self.applied.len(),
             self.skipped.len(),

@@ -165,6 +165,8 @@ fn from_config_with_a_header_registers_the_header_rule_alongside_the_others() {
             "single-implemented-type",
             "test-file-structure",
             "test-free-source",
+            "test-naming",
+            "tested-public-api",
             "tests-layout",
             "header"
         ]
@@ -211,6 +213,8 @@ fn from_config_with_a_skip_leaves_that_rule_out() {
             "registry-completeness",
             "single-implemented-type",
             "test-free-source",
+            "test-naming",
+            "tested-public-api",
             "tests-layout"
         ]
     );
@@ -236,6 +240,8 @@ fn from_config_without_a_header_registers_the_rules_that_need_no_configuration()
             "single-implemented-type",
             "test-file-structure",
             "test-free-source",
+            "test-naming",
+            "tested-public-api",
             "tests-layout"
         ]
     );
@@ -261,6 +267,8 @@ fn known_names_lists_every_rule_the_tool_has() {
             "single-implemented-type",
             "test-file-structure",
             "test-free-source",
+            "test-naming",
+            "tested-public-api",
             "tests-layout",
             "header"
         ]

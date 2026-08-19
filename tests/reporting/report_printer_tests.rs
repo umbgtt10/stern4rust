@@ -184,7 +184,9 @@ fn render_of_no_offences_says_every_rule_is_satisfied() {
 
     // Assert
     assert!(report.contains("All rules are satisfied."));
-    assert!(report.contains("files_scanned=9 files_excluded=0 offences=0 rules_broken=0"));
+    assert!(report.contains(
+        "files_scanned=9 files_excluded=0 offences=0 baselined=0 fixed=0 rules_broken=0"
+    ));
 }
 
 // "All rules are satisfied" is only true when all of them ran.
@@ -300,7 +302,9 @@ fn render_summarises_two_offences_of_one_rule_as_one_broken_rule() {
     ]);
 
     // Assert
-    assert!(report.contains("files_scanned=5 files_excluded=0 offences=2 rules_broken=1"));
+    assert!(report.contains(
+        "files_scanned=5 files_excluded=0 offences=2 baselined=0 fixed=0 rules_broken=1"
+    ));
 }
 
 // The cap is on what is shown, never on what is counted. A summary that said
@@ -315,7 +319,56 @@ fn render_summary_counts_every_offence_even_when_some_are_not_shown() {
 
     // Assert
     assert!(
-        report.contains("files_scanned=1 files_excluded=0 offences=10 rules_broken=1"),
+        report.contains(
+            "files_scanned=1 files_excluded=0 offences=10 baselined=0 fixed=0 rules_broken=1"
+        ),
         "got {report}"
     );
+}
+
+// These three builders shipped in 0.4.0 with no test touching them directly.
+// tested-public-api found all six -- three here and three on the JSON printer.
+#[test]
+fn with_baseline_puts_the_suppressed_count_in_the_report() {
+    // Arrange
+    let printer = ReportPrinter::new(1).with_baseline(Some("bl.json".to_string()), 7, 2);
+
+    // Act
+    let report = printer.render(&[]);
+
+    // Assert
+    assert!(
+        report.contains("baseline: bl.json (7 suppressed)"),
+        "{report}"
+    );
+    assert!(
+        report.contains("2 baseline entries matched nothing"),
+        "{report}"
+    );
+    assert!(report.contains("baselined=7"), "{report}");
+}
+
+#[test]
+fn with_config_file_names_the_config_the_run_used() {
+    // Arrange
+    let printer = ReportPrinter::new(1).with_config_file(Some("stern4rust.toml".to_string()));
+
+    // Act
+    let report = printer.render(&[]);
+
+    // Assert
+    assert!(report.contains("config: stern4rust.toml"), "{report}");
+}
+
+#[test]
+fn with_fixed_reports_how_many_files_were_rewritten() {
+    // Arrange
+    let printer = ReportPrinter::new(1).with_fixed(12);
+
+    // Act
+    let report = printer.render(&[]);
+
+    // Assert
+    assert!(report.contains("fixed: 12 file(s) rewritten"), "{report}");
+    assert!(report.contains("fixed=12"), "{report}");
 }

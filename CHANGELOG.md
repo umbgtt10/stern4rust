@@ -4,6 +4,52 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **`test-naming`**, the twelfth rule: a test is named
+  `<method>_<conditions>_<result>`. The name and nothing else.
+
+  It reads a name and counts underscores, and that retreat is the point. Three
+  earlier versions tried to verify the leading part was the method actually
+  under test -- looking in the body, then through the test file's helpers
+  transitively, then against the mirrored source file. All three were measured
+  across 1559 tests in eight repositories and all three accused correct code:
+  tests of derived operators (`a < b` calls no named function), tests of derived
+  methods (`from_str` on a `#[derive(ValueEnum)]` enum is a `fn` nowhere), and
+  names reachable only through whatever a wide setup helper happened to touch.
+  592 offences became 5.
+
+- **`tested-public-api`**, the thirteenth: every public entry point is called by
+  at least one test. The question `test-naming` gave up on, asked from the other
+  end -- starting from declared entry points needs no guess about intent, and
+  sidesteps derives entirely, since `Default::default` is not a `pub fn`
+  declaration and can never be reported.
+
+  Counted: a free `pub fn`, a `pub fn` in an inherent impl, and every method of
+  a `pub trait`. Matched on **name and arity**; types and parameter order are
+  not checked and cannot be without type inference, so the rule under-reports
+  rather than accusing tested code.
+
+  84 offences across the family. In this crate it found the six printer builders
+  shipped untested in 0.4.0 -- `with_fixed`, `with_baseline`, `with_config_file`
+  on both printers -- and `signature`, a method written minutes earlier in the
+  rule's own supporting type.
+
+### Fixed
+
+- **The summary line never carried `baselined=` or `fixed=`.** Both were
+  documented in 0.4.0 and neither was implemented: the edits adding them failed
+  silently against a `\` line continuation in the format string. Both are
+  present now, after `offences`.
+
+### Removed
+
+- **`Args::parse_args`.** A thin wrapper over `parse_from(without_cargo_subcommand(env::args()))`
+  that could not be tested without controlling the process argv, while both
+  halves are public and tested. `main.rs` calls them directly.
+
 ## [0.5.0] - 2026-08-19
 
 ### Added

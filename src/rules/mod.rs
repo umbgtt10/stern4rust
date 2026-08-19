@@ -12,4 +12,6 @@ pub mod registry_completeness_rule;
 pub mod single_implemented_type_rule;
 pub mod test_file_structure_rule;
 pub mod test_free_source_rule;
+pub mod test_naming_rule;
+pub mod tested_public_api_rule;
 pub mod tests_layout_rule;

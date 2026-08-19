@@ -4,7 +4,6 @@
 
 use crate::reporting::output_format::OutputFormat;
 use clap::Parser;
-use std::env;
 use std::path::PathBuf;
 
 #[derive(Debug, Parser)]
@@ -84,10 +83,6 @@ pub struct Args {
 }
 
 impl Args {
-    pub fn parse_args() -> Self {
-        Self::parse_from(Self::without_cargo_subcommand(env::args()))
-    }
-
     /// Cargo invokes `cargo stern4rust` as `cargo-stern4rust stern4rust ...`, so
     /// the subcommand name arrives as an extra leading argument that clap would
     /// otherwise reject. Running the binary directly does not repeat it, which

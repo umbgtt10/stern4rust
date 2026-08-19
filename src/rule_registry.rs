@@ -14,6 +14,8 @@ use crate::rules::registry_completeness_rule::RegistryCompletenessRule;
 use crate::rules::single_implemented_type_rule::SingleImplementedTypeRule;
 use crate::rules::test_file_structure_rule::TestFileStructureRule;
 use crate::rules::test_free_source_rule::TestFreeSourceRule;
+use crate::rules::test_naming_rule::TestNamingRule;
+use crate::rules::tested_public_api_rule::TestedPublicApiRule;
 use crate::rules::tests_layout_rule::TestsLayoutRule;
 use crate::settings::config::Config;
 use crate::settings::rule_selection::RuleSelection;
@@ -57,6 +59,8 @@ impl RuleRegistry {
             Box::new(SingleImplementedTypeRule::new()),
             Box::new(TestFileStructureRule::new()),
             Box::new(TestFreeSourceRule::new()),
+            Box::new(TestNamingRule::new()),
+            Box::new(TestedPublicApiRule::new()),
             Box::new(TestsLayoutRule::new()),
             Box::new(HeaderRule::new(config.expected_header.clone())),
         ]

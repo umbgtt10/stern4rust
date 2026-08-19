@@ -215,3 +215,41 @@ fn render_of_several_offences_keeps_the_order_it_was_given() {
     assert_eq!(found["offences"][0]["description"], "first");
     assert_eq!(found["offences"][1]["description"], "second");
 }
+
+#[test]
+fn with_baseline_carries_the_suppressed_and_stale_counts() {
+    // Arrange
+    let printer = JsonPrinter::new(1).with_baseline(Some("bl.json".to_string()), 7, 2);
+
+    // Act
+    let document: Value = from_str(&printer.render(&[])).expect("valid json");
+
+    // Assert
+    assert_eq!(document["baseline"], "bl.json");
+    assert_eq!(document["baselined"], 7);
+    assert_eq!(document["baseline_stale_entries"], 2);
+}
+
+#[test]
+fn with_config_file_carries_the_config_the_run_used() {
+    // Arrange
+    let printer = JsonPrinter::new(1).with_config_file(Some("stern4rust.toml".to_string()));
+
+    // Act
+    let document: Value = from_str(&printer.render(&[])).expect("valid json");
+
+    // Assert
+    assert_eq!(document["config_file"], "stern4rust.toml");
+}
+
+#[test]
+fn with_fixed_carries_the_number_of_files_rewritten() {
+    // Arrange
+    let printer = JsonPrinter::new(1).with_fixed(12);
+
+    // Act
+    let document: Value = from_str(&printer.render(&[])).expect("valid json");
+
+    // Assert
+    assert_eq!(document["files_fixed"], 12);
+}
