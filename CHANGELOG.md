@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.5.0] - 2026-08-19
 
 ### Added
 
@@ -67,19 +67,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   `stern4rust::offence::Offence` now wants
   `stern4rust::reporting::offence::Offence`.
 
+
+- **`stern4rust.toml` gained `max-files-per-directory` and
+  `max-subfolders-per-directory`.** Both optional; the rules supply their own
+  defaults. They are config-file-only rather than CLI flags, because a directory
+  limit is a fact about a repository rather than a choice for one run.
+
 ### Fixed
 
 - **`PackageTree` did not model a directory that held no files of its own.** A
   `src/` whose sources all live one level down was invisible to the walk, so a
   rule counting what a directory contains could never ask about it. Ancestors
   are now keys too, including the package root.
-
-### Changed
-
-- **`stern4rust.toml` gained `max-files-per-directory` and
-  `max-subfolders-per-directory`.** Both optional; the rules supply their own
-  defaults. They are config-file-only rather than CLI flags, because a directory
-  limit is a fact about a repository rather than a choice for one run.
 
 ## [0.4.0] - 2026-08-19
 
