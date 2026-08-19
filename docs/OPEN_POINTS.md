@@ -25,19 +25,20 @@ files it removed so that an exclusion stays something the reader can see rather
 than a silence. See
 [ADR-ExclusionsAreCounted](ADRs/ADR-ExclusionsAreCounted.md).
 
-## The registry rule checks existence, not completeness
+## A file declared through `#[path = "..."]` reads as undeclared
 
-`tests-layout` verifies that `tests/all_tests.rs` and every `mod.rs` exist and
-hold only declarations. It does not verify that the declarations are *complete*.
+`registry-completeness` resolves a declaration to the file it names by
+convention -- `mod alpha;` reaches `alpha.rs` or `alpha/mod.rs` -- and does not
+understand an explicit `#[path]` attribute. A file reached that way would be
+reported as never compiled when it is compiled perfectly well.
 
-A `tests/rules/mod.rs` that is present, valid, and simply fails to mention
-`alpha_tests` leaves `tests/rules/alpha_tests.rs` uncompiled — the same silent
-failure the rule exists for, one level down, and `rustc` says nothing because an
-undeclared file is not an error.
+The house rules forbid `#[path]` in `all_tests.rs` and nothing in the family
+uses it, so this is a known false-positive class rather than an observed one.
+It would arrive as a confident wrong answer, which is the worse shape.
 
-Closing it means resolving each `pub mod` to the file it names and each file to
-the declaration that should point at it, in both directions. It is the obvious
-next rule.
+A related limit: the rule resolves names, not the module graph. A `mod.rs` that
+is itself never declared makes its whole subtree unreachable, and each level is
+reported separately rather than as one root cause.
 
 ## A test-only helper in `src/` is invisible
 

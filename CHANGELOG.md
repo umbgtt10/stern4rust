@@ -8,6 +8,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **`registry-completeness`**, the ninth rule. A registry declares every module
+  beside it -- each sibling `.rs` file and each subfolder that has a registry of
+  its own -- so nothing in the tree goes uncompiled. This closes the half of the
+  registry question `tests-layout` and `module-registry` both leave open: they
+  check that a registry exists and holds only declarations, not that the
+  declarations are complete.
+
+  **Only one direction needed a rule, and that was measured rather than
+  assumed.** `pub mod missing;` with no `missing.rs` is a compile error --
+  rustc reports `E0583` immediately. An orphan `.rs` file that no registry
+  declares produces no error and no warning at all. Silence is the whole
+  failure, so silence is all the rule looks for; the other half of the work
+  proposed in `OPEN_POINTS.md` turned out to be the compiler's.
+
+  `pub` is not required, since a private `mod name;` compiles the file just as
+  well. An inline `mod name { ... }` declares no file and does not count.
+  `main.rs` counts as a registry beside `lib.rs`, so a file declared only from
+  the entry point is not reported as an orphan. The offence lands on the
+  registry rather than the orphan, because the orphan needs no edit.
+
+  On its first run across eight repositories it found **8 offences in one**:
+  `grip4rust` has eight `*_analysis_tests.rs` files that `tests/all_tests.rs`
+  declares none of -- roughly thirty tests in a published tool that have never
+  once executed. Verified independently of the tool before it was believed.
+
 - **`--exclude <GLOB>`**, repeatable, matched against the package-relative path,
   for the tree a repository cannot move -- vendored source, generated output.
   Separators are normalised, so a pattern checked in on one platform works on

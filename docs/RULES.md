@@ -1,6 +1,6 @@
 # Rules
 
-Eight rules, each independent, each naming itself in the report. This is the
+Nine rules, each independent, each naming itself in the report. This is the
 reference; the reasoning behind each one is in its ADR.
 
 Every offence carries a **correction** as well as a description — what to do,
@@ -11,6 +11,7 @@ without answering it.
 |---|---|---|
 | `readable-source` | [R004](ADRs/R004-ADR-ReadableSourceRule.md) | no |
 | `imported-paths` | [R008](ADRs/R008-ADR-ImportedPathsRule.md) | no |
+| `registry-completeness` | [R009](ADRs/R009-ADR-RegistryCompletenessRule.md) | no |
 | `test-file-structure` | [R002](ADRs/R002-ADR-TestFileStructureRule.md) | no |
 | `test-free-source` | [R005](ADRs/R005-ADR-TestFreeSourceRule.md) | no |
 | `tests-layout` | [R003](ADRs/R003-ADR-TestsLayoutRule.md) | no |
@@ -210,6 +211,38 @@ The correction names the **mirrored file** — `src/<path>.rs` maps to
 an ordinary `pub fn make_test_widget()` — is invisible, because nothing in the
 source distinguishes it from production code.
 
+## `registry-completeness`
+
+A registry declares every module beside it: each sibling `.rs` file, and each
+subfolder that has a registry of its own. Nothing in the tree goes uncompiled.
+
+**Only one direction is checked, and it was measured.** `pub mod missing;` with
+no `missing.rs` is a compile error -- `rustc` reports `E0583` immediately and
+more clearly than this could. An orphan `.rs` file that no registry declares
+produces **no error and no warning at all**. Silence is the whole failure, so
+silence is all this looks for.
+
+`pub` is not required here: a private `mod name;` compiles the file just as
+well, and being compiled is the concern. `module-registry` is the rule that
+wants `pub`. An inline `mod name { ... }` declares no file and does not count.
+`main.rs` counts as a registry beside `lib.rs`, so a file declared only from the
+entry point is not reported.
+
+| offence | correction |
+|---|---|
+| `beta_tests` is not declared here, so its file is never compiled | add `pub mod beta_tests;` to `tests/all_tests.rs` |
+
+Reported against the **registry**, not the orphan -- the orphan is a perfectly
+good file and the edit that fixes it is one line somewhere else. An unparseable
+registry silences the rule for that directory rather than reporting every file
+beside it; `readable-source` reports the registry itself.
+
+**Does not catch:** a file declared through `#[path = "..."]`, which reads as
+undeclared. A file the walker never reached, including anything under
+`--exclude`. And `#[cfg(...)]`-gated declarations count as declarations, which
+is right for "is it ever compiled" and wrong for "is it compiled in this
+configuration".
+
 ## `module-registry`
 
 A `lib.rs` or `mod.rs` outside `tests/` is an index of the modules beneath it,
@@ -298,10 +331,7 @@ never compiled cannot fail.**
 | the constant `X` does not belong in a registry | move the constant `X` out of the registry into the file that needs it |
 
 **Does not catch:** it verifies a registry *exists*, not that its declarations
-are *complete*. A `mod.rs` that is present, valid, and simply fails to mention a
-file leaves that file uncompiled — the same silent failure one level down, and
-`rustc` says nothing. Closing that gap means resolving each `pub mod` to a file
-and each file to its declaration, in both directions. `#[cfg(...)]`-gated
+are *complete* — that is `registry-completeness`. `#[cfg(...)]`-gated
 declarations are treated as ordinary ones.
 
 ## What is not walked

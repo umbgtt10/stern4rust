@@ -10,6 +10,7 @@ use crate::rules::header_rule::HeaderRule;
 use crate::rules::imported_paths_rule::ImportedPathsRule;
 use crate::rules::module_registry_rule::ModuleRegistryRule;
 use crate::rules::readable_source_rule::ReadableSourceRule;
+use crate::rules::registry_completeness_rule::RegistryCompletenessRule;
 use crate::rules::single_implemented_type_rule::SingleImplementedTypeRule;
 use crate::rules::test_file_structure_rule::TestFileStructureRule;
 use crate::rules::test_free_source_rule::TestFreeSourceRule;
@@ -40,6 +41,7 @@ impl RuleRegistry {
             Box::new(ReadableSourceRule::new()),
             Box::new(ImportedPathsRule::new()),
             Box::new(ModuleRegistryRule::new()),
+            Box::new(RegistryCompletenessRule::new()),
             Box::new(SingleImplementedTypeRule::new()),
             Box::new(TestFileStructureRule::new()),
             Box::new(TestFreeSourceRule::new()),

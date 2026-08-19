@@ -15,7 +15,7 @@ already own correctness. These are the things a reviewer would otherwise have to
 say by hand, every time, forever — and the ones that quietly stop being true
 across a codebase the moment nobody is checking.
 
-> **Status: eight rules, more coming.** The set below is what is implemented and
+> **Status: nine rules, more coming.** The set below is what is implemented and
 > gated. `stern4rust` runs against its own tree on every build, so a rule that
 > would fail this repository cannot be merged into it.
 
@@ -109,6 +109,21 @@ src/args.rs              58  imported-paths  `std::env::args` is reached through
 ```
 
 [R008](docs/ADRs/R008-ADR-ImportedPathsRule.md)
+
+### `registry-completeness`
+
+A registry declares every module beside it, so nothing in the tree goes
+uncompiled. A `mod.rs` that is valid and simply fails to mention `alpha_tests`
+leaves `alpha_tests.rs` uncompiled — it still exists, still looks like a test
+file, and nothing runs it.
+
+Only the silent direction is checked. `pub mod missing;` with no `missing.rs` is
+a compile error `rustc` already reports; an orphan `.rs` file produces no error
+and no warning at all.
+
+On its first run it found **8 never-compiled test files** in a published sibling
+tool — about thirty tests that had never once executed.
+[R009](docs/ADRs/R009-ADR-RegistryCompletenessRule.md)
 
 ### `module-registry`
 

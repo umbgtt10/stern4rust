@@ -73,7 +73,7 @@ reason not to adopt into a starting point. It needs a checked-in state file,
 fingerprints stable across line moves, and a story for when the baseline goes
 stale, which is why it follows rather than leads.
 
-### Phase 4: The Completeness Rule
+### Phase 4: The Completeness Rule — shipped
 
 `tests-layout` verifies a registry exists; it does not verify the registry is
 complete. Resolving each `pub mod` to the file it names, and each file to the

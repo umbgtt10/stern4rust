@@ -18,6 +18,11 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
 ### Rules
 
+- **`registry-completeness`** -- a registry declares every module beside it, so
+  no file goes uncompiled. Only the silent direction is checked: `pub mod x;`
+  with no `x.rs` is a compile error rustc already reports, while an orphan
+  `x.rs` produces no error and no warning. Found 8 never-compiled test files in
+  `grip4rust`. [R009](ADRs/R009-ADR-RegistryCompletenessRule.md)
 - **`imported-paths`** -- a function is called through a name the file imported,
   not through a path. One imported segment stays legal (`use std::fs;` with
   `fs::read_to_string(...)`); a path no import names does not. Type qualifiers
