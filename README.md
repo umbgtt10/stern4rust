@@ -15,7 +15,7 @@ already own correctness. These are the things a reviewer would otherwise have to
 say by hand, every time, forever — and the ones that quietly stop being true
 across a codebase the moment nobody is checking.
 
-> **Status: fifteen rules, more coming.** The set below is what is implemented and
+> **Status: sixteen rules, more coming.** The set below is what is implemented and
 > gated. `stern4rust` runs against its own tree on every build, so a rule that
 > would fail this repository cannot be merged into it.
 
@@ -269,6 +269,21 @@ here. With no default to fall back on, `rustc` rejects an incomplete impl with
 Associated types and associated constants may still carry defaults; neither is
 behaviour. `tests/` is exempt, where a trait with a body is a deliberate fake.
 [R014](docs/ADRs/R014-ADR-PureTraitsRule.md)
+
+### `paired-test-file`
+
+A `tests/<path>/<X>_tests.rs` names the source file it exercises, and that file
+exists — `tests/a/b_tests.rs` pairs with `src/a/b.rs`, matched by path rather
+than by name alone.
+
+The other side of the pairing from `twin4rust`, which starts at a source file
+and looks for its test. Nothing asked the reverse, and a test file outlives the
+module it was named for silently: it still compiles, still runs, still passes.
+
+`all_tests.rs` and `_proptest_tests.rs` are exempt. The rule assumes the package
+is mirrored — a harness crate whose `tests/` are scenarios named after
+behaviours rather than files should `--skip` it.
+[R016](docs/ADRs/R016-ADR-PairedTestFileRule.md)
 
 ### `test-file-name-postfix`
 

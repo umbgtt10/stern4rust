@@ -7,6 +7,15 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
 ### Rules
 
+- **`paired-test-file`** -- a `tests/a/b_tests.rs` names the source file it
+  exercises and `src/a/b.rs` exists, matched by path rather than by name alone.
+  The other side of the pairing from `twin4rust`, and the direction nothing
+  checked: a test file outlives the module it was named for silently, still
+  compiling and still passing. Found 40 tests in four such files in
+  `etheram-ibft/node`, and independently flagged the same eight `grip4rust`
+  files `registry-completeness` found never compiled. `all_tests.rs` and
+  `_proptest_tests.rs` are exempt; a harness crate skips the rule.
+  [R016](ADRs/R016-ADR-PairedTestFileRule.md)
 - **`test-file-name-postfix`** -- a file under `tests/` holding at least one
   test is named `<X>_tests.rs`. Closes the side of the mirrored-layout pairing
   nothing enforced: `twin4rust` starts from a source file and looks for its

@@ -9,6 +9,7 @@ use crate::rules::directory_subfolder_count_rule::DirectorySubfolderCountRule;
 use crate::rules::header_rule::HeaderRule;
 use crate::rules::imported_paths_rule::ImportedPathsRule;
 use crate::rules::module_registry_rule::ModuleRegistryRule;
+use crate::rules::paired_test_file_rule::PairedTestFileRule;
 use crate::rules::pure_traits_rule::PureTraitsRule;
 use crate::rules::readable_source_rule::ReadableSourceRule;
 use crate::rules::registry_completeness_rule::RegistryCompletenessRule;
@@ -57,6 +58,7 @@ impl RuleRegistry {
             )),
             Box::new(ImportedPathsRule::new()),
             Box::new(ModuleRegistryRule::new()),
+            Box::new(PairedTestFileRule::new()),
             Box::new(PureTraitsRule::new()),
             Box::new(RegistryCompletenessRule::new()),
             Box::new(SingleImplementedTypeRule::new()),

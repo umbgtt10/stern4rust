@@ -1,6 +1,6 @@
 # Rules
 
-Fifteen rules, each independent, each naming itself in the report. This is the
+Sixteen rules, each independent, each naming itself in the report. This is the
 reference; the reasoning behind each one is in its ADR.
 
 Every offence carries a **correction** as well as a description — what to do,
@@ -14,6 +14,7 @@ without answering it.
 | `directory-subfolder-count` | [R011](ADRs/R011-ADR-DirectorySubfolderCountRule.md) | optional, default 5 |
 | `imported-paths` | [R008](ADRs/R008-ADR-ImportedPathsRule.md) | no |
 | `registry-completeness` | [R009](ADRs/R009-ADR-RegistryCompletenessRule.md) | no |
+| `paired-test-file` | [R016](ADRs/R016-ADR-PairedTestFileRule.md) | no |
 | `test-file-name-postfix` | [R015](ADRs/R015-ADR-TestFileNamePostfixRule.md) | no |
 | `test-file-structure` | [R002](ADRs/R002-ADR-TestFileStructureRule.md) | no |
 | `test-free-source` | [R005](ADRs/R005-ADR-TestFreeSourceRule.md) | no |
@@ -400,6 +401,45 @@ will say nothing. Nor a default inherited from a supertrait in another crate, no
 whether a removed body was moved into the implementors or simply deleted --
 `rustc` guarantees each implementor has *a* body, not the right one. Anything
 inside a macro is invisible, as everywhere else in this tool.
+
+## `paired-test-file`
+
+A `tests/<path>/<X>_tests.rs` names the source file it exercises, and that file
+exists. The counterpart of `tests/a/b_tests.rs` is `src/a/b.rs`, matched **by
+path rather than by name alone** -- a test file in the wrong directory is as
+unpaired as one whose source is gone.
+
+This is the other side of the pairing from `twin4rust`, which starts at a source
+file and looks for its test. Nothing asked the reverse, and a test file outlives
+the module it was named for **silently**: it still compiles, still runs, still
+passes, and its name now points at nothing.
+
+`all_tests.rs` is exempt -- it ends in `_tests.rs` but is a registry, and would
+resolve to `src/all.rs`. `_proptest_tests.rs` is exempt because a property-test
+suite is a second suite for a module it does not name, so its stem resolves to a
+file nobody meant to write.
+
+| offence | correction |
+|---|---|
+| `` tests/state/etheram_state_ibft_tests.rs is named for src/state/etheram_state_ibft.rs, which does not exist `` | rename it after the source file it exercises, or delete it if that file is gone |
+
+The correction does **not** say "create the missing file". Measured against a
+real tree, every unpaired file tested something real under a name that had
+drifted, so the file to create is never the answer.
+
+**It assumes the package is mirrored.** A *harness* crate -- one whose `src/` is
+apparatus and whose `tests/` are scenarios named after behaviours rather than
+files -- is not, and every one of its test files is reported.
+`--skip paired-test-file` is the answer there, and a skipped rule is named as
+skipped in the report, so it cannot be mistaken for a pass.
+
+**Does not catch:** whether the name is *honest* -- `widget_tests.rs` beside
+`widget.rs` containing tests for something else entirely passes. Nor anything in
+a `_proptest_tests.rs` file, by decision. Nor a source file with no test at all,
+which is `twin4rust`'s direction. Nor a module that was emptied rather than
+removed.
+
+See [R016](ADRs/R016-ADR-PairedTestFileRule.md).
 
 ## `test-file-name-postfix`
 

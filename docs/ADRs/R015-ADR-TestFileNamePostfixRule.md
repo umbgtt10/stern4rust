@@ -136,10 +136,11 @@ rule.
 ### What this rule does not catch
 
 **An orphan test file.** `tests/rules/banana_tests.rs` full of tests with no
-`src/rules/banana.rs` behind it passes completely. The `<X>` is never resolved
-against anything, so this rule closes the "test file not named as one" gap and
-**not** the "test file pairing with nothing" gap. That remains open, on
-`twin4rust`'s blind side.
+`src/rules/banana.rs` behind it passes completely here. The `<X>` is never
+resolved against anything, so this rule closes the "test file not named as one"
+gap and **not** the "test file pairing with nothing" gap. That second gap is
+[R016](R016-ADR-PairedTestFileRule.md)'s, which resolves the name against the
+source tree.
 
 **A `_tests.rs` file with no tests**, by decision, above.
 
@@ -181,3 +182,6 @@ file outside the convention fails the build that introduces it.
   functions inside the file; this names the file holding them.
 - [R002-ADR-TestFileStructureRule](R002-ADR-TestFileStructureRule.md) — governs
   the order of items within a test file, and says nothing about its name.
+- [R016-ADR-PairedTestFileRule](R016-ADR-PairedTestFileRule.md) — requires the
+  name to *resolve* to a source file. This rule requires a file holding tests to
+  be named as one; together they are the two halves.

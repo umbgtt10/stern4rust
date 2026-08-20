@@ -8,6 +8,46 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **`paired-test-file`**, the sixteenth rule: a `tests/a/b_tests.rs` names the
+  source file it exercises, and `src/a/b.rs` exists.
+  [R016](docs/ADRs/R016-ADR-PairedTestFileRule.md)
+
+  The other side of the pairing from `twin4rust`, which starts at a source file
+  and looks for its test. Nothing asked the reverse, and R015 recorded the gap
+  in its own "does not catch". A test file outlives the module it was named for
+  **silently**: it still compiles, still runs, still passes, and its name now
+  points at nothing.
+
+  Matched by path rather than by name alone, so a test file in the wrong
+  directory is as unpaired as one whose source is gone.
+
+  **Four findings in `etheram-ibft/node`, predicted by hand before the rule
+  existed and reproduced exactly** -- 40 tests across four files named for
+  source files that exist nowhere in the crate, all passing, in a crate whose
+  gates are green. Across the family: 19 in `braintax4rust` (18 of them fixture
+  crates), 8 in `grip4rust`, 2 in `crap4rust`, 1 in `slotgate`, and zero in
+  `stern4rust`, `twin4rust`, `iceberg4rust` and `etheram-core`.
+
+  `grip4rust`'s eight are **the same eight files `registry-completeness` found
+  never compiled**. Two rules, approaching from unrelated directions, landing on
+  the same files.
+
+  `_proptest_tests.rs` is exempt, and that was measured: before the exemption
+  the rule found 7 unpaired files in `node`, 3 of which were property-test
+  suites whose real counterparts exist. Excluding them removed exactly those 3.
+  `all_tests.rs` is exempt as a registry that would otherwise resolve to
+  `src/all.rs`.
+
+  The correction says "rename it after the source file it exercises, or delete
+  it if that file is gone" -- deliberately **not** "create the missing file",
+  since every unpaired file measured tested something real under a drifted name.
+
+  **It assumes the package is mirrored**, and says so. A harness crate --
+  `src/` apparatus, `tests/` named after behaviours -- is not:
+  `etheram-ibft/validation` reports 53 and `system-tests` 28, correctly and
+  uselessly. `--skip paired-test-file` is the answer, using rule selection as
+  shipped; no new configuration was added.
+
 - **`test-file-name-postfix`**, the fifteenth rule: a file under `tests/`
   holding at least one test is named `<X>_tests.rs`.
   [R015](docs/ADRs/R015-ADR-TestFileNamePostfixRule.md)
