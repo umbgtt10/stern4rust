@@ -319,7 +319,12 @@ impl Runner {
         let threshold = config.offence_threshold;
         let applied = Self::owned(&registry.names());
         let skipped = Self::owned(&RuleRegistry::skipped_names(&config.selection));
-        let unconfigured = Self::owned(&registry.unconfigured_names(config));
+        let unconfigured: Vec<(String, String)> = registry
+            .unconfigured(config)
+            .into_iter()
+            .map(|(name, requirement)| (name.to_string(), requirement.to_string()))
+            .collect();
+        let unconfigured_names = Self::owned(&registry.unconfigured_names(config));
         match config.format {
             OutputFormat::Text => ReportPrinter::new(files_scanned)
                 .with_threshold(threshold)
@@ -335,7 +340,7 @@ impl Runner {
                 .print(offences),
             OutputFormat::Json => JsonPrinter::new(files_scanned)
                 .with_threshold(threshold)
-                .with_rules(applied, skipped, unconfigured)
+                .with_rules(applied, skipped, unconfigured_names)
                 .with_exclusions(excluded.excluded.clone())
                 .with_config_file(Self::shown(config))
                 .with_baseline(

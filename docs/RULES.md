@@ -35,7 +35,7 @@ without answering it.
 repeatable, both default to everything, and skipping wins over selecting. Every
 report names the rules it applied; a run that did not apply all of them says
 `All applied rules are satisfied` and names each absence with its reason --
-`(skipped)` or `(not configured)`. The JSON carries `rules_applied`,
+`(skipped)` or what the rule was waiting for, such as `(needs --header-file)`. The JSON carries `rules_applied`,
 `rules_skipped` and `rules_unconfigured`. An unknown rule
 name is an error, as is `--rule header` without `--header-file`. See
 [ADR-RuleSelection](ADRs/ADR-RuleSelection.md).

@@ -115,13 +115,6 @@ answer rather than as a missing one.
 real tests tree; if one does, the rule would need to decide whether a
 conditionally-declared test file counts as reached.
 
-## An unparseable registry is skipped in silence
-
-`RegistryParser::strays` returns `None` when the file does not parse, so
-`tests-layout` says nothing about it. `readable-source` reports the file, so the
-run is not silent overall — but the registry-specific offences are simply
-absent, and nothing says they were skipped rather than satisfied.
-
 ## Import ordering agrees with rustfmt only for same-case pairs
 
 `ordered-imports` extended the check to `src/`, so this stand-down now governs

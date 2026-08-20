@@ -131,6 +131,21 @@ impl TestsLayoutRule {
             .collect()
     }
 
+    fn unchecked(&self, file: &SourceFile) -> Offence {
+        Offence::new(
+            file.relative_path(),
+            1,
+            self.name(),
+            format!(
+                "{} could not be parsed, so its contents were not checked",
+                file.relative_path()
+            ),
+            "correct the syntax error readable-source reports, so this registry can be checked"
+                .to_string(),
+        )
+        .with_subject(file.relative_path())
+    }
+
     fn is_registry(file: &SourceFile) -> bool {
         let path = file.relative_path();
         path == "tests/all_tests.rs" || path.ends_with("/mod.rs")
@@ -138,9 +153,18 @@ impl TestsLayoutRule {
 
     // Each stray reported at its own line, named. "Something in this file is not
     // a declaration" is true of the whole file and actionable nowhere in it.
+    // A registry that does not parse is reported as unchecked rather than
+    // passed over. `readable-source` names the file, but this rule's own answer
+    // would otherwise be simply absent -- indistinguishable from a registry it
+    // had read and found clean, which is the silence this tool refuses.
+    //
+    // One offence, not one per sibling: treating an unparseable registry as
+    // declaring nothing is the page of wrong answers R009 rejected.
     fn declarations_only(&self, file: &SourceFile) -> Vec<Offence> {
-        RegistryParser::strays(file, RegistryPolicy::tests())
-            .unwrap_or_default()
+        let Some(strays) = RegistryParser::strays(file, RegistryPolicy::tests()) else {
+            return vec![self.unchecked(file)];
+        };
+        strays
             .into_iter()
             .map(|stray| {
                 Offence::new(
@@ -188,6 +212,10 @@ impl Rule for TestsLayoutRule {
         offences.extend(self.missing_mod_files(&present));
         offences.extend(self.registry_contents(&present));
         offences
+    }
+
+    fn requirement(&self) -> Option<&'static str> {
+        None
     }
 
     fn is_configured(&self) -> bool {

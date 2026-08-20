@@ -57,4 +57,16 @@ pub trait Rule {
     // about the header rule -- is how the registry ends up with a second,
     // hand-maintained idea of which rules exist.
     fn is_configured(&self) -> bool;
+
+    // What this rule needs before it can run, for the report to print when it
+    // could not. `None` where a rule needs nothing and is therefore never
+    // unconfigured.
+    //
+    // The rule answers for itself so the printer names no rule in particular.
+    // The alternative -- a hardcoded reason in the printer -- was there until
+    // a second rule could go unconfigured, at which point it started telling
+    // readers to pass `--header-file` for a rule waiting on a manifest field.
+    // A line saying only that something is unset says what is wrong without
+    // saying what to do, which is the one thing every finding here must do.
+    fn requirement(&self) -> Option<&'static str>;
 }

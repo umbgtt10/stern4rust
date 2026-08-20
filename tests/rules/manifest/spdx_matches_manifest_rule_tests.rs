@@ -165,3 +165,12 @@ fn name_is_the_kebab_case_rule_name_used_in_the_report() {
     // Assert
     assert_eq!(name, "spdx-matches-manifest");
 }
+
+#[test]
+fn requirement_names_the_manifest_field_the_rule_needs() {
+    // Arrange & Act
+    let requirement = SpdxMatchesManifestRule::new(None).requirement();
+
+    // Assert
+    assert_eq!(requirement, Some("needs a `license` field in Cargo.toml"));
+}

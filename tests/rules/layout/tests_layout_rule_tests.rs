@@ -323,6 +323,39 @@ fn check_workspace_an_intermediate_folder_without_a_mod_file_reports_it_missing(
     assert!(found.contains("tests/rules/mod.rs"), "got {found}");
 }
 
+// Guiding principle 2: silence is never success. readable-source reports the
+// file, but this rule's own answer was simply absent -- indistinguishable from
+// a registry it had checked and found clean.
+#[test]
+fn check_workspace_of_an_unparseable_registry_says_it_was_not_checked() {
+    // Arrange & Act
+    let offences = check(&[
+        (
+            "tests/all_tests.rs",
+            "pub mod deep;
+",
+        ),
+        (
+            "tests/deep/mod.rs",
+            "pub mod broken
+",
+        ),
+        ("tests/deep/alpha_tests.rs", TEST_BODY),
+    ]);
+
+    // Assert
+    let skipped: Vec<&stern4rust::reporting::offence::Offence> = offences
+        .iter()
+        .filter(|offence| offence.description.contains("could not be parsed"))
+        .collect();
+    assert_eq!(skipped.len(), 1);
+    assert_eq!(skipped[0].file, "tests/deep/mod.rs");
+    assert_eq!(
+        skipped[0].correction,
+        "correct the syntax error readable-source reports, so this registry can be checked"
+    );
+}
+
 #[test]
 fn check_workspace_reports_every_missing_registry_rather_than_only_the_first() {
     // Arrange & Act

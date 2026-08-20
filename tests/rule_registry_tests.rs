@@ -40,6 +40,10 @@ impl Rule for AlwaysOffends {
     fn is_configured(&self) -> bool {
         true
     }
+
+    fn requirement(&self) -> Option<&'static str> {
+        None
+    }
 }
 
 fn file() -> SourceFile {
@@ -74,6 +78,10 @@ impl Rule for NeverOffends {
     fn is_configured(&self) -> bool {
         true
     }
+
+    fn requirement(&self) -> Option<&'static str> {
+        None
+    }
 }
 
 struct OffendsPerWorkspace;
@@ -99,6 +107,10 @@ impl Rule for OffendsPerWorkspace {
 
     fn is_configured(&self) -> bool {
         true
+    }
+
+    fn requirement(&self) -> Option<&'static str> {
+        None
     }
 }
 
@@ -392,6 +404,29 @@ fn unconfigured_names_does_not_list_a_skipped_rule() {
 
     // Assert
     assert!(unconfigured.is_empty(), "got {unconfigured:?}");
+}
+
+// The requirement comes from the rule, so the report can say what to pass
+// rather than only that something is unset.
+#[test]
+fn unconfigured_names_each_rule_with_what_it_is_waiting_for() {
+    // Arrange
+    let registry = RuleRegistry::from_config(&Config::default());
+
+    // Act
+    let unconfigured = registry.unconfigured(&Config::default());
+
+    // Assert
+    assert_eq!(
+        unconfigured,
+        [
+            (
+                "spdx-matches-manifest",
+                "needs a `license` field in Cargo.toml"
+            ),
+            ("header", "needs --header-file")
+        ]
+    );
 }
 
 // A rule dropped for want of configuration is not a rule anybody skipped, and

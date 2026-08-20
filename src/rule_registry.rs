@@ -123,10 +123,23 @@ impl RuleRegistry {
     // blame the reader for a choice they did not make, and reporting it as
     // nothing at all would let a run check less than it appears to.
     pub fn unconfigured_names(&self, config: &Config) -> Vec<&'static str> {
-        let applied = self.names();
-        Self::known_names()
+        self.unconfigured(config)
             .into_iter()
-            .filter(|name| config.selection.includes(name) && !applied.contains(name))
+            .map(|(name, _)| name)
+            .collect()
+    }
+
+    // Each with what it was waiting for, taken from the rule rather than
+    // guessed at by the printer. A rule that could not run is built by `all`
+    // even though `from_config` dropped it, which is what lets it still answer.
+    pub fn unconfigured(&self, config: &Config) -> Vec<(&'static str, &'static str)> {
+        let applied = self.names();
+        Self::all(config)
+            .iter()
+            .filter(|rule| {
+                config.selection.includes(rule.name()) && !applied.contains(&rule.name())
+            })
+            .map(|rule| (rule.name(), rule.requirement().unwrap_or("not configured")))
             .collect()
     }
 

@@ -4,6 +4,35 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **A rule that could not run now says what it was waiting for.**
+  `Rule::requirement` returns what a rule needs, and the report prints it:
+  `header (needs --header-file)`,
+  `spdx-matches-manifest (needs a `license` field in Cargo.toml)`.
+
+  This is a breaking change for anyone implementing `Rule` outside this crate --
+  the trait has no default bodies, so every implementor answers. Nineteen of the
+  twenty-one answer `None`.
+
+  The text was hardcoded in the printer until 0.8.0, when a second rule could go
+  unconfigured and it began telling readers to pass `--header-file` for a rule
+  waiting on a manifest field. Replacing it with a bare `(not configured)` fixed
+  the inaccuracy and **lost the correction**: it said what was wrong without
+  saying what to do, which Guiding Principle 1 requires of every finding. This
+  restores it from the rule rather than from a hardcoded string.
+
+### Fixed
+
+- **`tests-layout` no longer goes silent on a registry it cannot parse.** It
+  reported nothing at all, which is indistinguishable from a registry it had read
+  and found clean -- the silence Guiding Principle 2 refuses. It now states that
+  the registry was not checked, once, with the syntax error as the correction.
+  One offence rather than one per sibling file, since treating an unparseable
+  registry as declaring nothing is the page of wrong answers R009 rejected.
+
 ## [0.8.0] - 2026-08-20
 
 ### Changed

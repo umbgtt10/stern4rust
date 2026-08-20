@@ -262,15 +262,18 @@ fn render_says_why_each_rule_was_not_applied() {
         .with_rules(
             vec!["readable-source".to_string()],
             vec!["tests-layout".to_string()],
-            vec!["header".to_string()],
+            vec![("header".to_string(), "needs --header-file".to_string())],
         )
         .render(&[]);
 
     // Assert
     assert!(report.contains("tests-layout (skipped)"), "got {report}");
-    // Not "(needs --header-file)": two rules can go unconfigured now, and the
-    // header rule is not the one the other is waiting on.
-    assert!(report.contains("header (not configured)"), "got {report}");
+    // The rule says what it needs, so the line carries a correction rather than
+    // only a verdict. A bare "(not configured)" told the reader nothing to do.
+    assert!(
+        report.contains("header (needs --header-file)"),
+        "got {report}"
+    );
     assert!(
         report.contains("rules_applied=1 rules_skipped=1 rules_unconfigured=1"),
         "got {report}"

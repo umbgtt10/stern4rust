@@ -95,6 +95,10 @@ impl Rule for HeaderRule {
     }
 
     // The one rule that can be selected and still have nothing to work from.
+    fn requirement(&self) -> Option<&'static str> {
+        Some("needs --header-file")
+    }
+
     fn is_configured(&self) -> bool {
         !self.expected.is_empty()
     }

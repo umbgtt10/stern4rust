@@ -122,6 +122,10 @@ impl Rule for SpdxMatchesManifestRule {
 
     // The manifest is what configures this rule, so a manifest with no `license`
     // leaves it nothing to check against.
+    fn requirement(&self) -> Option<&'static str> {
+        Some("needs a `license` field in Cargo.toml")
+    }
+
     fn is_configured(&self) -> bool {
         self.license.is_some()
     }

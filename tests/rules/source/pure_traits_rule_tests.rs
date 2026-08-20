@@ -192,3 +192,14 @@ fn name_is_the_kebab_case_rule_name_used_in_the_report() {
     // Assert
     assert_eq!(name, RULE);
 }
+
+// A rule that is always configured has nothing to ask for, and says so rather
+// than inventing a requirement it does not have.
+#[test]
+fn requirement_of_a_rule_that_needs_nothing_is_none() {
+    // Arrange & Act
+    let requirement = PureTraitsRule::new().requirement();
+
+    // Assert
+    assert!(requirement.is_none());
+}

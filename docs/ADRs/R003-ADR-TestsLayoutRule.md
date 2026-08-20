@@ -182,6 +182,19 @@ rule and hands it the whole file set, and `run_stage_2.ps1` runs the compiled
 binary against this crate's own tree — where, unavoidably and correctly, the rule's own test file is
 subject to it.
 
+## An unparseable registry is reported, not skipped
+
+A registry that does not parse yields no declarations, and this rule used to say
+nothing about it. `readable-source` names the file, so the run was not silent
+overall -- but this rule's own answer was simply absent, indistinguishable from
+a registry it had read and found clean. That is the silence Guiding Principle 2
+refuses.
+
+It now reports one offence: the registry could not be parsed, so its contents
+were not checked. One, not one per sibling -- treating an unparseable registry
+as declaring nothing is the page of wrong answers
+[R009](R009-ADR-RegistryCompletenessRule.md) rejected.
+
 ## Related
 
 - [R002-ADR-TestFileStructureRule](R002-ADR-TestFileStructureRule.md) — skips the two

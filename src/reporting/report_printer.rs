@@ -15,7 +15,7 @@ pub struct ReportPrinter {
     threshold: OffenceThreshold,
     applied: Vec<String>,
     skipped: Vec<String>,
-    unconfigured: Vec<String>,
+    unconfigured: Vec<(String, String)>,
     exclusions: Vec<(String, usize)>,
     config_file: Option<String>,
     baseline: Option<String>,
@@ -78,7 +78,7 @@ impl ReportPrinter {
         self,
         applied: Vec<String>,
         skipped: Vec<String>,
-        unconfigured: Vec<String>,
+        unconfigured: Vec<(String, String)>,
     ) -> Self {
         Self {
             applied,
@@ -248,7 +248,7 @@ impl ReportPrinter {
             .chain(
                 self.unconfigured
                     .iter()
-                    .map(|name| format!("{name} (not configured)")),
+                    .map(|(name, requirement)| format!("{name} ({requirement})")),
             )
             .collect()
     }

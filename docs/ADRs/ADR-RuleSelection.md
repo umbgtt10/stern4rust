@@ -98,6 +98,23 @@ a switch that worked.
 name.** Rejected: it invites arguing about the ranking rather than fixing the
 offence, and rule selection addresses the same need without the argument.
 
+## The requirement comes from the rule
+
+A rule that could not run states **what it was waiting for**, and the report
+prints it: `header (needs --header-file)`,
+`spdx-matches-manifest (needs a `license` field in Cargo.toml)`.
+
+That text was hardcoded in the printer until a second rule could go
+unconfigured, at which point it told readers to pass `--header-file` for a rule
+waiting on a manifest field. Replacing it with a bare `(not configured)` made it
+accurate and **useless** -- it said what was wrong without saying what to do,
+which is the one thing every finding in this tool must do.
+
+`Rule::requirement` returns `Option<&'static str>`, so the printer names no rule
+in particular -- the same reason `is_configured` is answered by the rule rather
+than by an `if` in the registry. `None` where a rule needs nothing, which is
+nineteen of the twenty-one.
+
 ## Consequences
 
 **A clean run is now conditional, and the report has to say so.** This is the

@@ -89,6 +89,10 @@ impl Rule for SingleImplementedTypeRule {
         Vec::new()
     }
 
+    fn requirement(&self) -> Option<&'static str> {
+        None
+    }
+
     fn is_configured(&self) -> bool {
         true
     }

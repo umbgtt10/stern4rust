@@ -262,3 +262,14 @@ fn name_is_the_kebab_case_rule_name_used_in_the_report() {
     // Assert
     assert_eq!(name, "header");
 }
+
+// The one rule that can be selected and still have nothing to work from, so it
+// is the one whose requirement a reader most needs printed.
+#[test]
+fn requirement_names_the_flag_the_rule_needs() {
+    // Arrange & Act
+    let requirement = HeaderRule::new(Vec::new()).requirement();
+
+    // Assert
+    assert_eq!(requirement, Some("needs --header-file"));
+}
