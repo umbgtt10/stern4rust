@@ -3,6 +3,35 @@
 What `cargo-stern4rust` does today. Anything not listed here is not built, and
 the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
+## Version 0.9.0
+
+### Reporting
+
+- A rule that could not run **says what it was waiting for**:
+  `header (needs --header-file)`,
+  `spdx-matches-manifest (needs a `license` field in Cargo.toml)`.
+  `Rule::requirement` answers it, so the printer names no rule in particular.
+- `tests-layout` reports a registry it cannot parse as **unchecked** rather than
+  saying nothing. One offence, not one per sibling file.
+
+### Baselines
+
+- Keyed on file + rule + **subject**, not the description. A rule may reword an
+  offence without every baseline in the family reporting it as new.
+
+### Structure
+
+- `src/finding/` is grouped into `model/` and `parsing/`, mirrored in `tests/`.
+- `ItemNaming` holds the identifier an item declares and the source-line
+  fallback, where three parsers each carried both.
+
+### Library surface
+
+- **Decided: the library is not a public API.** Depend on the binary. Everything
+  is `pub` because this repository forbids unit tests, so the surface is as wide
+  as the test suite needs and no wider a promise than that.
+  [ADR-LibrarySurfaceIsNotAnApi](ADRs/ADR-LibrarySurfaceIsNotAnApi.md)
+
 ## Version 0.8.0
 
 ### Rules

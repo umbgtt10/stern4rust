@@ -148,7 +148,7 @@ the member declaration, the member taking from the workspace, the pinned
 dev-dependency, several members at once, the non-workspace package, the per-file
 door, `is_configured`, and the rule's name.
 
-`tests/finding/manifest_dependency_tests.rs` — 2 tests on the declaration model
+`tests/finding/model/manifest_dependency_tests.rs` — 2 tests on the declaration model
 and the three tables it covers.
 
 `tests/settings/manifest_resolver_tests.rs` — that this crate, a single package,

@@ -53,6 +53,9 @@ rule; anything without is the machinery the rules run on.
 
 | ADR | Decision |
 |---|---|
+| [ADR-Baselines](ADR-Baselines.md) | Record the current offences and fail only on new ones, keyed on file + rule + subject with the line deliberately excluded so an offence that moved is the same offence. Counts rather than a set; every run that used one names it and says how many it hid. |
+| [ADR-ExclusionsAreCounted](ADR-ExclusionsAreCounted.md) | `--exclude` reports every pattern with the number of files it removed, including zero, so a tree taken out of the report is something the reader can see rather than a silence. |
+| [ADR-FixOnlyWhatIsSafe](ADR-FixOnlyWhatIsSafe.md) | `--fix` repairs only what can be moved without reading it -- item order, section order, blank lines -- working from `syn` spans, and never touches imports, which are rustfmt's decision. |
 | [ADR-ExitCodeContract](ADR-ExitCodeContract.md) | `0` clean, `1` could-not-run, `2` rule-broken, and the line between `1` and `2` is whether the work can still be enumerated — a bad manifest is a `1`, one unreadable file among fifty is a `2`. |
 | [ADR-LibrarySurfaceIsNotAnApi](ADR-LibrarySurfaceIsNotAnApi.md) | The `stern4rust` library is not a public API -- depend on the binary. Everything is `pub` because unit tests are forbidden and integration tests can only reach what is public, so the surface is as wide as the test suite needs and moves whenever the rules require it. |
 | [ADR-MachineReadableReport](ADR-MachineReadableReport.md) | The table stays the default and `--format json` renders the same run as a document; every offence carries a required `correction` alongside its description, because a report worth reading is not the same as a report worth acting on. |

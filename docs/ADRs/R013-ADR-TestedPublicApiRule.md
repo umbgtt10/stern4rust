@@ -159,14 +159,14 @@ sufficient justification for any `pub`, however unnecessary.
 entry point, the called one, the private function, the wrong arity, the call
 made only from `src/`, the call inside an `assert!`, and the rule's name.
 
-`tests/finding/public_entry_point_finder_tests.rs` — 7 tests on what counts as
+`tests/finding/parsing/public_entry_point_finder_tests.rs` — 7 tests on what counts as
 an entry point, including the trait method and the trait *impl* method that does
 not.
 
-`tests/finding/call_site_finder_tests.rs` — 6 tests on call collection, macro
+`tests/finding/parsing/call_site_finder_tests.rs` — 6 tests on call collection, macro
 token streams included.
 
-`tests/finding/public_entry_point_tests.rs` — 3 tests on the name-and-arity
+`tests/finding/model/public_entry_point_tests.rs` — 3 tests on the name-and-arity
 identity.
 
 Stage 2 runs the tool against this crate at zero offences, so a new `pub fn`

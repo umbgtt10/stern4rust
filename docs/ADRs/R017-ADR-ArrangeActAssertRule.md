@@ -41,7 +41,7 @@ rather than merged**.
 
 **`// Arrange & Act & Assert` is now part of the standard.** It was not in
 `CLAUDE.md`, and practice had already outrun the standard: nine tests use it
-across the family, including `tests/finding/section_tests.rs` in this crate. A
+across the family, including `tests/finding/model/section_tests.rs` in this crate. A
 rule written strictly to the standard as it stood would have failed its own
 repository on the first run. `CLAUDE.md` was amended rather than the nine tests.
 
@@ -194,7 +194,7 @@ Assert with no Act, the test with no markers, the spacing offence, the folded
 comment block, trailing prose, the `Actually` word boundary, the helper function,
 a source file, an unparseable file, and **the string literal holding markers**.
 
-`tests/finding/test_marker_tests.rs` — 10 tests on marker parsing alone: each
+`tests/finding/model/test_marker_tests.rs` — 10 tests on marker parsing alone: each
 merged form, trailing prose in all three punctuations, the word boundary, an
 ordinary comment, and a line of code.
 

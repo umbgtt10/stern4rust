@@ -135,7 +135,7 @@ one.
 
 ## Enforcement
 
-`tests/rules/source/header_rule_tests.rs` — 17 tests covering exact match, wrong
+`tests/rules/source/header_rule_tests.rs` — 18 tests covering exact match, wrong
 year, wrong licence, header below other code, empty file, file shorter than
 the header, both normalisation cases, and the empty-expected-header no-op.
 

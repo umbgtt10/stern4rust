@@ -142,7 +142,7 @@ the uppercase first segment, the case divergence inside a path, blocks separated
 by a blank line, a test file, an unparseable file, `check_workspace`,
 `is_configured`, and the rule's name.
 
-`tests/finding/import_path_tests.rs` — the stand-down itself, unchanged and
+`tests/finding/model/import_path_tests.rs` — the stand-down itself, unchanged and
 already covered by `test-file-structure`.
 
 Stage 2 runs the tool against this crate at zero offences.

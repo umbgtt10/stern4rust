@@ -4,7 +4,28 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.9.0] - 2026-08-20
+
+### Changed
+
+- **Three breaking changes, each a consequence of a rule this tool enforces on
+  itself.**
+
+  `Rule` gained `requirement`, so an external implementor must answer it -- the
+  trait has no default bodies, by `pure-traits`.
+
+  `src/finding/` module paths moved into `model/` and `parsing/`, as
+  `src/rules/` did in `0.8.0` and for the same reason: `directory-file-count`
+  refused a twenty-first file in one directory. Under
+  [ADR-LibrarySurfaceIsNotAnApi](docs/ADRs/ADR-LibrarySurfaceIsNotAnApi.md)
+  these are not breaking at all, since the library is not a public API -- but
+  the note stays, because a reader whose build stopped compiling deserves to
+  know why.
+
+  **Baseline fingerprints changed, which invalidates every existing baseline
+  once.** A checked-in baseline reports its entries as stale on the first run
+  after upgrading; `--write-baseline` rewrites it, and the report already says
+  so.
 
 ### Changed
 

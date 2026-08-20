@@ -119,7 +119,7 @@ form, each forbidden one, the `tests/` exclusion that keeps R003 and this rule
 from reporting the same file twice, and that every stray is reported at its own
 line.
 
-`tests/finding/registry_policy_tests.rs` — 8 tests pinning the two policies against each
+`tests/finding/model/registry_policy_tests.rs` — 8 tests pinning the two policies against each
 other, including the private-`mod` disagreement in both directions and that
 `extern crate alloc` is permitted under `source()` and not under `tests()`.
 

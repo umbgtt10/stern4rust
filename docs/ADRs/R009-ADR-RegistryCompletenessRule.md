@@ -120,10 +120,10 @@ file declared only from `main.rs`, the undeclared subfolder, the subfolder
 without a registry, the directory with no registry at all, the unparseable
 registry, and the tests-tree shape the gap was first noticed in.
 
-`tests/finding/package_tree_tests.rs` — 9 tests on the directory model, including that
+`tests/finding/model/package_tree_tests.rs` — 9 tests on the directory model, including that
 `lib.rs` outranks `main.rs`.
 
-`tests/finding/module_declaration_finder_tests.rs` — 6 tests on what counts as a
+`tests/finding/parsing/module_declaration_finder_tests.rs` — 6 tests on what counts as a
 declaration.
 
 ## Related

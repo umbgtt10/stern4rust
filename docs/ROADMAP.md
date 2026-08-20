@@ -33,25 +33,21 @@ moment nobody is checking.
 ## Current Baseline
 
 Twenty-one rules, two output formats, autofix, baselines, exclusions and a config
-file. 610 tests, both gates green, and the tool runs against its own tree on
+file. Every planned phase has shipped or been decided, and what each built is in
+[IMPLEMENTED-FEATURES.md](IMPLEMENTED-FEATURES.md). 625 tests, both gates green, and the tool runs against its own tree on
 every build with zero offences.
 
-## Planned Phases
+## What is left
 
-Phases 1 to 6 have shipped or been decided and have left this file, as the
-revision policy below requires: releasing `0.2.0`, excludability, baselines, the completeness
-rule, and the rule set itself. What they built is described in
-[IMPLEMENTED-FEATURES.md](IMPLEMENTED-FEATURES.md); why each rule is shaped as
-it is, in [the ADRs](ADRs/README.md). Their numbers are not reused.
+Nothing is planned. The rule set is at twenty-one, the original candidate list
+has shipped in full, the library surface is decided, and every remaining gap is
+a limit with no structural answer -- collected in
+[OPEN_POINTS.md](OPEN_POINTS.md).
 
-Phase 6, the library surface, is decided rather than built: **the library is not
-a public API, and consumers depend on the binary.** Everything is `pub` because
-this repository forbids unit tests, so the surface is as wide as the test suite
-needs and no wider a promise than that. See
-[ADR-LibrarySurfaceIsNotAnApi](ADRs/ADR-LibrarySurfaceIsNotAnApi.md).
-
-No phases remain. The rule set is at twenty-one, the original candidate list has
-shipped in full, and what is left is in [OPEN_POINTS.md](OPEN_POINTS.md).
+What remains is not a feature. **This tool is finished and unapplied**: it
+reports 815 offences across the seven sibling repositories and zero against
+itself. `slotgate` at 17 and `etheram-core` at 25 are the plausible first ones,
+and `--rule` exists so a repository can take one rule at a time.
 
 ## Deferred Ideas
 
