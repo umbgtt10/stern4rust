@@ -135,7 +135,7 @@ function call does, it is a small change to `visit_expr_macro`.
 
 ## Enforcement
 
-`tests/rules/imported_paths_rule_tests.rs` — 7 tests covering an imported
+`tests/rules/source/imported_paths_rule_tests.rs` — 7 tests covering an imported
 qualifier, a two-segment path, a multi-segment path and its correction, a test
 file getting no exemption, an unparseable file, and that every offending call is
 reported rather than the first.

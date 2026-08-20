@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use std::collections::BTreeSet;
+use std::fs::read_to_string;
 use std::path::Path;
 use std::path::PathBuf;
 
@@ -11,7 +12,10 @@ use anyhow::anyhow;
 use cargo_metadata::Metadata;
 use cargo_metadata::MetadataCommand;
 use cargo_metadata::Package;
+use toml::Table;
+use toml::Value;
 
+use crate::finding::manifest_dependency::ManifestDependency;
 use crate::settings::config::Config;
 
 // Turns the requested packages into the directories to walk.
@@ -22,6 +26,8 @@ use crate::settings::config::Config;
 pub struct ManifestResolver;
 
 impl ManifestResolver {
+    pub const MANIFEST: &'static str = "Cargo.toml";
+
     pub fn package_roots(config: &Config) -> Result<Vec<PathBuf>> {
         let metadata = Self::metadata(config)?;
         Ok(Self::selected(&metadata, config)?
@@ -48,6 +54,72 @@ impl ManifestResolver {
             return None;
         }
         declared.into_iter().next().cloned()
+    }
+
+    // Every dependency each member manifest declares, as written. None when the
+    // package is not a workspace, which is not the same as a workspace with
+    // nothing to report.
+    //
+    // Read from the TOML rather than from `cargo metadata`, because the question
+    // is *how* a dependency was declared and resolution erases that: a
+    // `{ workspace = true }` and a spelled-out version look identical once
+    // resolved.
+    pub fn workspace_dependencies(config: &Config) -> Option<Vec<ManifestDependency>> {
+        let metadata = Self::metadata(config).ok()?;
+        let root = metadata.workspace_root.as_std_path();
+        if !Self::is_workspace(&root.join(Self::MANIFEST)) {
+            return None;
+        }
+        Some(
+            metadata
+                .packages
+                .iter()
+                .flat_map(|package| {
+                    let path = package.manifest_path.as_std_path();
+                    Self::declared_in(path, &Self::relative_to(root, path))
+                })
+                .collect(),
+        )
+    }
+
+    fn is_workspace(manifest: &Path) -> bool {
+        Self::parsed(manifest).is_some_and(|table| table.contains_key("workspace"))
+    }
+
+    fn parsed(manifest: &Path) -> Option<Table> {
+        read_to_string(manifest).ok()?.parse::<Table>().ok()
+    }
+
+    fn declared_in(manifest: &Path, shown: &str) -> Vec<ManifestDependency> {
+        let Some(table) = Self::parsed(manifest) else {
+            return Vec::new();
+        };
+        ManifestDependency::SECTIONS
+            .into_iter()
+            .flat_map(|section| Self::in_section(&table, section, shown))
+            .collect()
+    }
+
+    // A dependency takes from the workspace when it is a table saying so. A
+    // string version, or a table with a version of its own, does not.
+    fn in_section(table: &Table, section: &str, shown: &str) -> Vec<ManifestDependency> {
+        table
+            .get(section)
+            .and_then(Value::as_table)
+            .map(|declared| {
+                declared
+                    .iter()
+                    .map(|(name, value)| {
+                        let takes = value
+                            .as_table()
+                            .and_then(|entry| entry.get("workspace"))
+                            .and_then(Value::as_bool)
+                            .unwrap_or(false);
+                        ManifestDependency::new(shown, name, section, takes)
+                    })
+                    .collect()
+            })
+            .unwrap_or_default()
     }
 
     fn metadata(config: &Config) -> Result<Metadata> {

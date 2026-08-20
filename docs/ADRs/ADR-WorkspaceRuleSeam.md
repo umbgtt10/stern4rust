@@ -86,7 +86,7 @@ it the whole file set.
 rule that answers only the workspace question stays silent through the per-file
 door, so nothing is reported twice.
 
-`tests/rules/tests_layout_rule_tests.rs::check_of_a_single_file_reports_nothing`
+`tests/rules/layout/tests_layout_rule_tests.rs::check_of_a_single_file_reports_nothing`
 pins the same property at the rule.
 
 ## Related

@@ -4,26 +4,27 @@
 
 use crate::reporting::offence::Offence;
 use crate::rule::Rule;
-use crate::rules::arrange_act_assert_rule::ArrangeActAssertRule;
-use crate::rules::declared_by_name_rule::DeclaredByNameRule;
-use crate::rules::directory_file_count_rule::DirectoryFileCountRule;
-use crate::rules::directory_subfolder_count_rule::DirectorySubfolderCountRule;
-use crate::rules::header_rule::HeaderRule;
-use crate::rules::imported_paths_rule::ImportedPathsRule;
-use crate::rules::module_registry_rule::ModuleRegistryRule;
-use crate::rules::ordered_imports_rule::OrderedImportsRule;
-use crate::rules::paired_test_file_rule::PairedTestFileRule;
-use crate::rules::pure_traits_rule::PureTraitsRule;
-use crate::rules::readable_source_rule::ReadableSourceRule;
-use crate::rules::registry_completeness_rule::RegistryCompletenessRule;
-use crate::rules::single_implemented_type_rule::SingleImplementedTypeRule;
-use crate::rules::spdx_matches_manifest_rule::SpdxMatchesManifestRule;
-use crate::rules::test_file_name_postfix_rule::TestFileNamePostfixRule;
-use crate::rules::test_file_structure_rule::TestFileStructureRule;
-use crate::rules::test_free_source_rule::TestFreeSourceRule;
-use crate::rules::test_naming_rule::TestNamingRule;
-use crate::rules::tested_public_api_rule::TestedPublicApiRule;
-use crate::rules::tests_layout_rule::TestsLayoutRule;
+use crate::rules::layout::directory_file_count_rule::DirectoryFileCountRule;
+use crate::rules::layout::directory_subfolder_count_rule::DirectorySubfolderCountRule;
+use crate::rules::layout::module_registry_rule::ModuleRegistryRule;
+use crate::rules::layout::paired_test_file_rule::PairedTestFileRule;
+use crate::rules::layout::registry_completeness_rule::RegistryCompletenessRule;
+use crate::rules::layout::test_file_name_postfix_rule::TestFileNamePostfixRule;
+use crate::rules::layout::tests_layout_rule::TestsLayoutRule;
+use crate::rules::manifest::spdx_matches_manifest_rule::SpdxMatchesManifestRule;
+use crate::rules::manifest::workspace_dependencies_rule::WorkspaceDependenciesRule;
+use crate::rules::source::declared_by_name_rule::DeclaredByNameRule;
+use crate::rules::source::header_rule::HeaderRule;
+use crate::rules::source::imported_paths_rule::ImportedPathsRule;
+use crate::rules::source::ordered_imports_rule::OrderedImportsRule;
+use crate::rules::source::pure_traits_rule::PureTraitsRule;
+use crate::rules::source::readable_source_rule::ReadableSourceRule;
+use crate::rules::source::single_implemented_type_rule::SingleImplementedTypeRule;
+use crate::rules::source::test_free_source_rule::TestFreeSourceRule;
+use crate::rules::testing::arrange_act_assert_rule::ArrangeActAssertRule;
+use crate::rules::testing::test_file_structure_rule::TestFileStructureRule;
+use crate::rules::testing::test_naming_rule::TestNamingRule;
+use crate::rules::testing::tested_public_api_rule::TestedPublicApiRule;
 use crate::settings::config::Config;
 use crate::settings::rule_selection::RuleSelection;
 use crate::source_file::SourceFile;
@@ -78,6 +79,9 @@ impl RuleRegistry {
             Box::new(TestNamingRule::new()),
             Box::new(TestedPublicApiRule::new()),
             Box::new(TestsLayoutRule::new()),
+            Box::new(WorkspaceDependenciesRule::new(
+                config.workspace_dependencies.clone(),
+            )),
             Box::new(HeaderRule::new(config.expected_header.clone())),
         ]
     }

@@ -11,7 +11,7 @@
 // trailing newline in the header file itself.
 
 use stern4rust::rule::Rule;
-use stern4rust::rules::header_rule::HeaderRule;
+use stern4rust::rules::source::header_rule::HeaderRule;
 use stern4rust::source_file::SourceFile;
 
 const HEADER: &str = "// Copyright 2025 Umberto Gotti <umberto.gotti@umbertogotti.dev>\n\

@@ -11,7 +11,7 @@
 
 use stern4rust::reporting::offence::Offence;
 use stern4rust::rule::Rule;
-use stern4rust::rules::spdx_matches_manifest_rule::SpdxMatchesManifestRule;
+use stern4rust::rules::manifest::spdx_matches_manifest_rule::SpdxMatchesManifestRule;
 use stern4rust::source_file::SourceFile;
 
 const APACHE: &str = "// Copyright 2025 Umberto Gotti\n\

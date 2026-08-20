@@ -99,7 +99,7 @@ not doing it.
 
 ## Enforcement
 
-`tests/rules/readable_source_rule_tests.rs` — 7 tests, including the NUL-byte
+`tests/rules/source/readable_source_rule_tests.rs` — 7 tests, including the NUL-byte
 case that motivated the rule, an empty file (valid Rust, not an offence), and
 the line the parse failed on.
 

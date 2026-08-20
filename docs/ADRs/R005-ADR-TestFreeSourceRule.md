@@ -150,7 +150,7 @@ spellings are pinned in opposite directions:
 `derive(Serialize)` specifically, because that is the pattern this rule must
 not break.
 
-`tests/rules/test_free_source_rule_tests.rs` — 9 tests covering the rule
+`tests/rules/source/test_free_source_rule_tests.rs` — 9 tests covering the rule
 itself, including that `tests/` is exempt and that the correction names the
 mirrored file.
 

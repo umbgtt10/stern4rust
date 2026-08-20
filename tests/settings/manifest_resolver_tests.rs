@@ -139,3 +139,17 @@ fn relative_to_strips_the_root_prefix() {
     // Assert
     assert_eq!(relative, "src/a.rs");
 }
+
+// This crate is a single package, not a workspace, so there is no root to
+// centralise into and the rule stays silent rather than reporting.
+#[test]
+fn workspace_dependencies_of_a_package_that_is_not_a_workspace_is_none() {
+    // Arrange
+    let config = config_for(&["cargo-stern4rust"]);
+
+    // Act
+    let declared = ManifestResolver::workspace_dependencies(&config);
+
+    // Assert
+    assert!(declared.is_none());
+}

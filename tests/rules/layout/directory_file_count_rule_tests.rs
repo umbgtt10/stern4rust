@@ -13,7 +13,7 @@
 
 use stern4rust::reporting::offence::Offence;
 use stern4rust::rule::Rule;
-use stern4rust::rules::directory_file_count_rule::DirectoryFileCountRule;
+use stern4rust::rules::layout::directory_file_count_rule::DirectoryFileCountRule;
 use stern4rust::source_file::SourceFile;
 
 fn check(limit: usize, paths: &[&str]) -> Vec<Offence> {

@@ -128,7 +128,7 @@ rather than an offence. It is named in the report, not counted.
 
 ## Enforcement
 
-`tests/rules/spdx_matches_manifest_rule_tests.rs` — 11 tests covering the
+`tests/rules/manifest/spdx_matches_manifest_rule_tests.rs` — 11 tests covering the
 matching identifier, the mismatch, the missing identifier, the file with no
 header at all, the prose-only claim, an SPDX line below the header,
 `check_workspace`, and both `is_configured` answers.

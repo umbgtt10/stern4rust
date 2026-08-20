@@ -6,6 +6,7 @@ pub mod call_site_finder_tests;
 pub mod implemented_type_finder_tests;
 pub mod implemented_type_tests;
 pub mod import_path_tests;
+pub mod manifest_dependency_tests;
 pub mod module_declaration_finder_tests;
 pub mod package_tree_tests;
 pub mod public_entry_point_finder_tests;

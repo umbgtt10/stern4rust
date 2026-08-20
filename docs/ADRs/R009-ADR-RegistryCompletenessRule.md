@@ -114,7 +114,7 @@ than as one root cause.
 
 ## Enforcement
 
-`tests/rules/registry_completeness_rule_tests.rs` — 11 tests covering the
+`tests/rules/layout/registry_completeness_rule_tests.rs` — 11 tests covering the
 complete registry, the orphan, the private declaration, the inline module, the
 file declared only from `main.rs`, the undeclared subfolder, the subfolder
 without a registry, the directory with no registry at all, the unparseable

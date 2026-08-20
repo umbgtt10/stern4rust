@@ -13,7 +13,7 @@ use crate::reporting::output_format::OutputFormat;
 use crate::reporting::report_printer::ReportPrinter;
 use crate::reporting::run_outcome::RunOutcome;
 use crate::rule_registry::RuleRegistry;
-use crate::rules::header_rule::HeaderRule;
+use crate::rules::source::header_rule::HeaderRule;
 use crate::settings::args::Args;
 use crate::settings::config::Config;
 use crate::settings::config_file::ConfigFile;
@@ -26,6 +26,7 @@ use crate::source_walker::SourceWalker;
 use crate::test_file_rewriter::TestFileRewriter;
 use anyhow::Context;
 use anyhow::Result;
+use std::collections::HashSet;
 use std::fs::write as write_file;
 use std::path::Path;
 use std::path::PathBuf;
@@ -55,6 +56,7 @@ impl Runner {
         // judged rather than from the command line, read once for the run.
         let config = Config {
             manifest_license: ManifestResolver::license(&config),
+            workspace_dependencies: ManifestResolver::workspace_dependencies(&config),
             ..config
         };
         let registry = RuleRegistry::from_config(&config);
@@ -102,6 +104,16 @@ impl Runner {
         // without this the report jumps between files. Sorting is the report's
         // business rather than any rule's -- a rule states facts, and their
         // order on the page is not one of them.
+        // The workspace question is asked once per package root, so a rule whose
+        // subject is the *workspace* rather than the package -- the manifest
+        // rules -- states the same finding once per member. The same sentence
+        // about the same line of the same file is one finding, not several.
+        //
+        // By content rather than by `dedup`, because two findings about one
+        // manifest interleave once sorted and consecutive-only removal misses
+        // every copy after the first pair.
+        let mut seen = HashSet::new();
+        offences.retain(|offence| seen.insert(offence.clone()));
         offences.sort_by(|left, right| left.sort_key().cmp(&right.sort_key()));
 
         if config.write_baseline {
@@ -173,6 +185,7 @@ impl Runner {
             // Filled in by `run` once the manifest has been read; the command
             // line has nothing to say about it.
             manifest_license: None,
+            workspace_dependencies: None,
             // Discovered beside the manifest when nobody named one, the same
             // way stern4rust.toml is. Implicit suppression would be
             // unacceptable if it were invisible; every report that used a

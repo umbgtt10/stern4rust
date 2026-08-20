@@ -138,7 +138,7 @@ back, and nothing connects the two. That linkage lives here and in
 
 ## Enforcement
 
-`tests/rules/declared_by_name_rule_tests.rs` — 11 tests covering the path
+`tests/rules/source/declared_by_name_rule_tests.rs` — 11 tests covering the path
 attribute, the module declared by name, the nested module, the attribute in a
 test file, the `cfg_attr` exemption, an unrelated attribute, several attributes
 in one file, an unparseable file, `check_workspace`, `is_configured`, and the

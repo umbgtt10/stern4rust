@@ -12,7 +12,7 @@
 
 use stern4rust::reporting::offence::Offence;
 use stern4rust::rule::Rule;
-use stern4rust::rules::directory_subfolder_count_rule::DirectorySubfolderCountRule;
+use stern4rust::rules::layout::directory_subfolder_count_rule::DirectorySubfolderCountRule;
 use stern4rust::source_file::SourceFile;
 
 fn check(limit: usize, paths: &[&str]) -> Vec<Offence> {

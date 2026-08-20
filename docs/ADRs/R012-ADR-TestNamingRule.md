@@ -132,7 +132,7 @@ satisfies this rule completely.
 
 ## Enforcement
 
-`tests/rules/test_naming_rule_tests.rs` — 8 tests covering the one-part name,
+`tests/rules/testing/test_naming_rule_tests.rs` — 8 tests covering the one-part name,
 the two-part name, the three-part boundary, the long name, the helper function
 without `#[test]`, a source file outside `tests/`, an unparseable file, and the
 rule's name.

@@ -11,7 +11,7 @@
 
 use stern4rust::reporting::offence::Offence;
 use stern4rust::rule::Rule;
-use stern4rust::rules::registry_completeness_rule::RegistryCompletenessRule;
+use stern4rust::rules::layout::registry_completeness_rule::RegistryCompletenessRule;
 use stern4rust::source_file::SourceFile;
 
 fn check(files: &[(&str, &str)]) -> Vec<Offence> {

@@ -136,7 +136,7 @@ compared.
 
 ## Enforcement
 
-`tests/rules/ordered_imports_rule_tests.rs` — 12 tests covering the sorted
+`tests/rules/source/ordered_imports_rule_tests.rs` — 12 tests covering the sorted
 block, the unsorted block, several unordered pairs, the `crate::` stand-down,
 the uppercase first segment, the case divergence inside a path, blocks separated
 by a blank line, a test file, an unparseable file, `check_workspace`,

@@ -1,6 +1,6 @@
 # Rules
 
-Twenty rules, each independent, each naming itself in the report. This is the
+Twenty-one rules, each independent, each naming itself in the report. This is the
 reference; the reasoning behind each one is in its ADR.
 
 Every offence carries a **correction** as well as a description — what to do,
@@ -24,6 +24,7 @@ without answering it.
 | `module-registry` | [R006](ADRs/R006-ADR-ModuleRegistryRule.md) | no |
 | `ordered-imports` | [R019](ADRs/R019-ADR-OrderedImportsRule.md) | no |
 | `spdx-matches-manifest` | [R020](ADRs/R020-ADR-SpdxMatchesManifestRule.md) | `license` in the manifest |
+| `workspace-dependencies` | [R021](ADRs/R021-ADR-WorkspaceDependenciesRule.md) | no |
 | `single-implemented-type` | [R007](ADRs/R007-ADR-SingleImplementedTypeRule.md) | no |
 | `pure-traits` | [R014](ADRs/R014-ADR-PureTraitsRule.md) | no |
 | `test-naming` | [R012](ADRs/R012-ADR-TestNamingRule.md) | no |
@@ -471,6 +472,40 @@ external crates and `crate::` are separated at all, or in what order those
 blocks appear. Nor imports inside inline modules or macros.
 
 See [R019](ADRs/R019-ADR-OrderedImportsRule.md).
+
+## `workspace-dependencies`
+
+A workspace declares its dependencies once, in the root, and every member takes
+them from there with `.workspace` notation.
+
+**Three requirements, one check.** The root holding every reference, each member
+using `.workspace`, and no member declaring its own are the same requirement:
+`cargo` refuses to build a `foo = { workspace = true }` the root does not
+declare, so only the middle one needs code. The same split
+[R009](ADRs/R009-ADR-RegistryCompletenessRule.md),
+[R014](ADRs/R014-ADR-PureTraitsRule.md) and
+[R016](ADRs/R016-ADR-PairedTestFileRule.md) each found before it.
+
+Read from the TOML rather than from `cargo metadata`, because the question is
+*how* a dependency was written and resolution erases exactly that. All three
+tables count -- `dependencies`, `dev-dependencies`, `build-dependencies` -- since
+a member pinning its own `proptest` splits the workspace as surely as a runtime
+dependency does. Intra-workspace path dependencies are included.
+
+| offence | correction |
+|---|---|
+| `` validation/Cargo.toml declares `node` in [dependencies] rather than taking it from the workspace `` | add `node` to [workspace.dependencies] in the root manifest, and write `node = { workspace = true }` here |
+
+A package that is **not** a workspace has no root to centralise into, so the rule
+says nothing -- the silence `tests-layout` keeps about a package with no tests
+tree, not the `(not configured)` state.
+
+**Does not catch:** whether the root's `[workspace.dependencies]` is tidy -- an
+entry nothing references is invisible. Nor version drift within the root, nor
+`[patch]`, `[replace]` or target-specific tables, nor whether a member needs the
+dependency at all.
+
+See [R021](ADRs/R021-ADR-WorkspaceDependenciesRule.md).
 
 ## `spdx-matches-manifest`
 

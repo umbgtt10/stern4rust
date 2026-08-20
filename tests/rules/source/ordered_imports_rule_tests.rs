@@ -13,7 +13,7 @@
 
 use stern4rust::reporting::offence::Offence;
 use stern4rust::rule::Rule;
-use stern4rust::rules::ordered_imports_rule::OrderedImportsRule;
+use stern4rust::rules::source::ordered_imports_rule::OrderedImportsRule;
 use stern4rust::source_file::SourceFile;
 
 const HEADER: &str = "// Copyright 2025 Umberto Gotti <umberto.gotti@umbertogotti.dev>\n\

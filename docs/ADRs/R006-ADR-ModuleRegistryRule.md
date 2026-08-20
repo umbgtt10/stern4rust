@@ -114,7 +114,7 @@ which is an entry point rather than an index and legitimately holds code.
 
 ## Enforcement
 
-`tests/rules/module_registry_rule_tests.rs` — 13 tests covering each permitted
+`tests/rules/layout/module_registry_rule_tests.rs` — 13 tests covering each permitted
 form, each forbidden one, the `tests/` exclusion that keeps R003 and this rule
 from reporting the same file twice, and that every stray is reported at its own
 line.

@@ -169,7 +169,7 @@ bodies satisfies this rule completely.
 
 ## Enforcement
 
-`tests/rules/pure_traits_rule_tests.rs` — 12 tests covering the default body,
+`tests/rules/source/pure_traits_rule_tests.rs` — 12 tests covering the default body,
 two defaults in one trait reported separately, the declaration-only trait, the
 associated type, the defaulted associated constant, the trait inside an inline
 module, the impl block that is not a trait, the unparseable file, the test file,

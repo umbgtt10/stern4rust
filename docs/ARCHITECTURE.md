@@ -25,7 +25,7 @@ ManifestResolver ──▶ package roots
               └──────────┬──────────┘
                      Vec<Offence>
                          │
-                   sort by (file, line, rule)
+          dedupe by content, sort by (file, line, rule)
                          │
               ReportPrinter │ JsonPrinter   (OffenceThreshold caps what prints)
                          │
@@ -94,12 +94,13 @@ offences — there is no "expected text" for a missing folder.
 
 ## Adding a rule
 
-1. a file under `src/rules/`, implementing `Rule` — all four methods, since none
-   of them has a default body
-2. a `pub mod` line in `src/rules/mod.rs`
+1. a file under `src/rules/<group>/`, implementing `Rule` — all four methods,
+   since none of them has a default body. The groups are `source/`, `layout/`,
+   `testing/` and `manifest/`; `tests/rules/` mirrors them exactly
+2. a `pub mod` line in that group's `mod.rs`
 3. an import and one entry in `RuleRegistry::all`, the single list both
    `from_config` and `known_names` read
-4. a mirrored test file under `tests/rules/`, declared in `tests/rules/mod.rs`
+4. a mirrored test file under `tests/rules/<group>/`, declared in that group`s `mod.rs`
 5. an `R<NNN>-ADR-<Name>.md` in `docs/ADRs/`, and a section in `RULES.md`
 
 Nothing else in the tool changes. A rule does not walk, does not print, and does

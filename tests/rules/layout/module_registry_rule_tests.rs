@@ -16,7 +16,7 @@
 // having to know they exist.
 
 use stern4rust::rule::Rule;
-use stern4rust::rules::module_registry_rule::ModuleRegistryRule;
+use stern4rust::rules::layout::module_registry_rule::ModuleRegistryRule;
 use stern4rust::source_file::SourceFile;
 
 const HEADER: &str = "// Copyright 2025 Umberto Gotti <umberto.gotti@umbertogotti.dev>\n\

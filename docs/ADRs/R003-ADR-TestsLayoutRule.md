@@ -164,7 +164,7 @@ silence rather than reported.
 
 ## Enforcement
 
-`tests/rules/tests_layout_rule_tests.rs` — 20 tests, written before the
+`tests/rules/layout/tests_layout_rule_tests.rs` — 20 tests, written before the
 implementation and confirmed red on
 `error[E0432]: unresolved import stern4rust::rules::tests_layout_rule`,
 covering each of the four checks, the nested and intermediate folder cases,

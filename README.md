@@ -15,7 +15,7 @@ already own correctness. These are the things a reviewer would otherwise have to
 say by hand, every time, forever — and the ones that quietly stop being true
 across a codebase the moment nobody is checking.
 
-> **Status: twenty rules.** The set below is what is implemented and
+> **Status: twenty-one rules.** The set below is what is implemented and
 > gated. `stern4rust` runs against its own tree on every build, so a rule that
 > would fail this repository cannot be merged into it.
 
@@ -295,6 +295,18 @@ The stand-downs are the design: `cargo fmt` runs first and sorts `self`,
 `super`, `crate` and uppercase-initial paths itself, so demanding the alphabet
 there would write a file no edit could make green.
 [R019](docs/ADRs/R019-ADR-OrderedImportsRule.md)
+
+### `workspace-dependencies`
+
+A workspace declares its dependencies once, in the root, and every member takes
+them with `.workspace` notation.
+
+The three things this asks for — the root holds every reference, members use
+`.workspace`, members declare nothing new — are one check, because `cargo`
+refuses to build a `workspace = true` the root does not declare. Read from the
+TOML, since resolution erases how a dependency was written. A package that is
+not a workspace is silently skipped.
+[R021](docs/ADRs/R021-ADR-WorkspaceDependenciesRule.md)
 
 ### `spdx-matches-manifest`
 

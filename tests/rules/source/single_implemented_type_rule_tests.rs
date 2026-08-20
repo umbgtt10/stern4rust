@@ -14,7 +14,7 @@
 // the file has too many.
 
 use stern4rust::rule::Rule;
-use stern4rust::rules::single_implemented_type_rule::SingleImplementedTypeRule;
+use stern4rust::rules::source::single_implemented_type_rule::SingleImplementedTypeRule;
 use stern4rust::source_file::SourceFile;
 
 const HEADER: &str = "// Copyright 2025 Umberto Gotti <umberto.gotti@umbertogotti.dev>\n\

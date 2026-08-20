@@ -134,7 +134,7 @@ side, eight new registries, and every `use` path rewritten. The compiler and the
 
 ## Enforcement
 
-`tests/rules/directory_file_count_rule_tests.rs` — 9 tests covering the
+`tests/rules/layout/directory_file_count_rule_tests.rs` — 9 tests covering the
 boundary, over the boundary, per-directory counting, the registry exemption for
 all three index names, `main.rs` counting, reporting against the index, and
 reporting against the path where there is no index.

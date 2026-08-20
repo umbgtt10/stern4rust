@@ -8,6 +8,51 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **`workspace-dependencies`**, the twenty-first rule: a workspace declares its
+  dependencies once, in the root, and every member takes them from there with
+  `.workspace` notation.
+  [R021](docs/ADRs/R021-ADR-WorkspaceDependenciesRule.md)
+
+  **Three requirements, one check.** The root holding all the references, each
+  member using `.workspace`, and members declaring nothing new are the same
+  requirement: `cargo` refuses to build a `foo = { workspace = true }` the root
+  does not declare, so only the middle one needs code. That is the fourth time
+  this repository has found the shape -- R009 (`E0583`), R014 (`E0046`), R016,
+  and now this.
+
+  Read from the TOML rather than from `cargo metadata`, because the question is
+  *how* a dependency was written and resolution erases exactly that. All three
+  tables count; a member pinning its own `proptest` splits the workspace as
+  surely as a runtime dependency does.
+
+  Intra-workspace path dependencies are included, decided on evidence:
+  `etheram-ibft`'s root already centralises `execution-types` and `evm` as path
+  dependencies while `node = { path = "../node" }` is spelled out in four
+  members. Exempting them would have hidden all six of its findings.
+
+  **27 offences across three workspaces.** `crap4rust` (11) and `grip4rust` (10)
+  have no `[workspace.dependencies]` section at all; `etheram-ibft` (6) has one
+  and leaks only on path dependencies. `braintax4rust` centralises all 65 of its
+  dependencies and `etheram-raft` all 27, so the convention is demonstrably
+  workable at that size. The five repositories that are not workspaces are
+  silent -- not `(not configured)`, since the rule has everything it needs and
+  simply has no subject.
+
+### Changed
+
+- **`src/rules/` is grouped into subfolders** -- `source/`, `layout/`,
+  `testing/` and `manifest/` -- with `tests/rules/` mirroring exactly. Both
+  directories stood at exactly 20 files, so `directory-file-count` would not
+  allow a twenty-first rule. The tool's own rule decided the layout, which is
+  self-gating working as intended.
+
+- **Offences are deduplicated by content.** The workspace question is asked once
+  per package root, so a rule whose subject is the *workspace* rather than the
+  package stated each finding once per member: `etheram-ibft` reported 36 where
+  there are 6. `Vec::dedup` was not enough -- two findings about one manifest
+  interleave once sorted, so consecutive-only removal missed every copy after
+  the first pair.
+
 - **`ordered-imports`**, the nineteenth rule: imports in `src/` run in
   alphabetic order, on the pairs where the alphabet is the authority.
   [R019](docs/ADRs/R019-ADR-OrderedImportsRule.md)

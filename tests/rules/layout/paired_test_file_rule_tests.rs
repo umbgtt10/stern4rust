@@ -13,7 +13,7 @@
 
 use stern4rust::reporting::offence::Offence;
 use stern4rust::rule::Rule;
-use stern4rust::rules::paired_test_file_rule::PairedTestFileRule;
+use stern4rust::rules::layout::paired_test_file_rule::PairedTestFileRule;
 use stern4rust::source_file::SourceFile;
 
 const HEADER: &str = "// Copyright 2025 Umberto Gotti <umberto.gotti@umbertogotti.dev>\n\

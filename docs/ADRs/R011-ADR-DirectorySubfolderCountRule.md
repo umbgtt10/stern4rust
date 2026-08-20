@@ -88,7 +88,7 @@ The two are only meaningful together.
 
 ## Enforcement
 
-`tests/rules/directory_subfolder_count_rule_tests.rs` — 5 tests covering the
+`tests/rules/layout/directory_subfolder_count_rule_tests.rs` — 5 tests covering the
 boundary, one past it, checking at a nested level rather than only the root, and
 that a folder with no source does not count.
 

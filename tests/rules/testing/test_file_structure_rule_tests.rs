@@ -17,7 +17,7 @@
 // fake -- is a helper and sorts among the functions.
 
 use stern4rust::rule::Rule;
-use stern4rust::rules::test_file_structure_rule::TestFileStructureRule;
+use stern4rust::rules::testing::test_file_structure_rule::TestFileStructureRule;
 use stern4rust::source_file::SourceFile;
 
 const HEADER: &str = "// Copyright 2025 Umberto Gotti <umberto.gotti@umbertogotti.dev>\n\

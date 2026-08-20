@@ -6,7 +6,7 @@ use std::fs;
 use std::path::Path;
 
 use crate::reporting::offence::Offence;
-use crate::rules::readable_source_rule::ReadableSourceRule;
+use crate::rules::source::readable_source_rule::ReadableSourceRule;
 use crate::settings::manifest_resolver::ManifestResolver;
 use crate::source_file::SourceFile;
 

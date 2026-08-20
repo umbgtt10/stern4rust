@@ -155,7 +155,7 @@ sufficient justification for any `pub`, however unnecessary.
 
 ## Enforcement
 
-`tests/rules/tested_public_api_rule_tests.rs` — 7 tests covering the uncalled
+`tests/rules/testing/tested_public_api_rule_tests.rs` — 7 tests covering the uncalled
 entry point, the called one, the private function, the wrong arity, the call
 made only from `src/`, the call inside an `assert!`, and the rule's name.
 

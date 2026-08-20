@@ -117,7 +117,7 @@ out to be wrong it will be wrong visibly, in a file whose name stops matching.
 
 ## Enforcement
 
-`tests/rules/single_implemented_type_rule_tests.rs` — 9 tests covering one
+`tests/rules/source/single_implemented_type_rule_tests.rs` — 9 tests covering one
 subject, one subject with plain data beside it, two subjects, an enum as the
 second subject, the `tests/` exemption, and that every type after the first is
 reported rather than only the second.

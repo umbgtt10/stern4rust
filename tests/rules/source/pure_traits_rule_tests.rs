@@ -12,7 +12,7 @@
 
 use stern4rust::reporting::offence::Offence;
 use stern4rust::rule::Rule;
-use stern4rust::rules::pure_traits_rule::PureTraitsRule;
+use stern4rust::rules::source::pure_traits_rule::PureTraitsRule;
 use stern4rust::source_file::SourceFile;
 
 const HEADER: &str = "// Copyright 2025 Umberto Gotti <umberto.gotti@umbertogotti.dev>\n\

@@ -158,7 +158,7 @@ reported by the rule that owns them.
 
 ## Enforcement
 
-`tests/rules/test_file_name_postfix_rule_tests.rs` — 12 tests covering the
+`tests/rules/layout/test_file_name_postfix_rule_tests.rs` — 12 tests covering the
 misnamed file, the correctly named file, the file with no tests, the
 `#[tokio::test]` attribute, the test inside an inline module, both registry
 kinds, a source file, an unparseable file, `check_workspace`, `is_configured`,

@@ -11,7 +11,7 @@
 
 use stern4rust::reporting::offence::Offence;
 use stern4rust::rule::Rule;
-use stern4rust::rules::imported_paths_rule::ImportedPathsRule;
+use stern4rust::rules::source::imported_paths_rule::ImportedPathsRule;
 use stern4rust::source_file::SourceFile;
 
 fn check(path: &str, body: &str) -> Vec<Offence> {

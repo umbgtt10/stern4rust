@@ -7,6 +7,15 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
 ### Rules
 
+- **`workspace-dependencies`** -- a workspace declares its dependencies once, in
+  the root, and every member takes them with `.workspace`. The three
+  requirements asked for are one check, because `cargo` refuses to build a
+  `workspace = true` the root does not declare. Read from the TOML, since
+  resolution erases how a dependency was written; all three dependency tables
+  count; intra-workspace path dependencies are included. 27 offences across
+  three workspaces, and silent on the five repositories that are not workspaces.
+  [R021](ADRs/R021-ADR-WorkspaceDependenciesRule.md)
+
 - **`ordered-imports`** -- imports in `src/` run in alphabetic order, reusing
   the `ImportPath` stand-down so the rule and `cargo fmt` cannot disagree.
   Verified against rustfmt by controlled experiment before it was written. 10
@@ -18,8 +27,17 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
   manifest naming no licence leaves it unconfigured rather than offended.
   [R020](ADRs/R020-ADR-SpdxMatchesManifestRule.md)
 
+### Structure
+
+- `src/rules/` is grouped into `source/`, `layout/`, `testing/` and `manifest/`,
+  with `tests/rules/` mirroring exactly. `directory-file-count` would not allow a
+  twenty-first file in one directory, so the tool's own rule decided the layout.
+
 ### Reporting
 
+- Offences are deduplicated by content. The workspace question is asked once per
+  package root, so a rule whose subject is the workspace rather than the package
+  stated each finding once per member -- 36 where there were 6.
 - An unconfigured rule now reads `(not configured)` rather than
   `(needs --header-file)`. Two rules can go unconfigured, and the header rule is
   not what the other is waiting on.

@@ -12,7 +12,7 @@
 
 use stern4rust::reporting::offence::Offence;
 use stern4rust::rule::Rule;
-use stern4rust::rules::test_naming_rule::TestNamingRule;
+use stern4rust::rules::testing::test_naming_rule::TestNamingRule;
 use stern4rust::source_file::SourceFile;
 
 fn check(body: &str) -> Vec<Offence> {

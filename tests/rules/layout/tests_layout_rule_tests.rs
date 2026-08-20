@@ -15,7 +15,7 @@
 // Anything else in them is logic living where nobody looks for it.
 
 use stern4rust::rule::Rule;
-use stern4rust::rules::tests_layout_rule::TestsLayoutRule;
+use stern4rust::rules::layout::tests_layout_rule::TestsLayoutRule;
 use stern4rust::source_file::SourceFile;
 
 const HEADER: &str = "// Copyright 2025 Umberto Gotti <umberto.gotti@umbertogotti.dev>\n\

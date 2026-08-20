@@ -2,7 +2,5 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-pub mod layout;
-pub mod manifest;
-pub mod source;
-pub mod testing;
+pub mod spdx_matches_manifest_rule;
+pub mod workspace_dependencies_rule;

@@ -188,7 +188,7 @@ anything. A test may label an empty section.
 
 ## Enforcement
 
-`tests/rules/arrange_act_assert_rule_tests.rs` — 20 tests covering each legal
+`tests/rules/testing/arrange_act_assert_rule_tests.rs` — 20 tests covering each legal
 shape, several Act/Assert pairs, the missing Arrange, the Act with no Assert, the
 Assert with no Act, the test with no markers, the spacing offence, the folded
 comment block, trailing prose, the `Actually` word boundary, the helper function,

@@ -12,7 +12,7 @@
 
 use stern4rust::reporting::offence::Offence;
 use stern4rust::rule::Rule;
-use stern4rust::rules::arrange_act_assert_rule::ArrangeActAssertRule;
+use stern4rust::rules::testing::arrange_act_assert_rule::ArrangeActAssertRule;
 use stern4rust::source_file::SourceFile;
 
 const HEADER: &str = "// Copyright 2025 Umberto Gotti <umberto.gotti@umbertogotti.dev>\n\

@@ -2,6 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::finding::manifest_dependency::ManifestDependency;
 use crate::reporting::offence_threshold::OffenceThreshold;
 use crate::reporting::output_format::OutputFormat;
 use crate::settings::rule_selection::RuleSelection;
@@ -23,6 +24,7 @@ pub struct Config {
     pub fix: bool,
     pub write_baseline: bool,
     pub manifest_license: Option<String>,
+    pub workspace_dependencies: Option<Vec<ManifestDependency>>,
     pub manifest_path: Option<PathBuf>,
     pub max_files_per_directory: Option<usize>,
     pub max_subfolders_per_directory: Option<usize>,

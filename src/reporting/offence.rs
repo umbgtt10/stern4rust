@@ -19,7 +19,7 @@ use serde::Serialize;
 // that can say what is wrong can say what to do about it, and making the field
 // optional would let a future rule quietly omit the half of the report that is
 // worth acting on -- the exact shape of silent gap this tool exists to catch.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize)]
 pub struct Offence {
     pub file: String,
     pub line: usize,

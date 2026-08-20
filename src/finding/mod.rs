@@ -6,6 +6,7 @@ pub mod call_site_finder;
 pub mod implemented_type;
 pub mod implemented_type_finder;
 pub mod import_path;
+pub mod manifest_dependency;
 pub mod module_declaration_finder;
 pub mod package_tree;
 pub mod public_entry_point;

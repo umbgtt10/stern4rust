@@ -13,7 +13,7 @@
 // indication anything had been skipped.
 
 use stern4rust::rule::Rule;
-use stern4rust::rules::readable_source_rule::ReadableSourceRule;
+use stern4rust::rules::source::readable_source_rule::ReadableSourceRule;
 use stern4rust::source_file::SourceFile;
 
 const RULE: &str = "readable-source";

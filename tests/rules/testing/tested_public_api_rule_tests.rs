@@ -15,7 +15,7 @@
 
 use stern4rust::reporting::offence::Offence;
 use stern4rust::rule::Rule;
-use stern4rust::rules::tested_public_api_rule::TestedPublicApiRule;
+use stern4rust::rules::testing::tested_public_api_rule::TestedPublicApiRule;
 use stern4rust::source_file::SourceFile;
 
 fn check(files: &[(&str, &str)]) -> Vec<Offence> {
