@@ -11,6 +11,7 @@ pub mod pure_traits_rule_tests;
 pub mod readable_source_rule_tests;
 pub mod registry_completeness_rule_tests;
 pub mod single_implemented_type_rule_tests;
+pub mod test_file_name_postfix_rule_tests;
 pub mod test_file_structure_rule_tests;
 pub mod test_free_source_rule_tests;
 pub mod test_naming_rule_tests;

@@ -15,7 +15,7 @@ already own correctness. These are the things a reviewer would otherwise have to
 say by hand, every time, forever — and the ones that quietly stop being true
 across a codebase the moment nobody is checking.
 
-> **Status: fourteen rules, more coming.** The set below is what is implemented and
+> **Status: fifteen rules, more coming.** The set below is what is implemented and
 > gated. `stern4rust` runs against its own tree on every build, so a rule that
 > would fail this repository cannot be merged into it.
 
@@ -269,6 +269,21 @@ here. With no default to fall back on, `rustc` rejects an incomplete impl with
 Associated types and associated constants may still carry defaults; neither is
 behaviour. `tests/` is exempt, where a trait with a body is a deliberate fake.
 [R014](docs/ADRs/R014-ADR-PureTraitsRule.md)
+
+### `test-file-name-postfix`
+
+A file under `tests/` holding at least one test is named `<X>_tests.rs`.
+
+The name is what pairs a test file with the source file it exercises. That
+pairing was enforced from one side only — `twin4rust` starts at a source file
+and looks for its test — so a file full of tests under any other name sat
+outside it, invisible to every rule here.
+
+One direction only: holding a test obliges the name. `src/` is exempt, because a
+`#[test]` there is `test-free-source`'s offence and the file needs to *move*
+rather than be renamed; registries are exempt because `mod.rs` cannot be renamed
+at all. The correction names the exact path to rename to.
+[R015](docs/ADRs/R015-ADR-TestFileNamePostfixRule.md)
 
 ### `test-file-structure`
 

@@ -13,6 +13,7 @@ use crate::rules::pure_traits_rule::PureTraitsRule;
 use crate::rules::readable_source_rule::ReadableSourceRule;
 use crate::rules::registry_completeness_rule::RegistryCompletenessRule;
 use crate::rules::single_implemented_type_rule::SingleImplementedTypeRule;
+use crate::rules::test_file_name_postfix_rule::TestFileNamePostfixRule;
 use crate::rules::test_file_structure_rule::TestFileStructureRule;
 use crate::rules::test_free_source_rule::TestFreeSourceRule;
 use crate::rules::test_naming_rule::TestNamingRule;
@@ -59,6 +60,7 @@ impl RuleRegistry {
             Box::new(PureTraitsRule::new()),
             Box::new(RegistryCompletenessRule::new()),
             Box::new(SingleImplementedTypeRule::new()),
+            Box::new(TestFileNamePostfixRule::new()),
             Box::new(TestFileStructureRule::new()),
             Box::new(TestFreeSourceRule::new()),
             Box::new(TestNamingRule::new()),

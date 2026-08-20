@@ -8,6 +8,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **`test-file-name-postfix`**, the fifteenth rule: a file under `tests/`
+  holding at least one test is named `<X>_tests.rs`.
+  [R015](docs/ADRs/R015-ADR-TestFileNamePostfixRule.md)
+
+  The mirrored pairing -- `src/foo.rs` answering to `tests/foo_tests.rs` -- is
+  the most load-bearing convention in the family, and it was enforced from one
+  side only. `twin4rust` starts at a source file and looks for its test, so a
+  `tests/rules/widget.rs` holding twenty tests was invisible to everything:
+  `tests-layout` cared only that a registry existed, `registry-completeness`
+  only that the file was declared, `test-file-structure` only about the order
+  inside it, `test-naming` only about the function names. All of them passed it,
+  while `twin4rust` separately reported the source file as untested.
+
+  One direction only. Holding a test obliges the name; a `_tests.rs` file
+  holding none is a different failure with a different correction, and is left
+  out on purpose -- the same split R009 and R014 made.
+
+  Two exemptions, both load-bearing rather than softening. `src/` is exempt
+  because a `#[test]` there is already `test-free-source`'s offence and this
+  rule's correction would be **wrong**: renaming `src/foo.rs` to
+  `src/foo_tests.rs` leaves the test where it does not belong. Registries are
+  exempt because a `#[test]` in a `mod.rs` is already `tests-layout`'s, and
+  `mod.rs` cannot be renamed at all.
+
+  **Zero offences across the family**, and the ADR says so plainly rather than
+  burying it. The convention is already kept everywhere. The one real instance
+  found anywhere is `validation_support.rs` in a `crap4rust` fixture tree -- a
+  support file that grew a test, which is exactly how this drift happens -- and
+  it sits outside the published package, so no ordinary run walks it.
+
+  Does not catch an **orphan**: `banana_tests.rs` with no `banana.rs` behind it
+  passes, since `<X>` is never resolved against the source tree. That gap stays
+  open on `twin4rust`'s blind side.
+
 - **`R012-ADR-TestNamingRule` and `R013-ADR-TestedPublicApiRule`**, written
   after the fact. Both rules shipped in `0.6.0` with only changelog prose behind
   them, against the standing obligation that every rule carries an ADR saying

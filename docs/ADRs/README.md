@@ -40,6 +40,7 @@ rule; anything without is the machinery the rules run on.
 | [R011](R011-ADR-DirectorySubfolderCountRule.md) | `directory-subfolder-count` | At most 5 subfolders per directory, checked at every level. The counterweight to R010, so a folder per file is not the cheapest way to satisfy it. |
 | [R012](R012-ADR-TestNamingRule.md) | `test-naming` | A test's name has at least three underscore-separated parts. The name and nothing else -- three attempts to verify the leading part was the method under test each accused correct code, and were abandoned. |
 | [R013](R013-ADR-TestedPublicApiRule.md) | `tested-public-api` | Every public entry point is called by at least one test, matched on name and arity. The question R012 gave up on, asked from the declaration instead of the name. |
+| [R015](R015-ADR-TestFileNamePostfixRule.md) | `test-file-name-postfix` | A file under `tests/` holding at least one test is named `<X>_tests.rs`. One direction only -- holding a test obliges the name. `src/` and registries are exempt because the rule that owns each already reports them, and this rule's correction would be wrong for both. |
 | [R014](R014-ADR-PureTraitsRule.md) | `pure-traits` | No method in a `trait` declaration may have a default body -- a default hides which question an implementor actually answered. The other half, that every implementor implements every method, is `rustc`'s `E0046` and needs no rule. |
 
 ## Everything else

@@ -3,6 +3,19 @@
 What `cargo-stern4rust` does today. Anything not listed here is not built, and
 the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
+## Unreleased
+
+### Rules
+
+- **`test-file-name-postfix`** -- a file under `tests/` holding at least one
+  test is named `<X>_tests.rs`. Closes the side of the mirrored-layout pairing
+  nothing enforced: `twin4rust` starts from a source file and looks for its
+  test, so a file full of tests under any other name was invisible to every tool
+  in the family. One direction only. `src/` and registries are exempt, because
+  the rule that owns each already reports them and this rule's correction would
+  be wrong for both. Zero offences across the family.
+  [R015](ADRs/R015-ADR-TestFileNamePostfixRule.md)
+
 ## Version 0.6.0
 
 ### Rules
