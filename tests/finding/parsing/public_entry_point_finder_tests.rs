@@ -46,16 +46,19 @@ fn find_of_a_private_function_counts_nothing() {
     assert!(found.is_empty(), "got {found:?}");
 }
 
-// A trait's methods are as public as the trait and need no `pub` of their own.
+// A trait method is a declaration, not an implementation: there is no behaviour
+// behind it to test. Counting it demanded a fake whose only purpose was to be
+// asserted against -- while every real implementation stayed excused, because
+// an implementing method is reached through the trait rather than named.
 #[test]
-fn find_of_a_public_trait_counts_every_method() {
+fn find_of_a_public_trait_counts_nothing() {
     // Arrange & Act
     let found = find(
         "pub trait Rule {\n    fn name(&self) -> &'static str;\n    fn check(&self, one: usize);\n}\n",
     );
 
     // Assert
-    assert_eq!(found, ["name/0", "check/1"]);
+    assert!(found.is_empty(), "got {found:?}");
 }
 
 // It carries no visibility and is reached through the trait, not by name.

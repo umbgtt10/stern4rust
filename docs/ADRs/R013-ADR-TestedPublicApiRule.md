@@ -27,12 +27,14 @@ changelog prose behind it.
 
 **Every public entry point declared in `src/` is called by at least one test.**
 
-Three shapes count as an entry point: a free `pub fn`, a `pub fn` in an inherent
-impl block, and **every method of a `pub trait`**, which needs no `pub` of its
-own because a trait's methods are as public as the trait. A method implementing
-a trait is deliberately not counted — it carries no visibility of its own and is
-reached through the trait rather than named directly, so demanding a test call it
-by name would ask for something the caller does not usually write.
+Two shapes count as an entry point: a free `pub fn`, and a `pub fn` in an
+inherent impl block.
+
+**Neither half of a trait counts.** A method *implementing* a trait carries no
+visibility of its own and is reached through the trait rather than named, so
+demanding a test call it by name asks for something the caller does not write. A
+method *declared* by a trait is not an implementation at all — there is no
+behaviour behind it to test.
 
 **Matched on name and arity.** Types and parameter order are neither checked nor
 checkable: at a call site `check(3, &paths)` offers two arguments and nothing
@@ -89,6 +91,21 @@ force.
 
 ## Rejected alternatives
 
+**Count the methods a `pub trait` declares.** This is what the rule did until
+`etheram-core` measured it, and the reasoning was that a trait's methods are as
+public as the trait. It was **incoherent**: a trait method can only be called
+through an implementor, and implementors were already excused for a reason that
+applies at least as strongly to declarations. The rule demanded a test for the
+declaration while excusing every implementation of it.
+
+What it produced in practice was worse than noise. `etheram-core` is a
+trait-definition crate — its `src/` is nine `pub trait` declarations and almost
+nothing else — and the rule reported **15 offences, every one a trait method**.
+Satisfying them meant writing eight fake implementors whose only purpose was to
+be asserted against: a test of the compiler, not of the code. Across the family
+the change takes the rule from 72 offences to 34, and the 38 it drops are all
+declarations.
+
 **Match on name alone.** Rejected: `new()` and `new(a, b)` are different entry
 points and a test of one would mark both. Arity costs nothing and removes most
 of the confusion.
@@ -144,8 +161,11 @@ test ever invokes still counts.
 **Anything a macro generates.** An entry point declared by a macro is not in the
 syntax tree and is never counted, in either direction.
 
-**Derived and trait-implementing methods**, by decision. `Default::default` and
-`impl Display for X` are outside the rule's idea of an entry point.
+**Anything to do with a trait**, declared or implementing, by decision above.
+A `pub trait` whose methods no implementor is tested through is invisible here.
+
+**Derived methods.** `Default::default` and a `ValueEnum`'s `from_str` are not
+`pub fn` declarations, so they never enter the count.
 
 **Private code entirely.** A `fn` without `pub` is not judged here — that is
 `crap4rust`'s and `iceberg4rust`'s question, not this one.

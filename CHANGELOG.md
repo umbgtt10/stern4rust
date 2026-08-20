@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **`tested-public-api` no longer counts the methods a `pub trait` declares.**
+  Two shapes remain: a free `pub fn`, and a `pub fn` in an inherent impl.
+
+  The rule already excused a method *implementing* a trait, because it carries no
+  visibility of its own and is reached through the trait rather than named.
+  Counting *declarations* while excusing every implementation of them was
+  incoherent -- a trait method can only be called through an implementor.
+
+  `etheram-core` measured the cost. It is a trait-definition crate, and the rule
+  reported **15 offences, every one a trait method**. Satisfying them meant eight
+  fake implementors whose only purpose was to be asserted against: a test of the
+  compiler, not of the code. Across the family the rule goes from 72 offences to
+  34, and every one of the 38 dropped is a declaration.
+
 ## [0.9.0] - 2026-08-20
 
 ### Changed

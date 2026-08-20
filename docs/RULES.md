@@ -696,10 +696,13 @@ are invisible.
 
 Every public entry point declared in `src/` is called by at least one test.
 
-Three shapes count: a free `pub fn`, a `pub fn` in an inherent impl, and every
-method of a `pub trait` -- a trait's methods are as public as the trait. A method
-*implementing* a trait is not counted; it has no visibility of its own and is
-reached through the trait rather than named.
+Two shapes count: a free `pub fn` and a `pub fn` in an inherent impl.
+
+**Neither half of a trait counts.** A method implementing a trait has no
+visibility of its own and is reached through the trait rather than named; a
+method a trait *declares* is not an implementation at all, so there is no
+behaviour behind it to test. Counting declarations while excusing implementations
+demanded a fake per trait whose only purpose was to be asserted against.
 
 Matched on **name and arity**. Types and parameter order are not checked and
 cannot be without type inference, which this tool does not do. Call sites are

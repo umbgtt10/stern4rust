@@ -432,7 +432,9 @@ enum is a `fn` nowhere. 592 offences became 5.
 ### `tested-public-api`
 
 Every public entry point declared in `src/` is called by at least one test — a
-free `pub fn`, a `pub fn` in an inherent impl, and every method of a `pub trait`.
+free `pub fn` or a `pub fn` in an inherent impl. Traits are not counted, on
+either side: an implementing method is reached through the trait rather than
+named, and a declared one has no behaviour behind it to test.
 
 The question `test-naming` gave up on, asked from the other end: starting from
 the declaration needs no guess about intent. Matched on name and arity, so the

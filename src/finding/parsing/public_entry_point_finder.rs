@@ -6,7 +6,6 @@ use syn::FnArg;
 use syn::ImplItem;
 use syn::Item;
 use syn::Signature;
-use syn::TraitItem;
 use syn::Visibility;
 use syn::parse_file;
 
@@ -15,14 +14,19 @@ use crate::source_file::SourceFile;
 
 // Everything a source file exposes that a test could call.
 //
-// Three shapes count. A free `pub fn`. A `pub fn` in an inherent impl block. And
-// every method of a `pub trait`, which needs no `pub` of its own because a
-// trait's methods are as public as the trait.
+// Two shapes count: a free `pub fn`, and a `pub fn` in an inherent impl block.
 //
-// A method implementing a trait is deliberately not counted. It carries no
-// visibility of its own and is reached through the trait rather than named
-// directly, so requiring a test to call it by name would ask for something the
-// caller does not usually write.
+// **Neither half of a trait counts**, and the two exclusions are the same
+// reason. A method *implementing* a trait carries no visibility of its own and
+// is reached through the trait rather than named, so requiring a test to call it
+// by name asks for something the caller does not write. A method *declared* by a
+// trait is not an implementation at all -- there is no behaviour behind it to
+// test.
+//
+// Counting declarations while excusing implementations was incoherent: a trait
+// method can only be called through an implementor, and the implementor was
+// excused. What it produced was a fake per trait whose only purpose was to be
+// asserted against -- a test of the compiler, not of the code.
 pub struct PublicEntryPointFinder;
 
 impl PublicEntryPointFinder {
@@ -49,14 +53,6 @@ impl PublicEntryPointFinder {
                     ImplItem::Fn(method) if Self::is_public(&method.vis) => {
                         Some(Self::of_signature(&method.sig))
                     }
-                    _ => None,
-                })
-                .collect(),
-            Item::Trait(declared) if Self::is_public(&declared.vis) => declared
-                .items
-                .iter()
-                .filter_map(|inner| match inner {
-                    TraitItem::Fn(method) => Some(Self::of_signature(&method.sig)),
                     _ => None,
                 })
                 .collect(),
