@@ -32,8 +32,8 @@ moment nobody is checking.
 
 ## Current Baseline
 
-Fourteen rules, two output formats, autofix, baselines, exclusions and a config
-file. 510 tests, both gates green, and the tool runs against its own tree on
+Seventeen rules, two output formats, autofix, baselines, exclusions and a config
+file. 563 tests, both gates green, and the tool runs against its own tree on
 every build with zero offences.
 
 ## Planned Phases
@@ -82,18 +82,16 @@ version of "a test that is never compiled cannot fail".
 
 ### Phase 5: More Rules
 
-The set is open, and most of the original candidate list has since shipped:
+The set is open, and the original candidate list has now shipped in full:
 **test naming** as `test-naming`, **one struct with an impl block per file** as
-`single-implemented-type`, **no re-export shims** as `module-registry`, which
-catches the shim in the one file it forms in. `pure-traits` was not on the list
-and arrived from measuring the family.
+`single-implemented-type`, **no re-export shims** as `module-registry`, and
+**AAA structure** as `arrange-act-assert` -- the oldest of them, and the last,
+because comments never reach the syntax tree. `pure-traits`,
+`test-file-name-postfix` and `paired-test-file` were not on the list and arrived
+from measuring the family.
 
 What remains:
 
-- **AAA structure** — `// Arrange`, `// Act`, `// Assert` present and in order
-  inside a test body. This was the original motivating example and is still the
-  oldest unbuilt one; `test-file-structure` judges the file's shape, not the
-  body's.
 - **Header against the manifest** — SPDX identifier agreeing with the `license`
   field, rather than only matching a text file. Recorded as a gap in
   [OPEN_POINTS.md](OPEN_POINTS.md).

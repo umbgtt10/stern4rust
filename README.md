@@ -15,7 +15,7 @@ already own correctness. These are the things a reviewer would otherwise have to
 say by hand, every time, forever — and the ones that quietly stop being true
 across a codebase the moment nobody is checking.
 
-> **Status: sixteen rules, more coming.** The set below is what is implemented and
+> **Status: seventeen rules, more coming.** The set below is what is implemented and
 > gated. `stern4rust` runs against its own tree on every build, so a rule that
 > would fail this repository cannot be merged into it.
 
@@ -269,6 +269,23 @@ here. With no default to fall back on, `rustc` rejects an incomplete impl with
 Associated types and associated constants may still carry defaults; neither is
 behaviour. `tests/` is exempt, where a trait with a body is a deliberate fake.
 [R014](docs/ADRs/R014-ADR-PureTraitsRule.md)
+
+### `arrange-act-assert`
+
+A test reads `Arrange`, then one or more `Act`/`Assert` pairs, with a blank line
+between the sections. The merged forms `// Arrange & Act`, `// Act & Assert` and
+`// Arrange & Act & Assert` expand to the same sequence, so one check covers
+every shape — and rejects an Act with no Assert, an Assert with no Act, and an
+Arrange dropped rather than merged.
+
+A marker may carry trailing prose after `--`, `:` or `.`, and comment lines
+above a marker are folded into it, so a documented section is not a spacing
+offence.
+
+The markers are comments, which `syn` discards, so this rule reads lines — and
+skips every line a string literal occupies. Without that it reports the
+Rust-in-a-raw-string fixtures this tool's own tests are built from.
+[R017](docs/ADRs/R017-ADR-ArrangeActAssertRule.md)
 
 ### `paired-test-file`
 

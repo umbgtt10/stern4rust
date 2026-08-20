@@ -8,6 +8,51 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **`arrange-act-assert`**, the seventeenth rule: a test reads `Arrange`, then
+  one or more `Act`/`Assert` pairs, with a blank line separating the sections.
+  [R017](docs/ADRs/R017-ADR-ArrangeActAssertRule.md)
+
+  **The original motivating example for this whole tool, shipped seventeenth.**
+  `ROADMAP.md` carried it as "the oldest unbuilt one" since the first release.
+
+  Every marker expands into the phases it names, and the expansion must read
+  `Arrange` then one or more `Act`, `Assert` pairs. The merged forms expand
+  identically to the separate ones, so a single check covers every legal shape
+  and still rejects an Act with no Assert, an Assert with no Act, a test with no
+  markers, and an Arrange dropped rather than merged.
+
+  **`// Arrange & Act & Assert` is now part of the standard.** It was not in
+  `CLAUDE.md`, and practice had outrun the standard: nine tests use it across
+  the family, including this crate's own `tests/finding/section_tests.rs`. A
+  rule written strictly to the standard as it stood would have failed its own
+  repository on the first run.
+
+  **The hard part was never the grammar.** The markers are comments, and `syn`
+  discards comments, so the rule reads lines -- and a line scanner cannot tell
+  code from a string containing code. This repository's tests are built from
+  Rust source embedded in raw strings: a naive scanner reports **seven offences
+  here that are every one of them a string literal**, plus ~156 across the
+  family where a `}` at column zero inside a raw string ended a test early. The
+  lines every literal occupies are taken from the token stream and skipped --
+  comments are not tokens and literals are. Walking tokens rather than the
+  syntax tree also reaches inside macros.
+
+  Markers may carry trailing prose after `--`, `:` or `.`, all three observed in
+  the family; a marker ends on a word boundary so `// Actually` is prose; and
+  comment lines above a marker are folded into it, the same call
+  `TestFileParser` already made.
+
+  Measured across ~3,900 tests in nine repositories before the grammar was
+  chosen: 68% canonical, 19% `Arrange & Act`, 6.6% `Act & Assert`, 9 fully
+  merged, and **2 with multiple Act/Assert pairs**. Those two are why a stray or
+  duplicated marker cannot be caught -- the permissiveness is recorded as the
+  cost it is.
+
+  **45 offences across the family** -- 23 `grip4rust`, 9 `braintax4rust`, 5
+  `iceberg4rust`, 4 `crap4rust`, 3 `twin4rust`, 1 `etheram-core`, and **0 in
+  `stern4rust`** over roughly 500 tests including the fixtures it had to learn
+  to ignore.
+
 - **`paired-test-file`**, the sixteenth rule: a `tests/a/b_tests.rs` names the
   source file it exercises, and `src/a/b.rs` exists.
   [R016](docs/ADRs/R016-ADR-PairedTestFileRule.md)

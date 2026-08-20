@@ -4,6 +4,7 @@
 
 use crate::reporting::offence::Offence;
 use crate::rule::Rule;
+use crate::rules::arrange_act_assert_rule::ArrangeActAssertRule;
 use crate::rules::directory_file_count_rule::DirectoryFileCountRule;
 use crate::rules::directory_subfolder_count_rule::DirectorySubfolderCountRule;
 use crate::rules::header_rule::HeaderRule;
@@ -46,6 +47,7 @@ impl RuleRegistry {
     fn all(config: &Config) -> Vec<Box<dyn Rule>> {
         vec![
             Box::new(ReadableSourceRule::new()),
+            Box::new(ArrangeActAssertRule::new()),
             Box::new(DirectoryFileCountRule::new(
                 config
                     .max_files_per_directory

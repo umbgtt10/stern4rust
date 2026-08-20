@@ -18,5 +18,6 @@ pub mod registry_policy;
 pub mod section;
 pub mod test_file_item;
 pub mod test_file_parser;
+pub mod test_marker;
 pub mod unit_test_finder;
 pub mod unit_test_site;

@@ -7,6 +7,14 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
 ### Rules
 
+- **`arrange-act-assert`** -- a test reads `Arrange`, then one or more
+  `Act`/`Assert` pairs, sections separated by a blank line. The original
+  motivating example for the tool, shipped seventeenth. Markers expand to the
+  phases they name and the expansion must match, so the merged forms need no
+  special case. The markers are comments, which `syn` discards, so the rule
+  reads lines and skips every line a literal occupies -- without which it
+  reports this crate's own Rust-in-a-raw-string fixtures. 45 offences across the
+  family, 0 here. [R017](ADRs/R017-ADR-ArrangeActAssertRule.md)
 - **`paired-test-file`** -- a `tests/a/b_tests.rs` names the source file it
   exercises and `src/a/b.rs` exists, matched by path rather than by name alone.
   The other side of the pairing from `twin4rust`, and the direction nothing

@@ -127,6 +127,9 @@ Specifically:
 - apply AAA (`Arrange`, `Act`, `Assert`) structure to tests with blank-line separation between the three sections
 - use `// Arrange & Act` if there is no separate `Arrange`
 - use `// Act & Assert` if there is no separate `Act`
+- use `// Arrange & Act & Assert` if none of the three is separate
+- a test may hold several `Act`/`Assert` pairs after its `Arrange`
+- a marker may carry trailing prose after `--`, `:` or `.`
 - add the repository copyright and license header to every Rust source file
 - tests should be named as follows `<method under test>_<test description>_<result>`
 - do not use fully qualified paths; use `use` imports instead
