@@ -148,16 +148,3 @@ A lowercase-named type would be reported when it should not be, and an
 uppercase-named module would pass when it should not. Both are conventions
 violated rarely enough that the trade is worth it, but the failure would arrive
 as a confident wrong answer rather than a missing one, which is the worse shape.
-
-## A baseline forgives by description, so a reworded offence comes back
-
-Baseline entries are keyed on file + rule + description, deliberately excluding
-the line so an offence that moved is still the same offence. The cost is that
-**changing an offence's wording invalidates every baseline entry for it**: a
-rule whose description gains a word will report its offences as new across every
-repository that had baselined them, all at once.
-
-Nothing warns about this today beyond the stale-entry count, which would spike
-at the same moment. Rule descriptions are effectively part of a published
-interface once baselines exist, and changing one is a breaking change that this
-tool does not currently call out as such.

@@ -46,6 +46,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- **A baseline no longer forgives by description.** `OffenceFingerprint` keys on
+  file + rule + **subject**, not file + rule + description.
+
+  The description was standing in for the subject, from before `Offence` carried
+  one. That made **rule descriptions a published interface with nothing saying
+  so**: a rule whose sentence gained a word reported its offences as new across
+  every repository that had baselined them, all at once, with a spike in the
+  stale-entry count as the only signal. The subject survives a rewrite of the
+  sentence around it.
+
+  Only `header` emits an offence with no subject, and it reports once per file,
+  so the file and the rule already tell those apart; the description remains the
+  fallback there.
+
+  **This invalidates existing baselines, once.** Every fingerprint changes, so a
+  checked-in baseline will report its entries as stale on the first run after
+  upgrading. `--write-baseline` rewrites it, and the report already says so. It
+  is the failure the old key made inevitable, triggered deliberately and once so
+  that it stops recurring.
+
 - **`tests-layout` no longer goes silent on a registry it cannot parse.** It
   reported nothing at all, which is indistinguishable from a registry it had read
   and found clean -- the silence Guiding Principle 2 refuses. It now states that
