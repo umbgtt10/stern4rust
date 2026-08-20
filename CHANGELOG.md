@@ -8,6 +8,38 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **`declared-by-name`**, the eighteenth rule: a module is declared by name, and
+  `#[path = "..."]` on a `mod` is an offence.
+  [R018](docs/ADRs/R018-ADR-DeclaredByNameRule.md)
+
+  Not a rule about taste. `#[path]` is the one attribute that makes another rule
+  here give a **confident wrong answer**: `registry-completeness` resolves a
+  declaration to the file it names by convention, so a file reached through an
+  explicit path is reported as **never compiled** when it compiles perfectly
+  well. R009 accepted that gap on the grounds that the house standard forbids
+  `#[path]` -- a convention `CLAUDE.md`, `OPEN_POINTS.md` and `RULES.md` all
+  described and **no rule enforced**.
+
+  Package-wide rather than registries-only. The standard names `all_tests.rs`
+  because that is where the temptation is, but a `mod` in an ordinary source
+  file is resolved by the same convention and misread the same way.
+
+  `#[cfg_attr(unix, path = "...")]` is deliberately left alone: a platform-gated
+  module is the one honest use, it cannot resolve by name on every platform
+  anyway, and reporting it would accuse correct code.
+
+  **Zero offences across ten repositories**, which confirms R009's assumption by
+  measurement rather than assertion, and is the whole point -- the day it stops
+  being true, the failure does not look like a `#[path]` attribute. It looks
+  like `registry-completeness` accusing an innocent file, somewhere else
+  entirely.
+
+  Written as its own rule rather than folded into `module-registry` or
+  `tests-layout`: those are scoped to one tree each, so the check would have
+  been written twice, and their offence sentence -- "does not belong in a module
+  registry, which holds ... `pub mod` declarations" -- would contradict itself,
+  since `#[path = "x.rs"] pub mod x;` **is** a `pub mod` declaration.
+
 - **`arrange-act-assert`**, the seventeenth rule: a test reads `Arrange`, then
   one or more `Act`/`Assert` pairs, with a blank line separating the sections.
   [R017](docs/ADRs/R017-ADR-ArrangeActAssertRule.md)

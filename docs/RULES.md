@@ -1,6 +1,6 @@
 # Rules
 
-Seventeen rules, each independent, each naming itself in the report. This is the
+Eighteen rules, each independent, each naming itself in the report. This is the
 reference; the reasoning behind each one is in its ADR.
 
 Every offence carries a **correction** as well as a description — what to do,
@@ -11,6 +11,7 @@ without answering it.
 |---|---|---|
 | `readable-source` | [R004](ADRs/R004-ADR-ReadableSourceRule.md) | no |
 | `arrange-act-assert` | [R017](ADRs/R017-ADR-ArrangeActAssertRule.md) | no |
+| `declared-by-name` | [R018](ADRs/R018-ADR-DeclaredByNameRule.md) | no |
 | `directory-file-count` | [R010](ADRs/R010-ADR-DirectoryFileCountRule.md) | optional, default 20 |
 | `directory-subfolder-count` | [R011](ADRs/R011-ADR-DirectorySubfolderCountRule.md) | optional, default 5 |
 | `imported-paths` | [R008](ADRs/R008-ADR-ImportedPathsRule.md) | no |
@@ -297,7 +298,9 @@ registry silences the rule for that directory rather than reporting every file
 beside it; `readable-source` reports the registry itself.
 
 **Does not catch:** a file declared through `#[path = "..."]`, which reads as
-undeclared. A file the walker never reached, including anything under
+undeclared -- which is why `declared-by-name` forbids that attribute outright, so
+this can only be reached by a repository that skipped it. A file the walker never
+reached, including anything under
 `--exclude`. And `#[cfg(...)]`-gated declarations count as declarations, which
 is right for "is it ever compiled" and wrong for "is it compiled in this
 configuration".
@@ -402,6 +405,38 @@ will say nothing. Nor a default inherited from a supertrait in another crate, no
 whether a removed body was moved into the implementors or simply deleted --
 `rustc` guarantees each implementor has *a* body, not the right one. Anything
 inside a macro is invisible, as everywhere else in this tool.
+
+## `declared-by-name`
+
+A module is declared by name: `mod alpha;` reaches `alpha.rs` or `alpha/mod.rs`,
+and nothing else decides which file that is. `#[path = "..."]` on a `mod` is an
+offence, anywhere in the package.
+
+This is not a rule about taste. It is the one attribute that makes another rule
+here give a **confident wrong answer**: `registry-completeness` resolves
+declarations by convention, so a file reached through an explicit path is
+reported as never compiled when it compiles perfectly well. That rule accepted
+the gap on the grounds that the house standard forbids `#[path]` -- a convention
+nothing enforced until now.
+
+It applies package-wide rather than to registries alone. The standard names
+`all_tests.rs` because that is where the temptation is; the harm is the same
+wherever the attribute appears.
+
+| offence | correction |
+|---|---|
+| `` `mod alpha` is reached through `#[path = "elsewhere/other.rs"]`, so the file it declares cannot be found from its name `` | move `elsewhere/other.rs` to `alpha.rs` beside this file and drop the `#[path]` attribute |
+
+`#[cfg_attr(unix, path = "...")]` is deliberately left alone -- a platform-gated
+module is the one honest use of the attribute, and reporting it would accuse
+correct code.
+
+**Does not catch:** a `cfg_attr`-gated path, by decision, which
+`registry-completeness` would still misread on the platform where it applies.
+Nor a `#[path]` produced by a macro, nor whether the file it points at exists --
+that is `rustc`'s `E0583`.
+
+See [R018](ADRs/R018-ADR-DeclaredByNameRule.md).
 
 ## `arrange-act-assert`
 

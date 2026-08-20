@@ -32,8 +32,8 @@ moment nobody is checking.
 
 ## Current Baseline
 
-Seventeen rules, two output formats, autofix, baselines, exclusions and a config
-file. 563 tests, both gates green, and the tool runs against its own tree on
+Eighteen rules, two output formats, autofix, baselines, exclusions and a config
+file. 574 tests, both gates green, and the tool runs against its own tree on
 every build with zero offences.
 
 ## Planned Phases

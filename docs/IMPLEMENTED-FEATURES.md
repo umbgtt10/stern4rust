@@ -7,6 +7,13 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
 ### Rules
 
+- **`declared-by-name`** -- a module is declared by name; `#[path = "..."]` on a
+  `mod` is an offence, package-wide. It exists to hold up the convention
+  `registry-completeness` resolves by: without it, a file reached through an
+  explicit path is reported as never compiled when it compiles fine. Three
+  documents described that standard and no rule enforced it. `cfg_attr`-gated
+  paths are left alone as the one honest use. Zero offences across ten
+  repositories. [R018](ADRs/R018-ADR-DeclaredByNameRule.md)
 - **`arrange-act-assert`** -- a test reads `Arrange`, then one or more
   `Act`/`Assert` pairs, sections separated by a blank line. The original
   motivating example for the tool, shipped seventeenth. Markers expand to the

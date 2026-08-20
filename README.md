@@ -15,7 +15,7 @@ already own correctness. These are the things a reviewer would otherwise have to
 say by hand, every time, forever — and the ones that quietly stop being true
 across a codebase the moment nobody is checking.
 
-> **Status: seventeen rules, more coming.** The set below is what is implemented and
+> **Status: eighteen rules, more coming.** The set below is what is implemented and
 > gated. `stern4rust` runs against its own tree on every build, so a rule that
 > would fail this repository cannot be merged into it.
 
@@ -269,6 +269,21 @@ here. With no default to fall back on, `rustc` rejects an incomplete impl with
 Associated types and associated constants may still carry defaults; neither is
 behaviour. `tests/` is exempt, where a trait with a body is a deliberate fake.
 [R014](docs/ADRs/R014-ADR-PureTraitsRule.md)
+
+### `declared-by-name`
+
+A module is declared by name — `mod alpha;` reaches `alpha.rs` or
+`alpha/mod.rs`. `#[path = "..."]` on a `mod` is an offence, anywhere in the
+package.
+
+Not a rule about taste: `#[path]` is what makes `registry-completeness` give a
+confident wrong answer, reporting a perfectly compiled file as never compiled.
+That rule resolves declarations by convention, and this is what holds the
+convention up.
+
+`#[cfg_attr(unix, path = "...")]` is left alone — a platform-gated module is the
+one honest use, and reporting it would accuse correct code.
+[R018](docs/ADRs/R018-ADR-DeclaredByNameRule.md)
 
 ### `arrange-act-assert`
 

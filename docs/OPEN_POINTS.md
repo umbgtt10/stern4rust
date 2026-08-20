@@ -32,9 +32,16 @@ convention -- `mod alpha;` reaches `alpha.rs` or `alpha/mod.rs` -- and does not
 understand an explicit `#[path]` attribute. A file reached that way would be
 reported as never compiled when it is compiled perfectly well.
 
-The house rules forbid `#[path]` in `all_tests.rs` and nothing in the family
-uses it, so this is a known false-positive class rather than an observed one.
-It would arrive as a confident wrong answer, which is the worse shape.
+`declared-by-name` now forbids the attribute outright, package-wide, so this
+false positive can only be reached by a repository that has skipped that rule.
+Nothing in ten repositories uses `#[path]`, which is what the rule was written
+to keep true — the failure would otherwise arrive as a confident wrong answer
+from `registry-completeness`, about a file with nothing wrong with it, with
+nothing connecting it to the attribute that caused it.
+
+The gap that remains is `#[cfg_attr(..., path = "...")]`, which
+`declared-by-name` deliberately allows as the one honest use of the attribute.
+On the platform where it applies, `registry-completeness` still misreads it.
 
 A related limit: the rule resolves names, not the module graph. A `mod.rs` that
 is itself never declared makes its whole subtree unreachable, and each level is

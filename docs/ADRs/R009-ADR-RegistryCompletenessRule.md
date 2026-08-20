@@ -94,9 +94,12 @@ tree, or under `target/`, is not judged and not expected — correct, but it mea
 excluding a tree also excludes it from this rule's idea of complete.
 
 **`#[path = "..."]` is not understood.** A file declared through an explicit path
-attribute would be reported as undeclared. The house rules forbid `#[path]` in
-`all_tests.rs`, and nothing in the family uses it, so this is a known
-false-positive class rather than an observed one.
+attribute would be reported as undeclared. That convention is now held up by a
+rule of its own — [R018](R018-ADR-DeclaredByNameRule.md) forbids the attribute
+package-wide, precisely because this rule depends on it — so the false positive
+is reachable only by a repository that has skipped `declared-by-name`. A
+`#[cfg_attr(..., path = ...)]`, which R018 deliberately allows, is still
+misread here on the platform where it applies.
 
 **`#[cfg(...)]`-gated declarations are treated as ordinary ones**, the same
 choice `tests-layout` makes. A file declared only under a feature counts as
