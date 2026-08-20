@@ -3,6 +3,15 @@
 What `cargo-stern4rust` does today. Anything not listed here is not built, and
 the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
+## Version 0.9.1
+
+### Rules
+
+- **`tested-public-api` counts two shapes, not three.** A free `pub fn` and a
+  `pub fn` in an inherent impl. Neither half of a trait counts: an implementing
+  method is reached through the trait rather than named, and a declared one has
+  no behaviour behind it to test. Across the family, 72 offences to 34.
+
 ## Version 0.9.0
 
 ### Reporting
