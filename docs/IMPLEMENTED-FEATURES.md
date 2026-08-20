@@ -3,10 +3,21 @@
 What `cargo-stern4rust` does today. Anything not listed here is not built, and
 the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
-## Unreleased
+## Version 0.6.0
 
 ### Rules
 
+- **`test-naming`** -- a test's name has at least three underscore-separated
+  parts, following `<method>_<conditions>_<result>`. The name and nothing else:
+  three earlier versions tried to verify the leading part was the method under
+  test and all three accused correct code across 1559 tests, taking 592 offences
+  down to 5. [R012](ADRs/R012-ADR-TestNamingRule.md)
+- **`tested-public-api`** -- every public entry point in `src/` is called by at
+  least one test, matched on name and arity. Call sites are gathered from macro
+  token streams as well as parsed expressions, since a test's assertion lives in
+  `assert!` and never becomes syntax. Found six printer builders shipped
+  untested in 0.4.0. Under-reports by design.
+  [R013](ADRs/R013-ADR-TestedPublicApiRule.md)
 - **`pure-traits`** -- a trait declares, it does not implement: no method in a
   `trait` declaration in `src/` may have a default body. The other direction,
   that every implementor implements every method, is `rustc`'s `E0046` and needs

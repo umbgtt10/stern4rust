@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **`R012-ADR-TestNamingRule` and `R013-ADR-TestedPublicApiRule`**, written
+  after the fact. Both rules shipped in `0.6.0` with only changelog prose behind
+  them, against the standing obligation that every rule carries an ADR saying
+  what it does **not** catch.
+
+  R012 records the retreat as the decision: three attempts to verify a test's
+  leading name part was the method under test, each abandoned on measurement,
+  and why counting underscores is the only version that is never wrong.
+
+  R013 records that the rule under-reports on purpose, and that gathering call
+  sites from macro token streams is load-bearing rather than a refinement --
+  assertions live in `assert!`, which never becomes syntax, so skipping them
+  would report the best-tested code in a codebase as untested.
+
+  `docs/RULES.md` gains the two matching sections, and the ADR index gains rows
+  for R008 through R013, which had been missing since those rules shipped.
+
 ## [0.6.0] - 2026-08-19
 
 ### Added
