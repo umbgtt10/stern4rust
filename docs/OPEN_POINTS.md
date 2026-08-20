@@ -25,23 +25,24 @@ files it removed so that an exclusion stays something the reader can see rather
 than a silence. See
 [ADR-ExclusionsAreCounted](ADRs/ADR-ExclusionsAreCounted.md).
 
-## A file declared through `#[path = "..."]` reads as undeclared
+## A `cfg_attr`-gated path still misleads `registry-completeness`
 
 `registry-completeness` resolves a declaration to the file it names by
-convention -- `mod alpha;` reaches `alpha.rs` or `alpha/mod.rs` -- and does not
-understand an explicit `#[path]` attribute. A file reached that way would be
-reported as never compiled when it is compiled perfectly well.
+convention -- `mod alpha;` reaches `alpha.rs` or `alpha/mod.rs` -- so a file
+reached through an explicit path is reported as never compiled when it compiles
+perfectly well.
 
-`declared-by-name` now forbids the attribute outright, package-wide, so this
-false positive can only be reached by a repository that has skipped that rule.
-Nothing in ten repositories uses `#[path]`, which is what the rule was written
-to keep true — the failure would otherwise arrive as a confident wrong answer
-from `registry-completeness`, about a file with nothing wrong with it, with
-nothing connecting it to the attribute that caused it.
+`declared-by-name` closes the plain `#[path = "..."]` case by forbidding the
+attribute package-wide. What remains is `#[cfg_attr(unix, path = "...")]`, which
+that rule deliberately allows as the one honest use: a platform-gated module
+cannot resolve by name on every platform anyway, and reporting it would accuse
+correct code. On the platform where it applies, `registry-completeness` still
+misreads it.
 
-The gap that remains is `#[cfg_attr(..., path = "...")]`, which
-`declared-by-name` deliberately allows as the one honest use of the attribute.
-On the platform where it applies, `registry-completeness` still misreads it.
+The wrong answer arrives somewhere else entirely -- an innocent file accused of
+never being compiled, with nothing connecting it to the attribute that caused
+it -- which is the hardest kind to trace and the reason this stays written
+down.
 
 A related limit: the rule resolves names, not the module graph. A `mod.rs` that
 is itself never declared makes its whole subtree unreachable, and each level is
@@ -77,7 +78,7 @@ nothing in the source distinguishes it from production code.
 `crap4rust` has the same blind spot for the same reason. There may be no
 structural answer to this one.
 
-## The header rule compares text and nothing else -- partly closed
+## The header rule cannot check the copyright holder
 
 A file whose header is perfectly formatted but names the wrong copyright holder
 still passes. The SPDX half is now held by `spdx-matches-manifest`, which reads
@@ -123,6 +124,13 @@ absent, and nothing says they were skipped rather than satisfied.
 
 ## Import ordering agrees with rustfmt only for same-case pairs
 
+`ordered-imports` extended the check to `src/`, so this stand-down now governs
+both trees -- and it does far more work in `src/`. Measured on this crate, **56%
+of adjacent import pairs there are ones `cargo fmt` decides**, because a source
+file usually leads with a `crate::` block where a test file never does. More than
+half of what the rule appears to check, it does not, and a clean run means only
+that no pair the alphabet governs is out of order.
+
 The alphabetic check stands down on any import pair involving `self`, `super` or
 `crate`, and on any pair that first differs at a segment where one side is
 uppercase-initial and the other is not. rustfmt orders those by its own rules and
@@ -145,25 +153,6 @@ uppercase-initial crate sorts behind every lowercase one (`Bbb::gamma` after
 lowercase siblings (`serde_json::Value` before `serde_json::from_str`). Also,
 `cargo fmt` and a standalone `rustfmt <file>` disagree here -- only `cargo fmt`
 matters, since that is what the gate runs.
-
-## Nothing orders the imports of a productive file -- closed
-
-`test-file-structure` is scoped to `tests/`, so the alphabetic and grouping
-checks never look at `src/`. `imported-paths` now routinely *adds* imports to
-productive files -- 201 of them across the sibling tools once its offences are
-worked through -- with no rule saying where the new line lands. `cargo fmt` is
-the only authority there, and it reorders a group only when it decides to rewrite
-it.
-
-`ordered-imports` now does this, with the same per-pair stand-down. It did **not**
-arrive as a wave: 10 offences, all in `etheram-ibft`, because `cargo fmt` sorts
-what it rewrites and the stand-down covers the rest.
-
-What remains is the *size* of that stand-down. Measured on this crate, **56% of
-adjacent import pairs in `src/` are ones `cargo fmt` decides** -- a source file
-usually leads with a `crate::` block where a test file never does. More than half
-of what the rule appears to check, it does not, and a clean run means only that
-no pair the alphabet governs is out of order.
 
 ## `imported-paths` tells a module from a type by case
 

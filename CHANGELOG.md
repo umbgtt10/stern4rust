@@ -4,7 +4,34 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.8.0] - 2026-08-20
+
+### Changed
+
+- **Breaking, for anyone importing a rule from the library.** `src/rules/` is
+  grouped into `source/`, `layout/`, `testing/` and `manifest/`, so every rule's
+  module path moved: `stern4rust::rules::header_rule::HeaderRule` is now
+  `stern4rust::rules::source::header_rule::HeaderRule`. Nothing was renamed or
+  removed and no behaviour changed — only the path. The cargo subcommand is
+  unaffected.
+
+  The move was forced rather than chosen: `src/rules/` and `tests/rules/` both
+  stood at exactly 20 files, and `directory-file-count` would not allow a
+  twenty-first rule. The tool's own rule decided the layout.
+
+  **Whether these paths were ever promised is exactly what has never been
+  decided** — Phase 6 of [ROADMAP.md](docs/ROADMAP.md) is about committing to a
+  library surface, and until it lands the answer is that they are not.
+
+- **`Config` gained `manifest_license` and `workspace_dependencies`**, which is
+  breaking for anyone constructing it without `..Config::default()`. Both are
+  filled by `Runner` from the manifest; the command line has nothing to say
+  about either.
+
+- **Three new rules join the default set**, so a repository green on `0.7.0` may
+  not be on `0.8.0`. Measured across the family they add: `workspace-dependencies`
+  27, `ordered-imports` 10, `spdx-matches-manifest` 1 offence and one
+  unconfigured package. `--skip <name>` turns any of them off.
 
 ### Added
 

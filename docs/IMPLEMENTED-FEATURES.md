@@ -3,7 +3,7 @@
 What `cargo-stern4rust` does today. Anything not listed here is not built, and
 the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
-## Unreleased
+## Version 0.8.0
 
 ### Rules
 

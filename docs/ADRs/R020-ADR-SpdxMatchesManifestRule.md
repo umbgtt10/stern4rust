@@ -133,8 +133,8 @@ matching identifier, the mismatch, the missing identifier, the file with no
 header at all, the prose-only claim, an SPDX line below the header,
 `check_workspace`, and both `is_configured` answers.
 
-`tests/settings/manifest_resolver_tests.rs` — 2 tests on reading the licence:
-this crate's `MIT`, and `None` where no single answer exists.
+`tests/settings/manifest_resolver_tests.rs` — the two licence tests: this
+crate's `MIT`, and `None` where no single answer exists.
 
 `tests/rule_registry_tests.rs` — `fully_configured` now supplies both a header
 and a licence, so the "every rule" lists pin that two rules need configuration

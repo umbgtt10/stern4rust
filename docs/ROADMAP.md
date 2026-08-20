@@ -38,68 +38,22 @@ every build with zero offences.
 
 ## Planned Phases
 
-### Phase 1: Release 0.2.0 — shipped
-
-The ruleless `0.1.0` scaffold on crates.io was replaced by the first rule set.
-The changelog called out that an unreadable source file moved from exit `1` to
-exit `2`, which is a change to a published interface.
-
-### Phase 2: Excludability — shipped
-
-`--exclude <glob>`, repeatable, matched against the package-relative path, for
-trees a repository cannot move: vendored source, generated output.
-
-The case that motivated it has since been closed by layout instead.
-`grip4rust` and `crap4rust` both moved their fixture trees out of the published
-package into a sibling `fixture/`, which is the better answer where it is
-available -- analysis input is input, and it does not belong inside the package
-that ships. What remains for `--exclude` is the tree that genuinely cannot move,
-and the requirement that an exclusion be **visible in the report** rather than a
-silent skip, which is the mistake the nested-package skip made.
-
-Paired with `stern4rust.toml`, shipped alongside it, so the excludes live with
-the repository rather than in every invocation.
-
-### Phase 3: Baselines — shipped
-
-Rule selection shipped and gives a repository a way in: enforce one rule today,
-add the next when it is green. Measured on `braintax4rust`, that is the
-difference between a 204-offence report and a 50-offence one.
-
-What it does not give is a way to enforce every rule against *new* code
-while tolerating what is already there. A baseline — record the current
-offences, fail only on new ones — is what turns a 600-offence first run from a
-reason not to adopt into a starting point. It needs a checked-in state file,
-fingerprints stable across line moves, and a story for when the baseline goes
-stale, which is why it follows rather than leads.
-
-### Phase 4: The Completeness Rule — shipped
-
-`tests-layout` verifies a registry exists; it does not verify the registry is
-complete. Resolving each `pub mod` to the file it names, and each file to the
-declaration that should point at it, in both directions — closing the last
-version of "a test that is never compiled cannot fail".
-
-### Phase 5: More Rules
-
-The set is open, and the original candidate list has now shipped in full:
-**test naming** as `test-naming`, **one struct with an impl block per file** as
-`single-implemented-type`, **no re-export shims** as `module-registry`, and
-**AAA structure** as `arrange-act-assert` -- the oldest of them, and the last,
-because comments never reach the syntax tree. `pure-traits`,
-`test-file-name-postfix` and `paired-test-file` were not on the list and arrived
-from measuring the family.
-
-The last two shipped as `spdx-matches-manifest` and `ordered-imports`, which
-takes the set to **twenty** -- the upper end of the range this repository set
-itself. Phase 5 is complete, and a twenty-first rule is a decision to widen the
-range rather than to fill it.
+Phases 1 to 5 have shipped and have left this file, as the revision policy
+below requires: releasing `0.2.0`, excludability, baselines, the completeness
+rule, and the rule set itself. What they built is described in
+[IMPLEMENTED-FEATURES.md](IMPLEMENTED-FEATURES.md); why each rule is shaped as
+it is, in [the ADRs](ADRs/README.md). Their numbers are not reused.
 
 ### Phase 6: Library Surface
 
 The crate already exposes everything as a library, but nothing about that
 surface is committed to. Deciding what is public API, and what a consumer
 embedding the rules in their own tool can rely on.
+
+`0.8.0` made the case for itself: grouping `src/rules/` into subfolders moved
+every rule's module path, which is a breaking change for anybody importing one —
+and nothing had ever said whether those paths were promised. Until this phase
+lands, the answer is that they are not.
 
 ## Deferred Ideas
 
