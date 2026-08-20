@@ -39,7 +39,7 @@ directories actually separate — five repositories over, three comfortably unde
 *of* the directory rather than something *in* it, and counting the list against
 the length of the list makes no sense. **`main.rs` does count**: it is an entry
 point holding real code. That makes this list deliberately shorter than the one
-[`PackageTree`](../../src/finding/package_tree.rs) uses to decide what may
+[`PackageTree`](../../src/finding/model/package_tree.rs) uses to decide what may
 declare a module, where `main.rs` belongs because it can.
 
 At the measured threshold the exemption changes nothing — every offending

@@ -24,7 +24,7 @@ a scope restriction rather than a new rule".
 **Imports in `src/` run in alphabetic order**, on the pairs where the alphabet is
 the authority.
 
-The rule reuses [`ImportPath`](../../src/finding/import_path.rs) rather than
+The rule reuses [`ImportPath`](../../src/finding/model/import_path.rs) rather than
 deciding again. `cargo fmt` runs first in the gate and orders `self`, `super`,
 `crate` and uppercase-initial paths by rules of its own, so a rule demanding the
 alphabet there would write a file **no edit could make green** — each run undoing

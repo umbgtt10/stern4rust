@@ -38,22 +38,20 @@ every build with zero offences.
 
 ## Planned Phases
 
-Phases 1 to 5 have shipped and have left this file, as the revision policy
-below requires: releasing `0.2.0`, excludability, baselines, the completeness
+Phases 1 to 6 have shipped or been decided and have left this file, as the
+revision policy below requires: releasing `0.2.0`, excludability, baselines, the completeness
 rule, and the rule set itself. What they built is described in
 [IMPLEMENTED-FEATURES.md](IMPLEMENTED-FEATURES.md); why each rule is shaped as
 it is, in [the ADRs](ADRs/README.md). Their numbers are not reused.
 
-### Phase 6: Library Surface
+Phase 6, the library surface, is decided rather than built: **the library is not
+a public API, and consumers depend on the binary.** Everything is `pub` because
+this repository forbids unit tests, so the surface is as wide as the test suite
+needs and no wider a promise than that. See
+[ADR-LibrarySurfaceIsNotAnApi](ADRs/ADR-LibrarySurfaceIsNotAnApi.md).
 
-The crate already exposes everything as a library, but nothing about that
-surface is committed to. Deciding what is public API, and what a consumer
-embedding the rules in their own tool can rely on.
-
-`0.8.0` made the case for itself: grouping `src/rules/` into subfolders moved
-every rule's module path, which is a breaking change for anybody importing one —
-and nothing had ever said whether those paths were promised. Until this phase
-lands, the answer is that they are not.
+No phases remain. The rule set is at twenty-one, the original candidate list has
+shipped in full, and what is left is in [OPEN_POINTS.md](OPEN_POINTS.md).
 
 ## Deferred Ideas
 

@@ -44,6 +44,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   Sharing them would have been a silent breaking change for every baseline in
   the family.
 
+### Added
+
+- **`ADR-LibrarySurfaceIsNotAnApi`** — the library is **not** a public API.
+  Depend on the binary. Module paths, type names and signatures may move in any
+  release, including a patch.
+
+  This was Phase 6 of the roadmap from the first release, and two restructures
+  made it urgent: `0.8.0` moved every rule's module path and the release after
+  moved every finder's, both because `directory-file-count` refused a
+  twenty-first file in one directory. The tool's own rule reshaped its own
+  library surface twice while no policy said whether that was allowed.
+
+  The decision follows from a standard already in force: `CLAUDE.md` forbids
+  unit tests, so every test lives in `tests/` and can only reach what is `pub`.
+  **The surface is an artefact of the testing standard, not an offer.** It is
+  exactly as wide as the test suite needs.
+
+  Stated in `src/lib.rs` so it appears at the top of the `docs.rs` page, and in
+  `README.md` beside the install instructions. Nothing about the behaviour of
+  the tool changes.
+
 ### Fixed
 
 - **A baseline no longer forgives by description.** `OffenceFingerprint` keys on

@@ -54,6 +54,7 @@ rule; anything without is the machinery the rules run on.
 | ADR | Decision |
 |---|---|
 | [ADR-ExitCodeContract](ADR-ExitCodeContract.md) | `0` clean, `1` could-not-run, `2` rule-broken, and the line between `1` and `2` is whether the work can still be enumerated — a bad manifest is a `1`, one unreadable file among fifty is a `2`. |
+| [ADR-LibrarySurfaceIsNotAnApi](ADR-LibrarySurfaceIsNotAnApi.md) | The `stern4rust` library is not a public API -- depend on the binary. Everything is `pub` because unit tests are forbidden and integration tests can only reach what is public, so the surface is as wide as the test suite needs and moves whenever the rules require it. |
 | [ADR-MachineReadableReport](ADR-MachineReadableReport.md) | The table stays the default and `--format json` renders the same run as a document; every offence carries a required `correction` alongside its description, because a report worth reading is not the same as a report worth acting on. |
 | [ADR-RuleSelection](ADR-RuleSelection.md) | `--rule` and `--skip`, both repeatable, with skipping winning over selecting; a run that switched rules off never claims all of them are satisfied. |
 | [ADR-WalkEveryFileInThePackage](ADR-WalkEveryFileInThePackage.md) | The walker skips `target/` and `.git/` and nothing else; a nested package with its own manifest is judged like any other directory, because a linter quietly declining to look at part of a tree is the silence this tool refuses. Supersedes the `0.2.0` nested-package skip. |

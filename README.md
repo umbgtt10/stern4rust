@@ -19,6 +19,14 @@ across a codebase the moment nobody is checking.
 > gated. `stern4rust` runs against its own tree on every build, so a rule that
 > would fail this repository cannot be merged into it.
 
+## This library is not a public API
+
+Depend on the binary. Module paths and signatures in the `stern4rust` library
+may move in any release — everything is `pub` only because this repository
+forbids unit tests, so integration tests must reach it from outside. What is
+promised is the command: its exit codes and its `--format json` report. See
+[ADR-LibrarySurfaceIsNotAnApi](docs/ADRs/ADR-LibrarySurfaceIsNotAnApi.md).
+
 ## Install
 
 ```bash
