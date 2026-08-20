@@ -141,7 +141,7 @@ mirrors nothing, which is `twin4rust`'s subject.
 
 ## Enforcement
 
-`tests/unit_test_finder_tests.rs` — 17 tests covering all three shapes, the
+`tests/finding/unit_test_finder_tests.rs` — 17 tests covering all three shapes, the
 `any(test, ...)` predicate, the feature-named-test non-case, nesting inside an
 inline module, and the mirrored path in the correction. Both `cfg_attr`
 spellings are pinned in opposite directions:

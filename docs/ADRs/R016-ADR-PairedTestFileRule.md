@@ -161,7 +161,7 @@ emptied rather than removed.
 
 ## Enforcement
 
-`tests/rules/paired_test_file_rule_tests.rs` — 12 tests covering the unpaired
+`tests/rules/paired_test_file_rule_tests.rs` — 11 tests covering the unpaired
 file, the paired file, the nested paired file, the file in the wrong directory,
 the `_proptest` exemption, the `all_tests.rs` registry, a support file that is
 not a test file, multiple unpaired files, the single-file `check`,

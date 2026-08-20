@@ -374,6 +374,34 @@ and are left alone — a feature is selectable by the shipped build, so what is
 tested is what somebody runs. `test` is the one predicate no shipped build ever
 sets. [R005](docs/ADRs/R005-ADR-TestFreeSourceRule.md)
 
+### `test-naming`
+
+A test's name has at least three underscore-separated parts, following
+`<method>_<conditions>_<result>`. `cargo test` prints names, not bodies, and
+`scores_good` says nothing about what broke.
+
+The rule reads the name and nothing else, which is a deliberate retreat. Three
+earlier versions tried to verify the leading part was the method actually under
+test — in the body, through the test file's helpers, then against the mirrored
+source file. Measured across 1559 tests, all three accused correct code: derived
+operators call no named function, and `from_str` on a `#[derive(ValueEnum)]`
+enum is a `fn` nowhere. 592 offences became 5.
+[R012](docs/ADRs/R012-ADR-TestNamingRule.md)
+
+### `tested-public-api`
+
+Every public entry point declared in `src/` is called by at least one test — a
+free `pub fn`, a `pub fn` in an inherent impl, and every method of a `pub trait`.
+
+The question `test-naming` gave up on, asked from the other end: starting from
+the declaration needs no guess about intent. Matched on name and arity, so the
+rule under-reports rather than accusing tested code. Call sites are gathered
+from macro token streams too, since a test's assertion lives in `assert!` and
+never becomes syntax.
+
+It found six printer builders shipped untested in 0.4.0.
+[R013](docs/ADRs/R013-ADR-TestedPublicApiRule.md)
+
 ### `tests-layout`
 
 A tests folder is reached through exactly one door: `tests/all_tests.rs`, plus a
@@ -453,10 +481,10 @@ Measured against `braintax4rust`, which has never been through this tool:
 
 | run | offences |
 |---|---:|
-| all eight rules | 204 |
+| every rule | 259 |
 | `--rule imported-paths` | **50** |
 
-204 is a wall; 50 is an afternoon. Enforce one rule today, add the next when the
+259 is a wall; 50 is an afternoon. Enforce one rule today, add the next when the
 first is green.
 
 `--skip` is the other direction — everything except the one that is noisy for

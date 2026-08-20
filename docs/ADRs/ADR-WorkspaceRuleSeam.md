@@ -92,7 +92,8 @@ pins the same property at the rule.
 ## Related
 
 - [R003-ADR-TestsLayoutRule](R003-ADR-TestsLayoutRule.md) — the rule that forced
-  this seam. Five rules use it today: `tests-layout`, `registry-completeness`,
-  `tested-public-api`, `directory-file-count` and `directory-subfolder-count`.
+  this seam. Six rules use it today: `tests-layout`, `registry-completeness`,
+  `tested-public-api`, `paired-test-file`, `directory-file-count` and
+  `directory-subfolder-count`.
 - [R014-ADR-PureTraitsRule](R014-ADR-PureTraitsRule.md) — removed the default
   bodies this seam was originally built with.

@@ -10,9 +10,11 @@ correctness. These are the things a reviewer would otherwise have to say by
 hand, every time, forever — and the ones that quietly stop being true across a
 codebase the moment nobody is checking.
 
-The rule set is **open by design**: there will be fifteen to twenty of them.
-That is the constraint every decision here answers to. Adding a rule must cost
-one file under `src/rules/` and one line in `RuleRegistry`, and nothing else.
+The rule set is **open by design**: there will be fifteen to twenty of them, and
+there are eighteen today. That is the constraint every decision here answers to.
+Adding a rule costs a file under `src/rules/`, its `pub mod` line, one entry in
+`RuleRegistry::all`, a mirrored test file, an `R<NNN>` ADR and a `RULES.md`
+section — and nothing in the walker, the printer or any other rule.
 
 `docs/RULES.md` is the canonical policy description. If a rule's meaning
 changes, update `docs/RULES.md`, the rule and its tests together.
@@ -57,7 +59,7 @@ One rule, one file, one implementation.
   A rule with nothing to work from is **left out rather than registered and
   silently passing** — a run reporting "all rules satisfied" while a rule was
   never configured is worse than one that says so.
-- `Offence` (`src/offence.rs`) is the single currency. Every rule reports in it,
+- `Offence` (`src/reporting/offence.rs`) is the single currency. Every rule reports in it,
   so the report is one table rather than a section per rule.
 - `SourceFile` (`src/source_file.rs`) normalises once so no rule has to: a
   trailing carriage return and a leading byte order mark are stripped. Without

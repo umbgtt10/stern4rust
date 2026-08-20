@@ -164,14 +164,14 @@ silence rather than reported.
 
 ## Enforcement
 
-`tests/rules/tests_layout_rule_tests.rs` — 19 tests, written before the
+`tests/rules/tests_layout_rule_tests.rs` — 20 tests, written before the
 implementation and confirmed red on
 `error[E0432]: unresolved import stern4rust::rules::tests_layout_rule`,
 covering each of the four checks, the nested and intermediate folder cases,
 the source-tree exclusion, the empty registry, the multiple-offence case,
 and the single-file no-op.
 
-`tests/registry_parser_tests.rs` — 13 tests — covers the naming of every item
+`tests/finding/registry_parser_tests.rs` — 13 tests — covers the naming of every item
 kind a registry can wrongly hold, including
 `strays_reports_each_stray_at_its_own_line`, which is the regression test for
 the byte-identical-rows defect.

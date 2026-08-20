@@ -122,7 +122,7 @@ subject, one subject with plain data beside it, two subjects, an enum as the
 second subject, the `tests/` exemption, and that every type after the first is
 reported rather than only the second.
 
-`tests/implemented_type_finder_tests.rs` — 10 tests pinning the two halves of
+`tests/finding/implemented_type_finder_tests.rs` — 10 tests pinning the two halves of
 the conjunction independently: a trait impl counts, several impls of one type
 count once, a type without an impl does not count, an impl for a type declared
 elsewhere does not count, and the walk descends into inline modules.

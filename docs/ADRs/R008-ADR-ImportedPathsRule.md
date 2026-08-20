@@ -140,11 +140,11 @@ qualifier, a two-segment path, a multi-segment path and its correction, a test
 file getting no exemption, an unparseable file, and that every offending call is
 reported rather than the first.
 
-`tests/qualified_call_finder_tests.rs` — 13 tests pinning each stand-down
+`tests/finding/qualified_call_finder_tests.rs` — 13 tests pinning each stand-down
 independently: unqualified, type-qualified, `Self`-qualified, imported module,
 renamed import, grouped import, descent into function bodies, and macros.
 
-`tests/qualified_call_tests.rs` — 5 tests on the two correction shapes.
+`tests/finding/qualified_call_tests.rs` — 5 tests on the two correction shapes.
 
 `run_stage_2.ps1` runs the compiled binary against this crate's own tree, which
 is what surfaced all 15 of its own offences.

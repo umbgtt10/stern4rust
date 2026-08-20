@@ -66,7 +66,7 @@ Rule selection shipped and gives a repository a way in: enforce one rule today,
 add the next when it is green. Measured on `braintax4rust`, that is the
 difference between a 204-offence report and a 50-offence one.
 
-What it does not give is a way to enforce all eight rules against *new* code
+What it does not give is a way to enforce every rule against *new* code
 while tolerating what is already there. A baseline — record the current
 offences, fail only on new ones — is what turns a 600-offence first run from a
 reason not to adopt into a starting point. It needs a checked-in state file,

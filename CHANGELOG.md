@@ -4,7 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.7.0] - 2026-08-20
+
+### Changed
+
+- **Four new rules join the default set**, so a repository that was green on
+  `0.6.0` may not be on `0.7.0`. Nothing was removed and no signature changed —
+  the library surface is additive — but a linter gaining rules is a behaviour
+  change for anyone gating on it, and it is called out here rather than left to
+  be discovered. `--skip <name>` turns any of them off; a skipped rule is named
+  as skipped in the report.
+
+  Measured across the family, the four together add: `arrange-act-assert` 45,
+  `paired-test-file` 34, and zero from `test-file-name-postfix` and
+  `declared-by-name`.
 
 ### Added
 

@@ -135,7 +135,7 @@ removing or renaming one is not.
 
 ## Enforcement
 
-`tests/json_printer_tests.rs` — 8 tests parsing the document back and asserting
+`tests/reporting/json_printer_tests.rs` — 13 tests parsing the document back and asserting
 on its structure, including the quote-escaping case and that both optional keys
 are present as `null` when empty.
 
@@ -146,7 +146,7 @@ path survives no offences, one, many, and an over-wide path.
 
 `tests/offence_tests.rs` pins the sort key and both builders.
 
-`tests/offence_threshold_tests.rs` — 10 tests covering the default of 100,
+`tests/reporting/offence_threshold_tests.rs` — 10 tests covering the default of 100,
 zero meaning unlimited, and that `kept` preserves order. The
 never-counted-only-shown property is pinned at both renderers:
 `render_summary_counts_every_offence_even_when_some_are_not_shown` and

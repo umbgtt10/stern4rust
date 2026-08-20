@@ -133,7 +133,7 @@ repository carries 27 lines it did not carry before, and each new rule will
 write four methods to answer what used to take one.
 
 **A trait with many implementors is expensive to extend.** Adding a method to
-`Rule` now breaks all fourteen rules at once rather than compiling silently. This
+`Rule` now breaks every rule at once rather than compiling silently. This
 is the correct failure — a new question every rule must answer *should* stop the
 build until every rule answers it — but it makes a wide trait a wide edit, and
 that pressure toward narrow traits is intended.

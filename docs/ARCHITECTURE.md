@@ -32,7 +32,7 @@ ManifestResolver ──▶ package roots
                     RunOutcome ──▶ exit code
 ```
 
-The whole package is read before any of it is judged. Five of the rules answer
+The whole package is read before any of it is judged. Six of the rules answer
 questions about the *tree* rather than about a file, and one of them reports
 offences against files that do not exist — see
 [ADR-WorkspaceRuleSeam](ADRs/ADR-WorkspaceRuleSeam.md). Reading first also

@@ -125,7 +125,7 @@ unchanged, so a script matching `offences=N` still matches.
 
 ## Enforcement
 
-`tests/rule_selection_tests.rs` — 10 tests covering the default, the whitelist
+`tests/settings/rule_selection_tests.rs` — 10 tests covering the default, the whitelist
 behaviour, skip-wins-over-select, `selects_explicitly` as distinct from
 `includes`, and unknown-name detection across both switches.
 

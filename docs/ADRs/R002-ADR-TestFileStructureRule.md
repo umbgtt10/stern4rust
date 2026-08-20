@@ -143,7 +143,7 @@ rather than `stern4rust`'s.
 
 ## Enforcement
 
-`tests/rules/test_file_structure_rule_tests.rs` — 26 tests covering all
+`tests/rules/test_file_structure_rule_tests.rs` — 28 tests covering all
 three questions, the registry and non-test-tree exclusions, the
 comment-introducing-a-test case, and the reporting contract.
 
