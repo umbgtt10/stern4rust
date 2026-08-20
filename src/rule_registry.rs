@@ -11,11 +11,13 @@ use crate::rules::directory_subfolder_count_rule::DirectorySubfolderCountRule;
 use crate::rules::header_rule::HeaderRule;
 use crate::rules::imported_paths_rule::ImportedPathsRule;
 use crate::rules::module_registry_rule::ModuleRegistryRule;
+use crate::rules::ordered_imports_rule::OrderedImportsRule;
 use crate::rules::paired_test_file_rule::PairedTestFileRule;
 use crate::rules::pure_traits_rule::PureTraitsRule;
 use crate::rules::readable_source_rule::ReadableSourceRule;
 use crate::rules::registry_completeness_rule::RegistryCompletenessRule;
 use crate::rules::single_implemented_type_rule::SingleImplementedTypeRule;
+use crate::rules::spdx_matches_manifest_rule::SpdxMatchesManifestRule;
 use crate::rules::test_file_name_postfix_rule::TestFileNamePostfixRule;
 use crate::rules::test_file_structure_rule::TestFileStructureRule;
 use crate::rules::test_free_source_rule::TestFreeSourceRule;
@@ -62,10 +64,14 @@ impl RuleRegistry {
             )),
             Box::new(ImportedPathsRule::new()),
             Box::new(ModuleRegistryRule::new()),
+            Box::new(OrderedImportsRule::new()),
             Box::new(PairedTestFileRule::new()),
             Box::new(PureTraitsRule::new()),
             Box::new(RegistryCompletenessRule::new()),
             Box::new(SingleImplementedTypeRule::new()),
+            Box::new(SpdxMatchesManifestRule::new(
+                config.manifest_license.clone(),
+            )),
             Box::new(TestFileNamePostfixRule::new()),
             Box::new(TestFileStructureRule::new()),
             Box::new(TestFreeSourceRule::new()),

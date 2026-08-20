@@ -21,6 +21,34 @@ fn config_for(packages: &[&str]) -> Config {
     }
 }
 
+// No single answer means no expectation, and the rule reports the manifest
+// rather than every file in it.
+#[test]
+fn license_of_an_unknown_package_is_none() {
+    // Arrange
+    let config = config_for(&["no-such-package"]);
+
+    // Act
+    let license = ManifestResolver::license(&config);
+
+    // Assert
+    assert!(license.is_none());
+}
+
+// The expectation `spdx-matches-manifest` holds every header to, taken from the
+// package being judged rather than from a flag.
+#[test]
+fn license_of_this_crate_returns_what_the_manifest_declares() {
+    // Arrange
+    let config = config_for(&["cargo-stern4rust"]);
+
+    // Act
+    let license = ManifestResolver::license(&config);
+
+    // Assert
+    assert_eq!(license.as_deref(), Some("MIT"));
+}
+
 #[test]
 fn package_roots_names_the_package_it_could_not_find() {
     // Arrange

@@ -4,6 +4,75 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **`ordered-imports`**, the nineteenth rule: imports in `src/` run in
+  alphabetic order, on the pairs where the alphabet is the authority.
+  [R019](docs/ADRs/R019-ADR-OrderedImportsRule.md)
+
+  `test-file-structure` has asked this of `tests/` since 0.2.0 and nothing asked
+  it of the source tree -- which is where `imported-paths` routinely *adds*
+  lines, with nothing saying where a new one lands.
+
+  **Verified consistent with `cargo fmt` before it was written**, since that is
+  the only way it could be wrong in a way no user could fix. A controlled
+  experiment on default settings showed rustfmt is not alphabetical: it hoists
+  `crate::` ahead of everything, then sorts the rest. A naive rule would demand
+  `aaa_crate` above `crate::` and `cargo fmt` would put it back -- the
+  unsatisfiable file this repository hit once before. The rule reuses
+  `ImportPath`, the same seam `test-file-structure` uses, rather than deciding
+  again.
+
+  The 10 findings were confirmed to survive formatting three ways:
+  `cargo fmt --check` clean, standalone `rustfmt --check` clean, and the block
+  extracted into a scratch crate came back byte-identical.
+
+  **10 offences, all in `etheram-ibft`** -- 5 `node`, 4 `node-infra`, 1 `evm`.
+  ROADMAP predicted "a wave of offences"; it is not one, and that entry was
+  corrected. Recorded as the cost: **56% of adjacent import pairs in `src/` stand
+  down**, because a source file leads with a `crate::` block where a test file
+  never does. More than half of what the rule appears to check, it does not.
+
+- **`spdx-matches-manifest`**, the twentieth: every file's
+  `SPDX-License-Identifier` says what the manifest's `license` says.
+  [R020](docs/ADRs/R020-ADR-SpdxMatchesManifestRule.md)
+
+  `header` compares a header against a text file and nothing else and says so in
+  its own "does not catch". A package states its licence twice -- manifest and
+  every header -- and nothing held the two together.
+
+  The expected value comes from **the package being judged** rather than a flag,
+  which is the difference that matters: it needs no `--header-file`. That is how
+  it found `braintax4rust/core/src/traits/mod.rs`, a three-line registry with no
+  header at all -- `header` cannot catch it there, because `braintax4rust` has no
+  header file to configure `header` with.
+
+  A manifest naming no `license` leaves the rule **unconfigured** rather than
+  offended, and the report names it. That was measured: reporting the silent
+  manifest as an offence fired once per package root, and `braintax4rust` -- a
+  workspace of twenty packages -- produced twenty identical `Cargo.toml` lines.
+  `is_configured` is the mechanism this codebase already had.
+
+  `etheram-core` is the other shape: no `license` field, no SPDX anywhere, and
+  25 files asserting Apache-2.0 in prose that nothing machine-readable confirms.
+
+  This is the first rule configured from the manifest, so `Config` gained
+  `manifest_license`, `Runner` fills it once before building the registry, and
+  `ManifestResolver` reads it.
+
+### Changed
+
+- **An unconfigured rule now reads `(not configured)`** rather than
+  `(needs --header-file)`. Two rules can go unconfigured and the header rule is
+  not what the other is waiting on; the old text was a hardcoded reason the
+  registry's own doc warns against.
+
+- **The rule set is complete at twenty**, the upper end of the range `CLAUDE.md`
+  set. Phase 5 of the roadmap is closed, and a twenty-first rule is a decision to
+  widen that range rather than to fill it.
+
 ## [0.7.0] - 2026-08-20
 
 ### Changed

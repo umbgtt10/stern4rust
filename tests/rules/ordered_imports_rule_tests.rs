@@ -1,0 +1,187 @@
+// Copyright 2025 Umberto Gotti <umberto.gotti@umbertogotti.dev>
+// Licensed under the MIT License
+// SPDX-License-Identifier: MIT
+
+// Imports in `src/` run in alphabetic order, on the pairs where the alphabet is
+// the authority.
+//
+// The stand-downs are the whole design, and they are not concessions: `cargo
+// fmt` runs first in the gate and orders `self`, `super`, `crate` and
+// uppercase-initial paths by rules of its own. A rule demanding the alphabet
+// there would write a file no edit could make green -- each run undoing the
+// last. `ImportPath` already decides which pairs those are.
+
+use stern4rust::reporting::offence::Offence;
+use stern4rust::rule::Rule;
+use stern4rust::rules::ordered_imports_rule::OrderedImportsRule;
+use stern4rust::source_file::SourceFile;
+
+const HEADER: &str = "// Copyright 2025 Umberto Gotti <umberto.gotti@umbertogotti.dev>\n\
+                      // Licensed under the MIT License\n\
+                      // SPDX-License-Identifier: MIT\n";
+
+const RULE: &str = "ordered-imports";
+
+fn check(path: &str, body: &str) -> Vec<Offence> {
+    OrderedImportsRule::new().check(&SourceFile::new(path, &format!("{HEADER}\n{body}")))
+}
+
+// `serde_json::Value` sorts before `serde_json::from_str` under rustfmt and
+// after it under the alphabet. Only the pair is remarkable, not either path.
+#[test]
+fn check_a_case_divergence_inside_a_path_reports_nothing() {
+    // Arrange & Act
+    let offences = check(
+        "src/widget.rs",
+        "use serde_json::Value;\nuse serde_json::from_str;\n\npub struct W;\n",
+    );
+
+    // Assert
+    assert!(offences.is_empty(), "expected none, got {offences:?}");
+}
+
+// rustfmt sorts `crate` ahead of every other path, so the alphabet has no say.
+#[test]
+fn check_a_crate_import_before_an_external_one_reports_nothing() {
+    // Arrange & Act
+    let offences = check(
+        "src/widget.rs",
+        "use crate::alpha::Alpha;\nuse anyhow::Result;\n\npub struct W;\n",
+    );
+
+    // Assert
+    assert!(offences.is_empty(), "expected none, got {offences:?}");
+}
+
+#[test]
+fn check_a_file_that_does_not_parse_reports_nothing() {
+    // Arrange & Act
+    let offences = check("src/widget.rs", "use zzz::Z\nuse aaa::A;\n");
+
+    // Assert
+    assert!(offences.is_empty(), "expected none, got {offences:?}");
+}
+
+#[test]
+fn check_a_sorted_import_block_reports_nothing() {
+    // Arrange & Act
+    let offences = check(
+        "src/widget.rs",
+        "use aaa_crate::Alpha;\nuse std::fmt;\nuse zzz_crate::Zed;\n\npub struct W;\n",
+    );
+
+    // Assert
+    assert!(offences.is_empty(), "expected none, got {offences:?}");
+}
+
+// tests/ belongs to test-file-structure, which asks the same question of a
+// stricter shape.
+#[test]
+fn check_a_test_file_reports_nothing() {
+    // Arrange & Act
+    let offences = check(
+        "tests/widget_tests.rs",
+        "use zzz_crate::Zed;\nuse aaa_crate::Alpha;\n\npub struct W;\n",
+    );
+
+    // Assert
+    assert!(offences.is_empty(), "expected none, got {offences:?}");
+}
+
+#[test]
+fn check_an_unsorted_import_block_reports_it() {
+    // Arrange & Act
+    let offences = check(
+        "src/widget.rs",
+        "use zzz_crate::Zed;\nuse aaa_crate::Alpha;\n\npub struct W;\n",
+    );
+
+    // Assert
+    assert_eq!(offences.len(), 1);
+    assert_eq!(offences[0].rule, RULE);
+    assert_eq!(offences[0].line, 6);
+    assert_eq!(
+        offences[0].subject.as_deref(),
+        Some("use aaa_crate::Alpha;")
+    );
+    assert!(
+        offences[0].description.contains("out of alphabetic order"),
+        "got {}",
+        offences[0].description
+    );
+    assert_eq!(
+        offences[0].correction,
+        "move `use aaa_crate::Alpha;` above `use zzz_crate::Zed;`"
+    );
+}
+
+// An uppercase-initial crate sorts behind every lowercase one under rustfmt.
+#[test]
+fn check_an_uppercase_first_segment_reports_nothing() {
+    // Arrange & Act
+    let offences = check(
+        "src/widget.rs",
+        "use Bbb::gamma;\nuse aaa_crate::Alpha;\n\npub struct W;\n",
+    );
+
+    // Assert
+    assert!(offences.is_empty(), "expected none, got {offences:?}");
+}
+
+// A blank line ends a block, so the first import of the next one is compared
+// with nothing.
+#[test]
+fn check_blocks_separated_by_a_blank_line_are_ordered_apart() {
+    // Arrange & Act
+    let offences = check(
+        "src/widget.rs",
+        "use zzz_crate::Zed;\n\nuse aaa_crate::Alpha;\n\npub struct W;\n",
+    );
+
+    // Assert
+    assert!(offences.is_empty(), "expected none, got {offences:?}");
+}
+
+#[test]
+fn check_reports_every_unordered_pair() {
+    // Arrange & Act
+    let offences = check(
+        "src/widget.rs",
+        "use ccc_crate::C;\nuse bbb_crate::B;\nuse aaa_crate::A;\n\npub struct W;\n",
+    );
+
+    // Assert
+    assert_eq!(offences.len(), 2);
+    assert_eq!(offences[0].subject.as_deref(), Some("use bbb_crate::B;"));
+    assert_eq!(offences[1].subject.as_deref(), Some("use aaa_crate::A;"));
+}
+
+#[test]
+fn check_workspace_of_a_tree_reports_nothing() {
+    // Arrange
+    let file = SourceFile::new("src/widget.rs", "use zzz::Z;\nuse aaa::A;\n");
+
+    // Act
+    let offences = OrderedImportsRule::new().check_workspace(&[file]);
+
+    // Assert
+    assert!(offences.is_empty(), "expected none, got {offences:?}");
+}
+
+#[test]
+fn is_configured_for_a_rule_that_needs_nothing_returns_true() {
+    // Arrange & Act
+    let configured = OrderedImportsRule::new().is_configured();
+
+    // Assert
+    assert!(configured);
+}
+
+#[test]
+fn name_is_the_kebab_case_rule_name_used_in_the_report() {
+    // Arrange & Act
+    let name = OrderedImportsRule::new().name();
+
+    // Assert
+    assert_eq!(name, RULE);
+}

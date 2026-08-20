@@ -15,7 +15,7 @@ already own correctness. These are the things a reviewer would otherwise have to
 say by hand, every time, forever — and the ones that quietly stop being true
 across a codebase the moment nobody is checking.
 
-> **Status: eighteen rules, more coming.** The set below is what is implemented and
+> **Status: twenty rules.** The set below is what is implemented and
 > gated. `stern4rust` runs against its own tree on every build, so a rule that
 > would fail this repository cannot be merged into it.
 
@@ -284,6 +284,27 @@ convention up.
 `#[cfg_attr(unix, path = "...")]` is left alone — a platform-gated module is the
 one honest use, and reporting it would accuse correct code.
 [R018](docs/ADRs/R018-ADR-DeclaredByNameRule.md)
+
+### `ordered-imports`
+
+Imports in `src/` run in alphabetic order, on the pairs where the alphabet is
+the authority. `test-file-structure` has asked this of `tests/` since 0.2.0;
+nothing asked it of the source tree, which is where `imported-paths` adds lines.
+
+The stand-downs are the design: `cargo fmt` runs first and sorts `self`,
+`super`, `crate` and uppercase-initial paths itself, so demanding the alphabet
+there would write a file no edit could make green.
+[R019](docs/ADRs/R019-ADR-OrderedImportsRule.md)
+
+### `spdx-matches-manifest`
+
+Every file's `SPDX-License-Identifier` says what the manifest's `license` says.
+
+The expected value comes from the package being judged rather than from a flag,
+so unlike `header` this needs no `--header-file` — it can hold in a repository
+that has no header file at all. A manifest naming no licence leaves the rule not
+applied rather than offended.
+[R020](docs/ADRs/R020-ADR-SpdxMatchesManifestRule.md)
 
 ### `arrange-act-assert`
 

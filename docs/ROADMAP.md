@@ -32,8 +32,8 @@ moment nobody is checking.
 
 ## Current Baseline
 
-Eighteen rules, two output formats, autofix, baselines, exclusions and a config
-file. 574 tests, both gates green, and the tool runs against its own tree on
+Twenty rules, two output formats, autofix, baselines, exclusions and a config
+file. 599 tests, both gates green, and the tool runs against its own tree on
 every build with zero offences.
 
 ## Planned Phases
@@ -90,15 +90,10 @@ because comments never reach the syntax tree. `pure-traits`,
 `test-file-name-postfix` and `paired-test-file` were not on the list and arrived
 from measuring the family.
 
-What remains:
-
-- **Header against the manifest** — SPDX identifier agreeing with the `license`
-  field, rather than only matching a text file. Recorded as a gap in
-  [OPEN_POINTS.md](OPEN_POINTS.md).
-- **Import ordering in `src/`** — `test-file-structure` is scoped to `tests/`,
-  and `imported-paths` now routinely adds imports to productive files with
-  nothing saying where the new line lands. Removing a scope restriction rather
-  than a new rule, but it would arrive as a wave of offences.
+The last two shipped as `spdx-matches-manifest` and `ordered-imports`, which
+takes the set to **twenty** -- the upper end of the range this repository set
+itself. Phase 5 is complete, and a twenty-first rule is a decision to widen the
+range rather than to fill it.
 
 ### Phase 6: Library Surface
 

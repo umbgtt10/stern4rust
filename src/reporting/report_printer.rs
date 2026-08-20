@@ -248,7 +248,7 @@ impl ReportPrinter {
             .chain(
                 self.unconfigured
                     .iter()
-                    .map(|name| format!("{name} (needs --header-file)")),
+                    .map(|name| format!("{name} (not configured)")),
             )
             .collect()
     }

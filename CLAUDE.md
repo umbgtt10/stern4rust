@@ -11,7 +11,7 @@ hand, every time, forever — and the ones that quietly stop being true across a
 codebase the moment nobody is checking.
 
 The rule set is **open by design**: there will be fifteen to twenty of them, and
-there are eighteen today. That is the constraint every decision here answers to.
+there are twenty today -- the upper end of that range. That is the constraint every decision here answers to.
 Adding a rule costs a file under `src/rules/`, its `pub mod` line, one entry in
 `RuleRegistry::all`, a mirrored test file, an `R<NNN>` ADR and a `RULES.md`
 section — and nothing in the walker, the printer or any other rule.

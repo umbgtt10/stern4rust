@@ -3,6 +3,27 @@
 What `cargo-stern4rust` does today. Anything not listed here is not built, and
 the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
+## Unreleased
+
+### Rules
+
+- **`ordered-imports`** -- imports in `src/` run in alphabetic order, reusing
+  the `ImportPath` stand-down so the rule and `cargo fmt` cannot disagree.
+  Verified against rustfmt by controlled experiment before it was written. 10
+  offences, all in `etheram-ibft`. Records that 56% of `src/` import pairs stand
+  down. [R019](ADRs/R019-ADR-OrderedImportsRule.md)
+- **`spdx-matches-manifest`** -- every file's SPDX identifier says what the
+  manifest's `license` says. The first rule configured from the package being
+  judged rather than the command line, so it needs no `--header-file`; a
+  manifest naming no licence leaves it unconfigured rather than offended.
+  [R020](ADRs/R020-ADR-SpdxMatchesManifestRule.md)
+
+### Reporting
+
+- An unconfigured rule now reads `(not configured)` rather than
+  `(needs --header-file)`. Two rules can go unconfigured, and the header rule is
+  not what the other is waiting on.
+
 ## Version 0.7.0
 
 ### Rules

@@ -22,6 +22,7 @@ pub struct Config {
     pub config_file: Option<PathBuf>,
     pub fix: bool,
     pub write_baseline: bool,
+    pub manifest_license: Option<String>,
     pub manifest_path: Option<PathBuf>,
     pub max_files_per_directory: Option<usize>,
     pub max_subfolders_per_directory: Option<usize>,

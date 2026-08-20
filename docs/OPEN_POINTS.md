@@ -77,12 +77,17 @@ nothing in the source distinguishes it from production code.
 `crap4rust` has the same blind spot for the same reason. There may be no
 structural answer to this one.
 
-## The header rule compares text and nothing else
+## The header rule compares text and nothing else -- partly closed
 
 A file whose header is perfectly formatted but names the wrong copyright holder
-passes, as does an SPDX identifier that disagrees with the `license` field in
-`Cargo.toml`. Cross-checking the header against the manifest is a plausible
-future rule and is not this one.
+still passes. The SPDX half is now held by `spdx-matches-manifest`, which reads
+its expected value from the manifest and so needs no `--header-file` -- it holds
+in a repository that has no header file at all, which is where it found
+`braintax4rust`'s headerless registry.
+
+The copyright holder has no second source of truth to check against: `authors` in
+`Cargo.toml` is optional, frequently stale, and not the same claim. That half
+stays open and may have no structural answer.
 
 ## Item naming is written three times
 
@@ -141,7 +146,7 @@ lowercase siblings (`serde_json::Value` before `serde_json::from_str`). Also,
 `cargo fmt` and a standalone `rustfmt <file>` disagree here -- only `cargo fmt`
 matters, since that is what the gate runs.
 
-## Nothing orders the imports of a productive file
+## Nothing orders the imports of a productive file -- closed
 
 `test-file-structure` is scoped to `tests/`, so the alphabetic and grouping
 checks never look at `src/`. `imported-paths` now routinely *adds* imports to
@@ -150,9 +155,15 @@ worked through -- with no rule saying where the new line lands. `cargo fmt` is
 the only authority there, and it reorders a group only when it decides to rewrite
 it.
 
-Extending the ordering check to `src/` is not a new rule so much as removing a
-scope restriction, but it would need the same per-pair stand-down and would
-arrive as a wave of offences in files nobody has touched.
+`ordered-imports` now does this, with the same per-pair stand-down. It did **not**
+arrive as a wave: 10 offences, all in `etheram-ibft`, because `cargo fmt` sorts
+what it rewrites and the stand-down covers the rest.
+
+What remains is the *size* of that stand-down. Measured on this crate, **56% of
+adjacent import pairs in `src/` are ones `cargo fmt` decides** -- a source file
+usually leads with a `crate::` block where a test file never does. More than half
+of what the rule appears to check, it does not, and a clean run means only that
+no pair the alphabet governs is out of order.
 
 ## `imported-paths` tells a module from a type by case
 

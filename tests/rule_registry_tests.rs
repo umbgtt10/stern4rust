@@ -42,15 +42,18 @@ impl Rule for AlwaysOffends {
     }
 }
 
-fn config_with_header(lines: &[&str]) -> Config {
-    Config {
-        expected_header: lines.iter().map(|line| (*line).to_string()).collect(),
-        ..Config::default()
-    }
-}
-
 fn file() -> SourceFile {
     SourceFile::new("src/a.rs", "pub struct A;")
+}
+
+// Everything a run can be given: a header to compare against and a manifest
+// that names a licence. Two rules need one each, and both are dropped without.
+fn fully_configured(lines: &[&str]) -> Config {
+    Config {
+        expected_header: lines.iter().map(|line| (*line).to_string()).collect(),
+        manifest_license: Some("MIT".to_string()),
+        ..Config::default()
+    }
 }
 
 struct NeverOffends;
@@ -174,7 +177,7 @@ fn check_workspace_collects_the_offences_of_every_registered_rule() {
 #[test]
 fn from_config_with_a_header_registers_the_header_rule_alongside_the_others() {
     // Arrange & Act
-    let registry = RuleRegistry::from_config(&config_with_header(&["// header"]));
+    let registry = RuleRegistry::from_config(&fully_configured(&["// header"]));
 
     // Assert
     assert_eq!(
@@ -187,10 +190,12 @@ fn from_config_with_a_header_registers_the_header_rule_alongside_the_others() {
             "directory-subfolder-count",
             "imported-paths",
             "module-registry",
+            "ordered-imports",
             "paired-test-file",
             "pure-traits",
             "registry-completeness",
             "single-implemented-type",
+            "spdx-matches-manifest",
             "test-file-name-postfix",
             "test-file-structure",
             "test-free-source",
@@ -241,6 +246,7 @@ fn from_config_with_a_skip_leaves_that_rule_out() {
             "directory-subfolder-count",
             "imported-paths",
             "module-registry",
+            "ordered-imports",
             "paired-test-file",
             "pure-traits",
             "registry-completeness",
@@ -272,6 +278,7 @@ fn from_config_without_a_header_registers_the_rules_that_need_no_configuration()
             "directory-subfolder-count",
             "imported-paths",
             "module-registry",
+            "ordered-imports",
             "paired-test-file",
             "pure-traits",
             "registry-completeness",
@@ -304,10 +311,12 @@ fn known_names_lists_every_rule_the_tool_has() {
             "directory-subfolder-count",
             "imported-paths",
             "module-registry",
+            "ordered-imports",
             "paired-test-file",
             "pure-traits",
             "registry-completeness",
             "single-implemented-type",
+            "spdx-matches-manifest",
             "test-file-name-postfix",
             "test-file-structure",
             "test-free-source",
@@ -326,7 +335,7 @@ fn known_names_lists_every_rule_the_tool_has() {
 #[test]
 fn known_names_matches_what_a_fully_configured_run_applies() {
     // Arrange
-    let config = config_with_header(&["// Copyright"]);
+    let config = fully_configured(&["// Copyright"]);
 
     // Act
     let applied = RuleRegistry::from_config(&config).names();
@@ -365,8 +374,11 @@ fn skipped_names_lists_what_the_switches_turned_off() {
 #[test]
 fn unconfigured_names_does_not_list_a_skipped_rule() {
     // Arrange
+    // A licence, so that the header rule is the only one that could be
+    // unconfigured -- and it is the one being skipped.
     let config = Config {
         selection: RuleSelection::new(Vec::new(), vec!["header".to_string()]),
+        manifest_license: Some("MIT".to_string()),
         ..Config::default()
     };
     let registry = RuleRegistry::from_config(&config);
@@ -391,5 +403,5 @@ fn unconfigured_names_lists_a_rule_that_could_not_run() {
     let unconfigured = registry.unconfigured_names(&Config::default());
 
     // Assert
-    assert_eq!(unconfigured, ["header"]);
+    assert_eq!(unconfigured, ["spdx-matches-manifest", "header"]);
 }

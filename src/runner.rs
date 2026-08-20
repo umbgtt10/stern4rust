@@ -51,6 +51,12 @@ impl Runner {
     pub fn run(args: Args) -> Result<RunOutcome> {
         let config = Self::config_from(args)?;
         Self::validate_selection(&config)?;
+        // The one piece of configuration that comes from the package being
+        // judged rather than from the command line, read once for the run.
+        let config = Config {
+            manifest_license: ManifestResolver::license(&config),
+            ..config
+        };
         let registry = RuleRegistry::from_config(&config);
         if registry.is_empty() {
             return Err(anyhow::anyhow!(
@@ -164,6 +170,9 @@ impl Runner {
             .or_else(|| found.and_then(|file| file.offence_threshold))
             .unwrap_or(OffenceThreshold::DEFAULT);
         Ok(Config {
+            // Filled in by `run` once the manifest has been read; the command
+            // line has nothing to say about it.
+            manifest_license: None,
             // Discovered beside the manifest when nobody named one, the same
             // way stern4rust.toml is. Implicit suppression would be
             // unacceptable if it were invisible; every report that used a

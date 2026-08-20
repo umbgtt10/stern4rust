@@ -1,6 +1,6 @@
 # Rules
 
-Eighteen rules, each independent, each naming itself in the report. This is the
+Twenty rules, each independent, each naming itself in the report. This is the
 reference; the reasoning behind each one is in its ADR.
 
 Every offence carries a **correction** as well as a description — what to do,
@@ -22,6 +22,8 @@ without answering it.
 | `test-free-source` | [R005](ADRs/R005-ADR-TestFreeSourceRule.md) | no |
 | `tests-layout` | [R003](ADRs/R003-ADR-TestsLayoutRule.md) | no |
 | `module-registry` | [R006](ADRs/R006-ADR-ModuleRegistryRule.md) | no |
+| `ordered-imports` | [R019](ADRs/R019-ADR-OrderedImportsRule.md) | no |
+| `spdx-matches-manifest` | [R020](ADRs/R020-ADR-SpdxMatchesManifestRule.md) | `license` in the manifest |
 | `single-implemented-type` | [R007](ADRs/R007-ADR-SingleImplementedTypeRule.md) | no |
 | `pure-traits` | [R014](ADRs/R014-ADR-PureTraitsRule.md) | no |
 | `test-naming` | [R012](ADRs/R012-ADR-TestNamingRule.md) | no |
@@ -32,7 +34,7 @@ without answering it.
 repeatable, both default to everything, and skipping wins over selecting. Every
 report names the rules it applied; a run that did not apply all of them says
 `All applied rules are satisfied` and names each absence with its reason --
-`(skipped)` or `(needs --header-file)`. The JSON carries `rules_applied`,
+`(skipped)` or `(not configured)`. The JSON carries `rules_applied`,
 `rules_skipped` and `rules_unconfigured`. An unknown rule
 name is an error, as is `--rule header` without `--header-file`. See
 [ADR-RuleSelection](ADRs/ADR-RuleSelection.md).
@@ -84,8 +86,9 @@ one pass rather than a loop.
 | file has N lines but the header is M | *(same)* |
 
 **Does not catch:** it compares text and nothing else. A well-formed header
-naming the wrong copyright holder, or an SPDX identifier that disagrees with
-`Cargo.toml`, passes.
+naming the wrong copyright holder passes. An SPDX identifier disagreeing with
+`Cargo.toml` used to pass too; `spdx-matches-manifest` now holds those two
+together, and does so without needing `--header-file`.
 
 ## `test-file-structure`
 
@@ -437,6 +440,70 @@ Nor a `#[path]` produced by a macro, nor whether the file it points at exists --
 that is `rustc`'s `E0583`.
 
 See [R018](ADRs/R018-ADR-DeclaredByNameRule.md).
+
+## `ordered-imports`
+
+Imports in `src/` run in alphabetic order, on the pairs where the alphabet is
+the authority.
+
+`test-file-structure` has asked this of `tests/` since 0.2.0 and nothing asked
+it of the source tree -- which is where `imported-paths` routinely *adds* lines,
+with nothing saying where a new one lands.
+
+**The stand-downs are the design.** `cargo fmt` runs first in the gate and sorts
+`self`, `super`, `crate` and uppercase-initial paths by rules of its own, so
+demanding the alphabet there writes a file **no edit can make green**: each run
+undoes the last. The rule asks `ImportPath` -- the same seam
+`test-file-structure` uses -- rather than deciding again.
+
+A block ends where lines stop being consecutive, so a blank line or a comment
+separates two imports and the first of a block is compared with nothing.
+
+| offence | correction |
+|---|---|
+| `` `use aaa_crate::Alpha;` is out of alphabetic order; it follows `use zzz_crate::Zed;` `` | move `use aaa_crate::Alpha;` above `use zzz_crate::Zed;` |
+
+**Does not catch:** any pair `cargo fmt` decides -- measured on this crate, that
+is **56% of adjacent import pairs in `src/`**, because a source file usually
+leads with a `crate::` block while a test file never does. So more than half of
+what the rule appears to check, it does not. Nor grouping: whether `std`,
+external crates and `crate::` are separated at all, or in what order those
+blocks appear. Nor imports inside inline modules or macros.
+
+See [R019](ADRs/R019-ADR-OrderedImportsRule.md).
+
+## `spdx-matches-manifest`
+
+Every file's `SPDX-License-Identifier` says what the manifest's `license` says.
+
+`header` compares a header against a text file and nothing else, so an SPDX line
+disagreeing with `Cargo.toml` passes it. This rule takes its expected value from
+**the package being judged** rather than from a flag -- which is why it needs no
+`--header-file` to hold, and why it can catch a file in a repository that has no
+header file at all.
+
+The header is the comment block a file opens with: everything before the first
+line that is neither blank nor a `//` comment. An SPDX line below that declares
+nothing.
+
+| offence | correction |
+|---|---|
+| `` src/widget.rs carries no `SPDX-License-Identifier:`, so nothing ties it to the `MIT` the manifest declares `` | add `// SPDX-License-Identifier: MIT` to the header, or correct the manifest |
+| `` src/widget.rs declares `Apache-2.0` where the manifest declares `MIT` `` | change the header to `// SPDX-License-Identifier: MIT`, or correct the manifest |
+
+Both corrections end **"or correct the manifest"**: the rule knows the two
+disagree, not which is right.
+
+A manifest naming no `license` leaves the rule nothing to work from, so it is
+**not applied** rather than offended -- named in the report, as the header rule
+is.
+
+**Does not catch:** a licence stated only in prose, which reads as a *missing*
+identifier rather than a contradicting one. Nor whether the licence is correct,
+nor the copyright holder or year. A workspace whose packages declare different
+licences leaves the rule unconfigured.
+
+See [R020](ADRs/R020-ADR-SpdxMatchesManifestRule.md).
 
 ## `arrange-act-assert`
 
