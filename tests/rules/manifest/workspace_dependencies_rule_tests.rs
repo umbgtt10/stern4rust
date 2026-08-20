@@ -9,7 +9,7 @@
 // `{ workspace = true }` the root does not declare, so requiring the root to
 // hold every reference costs no code -- the same split R009, R014 and R016 made.
 
-use stern4rust::finding::manifest_dependency::ManifestDependency;
+use stern4rust::finding::model::manifest_dependency::ManifestDependency;
 use stern4rust::reporting::offence::Offence;
 use stern4rust::rule::Rule;
 use stern4rust::rules::manifest::workspace_dependencies_rule::WorkspaceDependenciesRule;

@@ -4,8 +4,8 @@
 
 use std::collections::BTreeSet;
 
-use crate::finding::registry_parser::RegistryParser;
-use crate::finding::registry_policy::RegistryPolicy;
+use crate::finding::model::registry_policy::RegistryPolicy;
+use crate::finding::parsing::registry_parser::RegistryParser;
 use crate::reporting::offence::Offence;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;

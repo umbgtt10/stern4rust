@@ -2,8 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::finding::qualified_call::QualifiedCall;
-use crate::finding::qualified_call_finder::QualifiedCallFinder;
+use crate::finding::model::qualified_call::QualifiedCall;
+use crate::finding::parsing::qualified_call_finder::QualifiedCallFinder;
 use crate::reporting::offence::Offence;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;

@@ -2,10 +2,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::finding::import_path::ImportPath;
-use crate::finding::section::Section;
-use crate::finding::test_file_item::TestFileItem;
-use crate::finding::test_file_parser::TestFileParser;
+use crate::finding::model::import_path::ImportPath;
+use crate::finding::model::section::Section;
+use crate::finding::model::test_file_item::TestFileItem;
+use crate::finding::parsing::test_file_parser::TestFileParser;
 use crate::reporting::offence::Offence;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;

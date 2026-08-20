@@ -15,7 +15,7 @@ use cargo_metadata::Package;
 use toml::Table;
 use toml::Value;
 
-use crate::finding::manifest_dependency::ManifestDependency;
+use crate::finding::model::manifest_dependency::ManifestDependency;
 use crate::settings::config::Config;
 
 // Turns the requested packages into the directories to walk.

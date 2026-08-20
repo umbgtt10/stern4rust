@@ -90,16 +90,6 @@ The copyright holder has no second source of truth to check against: `authors` i
 `Cargo.toml` is optional, frequently stale, and not the same claim. That half
 stays open and may have no structural answer.
 
-## Item naming is written three times
-
-`TestFileParser::name`, `RegistryParser::label` and `UnitTestFinder::describe`
-each map a `syn::Item` to a kind and an identifier, with the same match arms and
-the same source-line fallback. Three copies drift.
-
-Not yet extracted because it means changing two working files whose behaviour is
-already pinned, and the shared piece is small enough that the extraction should
-be deliberate rather than incidental to a bug fix.
-
 ## `readable-source` depends on `syn` accepting the file
 
 Source using syntax newer than this crate's `syn` would be reported as

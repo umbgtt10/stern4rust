@@ -4,9 +4,9 @@
 
 use std::collections::BTreeSet;
 
-use crate::finding::call_site_finder::CallSiteFinder;
-use crate::finding::public_entry_point::PublicEntryPoint;
-use crate::finding::public_entry_point_finder::PublicEntryPointFinder;
+use crate::finding::model::public_entry_point::PublicEntryPoint;
+use crate::finding::parsing::call_site_finder::CallSiteFinder;
+use crate::finding::parsing::public_entry_point_finder::PublicEntryPointFinder;
 use crate::reporting::offence::Offence;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;

@@ -7,7 +7,7 @@ use syn::ItemUse;
 use syn::parse_file;
 use syn::spanned::Spanned;
 
-use crate::finding::import_path::ImportPath;
+use crate::finding::model::import_path::ImportPath;
 use crate::reporting::offence::Offence;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;

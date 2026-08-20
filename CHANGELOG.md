@@ -24,6 +24,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   saying what to do, which Guiding Principle 1 requires of every finding. This
   restores it from the rule rather than from a hardcoded string.
 
+### Changed
+
+- **`src/finding/` is grouped into `model/` and `parsing/`**, with
+  `tests/finding/` mirroring. Breaking for anyone importing a finder from the
+  library, in the same way `0.8.0` was for the rules. The directory stood at 20
+  files and `directory-file-count` would not allow a twenty-first, so the tool's
+  own rule decided the split again.
+
+- **`ItemNaming` replaces three copies of the same code.**
+  `TestFileParser::name`, `RegistryParser::label` and `UnitTestFinder::describe`
+  each carried the same match over `syn::Item` and an identical `source_line`
+  fallback -- `OPEN_POINTS.md` recorded it as "three copies drift" and asked for
+  the extraction to be deliberate rather than incidental to a bug fix.
+
+  Only the shared half moved. The kind words stay with each caller, because one
+  says `inline module` where another says `module`, and every one of those
+  strings sits inside an offence description that baselines are keyed on.
+  Sharing them would have been a silent breaking change for every baseline in
+  the family.
+
 ### Fixed
 
 - **`tests-layout` no longer goes silent on a registry it cannot parse.** It

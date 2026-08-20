@@ -4,7 +4,7 @@
 
 use std::path::Path;
 
-use crate::finding::package_tree::PackageTree;
+use crate::finding::model::package_tree::PackageTree;
 use crate::reporting::offence::Offence;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;

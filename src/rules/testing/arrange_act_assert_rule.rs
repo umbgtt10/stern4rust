@@ -13,8 +13,8 @@ use syn::ItemFn;
 use syn::parse_file;
 use syn::spanned::Spanned;
 
-use crate::finding::test_marker::MarkerPhase;
-use crate::finding::test_marker::TestMarker;
+use crate::finding::model::test_marker::MarkerPhase;
+use crate::finding::model::test_marker::TestMarker;
 use crate::reporting::offence::Offence;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;

@@ -56,6 +56,17 @@ happened to return files in.
 | `ReportPrinter` / `JsonPrinter` | the two renderings |
 | `RunOutcome` | clean or rules-broken, turned into an exit code only by `main` |
 
+`src/finding/` is grouped into `model/` (what a rule reasons about) and
+`parsing/` (what turns a file into it), with `tests/finding/` mirroring exactly.
+`directory-file-count` decided that split too: the directory stood at 20 files.
+
+`ItemNaming` in `parsing/` holds the identifier an item declares and the
+source-line fallback for items that declare none. `TestFileParser`,
+`RegistryParser` and `UnitTestFinder` each carried both; what they legitimately
+differ on -- the wording around the name -- stays with each of them, because
+every one of those strings sits inside an offence description that baselines are
+keyed on.
+
 A set of finders and parsers sits beside the rules in `src/finding/`, each
 turning a file into the items one rule reasons about: `TestFileParser` (sections
 and ordering), `RegistryParser` (strays in an `all_tests.rs` or `mod.rs`),

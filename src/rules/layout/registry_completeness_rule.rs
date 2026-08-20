@@ -5,8 +5,8 @@
 use std::collections::BTreeSet;
 use std::path::Path;
 
-use crate::finding::module_declaration_finder::ModuleDeclarationFinder;
-use crate::finding::package_tree::PackageTree;
+use crate::finding::model::package_tree::PackageTree;
+use crate::finding::parsing::module_declaration_finder::ModuleDeclarationFinder;
 use crate::reporting::offence::Offence;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;

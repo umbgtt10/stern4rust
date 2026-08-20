@@ -2,7 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::finding::manifest_dependency::ManifestDependency;
+use crate::finding::model::manifest_dependency::ManifestDependency;
 use crate::reporting::offence_threshold::OffenceThreshold;
 use crate::reporting::output_format::OutputFormat;
 use crate::settings::rule_selection::RuleSelection;

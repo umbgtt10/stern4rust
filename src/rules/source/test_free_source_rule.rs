@@ -2,7 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::finding::unit_test_finder::UnitTestFinder;
+use crate::finding::parsing::unit_test_finder::UnitTestFinder;
 use crate::reporting::offence::Offence;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;
