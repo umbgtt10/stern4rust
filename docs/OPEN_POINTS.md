@@ -115,8 +115,9 @@ half of what the rule appears to check, it does not, and a clean run means only
 that no pair the alphabet governs is out of order.
 
 The alphabetic check stands down on any import pair involving `self`, `super` or
-`crate`, and on any pair that first differs at a segment where one side is
-uppercase-initial and the other is not. rustfmt orders those by its own rules and
+`crate`, and on any pair that first differs at a segment where the two sides are
+of different *case shape* -- the initial, and whether the segment is all
+capitals. rustfmt orders those by its own rules and
 `cargo fmt` runs first, so demanding the alphabet would make the file
 unsatisfiable rather than merely wrong. The cost is that a genuinely scrambled
 import list goes unreported at such a pair.
@@ -129,7 +130,26 @@ and no file in those 168 lines happened to contain such a pair. Adding one while
 fixing `imported-paths` produced a file no edit could make green. The decision is
 now made per pair.
 
-A second stand-down was added later, for a path that *extends* another rather
+A third was added after that, for two segments that both open with a capital.
+The check read only the first character, so `WAL_V2_MAGIC` beside `WalRecord`
+counted as same-case and the alphabet was demanded -- and the editions disagree
+about that pair exactly as they do about `Value` against `from_str`:
+
+|                                          | 2021          | 2024           |
+|------------------------------------------|---------------|----------------|
+| `WalRecord` against `WAL_V2_MAGIC`       | `WalRecord`   | `WAL_V2_MAGIC` |
+| `Block` against `BLOCK_GAS_LIMIT`        | `Block`       | `BLOCK_GAS_LIMIT` |
+| `TinyEvmEngine` against `OPCODE_PUSH1`   | `TinyEvmEngine` | `OPCODE_PUSH1` |
+
+Found in `etheram-ibft`, where it cost sixteen offences no edit could clear
+across `ordered-imports` and `test-file-structure`, and both rules had to be
+stood down there to keep `cargo fmt --check` green. Case is now read as a shape
+-- the initial, and whether the segment is all capitals -- and pairs sharing one
+are still judged: `ALPHA_TWO` against `ZETA_ONE`, `Alpha` against `Zeta` and
+`alpha` against `zeta` were each measured identical under 2021, 2024 and a plain
+sort.
+
+A second stand-down was added earlier, for a path that *extends* another rather
 than diverging from it: `use alloc::vec;` beside `use alloc::vec::Vec;`. The
 first version could not see it, because it looked for the first pair of segments
 that differ and there is no such pair -- the difference is between a segment and

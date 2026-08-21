@@ -457,6 +457,15 @@ demanding the alphabet there writes a file **no edit can make green**: each run
 undoes the last. The rule asks `ImportPath` -- the same seam
 `test-file-structure` uses -- rather than deciding again.
 
+Case is read as a *shape* rather than as a first letter: the initial, and
+whether the segment is all capitals. `WAL_V2_MAGIC` and `WalRecord` both open
+with a capital and the style editions still disagree about them -- 2021 orders
+`WalRecord` first, 2024 `WAL_V2_MAGIC` -- so a screaming-case segment beside a
+camel-case one stands down like any other case divergence. Segments sharing a
+shape are still judged, because `ALPHA_TWO` against `ZETA_ONE`, `Alpha` against
+`Zeta` and `alpha` against `zeta` were each measured to sort identically under
+2021, 2024 and a plain sort.
+
 A block ends where lines stop being consecutive, so a blank line or a comment
 separates two imports and the first of a block is compared with nothing.
 

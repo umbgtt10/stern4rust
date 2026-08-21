@@ -29,6 +29,15 @@
 use stern4rust::finding::model::import_path::ImportPath;
 
 #[test]
+fn decides_order_of_a_camel_case_segment_beside_a_screaming_case_one_is_true() {
+    // Arrange & Act
+    let decides = ImportPath::decides_order("use block::Block;", "use block::BLOCK_GAS_LIMIT;");
+
+    // Assert
+    assert!(decides);
+}
+
+#[test]
 fn decides_order_of_a_pair_diverging_at_the_first_segment_is_false() {
     // Arrange & Act
     let decides = ImportPath::decides_order("use serde_json::Value;", "use stern4rust::a::B;");
@@ -52,6 +61,28 @@ fn decides_order_of_a_pair_diverging_by_case_is_true() {
 fn decides_order_of_a_pair_of_lowercase_segments_is_false() {
     // Arrange & Act
     let decides = ImportPath::decides_order("use std::fs;", "use std::path::PathBuf;");
+
+    // Assert
+    assert!(!decides);
+}
+
+// Screaming case on both sides, so the comparators agree and the alphabet still
+// rules -- measured identical under 2021, 2024 and a plain sort.
+#[test]
+fn decides_order_of_a_pair_of_screaming_case_segments_is_false() {
+    // Arrange & Act
+    let decides = ImportPath::decides_order("use gas::ALPHA_TWO;", "use gas::ZETA_ONE;");
+
+    // Assert
+    assert!(!decides);
+}
+
+// A digit does not make a segment screaming case on its own, so this pair is
+// lowercase on both sides and still judged.
+#[test]
+fn decides_order_of_a_pair_of_segments_holding_digits_is_false() {
+    // Arrange & Act
+    let decides = ImportPath::decides_order("use wire::alpha2;", "use wire::zeta2;");
 
     // Assert
     assert!(!decides);
@@ -156,6 +187,21 @@ fn decides_order_of_a_renamed_path_beside_its_bare_form_is_false() {
 
     // Assert
     assert!(!decides);
+}
+
+// Both segments open with a capital, so reading only the first character calls
+// this pair same-case. The editions disagree about it -- measured, 2021 orders
+// `WalRecord` first and 2024 `WAL_V2_MAGIC` -- so the alphabet cannot rule here.
+#[test]
+fn decides_order_of_a_screaming_case_segment_beside_a_camel_case_one_is_true() {
+    // Arrange & Act
+    let decides = ImportPath::decides_order(
+        "use wal_record::WAL_V2_MAGIC;",
+        "use wal_record::WalRecord;",
+    );
+
+    // Assert
+    assert!(decides);
 }
 
 // Identical paths are not extensions of one another, and nothing about them

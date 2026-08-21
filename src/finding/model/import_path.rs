@@ -62,7 +62,33 @@ impl ImportPath {
             .into_iter()
             .zip(Self::segments(item))
             .find(|(left, right)| left != right)
-            .is_some_and(|(left, right)| Self::is_uppercase(left) != Self::is_uppercase(right))
+            .is_some_and(|(left, right)| !Self::share_a_case_shape(left, right))
+    }
+
+    // Two segments compare the same way under both comparators only when they
+    // are of the same shape, and an initial capital is not enough to say so.
+    // `WAL_V2_MAGIC` and `WalRecord` both open with one and the editions still
+    // disagree: measured, 2021 puts `WalRecord` first and 2024 `WAL_V2_MAGIC`,
+    // the same split already recorded for `Value` against `from_str`. Reading
+    // only the first character called that pair same-case and demanded the
+    // alphabet, which is a file `cargo fmt` rewrites on every run -- found in
+    // `etheram-ibft`, where it cost sixteen offences no edit could clear and
+    // both import rules had to be stood down to keep stage 1 green.
+    //
+    // Shape is the initial and whether the segment is all capitals, because
+    // those are the two axes the disagreement runs along. Segments sharing both
+    // -- `ALPHA_TWO` against `ZETA_ONE`, `Alpha` against `Zeta`, `alpha`
+    // against `zeta` -- were measured to sort identically under 2021, 2024 and
+    // a plain sort, so those are still judged.
+    fn share_a_case_shape(left: &str, right: &str) -> bool {
+        Self::is_uppercase(left) == Self::is_uppercase(right)
+            && Self::is_all_capitals(left) == Self::is_all_capitals(right)
+    }
+
+    // Capitals and no lowercase. Digits and underscores decide nothing, so `V2`
+    // reads as capitals and `v2` does not.
+    fn is_all_capitals(segment: &str) -> bool {
+        segment.chars().any(char::is_uppercase) && !segment.chars().any(char::is_lowercase)
     }
 
     // One path continues the other: `alloc::vec` beside `alloc::vec::Vec`.

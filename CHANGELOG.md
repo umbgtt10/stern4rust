@@ -6,6 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- **Import ordering reads case as a shape rather than as a first letter.**
+  `WAL_V2_MAGIC` beside `WalRecord` both open with a capital, so the case
+  stand-down did not fire and the alphabet was demanded — while `cargo fmt`
+  wanted the opposite order, and the two style editions want opposite orders
+  from each other:
+
+  |                                        | 2021            | 2024              |
+  |----------------------------------------|-----------------|-------------------|
+  | `WalRecord` against `WAL_V2_MAGIC`     | `WalRecord`     | `WAL_V2_MAGIC`    |
+  | `Block` against `BLOCK_GAS_LIMIT`      | `Block`         | `BLOCK_GAS_LIMIT` |
+  | `TinyEvmEngine` against `OPCODE_PUSH1` | `TinyEvmEngine` | `OPCODE_PUSH1`    |
+
+  That is the same split already recorded for `Value` against `from_str`, so it
+  gets the same answer: stand down, because declining to judge is correct under
+  either edition while demanding an order is wrong under one of them.
+
+  Found in `etheram-ibft`, where it cost sixteen offences no edit could clear
+  and forced `ordered-imports` and `test-file-structure` to be stood down there
+  to keep `cargo fmt --check` green.
+
+  Shape is the initial and whether the segment is all capitals. Pairs sharing
+  one are still judged — `ALPHA_TWO` against `ZETA_ONE`, `Alpha` against `Zeta`
+  and `alpha` against `zeta` were each measured identical under 2021, 2024 and a
+  plain sort.
+
 ### Added
 
 - **`--format json` carries a roster per package**, under a new `packages` key,
