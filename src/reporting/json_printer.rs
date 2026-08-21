@@ -4,6 +4,8 @@
 
 use crate::reporting::offence::Offence;
 use crate::reporting::offence_threshold::OffenceThreshold;
+use crate::reporting::package_roster::PackageRoster;
+use serde_json::Value;
 use serde_json::json;
 use serde_json::to_string_pretty;
 use std::collections::BTreeSet;
@@ -19,6 +21,7 @@ pub struct JsonPrinter {
     files_scanned: usize,
     threshold: OffenceThreshold,
     applied: Vec<String>,
+    rosters: Vec<PackageRoster>,
     skipped: Vec<String>,
     unconfigured: Vec<String>,
     exclusions: Vec<(String, usize)>,
@@ -35,6 +38,7 @@ impl JsonPrinter {
             files_scanned,
             threshold: OffenceThreshold::default(),
             applied: Vec::new(),
+            rosters: Vec::new(),
             skipped: Vec::new(),
             unconfigured: Vec::new(),
             exclusions: Vec::new(),
@@ -80,6 +84,13 @@ impl JsonPrinter {
     // A consumer that could not tell an all-rules run from a one-rule run would
     // read "no offences" as "nothing wrong", which is only true of the rules
     // that were actually applied.
+    // A roster per package walked. The text report collapses these where they
+    // agree; a document does not, because nothing is reading it for brevity and
+    // a consumer that has to tell absent from empty has been given a puzzle.
+    pub fn with_package_rosters(self, rosters: Vec<PackageRoster>) -> Self {
+        Self { rosters, ..self }
+    }
+
     pub fn with_rules(
         self,
         applied: Vec<String>,
@@ -131,9 +142,31 @@ impl JsonPrinter {
             "rules_applied": self.applied,
             "rules_skipped": self.skipped,
             "rules_unconfigured": self.unconfigured,
+            "packages": self.package_documents(),
             "offences": shown,
         });
         to_string_pretty(&document).unwrap_or_default()
+    }
+
+    fn package_documents(&self) -> Vec<Value> {
+        self.rosters
+            .iter()
+            .map(|roster| {
+                json!({
+                    "package": roster.package,
+                    "rules_applied": roster.applied,
+                    "rules_skipped": roster.skipped,
+                    "rules_unconfigured": roster
+                        .unconfigured
+                        .iter()
+                        .map(|(rule, requirement)| json!({
+                            "rule": rule,
+                            "requirement": requirement,
+                        }))
+                        .collect::<Vec<_>>(),
+                })
+            })
+            .collect()
     }
 
     pub fn print(&self, offences: &[Offence]) {

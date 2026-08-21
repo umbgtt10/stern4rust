@@ -18,6 +18,7 @@ use serde_json::from_str;
 use stern4rust::reporting::json_printer::JsonPrinter;
 use stern4rust::reporting::offence::Offence;
 use stern4rust::reporting::offence_threshold::OffenceThreshold;
+use stern4rust::reporting::package_roster::PackageRoster;
 
 fn parsed(files_scanned: usize, offences: &[Offence]) -> Value {
     from_str(&JsonPrinter::new(files_scanned).render(offences)).expect("valid json")
@@ -31,6 +32,35 @@ fn plain() -> Offence {
         "expected something".to_string(),
         "fix it".to_string(),
     )
+}
+
+// The same run as a document, which is what ADR-MachineReadableReport asks of
+// this printer. The text report gained a roster per package and this did not,
+// so for one afternoon a gate script reading JSON got a different picture from a
+// developer reading the terminal -- the conservative aggregate, with no way to
+// see which member stood a rule down.
+#[test]
+fn render_carries_a_roster_for_each_package() {
+    // Arrange
+    let printer = JsonPrinter::new(9).with_package_rosters(vec![
+        PackageRoster::new("node", vec!["header".to_string()], Vec::new(), Vec::new()),
+        PackageRoster::new(
+            "validation",
+            Vec::new(),
+            vec!["header".to_string()],
+            Vec::new(),
+        ),
+    ]);
+
+    // Act
+    let document: Value = from_str(&printer.render(&[])).expect("valid json");
+
+    // Assert
+    let packages = document["packages"].as_array().expect("a packages array");
+    assert_eq!(packages.len(), 2);
+    assert_eq!(packages[0]["package"], "node");
+    assert_eq!(packages[0]["rules_applied"][0], "header");
+    assert_eq!(packages[1]["rules_skipped"][0], "header");
 }
 
 // Two offences from one rule are one broken rule, the same count the table's
@@ -144,6 +174,33 @@ fn render_names_every_field_of_an_offence() {
     assert_eq!(found["offences"][0]["expected"], "// Copyright");
 }
 
+// Why a rule is missing travels into the document too, or a machine reading it
+// cannot tell a rule nobody asked for from one that could not run.
+#[test]
+fn render_names_why_a_package_rule_is_unconfigured() {
+    // Arrange
+    let printer = JsonPrinter::new(9).with_package_rosters(vec![PackageRoster::new(
+        "node",
+        Vec::new(),
+        Vec::new(),
+        vec![(
+            "spdx-matches-manifest".to_string(),
+            "needs a `license` field in Cargo.toml".to_string(),
+        )],
+    )]);
+
+    // Act
+    let document: Value = from_str(&printer.render(&[])).expect("valid json");
+
+    // Assert
+    let unconfigured = &document["packages"][0]["rules_unconfigured"][0];
+    assert_eq!(unconfigured["rule"], "spdx-matches-manifest");
+    assert_eq!(
+        unconfigured["requirement"],
+        "needs a `license` field in Cargo.toml"
+    );
+}
+
 // The keys are present even when the rule had nothing to put in them, so a
 // consumer reads the same shape on every offence rather than testing for the
 // existence of a field.
@@ -190,6 +247,26 @@ fn render_of_no_offences_reports_an_empty_list() {
     assert_eq!(found["rules_broken"], 0);
 }
 
+// A single-package run still carries its one roster, because a machine has no
+// terminal to collapse things for -- the array is the shape either way.
+#[test]
+fn render_of_one_package_carries_one_roster() {
+    // Arrange
+    let printer = JsonPrinter::new(9).with_package_rosters(vec![PackageRoster::new(
+        "cargo-stern4rust",
+        vec!["header".to_string()],
+        Vec::new(),
+        Vec::new(),
+    )]);
+
+    // Act
+    let document: Value = from_str(&printer.render(&[])).expect("valid json");
+
+    // Assert
+    assert_eq!(document["packages"].as_array().expect("array").len(), 1);
+    assert_eq!(document["packages"][0]["package"], "cargo-stern4rust");
+}
+
 #[test]
 fn render_of_several_offences_keeps_the_order_it_was_given() {
     // Arrange
@@ -214,6 +291,42 @@ fn render_of_several_offences_keeps_the_order_it_was_given() {
     // Assert
     assert_eq!(found["offences"][0]["description"], "first");
     assert_eq!(found["offences"][1]["description"], "second");
+}
+
+// The run-level keys every gate script in this family already reads are
+// untouched, so adding the detail does not cost the readers who do not want it.
+#[test]
+fn render_with_rosters_keeps_the_run_level_keys() {
+    // Arrange
+    let printer = JsonPrinter::new(9)
+        .with_rules(vec!["header".to_string()], Vec::new(), Vec::new())
+        .with_package_rosters(vec![PackageRoster::new(
+            "node",
+            vec!["header".to_string()],
+            Vec::new(),
+            Vec::new(),
+        )]);
+
+    // Act
+    let document: Value = from_str(&printer.render(&[])).expect("valid json");
+
+    // Assert
+    assert_eq!(document["rules_applied"][0], "header");
+    assert_eq!(document["files_scanned"], 9);
+}
+
+// A run with no rosters at all -- nothing walked -- still renders a document
+// rather than omitting the key, so a reader never has to tell absent from empty.
+#[test]
+fn render_without_rosters_carries_an_empty_packages_array() {
+    // Arrange
+    let printer = JsonPrinter::new(0);
+
+    // Act
+    let document: Value = from_str(&printer.render(&[])).expect("valid json");
+
+    // Assert
+    assert_eq!(document["packages"].as_array().expect("array").len(), 0);
 }
 
 #[test]

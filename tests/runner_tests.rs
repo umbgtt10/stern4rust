@@ -11,6 +11,8 @@
 // code" reach a gate script as a pass.
 
 use clap::Parser;
+use serde_json::Value;
+use serde_json::from_str;
 use std::env;
 use std::fs;
 use std::path::Path;
@@ -274,6 +276,72 @@ fn run_over_the_whole_workspace_reports_the_stand_down_its_section_asks_for() {
     // Assert
     assert!(report.contains("test-free-source (skipped)"), "{report}");
     assert!(report.contains("rules_skipped=1"), "{report}");
+}
+
+// The JSON document is what a gate script reads, and until this test the only
+// thing joining the runner to the JSON printer was a line nothing exercised.
+// Removing that line passed all 696 tests: the printer had five tests of its
+// own and every one of them called the printer directly.
+#[test]
+fn run_reporting_in_json_carries_a_roster_for_each_package() {
+    // Arrange
+    let root = probe_workspace("json_rosters");
+    let manifest = root.join("Cargo.toml");
+
+    // Act
+    let (_, report) = Runner::run_reporting(args_from(&[
+        "cargo-stern4rust",
+        "--manifest-path",
+        &manifest.to_string_lossy(),
+        "--format",
+        "json",
+    ]))
+    .expect("the run itself should succeed");
+
+    // Assert
+    let document: Value = from_str(&report).expect("valid json");
+    let packages = document["packages"].as_array().expect("a packages array");
+    let named: Vec<&str> = packages
+        .iter()
+        .filter_map(|package| package["package"].as_str())
+        .collect();
+    assert_eq!(named, vec!["alpha", "beta"]);
+}
+
+// And the detail is the per-package one rather than the run-level aggregate
+// repeated, which is the difference a machine reading this needs.
+#[test]
+fn run_reporting_in_json_names_the_member_that_stood_a_rule_down() {
+    // Arrange
+    let root = probe_workspace("json_skip");
+    let manifest = root.join("Cargo.toml");
+
+    // Act
+    let (_, report) = Runner::run_reporting(args_from(&[
+        "cargo-stern4rust",
+        "--manifest-path",
+        &manifest.to_string_lossy(),
+        "--format",
+        "json",
+    ]))
+    .expect("the run itself should succeed");
+
+    // Assert
+    let document: Value = from_str(&report).expect("valid json");
+    let beta = document["packages"]
+        .as_array()
+        .expect("array")
+        .iter()
+        .find(|package| package["package"] == "beta")
+        .expect("beta");
+    assert_eq!(beta["rules_skipped"][0], "test-free-source");
+    let alpha = document["packages"]
+        .as_array()
+        .expect("array")
+        .iter()
+        .find(|package| package["package"] == "alpha")
+        .expect("alpha");
+    assert_eq!(alpha["rules_skipped"].as_array().expect("array").len(), 0);
 }
 
 // The roster and the summary describe the same run and must agree about it.

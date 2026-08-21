@@ -8,6 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **`--format json` carries a roster per package**, under a new `packages` key,
+  each with `rules_applied`, `rules_skipped` and `rules_unconfigured` — the last
+  as `{rule, requirement}` pairs, so a machine can tell a rule nobody asked for
+  from one that could not run. The run-level keys every gate script already
+  reads are untouched.
+
+  The text report gained per-package rosters in `0.9.5` and this did not, so for
+  one afternoon a gate script reading JSON got a different picture from a
+  developer reading the terminal — which is precisely what
+  [ADR-MachineReadableReport](docs/ADRs/ADR-MachineReadableReport.md) says this
+  printer must not do.
+
 - **`Runner::run_reporting`** — the same run, handing back what it would have
   printed. Both per-package bugs left the run perfectly `Ok` while the report
   contradicted itself, so every test asserting on the outcome was blind to them.

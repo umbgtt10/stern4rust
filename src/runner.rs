@@ -426,6 +426,7 @@ impl Runner {
             OutputFormat::Json => JsonPrinter::new(totals.files_scanned)
                 .with_threshold(threshold)
                 .with_rules(applied, skipped, unconfigured_names)
+                .with_package_rosters(rosters.to_vec())
                 .with_exclusions(excluded.excluded.clone())
                 .with_config_file(Self::shown(config))
                 .with_baseline(
