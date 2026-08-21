@@ -13,10 +13,12 @@
 use clap::Parser;
 use std::env;
 use std::fs;
+use std::path::Path;
 use std::path::PathBuf;
 use stern4rust::reporting::run_outcome::RunOutcome;
 use stern4rust::runner::Runner;
 use stern4rust::settings::args::Args;
+use stern4rust::settings::config_file::ConfigFile;
 
 const THIS_CRATE: &str = "cargo-stern4rust";
 
@@ -66,6 +68,62 @@ edition = \"2021\"
     path
 }
 
+// A real workspace, judged whole and judged one member at a time.
+//
+// Both bugs in the per-package configuration reached a release past a full unit
+// suite and nine green gates, because nothing here built a workspace and ran the
+// tool the way a person does. 0.9.3 made `--package <member>` an error in any
+// repository whose root config had sections; 0.9.4 fixed that and left a scoped
+// run reporting a rule as applied and skipped three lines apart. Unit tests on
+// the pieces guard the shapes now, but only this reaches the wiring.
+fn probe_workspace(name: &str) -> PathBuf {
+    let root = env::temp_dir().join(format!("stern4rust_ws_{name}"));
+    let _ = fs::remove_dir_all(&root);
+    for member in ["alpha", "beta"] {
+        fs::create_dir_all(root.join(member).join("src")).expect("create the member");
+        fs::write(
+            root.join(member).join("Cargo.toml"),
+            format!(
+                "[package]
+name = \"{member}\"
+version = \"0.1.0\"
+edition = \"2021\"
+"
+            ),
+        )
+        .expect("write the member manifest");
+        fs::write(
+            root.join(member).join("src/lib.rs"),
+            "pub mod widget;
+",
+        )
+        .expect("write the registry");
+        fs::write(
+            root.join(member).join("src/widget.rs"),
+            "pub struct Widget;
+",
+        )
+        .expect("write the module");
+    }
+    fs::write(
+        root.join("Cargo.toml"),
+        "[workspace]
+resolver = \"2\"
+members = [\"alpha\", \"beta\"]
+",
+    )
+    .expect("write the workspace manifest");
+    // A section for one member only, which is the arrangement both bugs needed.
+    fs::write(
+        root.join(ConfigFile::NAME),
+        "[package.beta]
+skip = [\"test-free-source\"]
+",
+    )
+    .expect("write the config");
+    root
+}
+
 fn run_with_header(name: &str, contents: &str) -> RunOutcome {
     let path = header_file(name, contents);
     Runner::run(args_from(&[
@@ -78,6 +136,22 @@ fn run_with_header(name: &str, contents: &str) -> RunOutcome {
         &path.to_string_lossy(),
     ]))
     .expect("the run itself should succeed")
+}
+
+fn run_workspace(root: &Path, package: Option<&str>) -> Result<RunOutcome, anyhow::Error> {
+    let manifest = root.join("Cargo.toml");
+    let mut parts = vec![
+        "cargo-stern4rust".to_string(),
+        "--manifest-path".to_string(),
+        manifest.to_string_lossy().into_owned(),
+    ];
+    if let Some(name) = package {
+        parts.push("--package".to_string());
+        parts.push(name.to_string());
+    }
+    Runner::run(args_from(
+        &parts.iter().map(String::as_str).collect::<Vec<_>>(),
+    ))
 }
 
 // A typo in a gate script must fail loudly rather than scan nothing and pass.
@@ -125,6 +199,70 @@ fn run_against_this_crate_with_its_own_header_is_clean() {
 
     // Assert
     assert_eq!(outcome, RunOutcome::Clean);
+}
+
+#[test]
+fn run_over_a_whole_workspace_with_a_section_succeeds() {
+    // Arrange
+    let root = probe_workspace("whole");
+
+    // Act
+    let result = run_workspace(&root, None);
+
+    // Assert
+    assert!(result.is_ok(), "{:?}", result.err());
+}
+
+// A section naming no member of the workspace is still an error, which is the
+// case the 0.9.4 fix had to keep while letting the two above through.
+#[test]
+fn run_over_a_workspace_whose_section_names_no_member_is_an_error() {
+    // Arrange
+    let root = probe_workspace("typo");
+    fs::write(
+        root.join(ConfigFile::NAME),
+        "[package.gamma]
+skip = [\"test-free-source\"]
+",
+    )
+    .expect("write the config");
+
+    // Act
+    let result = run_workspace(&root, None);
+
+    // Assert
+    let error = result.expect_err("a section naming no member must not pass");
+    assert!(format!("{error}").contains("gamma"));
+}
+
+// The 0.9.3 failure, in the invocation that hit it: scoping to the member with
+// no section left the section for the other one looking like a typo.
+#[test]
+fn run_scoped_to_a_member_without_a_section_succeeds() {
+    // Arrange
+    let root = probe_workspace("scoped_alpha");
+
+    // Act
+    let result = run_workspace(&root, Some("alpha"));
+
+    // Assert
+    assert!(
+        result.is_ok(),
+        "a section for another member must not fail this run: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn run_scoped_to_the_member_that_has_the_section_succeeds() {
+    // Arrange
+    let root = probe_workspace("scoped_beta");
+
+    // Act
+    let result = run_workspace(&root, Some("beta"));
+
+    // Assert
+    assert!(result.is_ok(), "{:?}", result.err());
 }
 
 // A switch that quietly matched nothing would look exactly like a switch that
