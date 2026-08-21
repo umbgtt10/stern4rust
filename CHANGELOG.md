@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.1] - 2026-08-21
+
+### Fixed
+
+- **`not(test)` gates code OUT of the test build, and is no longer read as
+  gating it in.** `test-free-source` counted a `test` identifier anywhere in a
+  `cfg` predicate, so `#[cfg(all(not(test), target_arch = "arm"))]` -- which
+  makes an item production-only -- was reported as test code living in the
+  source tree. The rule said so in as many words, claiming `not(test)` gated on
+  test "just as effectively".
+
+  The predicate is now read with its polarity: a `not` applies to the group
+  following it, that group is walked negated, and everything beside it keeps the
+  polarity it inherited. Double negation lands back on gating.
+
+  `any(test, ...)` is unchanged and still reported -- an item the tests can
+  select is the thing this rule exists to find.
+
+  Found in `etheram-embassy`, where `platform/common` guards its arm-only
+  allocator this way: eleven offences, nine of them against code that cannot
+  appear in a test build at all. The two that remain are a different shape --
+  `not(all(not(test), target_arch = "arm"))` really is satisfied under `test`,
+  and the fallback behind it returns a different answer to the tests than the
+  shipped build gets, which is exactly what the rule is for.
+
 ## [0.10.0] - 2026-08-21
 
 ### Fixed

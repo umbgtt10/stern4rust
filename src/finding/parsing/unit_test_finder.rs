@@ -94,8 +94,8 @@ impl UnitTestFinder {
         attr.path().is_ident("cfg_attr") && Self::mentions_test(attr)
     }
 
-    // A predicate rather than the literal text, since `any(test, ...)` and
-    // `not(test)` gate on test just as effectively.
+    // A predicate rather than the literal text, since `any(test, ...)` gates on
+    // test just as effectively.
     fn is_cfg_test(attr: &Attribute) -> bool {
         attr.path().is_ident("cfg") && Self::mentions_test(attr)
     }
@@ -112,15 +112,50 @@ impl UnitTestFinder {
     // feature named test rather than a test gate -- the string literal never
     // arrives as an Ident.
     fn mentions_test(attr: &Attribute) -> bool {
-        Self::has_test_ident(attr.meta.to_token_stream())
+        Self::has_test_ident(attr.meta.to_token_stream(), false)
     }
 
-    fn has_test_ident(stream: proc_macro2::TokenStream) -> bool {
-        stream.into_iter().any(|tree| match tree {
-            TokenTree::Ident(ident) => ident == "test",
-            TokenTree::Group(group) => Self::has_test_ident(group.stream()),
-            _ => false,
-        })
+    // Negation flips what a mention means, and reading the ident without the
+    // polarity around it gets the answer exactly backwards. `not(test)` gates an
+    // item OUT of the test build, which makes it production-only code -- the
+    // opposite of what this rule looks for.
+    //
+    // This used to count a `test` ident anywhere in the predicate, and said in
+    // as many words that `not(test)` gated on test "just as effectively".
+    // `etheram-embassy` guards its arm-only allocator with
+    // `#[cfg(all(not(test), target_arch = "arm"))]`, and every item behind one
+    // was reported as test code living in the source tree: eleven offences,
+    // none of them real, against code that cannot appear in a test build at all.
+    //
+    // A `not` applies to the group that follows it, so that group is walked with
+    // the polarity flipped while everything beside it keeps the polarity it
+    // inherited. Double negation therefore lands back on gating.
+    fn has_test_ident(stream: proc_macro2::TokenStream, negated: bool) -> bool {
+        let mut trees = stream.into_iter().peekable();
+        while let Some(tree) = trees.next() {
+            match tree {
+                TokenTree::Ident(ident) if ident == "not" => {
+                    if let Some(TokenTree::Group(group)) =
+                        trees.next_if(|next| matches!(next, TokenTree::Group(_)))
+                        && Self::has_test_ident(group.stream(), !negated)
+                    {
+                        return true;
+                    }
+                }
+                TokenTree::Ident(ident) => {
+                    if ident == "test" && !negated {
+                        return true;
+                    }
+                }
+                TokenTree::Group(group) => {
+                    if Self::has_test_ident(group.stream(), negated) {
+                        return true;
+                    }
+                }
+                _ => {}
+            }
+        }
+        false
     }
 
     // src/<path>.rs mirrors onto tests/<path>_tests.rs, which is the same

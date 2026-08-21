@@ -69,6 +69,19 @@ fn sites_names_a_test_function_with_its_identifier() {
     assert_eq!(found, ["the test function `checks_something`"]);
 }
 
+// The shape as it actually appears: the negation nested inside an `all`,
+// alongside a target predicate that has nothing to do with testing.
+#[test]
+fn sites_of_a_cfg_all_not_test_predicate_reports_nothing() {
+    // Arrange & Act
+    let found = sites(
+        "#[cfg(all(not(test), target_arch = \"arm\"))]\nstatic HEAP: Heap = Heap::empty();\n",
+    );
+
+    // Assert
+    assert!(found.is_empty(), "expected none, got {found:?}");
+}
+
 // any(test, ...) gates on test just as effectively as test alone.
 #[test]
 fn sites_of_a_cfg_any_test_predicate_reports_it() {
@@ -121,6 +134,41 @@ fn sites_of_a_cfg_feature_module_reports_nothing() {
 fn sites_of_a_cfg_feature_named_test_reports_nothing() {
     // Arrange & Act
     let found = sites("#[cfg(feature = \"test\")]\nmod extras {}\n");
+
+    // Assert
+    assert!(found.is_empty(), "expected none, got {found:?}");
+}
+
+// Negating the whole thing still gates the item out of the test build.
+#[test]
+fn sites_of_a_cfg_not_any_test_predicate_reports_nothing() {
+    // Arrange & Act
+    let found = sites("#[cfg(not(any(test, feature = \"extra\")))]\npub struct A;\n");
+
+    // Assert
+    assert!(found.is_empty(), "expected none, got {found:?}");
+}
+
+// A double negation is back to gating on test, and is still reported. Nobody
+// writes this, but a rule that reads negation has to read it consistently.
+#[test]
+fn sites_of_a_cfg_not_not_test_predicate_reports_it() {
+    // Arrange & Act
+    let found = sites("#[cfg(not(not(test)))]\nmod tests {}\n");
+
+    // Assert
+    assert_eq!(found.len(), 1);
+}
+
+// `not(test)` gates an item OUT of the test build, so it is production-only
+// code and the opposite of what this rule looks for. Found in
+// `etheram-embassy`, where `platform/common` guards its arm-only allocator
+// with `#[cfg(all(not(test), target_arch = \"arm\"))]` and every one of
+// those items was reported as test code living in the source tree.
+#[test]
+fn sites_of_a_cfg_not_test_predicate_reports_nothing() {
+    // Arrange & Act
+    let found = sites("#[cfg(not(test))]\npub struct A;\n");
 
     // Assert
     assert!(found.is_empty(), "expected none, got {found:?}");
