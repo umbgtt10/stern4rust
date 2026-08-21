@@ -5,9 +5,11 @@
 // The imports whose order rustfmt decides rather than the alphabet.
 //
 // rustfmt sorts `self`, `super` and `crate` ahead of every other path, and it
-// treats case as significant in opposite directions at the two levels: an
-// uppercase-initial crate goes behind every lowercase one, an uppercase-initial
-// segment later in a path goes ahead of its lowercase siblings.
+// treats case as significant -- in a direction that depends on the style
+// edition. 2021 sorts an uppercase-initial crate last and `from_str` ahead of
+// `Value`; 2024 does the opposite of both. The two disagree with each other, so
+// no single alphabet is right for both and standing down is the only answer
+// correct under either.
 //
 // None matches a plain alphabetic sort, and unlike every other
 // disagreement this tool can have with a formatter, this one has no resolution:
@@ -72,6 +74,99 @@ fn decides_order_of_a_pair_with_a_crate_path_is_true() {
 
     // Assert
     assert!(decides);
+}
+
+#[test]
+fn decides_order_of_a_path_extended_by_a_brace_group_is_true() {
+    // Arrange & Act
+    let decides = ImportPath::decides_order("use aaa::bbb;", "use aaa::bbb::{ccc, Ddd};");
+
+    // Assert
+    assert!(decides);
+}
+
+#[test]
+fn decides_order_of_a_path_extended_by_a_glob_is_true() {
+    // Arrange & Act
+    let decides = ImportPath::decides_order("use hhh::iii;", "use hhh::iii::*;");
+
+    // Assert
+    assert!(decides);
+}
+
+// A brace group broken across lines reaches the rule as its first line only,
+// so the text carries no closing `;` at all. It is still an extension.
+#[test]
+fn decides_order_of_a_path_extended_by_a_group_opened_on_the_line_is_true() {
+    // Arrange & Act
+    let decides = ImportPath::decides_order("use xxx::yyy;", "use xxx::yyy::{");
+
+    // Assert
+    assert!(decides);
+}
+
+// Not only uppercase extensions. Compared as written, `::` is 58 and the `;`
+// ending the shorter line is 59, so a plain sort demands the longer path first
+// whatever follows -- and rustfmt demands the shorter. Every extension is a
+// disagreement, so every extension stands down.
+#[test]
+fn decides_order_of_a_path_extended_by_a_lowercase_segment_is_true() {
+    // Arrange & Act
+    let decides = ImportPath::decides_order("use aaa::bbb;", "use aaa::bbb::ccc;");
+
+    // Assert
+    assert!(decides);
+}
+
+// The shape `zip` could not see. `alloc::vec` and `alloc::vec::Vec` share every
+// segment they have in common, so the search for a first difference found none
+// and the case check never ran. The difference is real -- it is between nothing
+// and `Vec` -- and rustfmt owns it.
+//
+// Measured against rustfmt at both style editions, because the two disagree
+// about almost everything else in this file: 2021 sorts an uppercase-initial
+// crate last and `from_str` ahead of `Value`, 2024 does the opposite of both.
+// On this one they agree, and the shorter path goes first either way.
+#[test]
+fn decides_order_of_a_path_extended_by_an_uppercase_segment_is_true() {
+    // Arrange & Act
+    let decides = ImportPath::decides_order("use alloc::vec;", "use alloc::vec::Vec;");
+
+    // Assert
+    assert!(decides);
+}
+
+#[test]
+fn decides_order_of_a_renamed_path_beside_a_longer_one_is_false() {
+    // Arrange & Act
+    let decides = ImportPath::decides_order("use ddd::eee as ggg;", "use ddd::eee::fff;");
+
+    // Assert
+    assert!(!decides);
+}
+
+// A rename is not an extension: `bbb as ccc` is one segment, not `bbb`
+// followed by another. rustfmt puts the rename first at both editions and the
+// text comparison already agrees, so this pair stays the alphabet's to judge --
+// standing down here would lose a check that works.
+#[test]
+fn decides_order_of_a_renamed_path_beside_its_bare_form_is_false() {
+    // Arrange & Act
+    let decides = ImportPath::decides_order("use aaa::bbb as ccc;", "use aaa::bbb;");
+
+    // Assert
+    assert!(!decides);
+}
+
+// Identical paths are not extensions of one another, and nothing about them
+// needs rustfmt.
+#[test]
+fn decides_order_of_two_identical_paths_is_false() {
+    // Arrange & Act
+    let decides = ImportPath::decides_order("use aaa::bbb;", "use aaa::bbb;");
+
+    // Assert
+    assert!(!decides);
 }
 
 #[test]

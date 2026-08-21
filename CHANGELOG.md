@@ -4,6 +4,47 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **`ordered-imports` and `test-file-structure` no longer demand an order
+  rustfmt will not write, for a path that extends another.**
+
+  `use alloc::vec;` beside `use alloc::vec::Vec;` was reported as out of order,
+  and could not be fixed: rustfmt writes the shorter path first, the rule
+  demanded the longer, and stage 1 runs the formatter. Each run undid the last.
+
+  The stand-down that exists for exactly this reason was not firing. It looks
+  for the first pair of segments that differ, and here there is no such pair --
+  the difference is between a segment and nothing at all, which `zip` cannot
+  see. Compared as written the shorter line ends in `;` (59) where the longer
+  carries on with `::` (58), so a plain sort demands the longer path first
+  whatever follows. Every extension disagreed, not only the uppercase ones.
+
+  Measured against rustfmt at both style editions before choosing the fix,
+  because they disagree with each other about the rest of this: 2021 sorts an
+  uppercase-initial crate last and `from_str` ahead of `Value`, 2024 does the
+  opposite of both. On an extended path they agree -- shorter first -- for
+  uppercase, lowercase, brace groups, globs and groups broken across lines.
+
+  A rename is not an extension. `use aaa::bbb as ccc;` is one segment rather
+  than two, rustfmt puts it ahead of `use aaa::bbb;` at both editions, and the
+  existing comparison already agrees -- so that pair still answers to the
+  alphabet. Standing down there would have lost a check that works.
+
+  Found by `etheram-raft`, where it accounted for ten of twenty-nine remaining
+  offences and no edit could clear them.
+
+### Changed
+
+- **`ImportPath`'s note on rustfmt's case handling was wrong for every
+  edition.** It described 2021's rule for an uppercase crate and 2024's for an
+  uppercase segment, so it matched neither as a whole. It now states both and
+  gives the real argument for standing down: the editions disagree, this crate
+  cannot know which one the code under inspection compiles with, and declining
+  to judge is the only answer correct under either.
+
 ## [0.9.1] - 2026-08-20
 
 ### Changed
