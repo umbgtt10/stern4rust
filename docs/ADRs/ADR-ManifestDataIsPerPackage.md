@@ -113,7 +113,9 @@ minor version with the changelog saying so plainly.
 its aggregate is less wrong — it reads every member's manifest already, because
 its question is about the workspace. What changes is that it is asked once per
 package rather than once per run, which is what makes the deduplication in the
-runner necessary rather than incidental.
+runner necessary rather than incidental. That deduplication is scoped to one
+package: across members, two identical offences are two files sharing a
+package-relative path, and 0.10.2 fixes the run that collapsed them.
 
 **It is a prerequisite for
 [ADR-PerPackageConfiguration](ADR-PerPackageConfiguration.md), not a

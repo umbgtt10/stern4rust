@@ -3,6 +3,25 @@
 What `cargo-stern4rust` does today. Anything not listed here is not built, and
 the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
+## Version 0.10.2
+
+### Reporting
+
+- A workspace run counts every member's offences. Deduplication is per package
+  rather than per run, so two members sharing a package-relative path -- and in
+  a large workspace they nearly all share `src/lib.rs` and `tests/all_tests.rs`
+  -- no longer lose the second finding. Found in `etheram-embassy`: 390
+  offences reported as 364, across four rules.
+
+## Version 0.10.1
+
+### Rules
+
+- `test-free-source` reads a `cfg` predicate with its polarity. `not(test)`
+  gates an item out of the test build, making it production-only, and is no
+  longer reported as test code in the source tree. `any(test, ...)` is
+  unchanged. [R005](ADRs/R005-ADR-TestFreeSourceRule.md)
+
 ## Version 0.10.0
 
 ### Discoverability
@@ -102,9 +121,12 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
 ### Reporting
 
-- Offences are deduplicated by content. The workspace question is asked once per
-  package root, so a rule whose subject is the workspace rather than the package
-  stated each finding once per member -- 36 where there were 6.
+- Offences are deduplicated by content, per package. The workspace question is
+  asked once per package root, so a rule whose subject is the workspace rather
+  than the package stated each finding once per member -- 36 where there were 6.
+  Per package rather than per run because a path is relative to its package: two
+  members' `src/lib.rs` are two files with one name, and collapsing across the
+  run discarded the second.
 - An unconfigured rule now reads `(not configured)` rather than
   `(needs --header-file)`. Two rules can go unconfigured, and the header rule is
   not what the other is waiting on.
@@ -359,7 +381,7 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
 ### Project
 
-- 716 tests, one test file per source file, `autotests = false` with a single
+- 722 tests, one test file per source file, `autotests = false` with a single
   `[[test]] all_tests`.
 - Two gates: stage 1 (fmt, clippy `-D warnings`, tests), stage 2 (`crap4rust`,
   `twin4rust`, `iceberg4rust`, and stern4rust against its own tree, built from
