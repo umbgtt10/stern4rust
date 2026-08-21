@@ -129,8 +129,10 @@ are built from.
 
 **Every trait method is now written out in every implementor**, including the
 ones whose answer is "nothing". That is the point, and it is also the cost: this
-repository carries 27 lines it did not carry before, and each new rule will
-write four methods to answer what used to take one.
+repository carries 27 lines it did not carry before, and each new rule writes
+out every method to answer what used to take one. The trait stood at four
+methods when this was decided and stands at six now; `requirement` and
+`explanation` were each added on the same terms.
 
 **A trait with many implementors is expensive to extend.** Adding a method to
 `Rule` now breaks every rule at once rather than compiling silently. This

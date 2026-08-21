@@ -49,11 +49,13 @@ happened to return files in.
 | `SourceWalker` | every `.rs` path under a root, minus `target/` and `.git/` |
 | `SourceReader` | path → `SourceFile`, or an `Offence` if it cannot be read |
 | `SourceFile` | normalised contents: BOM stripped, `\r` stripped, path forward-slashed |
-| `Rule` | the seam: `name`, `check` for one file, `check_workspace` for the set, `is_configured`. No method has a default body, so every rule answers all four |
+| `Rule` | the seam: `name`, `check` for one file, `check_workspace` for the set, `is_configured`, `requirement` for why it could not run, `explanation` for what it wants. No method has a default body, so every rule answers all six |
 | `RuleRegistry` | the one place that knows which rules exist |
 | `Offence` | the currency every rule reports in |
 | `OffenceThreshold` | how much of the report is printed |
-| `ReportPrinter` / `JsonPrinter` | the two renderings |
+| `ReportPrinter` / `JsonPrinter` | the two renderings of a run |
+| `RuleExplanation` | what one rule wants, in the rule's own words |
+| `RuleListing` | the rule set as a document, in either format -- no run behind it |
 | `RunOutcome` | clean or rules-broken, turned into an exit code only by `main` |
 
 `src/finding/` is grouped into `model/` (what a rule reasons about) and
@@ -105,8 +107,10 @@ offences — there is no "expected text" for a missing folder.
 
 ## Adding a rule
 
-1. a file under `src/rules/<group>/`, implementing `Rule` — all four methods,
-   since none of them has a default body. The groups are `source/`, `layout/`,
+1. a file under `src/rules/<group>/`, implementing `Rule` — all six methods,
+   since none of them has a default body. That includes `explanation`, so a
+   rule cannot join the set without saying what it wants and what breaking it
+   looks like. The groups are `source/`, `layout/`,
    `testing/` and `manifest/`; `tests/rules/` mirrors them exactly
 2. a `pub mod` line in that group's `mod.rs`
 3. an import and one entry in `RuleRegistry::all`, the single list both
@@ -143,9 +147,15 @@ Windows working copy.
 "rule broken" rather than "tool failed", which is what keeps the whole run
 reachable from a test without a process boundary.
 
+`--rules` is the one path that returns before the pipeline above runs at all:
+nothing is walked, read or judged, so it works in a checkout with no manifest
+worth reading and cannot fail the way a run can.
+
 ## Related
 
 - [RULES.md](RULES.md) — what each rule requires, and what it does not catch
 - [ADRs/](ADRs/README.md) — the load-bearing decisions, `R` for rules
 - [ADR-MachineReadableReport](ADRs/ADR-MachineReadableReport.md) — the report's shape
 - [ADR-ExitCodeContract](ADRs/ADR-ExitCodeContract.md) — `0` / `1` / `2`
+- [ADR-RulesExplainThemselves](ADRs/ADR-RulesExplainThemselves.md) — why the
+  explanation lives on the rule

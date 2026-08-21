@@ -198,8 +198,8 @@ a source file, an unparseable file, and **the string literal holding markers**.
 merged form, trailing prose in all three punctuations, the word boundary, an
 ordinary comment, and a line of code.
 
-Stage 2 runs the tool against this crate at zero offences, over roughly 500 tests
-including the string-literal fixtures this rule had to learn to ignore.
+Stage 2 runs the tool against this crate at zero offences, over the whole test
+suite including the string-literal fixtures this rule had to learn to ignore.
 
 ## Related
 

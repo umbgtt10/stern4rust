@@ -3,6 +3,35 @@
 What `cargo-stern4rust` does today. Anything not listed here is not built, and
 the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
+## Version 0.10.0
+
+### Discoverability
+
+- **`--rules`** lists every rule with a line saying what it wants, a scrap of
+  source that breaks it and the same scrap put right, then exits without
+  scanning. All twenty-one, in registry order, so the listing reads in the same
+  order as the roster a report prints. Honours `--format`, so the same listing
+  is available as JSON. Nothing is walked, read or judged, so it works in a
+  checkout with no manifest worth reading and always exits clean.
+  [ADR-RulesExplainThemselves](ADRs/ADR-RulesExplainThemselves.md)
+- Every rule the registry can hold is listed, including the two that stay out
+  of an ordinary run until configured -- `header` and `spdx-matches-manifest`.
+  A listing missing a rule reads as a tool that does not have it.
+- `--manifest-path` and `--package` carry help text. They were the only two
+  flags printing an empty description.
+
+### Rules
+
+- **`imported-paths` names the primitives instead of guessing at them.**
+  `u64::from_le_bytes` was reported with the correction `use
+  u64::from_le_bytes;`, which does not compile at all. `u8` through `u128`, the
+  signed and pointer-sized forms, `f32`, `f64`, `bool`, `char` and `str`,
+  matched whole. [R008](ADRs/R008-ADR-ImportedPathsRule.md)
+- **`ordered-imports` reads case as a shape rather than as a first letter.**
+  `WAL_V2_MAGIC` beside `WalRecord` both open with a capital and the two style
+  editions order them oppositely, so the pair stands down like every other
+  cross-case pair. [R019](ADRs/R019-ADR-OrderedImportsRule.md)
+
 ## Version 0.9.1
 
 ### Rules
@@ -143,10 +172,13 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
 ### Trait surface
 
-- `Rule` has no default bodies. Every rule answers all four questions in its own
-  file, including the answers that are "nothing" -- 27 bodies, so that a rule's
-  file says which question it is about instead of leaving it to be inferred from
-  an absence.
+- `Rule` has no default bodies. Every rule answers all six questions in its own
+  file -- `name`, `check`, `check_workspace`, `is_configured`, `requirement`
+  and `explanation` -- including the answers that are "nothing", so that a
+  rule's file says which question it is about instead of leaving it to be
+  inferred from an absence. It began at four methods and 27 such bodies; each
+  method added since has been added the same way, breaking every rule at once
+  rather than compiling silently.
 - `Rule::is_configured` is answered explicitly by every rule. Its old default of
   `true` meant a new rule was configured because nobody said otherwise, which is
   the silent pass this tool exists to catch.
@@ -327,10 +359,10 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
 ### Project
 
-- 679 tests, one test file per source file, `autotests = false` with a single
+- 716 tests, one test file per source file, `autotests = false` with a single
   `[[test]] all_tests`.
 - Two gates: stage 1 (fmt, clippy `-D warnings`, tests), stage 2 (`crap4rust`,
   `twin4rust`, `iceberg4rust`, and stern4rust against its own tree, built from
   source rather than from whatever is installed).
 - Self-gating: a rule that would fail this repository cannot be merged into it.
-- Thirty-two ADRs — twenty-one `R` rule ADRs, eleven unnumbered.
+- Thirty-three ADRs — twenty-one `R` rule ADRs, twelve unnumbered.

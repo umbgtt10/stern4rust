@@ -32,10 +32,12 @@ moment nobody is checking.
 
 ## Current Baseline
 
-Twenty-one rules, two output formats, autofix, baselines, exclusions and a config
-file. Every planned phase has shipped or been decided, and what each built is in
-[IMPLEMENTED-FEATURES.md](IMPLEMENTED-FEATURES.md). 625 tests, both gates green, and the tool runs against its own tree on
-every build with zero offences.
+Twenty-one rules, two output formats, autofix, baselines, exclusions, a config
+file, and `--rules` to say what each rule wants without a codebase to ask
+against. Every planned phase has shipped or been decided, and what each built is
+in [IMPLEMENTED-FEATURES.md](IMPLEMENTED-FEATURES.md). 716 tests, both gates
+green, and the tool runs against its own tree on every build with zero
+offences.
 
 ## What is left
 
@@ -44,10 +46,19 @@ has shipped in full, the library surface is decided, and every remaining gap is
 a limit with no structural answer -- collected in
 [OPEN_POINTS.md](OPEN_POINTS.md).
 
-What remains is not a feature. **This tool is finished and unapplied**: it
-reports 815 offences across the seven sibling repositories and zero against
-itself. `slotgate` at 17 and `etheram-core` at 25 are the plausible first ones,
-and `--rule` exists so a repository can take one rule at a time.
+What remains is not a feature but adoption, and that has started.
+`etheram-core`, `etheram-raft` and `etheram-ibft` each carry a
+`stern4rust.toml` and gate on it. `etheram-ibft` was the hard one -- roughly
+1,950 offences taken down to a tail that needs decisions rather than edits --
+and it is where both of the `0.10.0` rule fixes came from: a codebase large
+enough to contain the shapes this crate's own tree never had.
+
+Deliberately no count here. The previous revision of this file named one, and
+it was wrong within a release -- a snapshot of somebody else's tree goes stale
+the moment they touch it, and a roadmap that has to be re-measured to stay true
+is not stating direction. `--rule` exists so a repository can take one rule at
+a time, and `--baseline` so it can take none of them today and no more of them
+tomorrow.
 
 ## Deferred Ideas
 
@@ -64,8 +75,9 @@ and `--rule` exists so a repository can take one rule at a time.
 
 A repository that runs `cargo stern4rust` in its gate and stays green, where the
 conventions hold because the build enforces them rather than because somebody
-remembered. The six sibling tools are the first test of that, and none of them
-passes yet.
+remembered. Three repositories now do. The sibling tools -- `crap4rust`,
+`grip4rust`, `iceberg4rust`, `twin4rust`, `slotgate` -- are the remaining test
+of it, and none of them passes yet.
 
 ## Revision Policy
 

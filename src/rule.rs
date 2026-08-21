@@ -15,7 +15,7 @@ use crate::source_file::SourceFile;
 // source without a workspace behind it.
 //
 // Nothing declared here has a body, and that is the point. Every rule answers
-// all four questions in its own file, including the answers that are "nothing".
+// all six questions in its own file, including the answers that are "nothing".
 //
 // Defaults used to spare a rule from saying so, and what they cost was the
 // ability to read a rule and know what it does. A file with no `check` meant
