@@ -150,6 +150,49 @@ rather than merging, because `--rule header` meaning "header *plus* whatever the
 file selected" would be the opposite of what naming one rule means everywhere
 else here.
 
+### A workspace, in one file
+
+A workspace whose members want different rules says so in a section each, and is
+judged in one call:
+
+```toml
+header-file = "docs/header.txt"
+
+[package.validation]
+skip = ["paired-test-file"]
+
+[package.system-tests]
+skip    = ["paired-test-file"]
+exclude = ["**/generated/**"]
+```
+
+A package with nothing to say needs no section. **Precedence runs command line,
+package, root, default**, and each level replaces the one below rather than
+adding to it — a package that says `skip = [...]` states its whole skip list.
+
+`baseline` and `offence-threshold` are not keys a section has: a baseline is a
+set of fingerprints for one run and the threshold is about how the report ends,
+so neither is a property of a package. A section naming a package the run does
+not scan is an error, for the reason a misspelled `--rule` is — it reads as a
+rule set being applied.
+
+**The report says which rules ran against which package**, and states one roster
+where they all agree, so a single-package run reads exactly as it always has:
+
+```text
+  node:
+  applied: readable-source, arrange-act-assert, ...
+  validation:
+  applied: readable-source, arrange-act-assert, ...
+  not applied: paired-test-file (skipped)
+summary: files_scanned=250 ... rules_applied=20 rules_skipped=1
+```
+
+The `summary:` line answers for the run as a whole and understates on purpose:
+`rules_skipped=1` where one package of four stood a rule down is true and
+coarse, and the blocks above it carry the detail. See
+[ADR-PerPackageConfiguration](docs/ADRs/ADR-PerPackageConfiguration.md).
+
 An unknown key is an error, not a silently ignored line: a misspelled `exclude`
 that quietly did nothing would look exactly like one that worked. A file that
 exists and cannot be parsed is an error too — it was written on purpose, and

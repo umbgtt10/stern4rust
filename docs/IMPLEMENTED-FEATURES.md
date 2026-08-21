@@ -314,12 +314,23 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
   `cargo stern4rust`.
 - `Args::without_cargo_subcommand` — the argv fixup every cargo subcommand
   needs, conditional and positional, so a package named `stern4rust` survives.
+- `[package.<name>]` sections — one `stern4rust.toml` at a workspace root
+  configures every member and one call judges them all. Precedence runs command
+  line, package, root, default, replacing rather than merging; `baseline` and
+  `offence-threshold` are root-only; a section naming no scanned package is an
+  error.
+- Manifest data resolved per package — the licence and the dependency list come
+  from the package being walked rather than once for the run, which is what lets
+  `spdx-matches-manifest` apply to a workspace at all.
+- A roster per package in the report, stated once where they agree so an
+  ordinary run is unchanged, and a block each where they differ.
 
 ### Project
 
-- 265 tests, one test file per source file, `autotests = false` with a single
+- 679 tests, one test file per source file, `autotests = false` with a single
   `[[test]] all_tests`.
 - Two gates: stage 1 (fmt, clippy `-D warnings`, tests), stage 2 (`crap4rust`,
-  `twin4rust`, `iceberg4rust`, and stern4rust against its own tree).
+  `twin4rust`, `iceberg4rust`, and stern4rust against its own tree, built from
+  source rather than from whatever is installed).
 - Self-gating: a rule that would fail this repository cannot be merged into it.
-- Ten ADRs — five `R` rule ADRs, five unnumbered.
+- Thirty-two ADRs — twenty-one `R` rule ADRs, eleven unnumbered.
