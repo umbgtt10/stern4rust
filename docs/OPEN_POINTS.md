@@ -129,13 +129,74 @@ and no file in those 168 lines happened to contain such a pair. Adding one while
 fixing `imported-paths` produced a file no edit could make green. The decision is
 now made per pair.
 
-Worth recording from measuring rustfmt to fix it, because it is not what anyone
-would guess: **case is significant in opposite directions at the two levels.** An
-uppercase-initial crate sorts behind every lowercase one (`Bbb::gamma` after
-`zzz::last`); an uppercase-initial segment later in a path sorts ahead of its
-lowercase siblings (`serde_json::Value` before `serde_json::from_str`). Also,
-`cargo fmt` and a standalone `rustfmt <file>` disagree here -- only `cargo fmt`
-matters, since that is what the gate runs.
+A second stand-down was added later, for a path that *extends* another rather
+than diverging from it: `use alloc::vec;` beside `use alloc::vec::Vec;`. The
+first version could not see it, because it looked for the first pair of segments
+that differ and there is no such pair -- the difference is between a segment and
+nothing at all. Compared as written, the shorter line ends in `;` (59) where the
+longer carries on with `::` (58), so a plain sort demands the longer path first
+whatever follows it, and rustfmt demands the shorter. Every extension disagreed,
+not only the uppercase ones. Found in `etheram-raft`, where it accounted for ten
+offences no edit could clear.
+
+Worth recording from measuring rustfmt, because it is not what anyone would
+guess: **which direction case leans depends on the style edition, and the two
+editions disagree with each other.**
+
+|                                        | 2021        | 2024        |
+|----------------------------------------|-------------|-------------|
+| `Bbb::gamma` against `zzz::last`        | sorts last  | sorts first |
+| `serde_json::Value` against `from_str`  | `from_str`  | `Value`     |
+
+An earlier version of this note stated 2021's rule for a crate and 2024's for a
+segment, so it described neither edition as a whole. That is the real argument
+for standing down rather than picking a side: this crate cannot know which
+edition the code under inspection compiles with, and declining to judge is the
+only answer correct under either. On an extended path they agree -- shorter
+first -- which is why that case could be settled rather than merely reported.
+
+Also, `cargo fmt` and a standalone `rustfmt <file>` disagree here -- only
+`cargo fmt` matters, since that is what the gate runs.
+
+## Imports are sorted but never packed
+
+Nothing asks that two imports from the same module become one statement.
+`raft_bootstrapper.rs` in `etheram-raft` opens with six consecutive
+`use faction::...;` lines and seven consecutive `use crate::bootstrapping::...;`
+lines, and every rule here is satisfied.
+
+**Nothing packs them because on stable rustfmt nothing can.**
+`imports_granularity` and `group_imports` are nightly-only; the stable default is
+`Preserve`, which sorts what is written and never merges or splits an import
+tree. Switching the gate to a nightly `cargo fmt` for this would make stage 1
+depend on a nightly toolchain for something cosmetic, which is the wrong trade.
+
+**A rule is viable precisely because of `Preserve`.** Measured on stable rustfmt
+1.8.0: a hand-written `use faction::{command::Command, conclusion::Conclusion};`
+comes back untouched. rustfmt will not undo packing, so unlike the ordering
+disagreements above this one has a resolution -- and it is auto-fixable, which
+`ordered-imports` deliberately is not.
+
+Three things such a rule has to get right, all of them measured rather than
+assumed:
+
+- **`self` in a brace group does not carry the macro namespace.** Packing
+  `use alloc::vec;` and `use alloc::vec::Vec;` into `use alloc::vec::{self, Vec};`
+  compiles the import and then fails the build: `vec![]` is no longer in scope.
+  This is exactly the merge a naive same-module packer produces, and it broke
+  `etheram-raft` when tried. A module imported for its macro cannot be packed
+  with its own children.
+- **rustfmt sorts inside the braces, by the edition's rule.**
+  `use crate::a::{B, c};` comes back as `{c, B}` under edition 2021 and stays
+  `{B, c}` under 2024. So the rule may ask that the braces exist; it must not
+  also ask what order they hold, or it reopens the disagreement above.
+- **Packing dissolves the extension pairs.** `use alloc::vec;` beside
+  `use alloc::vec::Vec;` is the shape that forced the second stand-down. Where
+  packing is possible it removes the pair; where it is not -- the macro case --
+  the stand-down is still what keeps the file satisfiable.
+
+The gap this leaves today is a file whose import list is correct by every rule
+and still reads as one line per symbol.
 
 ## `imported-paths` tells a module from a type by case
 
