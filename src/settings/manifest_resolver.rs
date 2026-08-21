@@ -28,6 +28,18 @@ pub struct ManifestResolver;
 impl ManifestResolver {
     pub const MANIFEST: &'static str = "Cargo.toml";
 
+    // Every package in the workspace, whether this run walks it or not. What a
+    // `[package.<name>]` section is checked against: a section for a member this
+    // run is not scanning is ordinary, one for a member that does not exist is a
+    // typo.
+    pub fn workspace_package_names(config: &Config) -> Result<Vec<String>> {
+        Ok(Self::metadata(config)?
+            .packages
+            .iter()
+            .map(|package| package.name.to_string())
+            .collect())
+    }
+
     // Every package the run will walk, each carrying what its own manifest says
     // about it.
     //

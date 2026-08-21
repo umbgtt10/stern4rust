@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **`--package` no longer errors in a repository whose config has sections.**
+  `0.9.3` checked each `[package.<name>]` section against the packages the run
+  was *walking*, so scoping a run to one member made every section for the
+  others look like a typo — and scoping a run to one member is an ordinary thing
+  to do. Sections are checked against the workspace now. Only a name no member
+  carries is an error.
+
 ## [0.9.3] - 2026-08-21
 
 ### Added

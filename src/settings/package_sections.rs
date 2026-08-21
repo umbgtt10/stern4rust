@@ -8,7 +8,6 @@ use std::path::Path;
 
 use crate::settings::config_file::ConfigFile;
 use crate::settings::package_config::PackageConfig;
-use crate::settings::scanned_package::ScannedPackage;
 
 // The `[package.<name>]` sections of the root `stern4rust.toml`, and the two
 // questions asked of them: which section applies to the package about to be
@@ -66,29 +65,30 @@ impl PackageSections {
         self.sections.is_empty()
     }
 
-    // A section naming no package this run scans is an error, for the reason a
-    // misspelled `--rule` name is: it reads as a rule set being applied.
-    // `deny_unknown_fields` cannot catch it, because the section name is data
+    // A section naming no package in the *workspace* is an error, for the reason
+    // a misspelled `--rule` name is: it reads as a rule set being applied, and
+    // `deny_unknown_fields` cannot catch it because the section name is data
     // rather than a key.
-    pub fn validate(&self, packages: &[ScannedPackage]) -> Result<()> {
-        let scanned: Vec<&str> = packages
-            .iter()
-            .map(|package| package.name.as_str())
-            .collect();
+    //
+    // The workspace, not the scan. Scoping a run to one package is an ordinary
+    // thing to do, and the sections for the others are not typos -- checking
+    // against the scan made `--package node` an error in any repository whose
+    // root config had sections, which is every repository this exists for.
+    pub fn validate(&self, workspace: &[&str]) -> Result<()> {
         let unknown: Vec<&str> = self
             .sections
             .keys()
             .map(String::as_str)
-            .filter(|name| !scanned.contains(name))
+            .filter(|name| !workspace.contains(name))
             .collect();
         if unknown.is_empty() {
             return Ok(());
         }
         Err(anyhow::anyhow!(
-            "{} configures package(s) this run does not scan: {} -- it scans: {}",
+            "{} configures package(s) that are not in this workspace: {} -- it holds: {}",
             ConfigFile::NAME,
             unknown.join(", "),
-            scanned.join(", ")
+            workspace.join(", ")
         ))
     }
 }

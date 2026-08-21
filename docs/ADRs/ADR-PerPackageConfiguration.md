@@ -108,6 +108,13 @@ A section for a package that is not in the workspace is that same failure wearin
 a different hat, and it is the more dangerous one: it reads as a rule set being
 applied.
 
+**The workspace, not the scan.** The first implementation checked sections
+against the packages the run was walking, which made `cargo stern4rust --package
+node` an error in any repository whose root config had sections — that is, every
+repository this decision exists for. Scoping a run to one member is an ordinary
+thing to do, and the sections for the others are not typos. Only a name no
+member carries is.
+
 ### The report becomes per package
 
 This is the part that costs something. Today the report carries one `applied:`

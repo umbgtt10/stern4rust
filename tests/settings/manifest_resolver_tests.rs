@@ -156,3 +156,34 @@ fn workspace_dependencies_of_a_package_that_is_not_a_workspace_is_none() {
     // Assert
     assert!(declared.is_none());
 }
+
+// What a `[package.<name>]` section is checked against. The workspace rather
+// than the scan: a section for a member this run is not looking at is ordinary,
+// and only one for a member that does not exist is a typo.
+#[test]
+fn workspace_package_names_includes_this_crate() {
+    // Arrange
+    let config = config_for(&[]);
+
+    // Act
+    let names = ManifestResolver::workspace_package_names(&config).expect("read the workspace");
+
+    // Assert
+    assert!(names.contains(&"cargo-stern4rust".to_string()));
+}
+
+// Scoping the run must not narrow the answer, or `--package X` would make every
+// section for another member look like a typo.
+#[test]
+fn workspace_package_names_is_unchanged_by_scoping_the_run() {
+    // Arrange
+    let scoped = config_for(&["cargo-stern4rust"]);
+    let unscoped = config_for(&[]);
+
+    // Act
+    let from_scoped = ManifestResolver::workspace_package_names(&scoped).expect("scoped");
+    let from_unscoped = ManifestResolver::workspace_package_names(&unscoped).expect("unscoped");
+
+    // Assert
+    assert_eq!(from_scoped, from_unscoped);
+}

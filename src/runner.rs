@@ -63,7 +63,8 @@ impl Runner {
             ..config
         };
         let packages = ManifestResolver::packages(&config)?;
-        sections.validate(&packages)?;
+        let workspace = ManifestResolver::workspace_package_names(&config)?;
+        sections.validate(&workspace.iter().map(String::as_str).collect::<Vec<_>>())?;
         // What the report answers for. A rule that stood down for any package
         // did not apply to this run, so the licence stated here is the one every
         // scanned package agrees on and nothing otherwise. Checking is per

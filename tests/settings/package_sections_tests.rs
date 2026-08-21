@@ -11,17 +11,8 @@
 // because the section name is data rather than a key.
 
 use std::collections::BTreeMap;
-use std::path::PathBuf;
 use stern4rust::settings::package_config::PackageConfig;
 use stern4rust::settings::package_sections::PackageSections;
-use stern4rust::settings::scanned_package::ScannedPackage;
-
-fn scanned(names: &[&str]) -> Vec<ScannedPackage> {
-    names
-        .iter()
-        .map(|name| ScannedPackage::new(name, PathBuf::from(*name), None))
-        .collect()
-}
 
 fn sections(names: &[&str]) -> PackageSections {
     PackageSections::new(
@@ -135,7 +126,7 @@ fn validate_names_the_packages_the_run_does_scan() {
     let sections = sections(&["nope"]);
 
     // Act
-    let result = sections.validate(&scanned(&["node", "validation"]));
+    let result = sections.validate(&["node", "validation"][..]);
 
     // Assert
     let error = format!("{}", result.expect_err("an error"));
@@ -143,19 +134,22 @@ fn validate_names_the_packages_the_run_does_scan() {
     assert!(error.contains("validation"));
 }
 
-// Scoping a run to one package leaves the others unscanned, and a section for a
-// package that exists but is not being looked at is still a rule set applying to
-// nothing.
+// Scoping a run to one package is an ordinary thing to do -- a developer
+// checking one crate, a gate that wants one -- and the sections for the others
+// are not typos. Validating against the scan rather than the workspace made
+// `--package node` an error in any repository whose root config had sections,
+// which is every repository this feature was built for.
 #[test]
-fn validate_of_a_section_for_a_package_outside_this_run_is_an_error() {
-    // Arrange
+fn validate_of_a_section_for_a_workspace_package_outside_this_run_is_ok() {
+    // Arrange -- system-tests is in the workspace; this run just is not looking
+    // at it.
     let sections = sections(&["system-tests"]);
 
     // Act
-    let result = sections.validate(&scanned(&["node"]));
+    let result = sections.validate(&["node", "system-tests"][..]);
 
     // Assert
-    assert!(result.is_err());
+    assert!(result.is_ok());
 }
 
 // The failure this type exists for.
@@ -165,7 +159,7 @@ fn validate_where_a_section_names_no_scanned_package_is_an_error() {
     let sections = sections(&["validaton"]);
 
     // Act
-    let result = sections.validate(&scanned(&["node", "validation"]));
+    let result = sections.validate(&["node", "validation"][..]);
 
     // Assert
     let error = result.expect_err("a section naming nothing must not pass");
@@ -178,7 +172,7 @@ fn validate_where_every_section_names_a_scanned_package_is_ok() {
     let sections = sections(&["node", "validation"]);
 
     // Act
-    let result = sections.validate(&scanned(&["node", "node-infra", "validation"]));
+    let result = sections.validate(&["node", "node-infra", "validation"][..]);
 
     // Assert
     assert!(result.is_ok());
