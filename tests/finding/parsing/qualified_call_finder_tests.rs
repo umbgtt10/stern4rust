@@ -45,6 +45,58 @@ fn find_ignores_a_macro_invocation() {
     assert!(paths.is_empty(), "expected none, got {paths:?}");
 }
 
+// A module whose name merely starts like a primitive is still a module.
+#[test]
+fn find_of_a_call_qualified_by_a_module_named_like_a_primitive_returns_the_path() {
+    // Arrange & Act
+    let paths = paths(
+        "fn outer() {
+    let _ = u64_helpers::decode([0; 8]);
+}
+",
+    );
+
+    // Assert
+    assert_eq!(paths, ["u64_helpers::decode"]);
+}
+
+#[test]
+fn find_of_a_call_qualified_by_a_non_integer_primitive_returns_nothing() {
+    // Arrange & Act
+    let paths: Vec<String> = ["f32", "f64", "bool", "char", "str"]
+        .iter()
+        .flat_map(|name| {
+            paths(&format!(
+                "fn outer() {{
+    let _ = {name}::from_str(\"\");
+}}
+"
+            ))
+        })
+        .collect();
+
+    // Assert
+    assert!(paths.is_empty(), "expected none, got {paths:?}");
+}
+
+// A primitive is a type, and the case convention cannot see that: `u64` opens
+// lowercase, so it read as a module and the correction offered was
+// `use u64::from_le_bytes;` -- which is not Rust. The names are fixed by the
+// language rather than guessed at, so this one lowercase set can be known.
+#[test]
+fn find_of_a_call_qualified_by_a_primitive_type_returns_nothing() {
+    // Arrange & Act
+    let paths = paths(
+        "fn outer() {
+    let _ = u64::from_le_bytes([0; 8]);
+}
+",
+    );
+
+    // Assert
+    assert!(paths.is_empty(), "expected none, got {paths:?}");
+}
+
 // One imported segment is the idiomatic form and states where the function
 // came from at the call site.
 #[test]
@@ -63,6 +115,27 @@ fn find_of_a_call_qualified_by_an_unimported_crate_returns_it() {
 
     // Assert
     assert_eq!(paths, ["syn::parse_file"]);
+}
+
+#[test]
+fn find_of_a_call_qualified_by_each_integer_primitive_returns_nothing() {
+    // Arrange & Act
+    let paths: Vec<String> = [
+        "u8", "u16", "u32", "u64", "u128", "usize", "i8", "i16", "i32", "i64", "i128", "isize",
+    ]
+    .iter()
+    .flat_map(|name| {
+        paths(&format!(
+            "fn outer() {{
+    let _ = {name}::from_le_bytes([0; 8]);
+}}
+"
+        ))
+    })
+    .collect();
+
+    // Assert
+    assert!(paths.is_empty(), "expected none, got {paths:?}");
 }
 
 #[test]

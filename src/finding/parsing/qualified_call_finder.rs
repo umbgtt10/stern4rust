@@ -105,7 +105,38 @@ impl QualifiedCallFinder {
     }
 
     fn is_type(segment: &str) -> bool {
-        segment.chars().next().is_some_and(char::is_uppercase)
+        segment.chars().next().is_some_and(char::is_uppercase) || Self::is_primitive(segment)
+    }
+
+    // The one lowercase set that can be known rather than guessed at. The case
+    // convention reads `u64` as a module, so `u64::from_le_bytes` was reported
+    // with the correction `use u64::from_le_bytes;` -- which does not compile:
+    // a primitive's inherent function cannot be imported at all. An offence
+    // whose correction is not Rust is worse than a missed one, and unlike a
+    // user's lowercase-named type these names are fixed by the language, so
+    // naming them is a fact rather than a second convention.
+    //
+    // Matched whole. A module named `u64_helpers` is still a module.
+    fn is_primitive(segment: &str) -> bool {
+        matches!(
+            segment,
+            "u8" | "u16"
+                | "u32"
+                | "u64"
+                | "u128"
+                | "usize"
+                | "i8"
+                | "i16"
+                | "i32"
+                | "i64"
+                | "i128"
+                | "isize"
+                | "f32"
+                | "f64"
+                | "bool"
+                | "char"
+                | "str"
+        )
     }
 }
 

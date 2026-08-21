@@ -209,7 +209,14 @@ function came from. A bare `read_to_string(...)` would satisfy a stricter rule
 while saying strictly less.
 
 Module and type are told apart by **case**, a convention rather than a
-resolution, because this tool has no type information.
+resolution, because this tool has no type information. The primitives are the
+exception, and they are named rather than guessed: `u8` through `u128`, the
+signed and pointer-sized forms, `f32`, `f64`, `bool`, `char` and `str` are
+types whatever their case says. Reading `u64` as a module made
+`u64::from_le_bytes` an offence whose correction was `use u64::from_le_bytes;`
+-- which does not compile, since a primitive's inherent function cannot be
+imported at all. Matched whole, so a module named `u64_helpers` is still a
+module.
 
 | offence | correction |
 |---|---|

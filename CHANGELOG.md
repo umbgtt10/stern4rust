@@ -8,6 +8,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- **The primitives are types, not modules.** `u64::from_le_bytes` was reported
+  as a path standing in for an import, with the correction
+  `use u64::from_le_bytes;` — which does not compile, because a primitive's
+  inherent function cannot be imported at all. An offence whose correction is
+  not Rust is worse than a missed one.
+
+  `imported-paths` tells a module from a type by case and has no type
+  information, which is a documented trade. The primitives are the part of it
+  that need not be guessed: their names are fixed by the language, so they are
+  named outright — `u8` through `u128`, the signed and pointer-sized forms,
+  `f32`, `f64`, `bool`, `char` and `str`. Matched whole, so a module called
+  `u64_helpers` is still a module.
+
+  Found in `etheram-ibft`, five offences no edit could clear.
+
 - **Import ordering reads case as a shape rather than as a first letter.**
   `WAL_V2_MAGIC` beside `WalRecord` both open with a capital, so the case
   stand-down did not fire and the alphabet was demanded — while `cargo fmt`

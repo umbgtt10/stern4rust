@@ -229,3 +229,17 @@ A lowercase-named type would be reported when it should not be, and an
 uppercase-named module would pass when it should not. Both are conventions
 violated rarely enough that the trade is worth it, but the failure would arrive
 as a confident wrong answer rather than a missing one, which is the worse shape.
+
+The primitives were exactly that failure and are no longer guessed at. `u64`
+opens lowercase, so `u64::from_le_bytes` was reported with the correction
+`use u64::from_le_bytes;` -- which does not compile at all, since a primitive's
+inherent function cannot be imported. An offence whose correction is not Rust is
+worse than a missed one. Their names are fixed by the language rather than by a
+convention, so the set can be written down: `u8` through `u128`, the signed and
+pointer-sized forms, `f32`, `f64`, `bool`, `char` and `str`. Matched whole, so
+`u64_helpers` stays a module. Found in `etheram-ibft`, five offences no edit
+could clear.
+
+What remains open is the rest of the trade: a lowercase type this crate cannot
+name -- someone's `mod widget` holding `struct widget` -- is still reported, and
+an uppercase-named module still passes.
