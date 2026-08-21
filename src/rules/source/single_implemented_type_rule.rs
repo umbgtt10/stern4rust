@@ -5,6 +5,7 @@
 use crate::finding::model::implemented_type::ImplementedType;
 use crate::finding::parsing::implemented_type_finder::ImplementedTypeFinder;
 use crate::reporting::offence::Offence;
+use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;
 
@@ -95,5 +96,14 @@ impl Rule for SingleImplementedTypeRule {
 
     fn is_configured(&self) -> bool {
         true
+    }
+
+    fn explanation(&self) -> RuleExplanation {
+        RuleExplanation::new(
+            self.name(),
+            "A source file has one subject: at most one type that carries behaviour.",
+            "pub struct Widget;\nimpl Widget { }\n\npub struct Gadget;\nimpl Gadget { }",
+            "// widget.rs\npub struct Widget;\nimpl Widget { }\n\n// gadget.rs\npub struct Gadget;\nimpl Gadget { }",
+        )
     }
 }

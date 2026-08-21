@@ -4,6 +4,7 @@
 
 use crate::finding::model::manifest_dependency::ManifestDependency;
 use crate::reporting::offence::Offence;
+use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;
 
@@ -86,5 +87,14 @@ impl Rule for WorkspaceDependenciesRule {
 
     fn is_configured(&self) -> bool {
         true
+    }
+
+    fn explanation(&self) -> RuleExplanation {
+        RuleExplanation::new(
+            self.name(),
+            "A workspace declares its dependencies once, in the root, and every member takes them from there.",
+            "serde = { version = \"1\" }   -- in a member manifest",
+            "serde.workspace = true",
+        )
     }
 }

@@ -7,6 +7,7 @@ use std::collections::BTreeSet;
 use crate::finding::model::registry_policy::RegistryPolicy;
 use crate::finding::parsing::registry_parser::RegistryParser;
 use crate::reporting::offence::Offence;
+use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;
 
@@ -220,5 +221,14 @@ impl Rule for TestsLayoutRule {
 
     fn is_configured(&self) -> bool {
         true
+    }
+
+    fn explanation(&self) -> RuleExplanation {
+        RuleExplanation::new(
+            self.name(),
+            "A tests folder is reached through one door -- tests/all_tests.rs -- and a mod.rs below it.",
+            "tests/all_tests.rs\nextern crate alloc;\npub mod widget_tests;",
+            "tests/all_tests.rs\npub mod widget_tests;",
+        )
     }
 }

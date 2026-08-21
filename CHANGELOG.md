@@ -50,6 +50,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **`--rules` says what each rule wants, without a codebase to ask against.**
+  A report names the rule that was broken; it does not say what the rule is
+  for or what satisfying it looks like. `--rules` lists all twenty-one with a
+  line of intent, a scrap of source that breaks the rule and the same scrap
+  put right, then exits without scanning anything.
+
+  Each rule answers for itself, the way it already answers `requirement`,
+  rather than a table in the printer mapping name to prose -- a second idea of
+  which rules exist would fall out of date the first time a rule changed its
+  mind without the table being told.
+
+  It honours `--format`, so the same listing is available as JSON. Both forms
+  come from one type reading one list, which is what keeps them from drifting.
+
+  Every rule the registry can hold is listed, including the two that stay out
+  of an ordinary run until something configures them: `header` until it is
+  told what the header says, and `spdx-matches-manifest` until a manifest
+  declares a licence. Both are handed a stand-in that nothing reads, because a
+  listing missing a rule reads as a tool that does not have it.
+
 - **`--format json` carries a roster per package**, under a new `packages` key,
   each with `rules_applied`, `rules_skipped` and `rules_unconfigured` — the last
   as `{rule, requirement}` pairs, so a machine can tell a rule nobody asked for

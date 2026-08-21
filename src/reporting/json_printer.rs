@@ -172,4 +172,8 @@ impl JsonPrinter {
     pub fn print(&self, offences: &[Offence]) {
         println!("{}", self.render(offences));
     }
+
+    // The same content the text listing carries, as a document. The two must not
+    // give different pictures -- see
+    // [ADR-MachineReadableReport](../../docs/ADRs/ADR-MachineReadableReport.md).
 }

@@ -10,6 +10,7 @@ use syn::TraitItemFn;
 use syn::parse_file;
 
 use crate::reporting::offence::Offence;
+use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;
 
@@ -133,5 +134,14 @@ impl Rule for PureTraitsRule {
 
     fn is_configured(&self) -> bool {
         true
+    }
+
+    fn explanation(&self) -> RuleExplanation {
+        RuleExplanation::new(
+            self.name(),
+            "A trait declares; it does not implement.",
+            "trait Store {\n    fn commit(&self) -> bool {\n        true\n    }\n}",
+            "trait Store {\n    fn commit(&self) -> bool;\n}",
+        )
     }
 }

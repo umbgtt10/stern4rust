@@ -8,6 +8,7 @@ use crate::finding::model::public_entry_point::PublicEntryPoint;
 use crate::finding::parsing::call_site_finder::CallSiteFinder;
 use crate::finding::parsing::public_entry_point_finder::PublicEntryPointFinder;
 use crate::reporting::offence::Offence;
+use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;
 
@@ -115,5 +116,14 @@ impl Rule for TestedPublicApiRule {
 
     fn is_configured(&self) -> bool {
         true
+    }
+
+    fn explanation(&self) -> RuleExplanation {
+        RuleExplanation::new(
+            self.name(),
+            "Every public entry point is called by at least one test.",
+            "pub fn commit(&self) -> bool   -- no test calls it",
+            "#[test]\nfn commit_without_a_quorum_returns_false() {\n    assert!(!store.commit());\n}",
+        )
     }
 }

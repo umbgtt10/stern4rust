@@ -7,6 +7,7 @@ use crate::finding::model::section::Section;
 use crate::finding::model::test_file_item::TestFileItem;
 use crate::finding::parsing::test_file_parser::TestFileParser;
 use crate::reporting::offence::Offence;
+use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;
 
@@ -176,5 +177,14 @@ impl Rule for TestFileStructureRule {
 
     fn is_configured(&self) -> bool {
         true
+    }
+
+    fn explanation(&self) -> RuleExplanation {
+        RuleExplanation::new(
+            self.name(),
+            "A test file reads header, imports, constants, helpers, tests -- each group alphabetical.",
+            "#[test]\nfn zeta() {}\n\nuse std::fs;\n\n#[test]\nfn alpha() {}",
+            "use std::fs;\n\n#[test]\nfn alpha() {}\n\n#[test]\nfn zeta() {}",
+        )
     }
 }

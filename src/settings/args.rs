@@ -12,9 +12,16 @@ use std::path::PathBuf;
 #[command(version)]
 #[command(about = "Check Rust packages and fail the build when the rule is broken")]
 pub struct Args {
+    /// Workspace or package manifest to analyse. Defaults to the Cargo.toml in
+    /// the current directory, which is what makes a bare `cargo stern4rust`
+    /// work from inside the thing being judged.
     #[arg(long)]
     pub manifest_path: Option<PathBuf>,
 
+    /// Restrict the run to these packages; repeatable. Omit to take the
+    /// manifest's own package, or every member if it is a workspace root.
+    /// Naming a package that the manifest does not scan is an error rather than
+    /// an empty run, because a typo in a gate script otherwise reads as a pass.
     #[arg(long = "package")]
     pub packages: Vec<String>,
 
@@ -41,6 +48,13 @@ pub struct Args {
     /// look like the reader had asked for 100 on the command line.
     #[arg(long)]
     pub offence_threshold: Option<usize>,
+
+    /// List every rule with a line saying what it wants, a scrap of source
+    /// that breaks it and the same scrap put right, then exit without
+    /// scanning. Answers the question a first run raises -- what does this
+    /// rule actually want -- without needing a codebase to ask it against.
+    #[arg(long = "rules")]
+    pub list_rules: bool,
 
     /// Apply only these rules; repeatable. Omit to apply every rule. Naming one
     /// makes the selection a whitelist, which is what lets a codebase facing

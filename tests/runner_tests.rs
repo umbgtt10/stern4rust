@@ -344,6 +344,100 @@ fn run_reporting_in_json_names_the_member_that_stood_a_rule_down() {
     assert_eq!(alpha["rules_skipped"].as_array().expect("array").len(), 0);
 }
 
+// The two printers must not give different pictures, which is the whole of
+// ADR-MachineReadableReport.
+#[test]
+fn run_reporting_with_rules_in_json_carries_the_same_rules_as_the_text() {
+    // Arrange & Act
+    let (_, report) = Runner::run_reporting(args_from(&[
+        "cargo-stern4rust",
+        "--manifest-path",
+        "Cargo.toml",
+        "--rules",
+        "--format",
+        "json",
+    ]))
+    .expect("listing the rules should succeed");
+
+    // Assert
+    let parsed: Value = from_str(&report).expect("valid json");
+    let rules = parsed["rules"].as_array().expect("a rules array");
+    assert_eq!(rules.len(), 21);
+    assert!(rules.iter().all(|entry| {
+        !entry["name"].as_str().unwrap_or_default().is_empty()
+            && !entry["breaks"].as_str().unwrap_or_default().is_empty()
+            && !entry["instead"].as_str().unwrap_or_default().is_empty()
+    }));
+}
+
+// --rules answers without scanning anything, so it works in a checkout with no
+// manifest worth reading and cannot fail the way a run can.
+#[test]
+fn run_reporting_with_rules_lists_every_rule_with_an_example_and_a_remedy() {
+    // Arrange & Act
+    let (outcome, report) = Runner::run_reporting(args_from(&[
+        "cargo-stern4rust",
+        "--manifest-path",
+        "Cargo.toml",
+        "--rules",
+    ]))
+    .expect("listing the rules should succeed");
+
+    // Assert
+    assert_eq!(outcome, RunOutcome::Clean);
+    assert!(report.contains("ordered-imports"), "{report}");
+    assert!(
+        report.contains("Imports in src/ run in alphabetic order."),
+        "{report}"
+    );
+    assert!(report.contains("use zzz::Zed;"), "{report}");
+}
+
+#[test]
+fn run_reporting_with_rules_names_every_rule_the_registry_holds() {
+    // Arrange
+    let expected = [
+        "readable-source",
+        "arrange-act-assert",
+        "declared-by-name",
+        "directory-file-count",
+        "directory-subfolder-count",
+        "imported-paths",
+        "module-registry",
+        "ordered-imports",
+        "paired-test-file",
+        "pure-traits",
+        "registry-completeness",
+        "single-implemented-type",
+        "spdx-matches-manifest",
+        "test-file-name-postfix",
+        "test-file-structure",
+        "test-free-source",
+        "test-naming",
+        "tested-public-api",
+        "tests-layout",
+        "workspace-dependencies",
+        "header",
+    ];
+
+    // Act
+    let (_, report) = Runner::run_reporting(args_from(&[
+        "cargo-stern4rust",
+        "--manifest-path",
+        "Cargo.toml",
+        "--rules",
+    ]))
+    .expect("listing the rules should succeed");
+
+    // Assert
+    let missing: Vec<&str> = expected
+        .iter()
+        .copied()
+        .filter(|name| !report.contains(name))
+        .collect();
+    assert!(missing.is_empty(), "missing: {missing:?}");
+}
+
 // The roster and the summary describe the same run and must agree about it.
 #[test]
 fn run_scoped_to_a_member_never_names_an_applied_rule_as_skipped() {

@@ -5,6 +5,7 @@
 use std::collections::BTreeSet;
 
 use crate::reporting::offence::Offence;
+use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;
 
@@ -128,5 +129,14 @@ impl Rule for PairedTestFileRule {
 
     fn is_configured(&self) -> bool {
         true
+    }
+
+    fn explanation(&self) -> RuleExplanation {
+        RuleExplanation::new(
+            self.name(),
+            "A <X>_tests.rs names the source file it exercises, and that file exists.",
+            "tests/widget_tests.rs   -- with no src/widget.rs",
+            "tests/widget_tests.rs   -- beside src/widget.rs",
+        )
     }
 }

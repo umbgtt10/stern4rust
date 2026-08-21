@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::reporting::offence::Offence;
+use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;
 
@@ -128,5 +129,14 @@ impl Rule for SpdxMatchesManifestRule {
 
     fn is_configured(&self) -> bool {
         self.license.is_some()
+    }
+
+    fn explanation(&self) -> RuleExplanation {
+        RuleExplanation::new(
+            self.name(),
+            "Every file's SPDX identifier says what the manifest says.",
+            "// SPDX-License-Identifier: Apache-2.0   -- manifest says MIT",
+            "// SPDX-License-Identifier: MIT",
+        )
     }
 }

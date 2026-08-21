@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::reporting::offence::Offence;
+use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;
 
@@ -129,5 +130,17 @@ impl Rule for HeaderRule {
 
     fn check_workspace(&self, _files: &[SourceFile]) -> Vec<Offence> {
         Vec::new()
+    }
+
+    fn explanation(&self) -> RuleExplanation {
+        RuleExplanation::new(
+            self.name(),
+            "Every .rs file opens with the repository's header.",
+            "pub struct Widget;",
+            "// Copyright 2025 ...
+// SPDX-License-Identifier: MIT
+
+pub struct Widget;",
+        )
     }
 }

@@ -16,6 +16,7 @@ use syn::spanned::Spanned;
 use crate::finding::model::test_marker::MarkerPhase;
 use crate::finding::model::test_marker::TestMarker;
 use crate::reporting::offence::Offence;
+use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;
 
@@ -240,5 +241,14 @@ impl Rule for ArrangeActAssertRule {
 
     fn is_configured(&self) -> bool {
         true
+    }
+
+    fn explanation(&self) -> RuleExplanation {
+        RuleExplanation::new(
+            self.name(),
+            "A test reads Arrange, then one or more Act/Assert pairs.",
+            "#[test]\nfn adds_two_numbers() {\n    assert_eq!(add(1, 1), 2);\n}",
+            "#[test]\nfn adds_two_numbers() {\n    // Arrange & Act & Assert\n    assert_eq!(add(1, 1), 2);\n}",
+        )
     }
 }

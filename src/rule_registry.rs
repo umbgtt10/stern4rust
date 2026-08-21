@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::reporting::offence::Offence;
+use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;
 use crate::rules::layout::directory_file_count_rule::DirectoryFileCountRule;
 use crate::rules::layout::directory_subfolder_count_rule::DirectorySubfolderCountRule;
@@ -149,6 +150,12 @@ impl RuleRegistry {
 
     pub fn names(&self) -> Vec<&'static str> {
         self.rules.iter().map(|rule| rule.name()).collect()
+    }
+
+    // In registry order, so `--rules` reads in the same order as the roster the
+    // report prints.
+    pub fn explanations(&self) -> Vec<RuleExplanation> {
+        self.rules.iter().map(|rule| rule.explanation()).collect()
     }
 
     pub fn check(&self, file: &SourceFile) -> Vec<Offence> {

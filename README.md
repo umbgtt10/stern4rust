@@ -49,6 +49,7 @@ cargo stern4rust --format json
 | `--header-file <PATH>` | the header every `.rs` file must open with. Without it the header rule does not run, and the report names it as not applied |
 | `--format <text\|json>` | `text` (default) is the table below; `json` is the same run as a document |
 | `--offence-threshold <N>` | how many offences the report prints. Default `100`, `0` for all. The cap is on what is *shown*, never on what is counted |
+| `--rules` | list every rule with what it wants, a scrap of source that breaks it and the same scrap put right, then exit without scanning. Honours `--format` |
 | `--rule <NAME>` | apply only these rules; repeatable. Omit to apply every rule |
 | `--skip <NAME>` | do not apply these rules; repeatable. Subtracted from whatever `--rule` selected |
 | `--fix` | repair what can be repaired mechanically, then report what is left. Only `test-file-structure` is fixable today |
@@ -76,6 +77,60 @@ summary: files_scanned=36 files_excluded=31 offences=8 ...
 ```
 
 See [ADR-ExclusionsAreCounted](docs/ADRs/ADR-ExclusionsAreCounted.md).
+
+## `--rules`
+
+The question a first run raises is not which rules exist -- the report names
+them -- but what a given one actually wants. `--rules` answers it without a
+codebase to ask against:
+
+```
+cargo stern4rust --rules
+```
+
+Each rule gets a line saying what it wants, a scrap of source that breaks it,
+and the same scrap put right:
+
+```
+pure-traits
+  A trait declares; it does not implement.
+
+  breaks:
+      trait Store {
+          fn commit(&self) -> bool {
+              true
+          }
+      }
+
+  instead:
+      trait Store {
+          fn commit(&self) -> bool;
+      }
+```
+
+Nothing is scanned and nothing is judged, so it works in a checkout with no
+manifest worth reading and cannot fail the way a run can.
+
+It honours `--format`, so `--rules --format json` is the same listing as data
+for an agent that would rather not parse indentation:
+
+```json
+{
+  "rules": [
+    {
+      "name": "pure-traits",
+      "summary": "A trait declares; it does not implement.",
+      "breaks": "trait Store {\n    fn commit(&self) -> bool {\n        true\n    }\n}",
+      "instead": "trait Store {\n    fn commit(&self) -> bool;\n}"
+    }
+  ]
+}
+```
+
+Every rule the registry can hold is listed, including the two that stay out of
+an ordinary run until something configures them -- `header` until it is told
+what the header says, and `spdx-matches-manifest` until a manifest declares a
+licence. A listing missing a rule reads as a tool that does not have it.
 
 ## `--fix`
 

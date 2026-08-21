@@ -6,6 +6,7 @@ use std::path::Path;
 
 use crate::finding::model::package_tree::PackageTree;
 use crate::reporting::offence::Offence;
+use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;
 
@@ -122,5 +123,14 @@ impl Rule for DirectoryFileCountRule {
 
     fn is_configured(&self) -> bool {
         true
+    }
+
+    fn explanation(&self) -> RuleExplanation {
+        RuleExplanation::new(
+            self.name(),
+            "A directory holds a number of files a reader can hold in their head.",
+            "src/parsing/  -- 24 files",
+            "src/parsing/  -- 12 files\nsrc/parsing/naming/  -- 12 files",
+        )
     }
 }

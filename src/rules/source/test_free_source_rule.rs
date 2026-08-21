@@ -4,6 +4,7 @@
 
 use crate::finding::parsing::unit_test_finder::UnitTestFinder;
 use crate::reporting::offence::Offence;
+use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;
 
@@ -79,5 +80,14 @@ impl Rule for TestFreeSourceRule {
 
     fn is_configured(&self) -> bool {
         true
+    }
+
+    fn explanation(&self) -> RuleExplanation {
+        RuleExplanation::new(
+            self.name(),
+            "Tests live in tests/, and the production source tree carries none of them.",
+            "// src/widget.rs\n#[test]\nfn widget_works() {}",
+            "// tests/widget_tests.rs\n#[test]\nfn widget_works() {}",
+        )
     }
 }

@@ -8,6 +8,7 @@ use syn::ItemFn;
 use syn::parse_file;
 
 use crate::reporting::offence::Offence;
+use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;
 
@@ -122,5 +123,14 @@ impl Rule for TestNamingRule {
 
     fn is_configured(&self) -> bool {
         true
+    }
+
+    fn explanation(&self) -> RuleExplanation {
+        RuleExplanation::new(
+            self.name(),
+            "A test is named <method>_<conditions>_<result>.",
+            "#[test]\nfn test_widget() {}",
+            "#[test]\nfn commit_without_a_quorum_returns_none() {}",
+        )
     }
 }

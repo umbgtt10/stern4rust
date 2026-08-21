@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::reporting::offence::Offence;
+use crate::reporting::rule_explanation::RuleExplanation;
 use crate::source_file::SourceFile;
 
 // One rule, one file, one implementation. A rule sees a single source file and
@@ -69,4 +70,13 @@ pub trait Rule {
     // A line saying only that something is unset says what is wrong without
     // saying what to do, which is the one thing every finding here must do.
     fn requirement(&self) -> Option<&'static str>;
+
+    // What this rule wants, for `--rules` to print when nobody has run it yet.
+    // A sentence, a scrap of source that breaks the rule, and the same scrap
+    // put right.
+    //
+    // Here rather than in the printer for the reason `requirement` is here: a
+    // rule that changed its mind would otherwise leave a printer describing
+    // what it used to want, and nothing would say so.
+    fn explanation(&self) -> RuleExplanation;
 }

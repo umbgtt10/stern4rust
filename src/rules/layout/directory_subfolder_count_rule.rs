@@ -6,6 +6,7 @@ use std::path::Path;
 
 use crate::finding::model::package_tree::PackageTree;
 use crate::reporting::offence::Offence;
+use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;
 
@@ -99,5 +100,14 @@ impl Rule for DirectorySubfolderCountRule {
 
     fn is_configured(&self) -> bool {
         true
+    }
+
+    fn explanation(&self) -> RuleExplanation {
+        RuleExplanation::new(
+            self.name(),
+            "A directory holds a number of subfolders a reader can hold in their head.",
+            "src/  -- 9 subfolders",
+            "src/  -- 4 subfolders, each grouping the rest",
+        )
     }
 }

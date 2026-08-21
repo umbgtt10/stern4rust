@@ -5,6 +5,7 @@
 use crate::finding::model::qualified_call::QualifiedCall;
 use crate::finding::parsing::qualified_call_finder::QualifiedCallFinder;
 use crate::reporting::offence::Offence;
+use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;
 
@@ -73,5 +74,14 @@ impl Rule for ImportedPathsRule {
 
     fn is_configured(&self) -> bool {
         true
+    }
+
+    fn explanation(&self) -> RuleExplanation {
+        RuleExplanation::new(
+            self.name(),
+            "A function is called through a name this file imported, not through a path.",
+            "let parsed = syn::parse_file(text);",
+            "use syn::parse_file;\n\nlet parsed = parse_file(text);",
+        )
     }
 }

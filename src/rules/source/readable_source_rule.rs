@@ -5,6 +5,7 @@
 use syn::parse_file;
 
 use crate::reporting::offence::Offence;
+use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;
 
@@ -77,5 +78,14 @@ impl Rule for ReadableSourceRule {
 
     fn is_configured(&self) -> bool {
         true
+    }
+
+    fn explanation(&self) -> RuleExplanation {
+        RuleExplanation::new(
+            self.name(),
+            "Every .rs file can be read and parsed.",
+            "fn broken( {",
+            "fn broken() {}",
+        )
     }
 }

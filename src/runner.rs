@@ -12,6 +12,7 @@ use crate::reporting::offence_threshold::OffenceThreshold;
 use crate::reporting::output_format::OutputFormat;
 use crate::reporting::package_roster::PackageRoster;
 use crate::reporting::report_printer::ReportPrinter;
+use crate::reporting::rule_listing::RuleListing;
 use crate::reporting::run_outcome::RunOutcome;
 use crate::reporting::scan_totals::ScanTotals;
 use crate::rule_registry::RuleRegistry;
@@ -66,6 +67,12 @@ impl Runner {
     // contradicted itself, so a test asserting on the outcome could not see
     // either. This is the seam that lets one assert on what was said.
     pub fn run_reporting(args: Args) -> Result<(RunOutcome, String)> {
+        // Before anything is read. The listing answers from the registry alone,
+        // so it works in a checkout with no manifest worth reading and cannot
+        // fail the way a run can.
+        if args.list_rules {
+            return Ok((RunOutcome::Clean, Self::rule_listing(&args)));
+        }
         let sections = PackageSections::load(&Self::manifest_directory(&args.manifest_path))?;
         let config = Self::config_from(&args, None)?;
         Self::validate_selection(&config)?;
@@ -282,6 +289,24 @@ impl Runner {
                 ),
             ),
         })
+    }
+
+    // Every rule the registry can hold, not the subset this run selected: the
+    // reader asking what a rule wants has not chosen one yet.
+    //
+    // Two rules stay out of a registry until something configures them -- the
+    // header rule until it is told what the header says, and
+    // spdx-matches-manifest until a manifest declares a licence. Both are
+    // handed a stand-in that nothing ever reads, because a listing missing a
+    // rule reads as a tool that does not have it. The first draft supplied only
+    // the header and quietly listed twenty.
+    fn rule_listing(args: &Args) -> String {
+        let registry = RuleRegistry::from_config(&Config {
+            expected_header: vec![String::new()],
+            manifest_license: Some(String::new()),
+            ..Config::default()
+        });
+        RuleListing::new(&registry.explanations()).render(args.format)
     }
 
     // When writing, the default path is the destination whether or not it

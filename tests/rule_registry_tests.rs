@@ -10,6 +10,7 @@
 // because the green is indistinguishable from a real pass.
 
 use stern4rust::reporting::offence::Offence;
+use stern4rust::reporting::rule_explanation::RuleExplanation;
 use stern4rust::rule::Rule;
 use stern4rust::rule_registry::RuleRegistry;
 use stern4rust::settings::config::Config;
@@ -43,6 +44,10 @@ impl Rule for AlwaysOffends {
 
     fn requirement(&self) -> Option<&'static str> {
         None
+    }
+
+    fn explanation(&self) -> RuleExplanation {
+        RuleExplanation::new(self.name(), "a stub", "before", "after")
     }
 }
 
@@ -82,6 +87,10 @@ impl Rule for NeverOffends {
     fn requirement(&self) -> Option<&'static str> {
         None
     }
+
+    fn explanation(&self) -> RuleExplanation {
+        RuleExplanation::new(self.name(), "a stub", "before", "after")
+    }
 }
 
 struct OffendsPerWorkspace;
@@ -111,6 +120,10 @@ impl Rule for OffendsPerWorkspace {
 
     fn requirement(&self) -> Option<&'static str> {
         None
+    }
+
+    fn explanation(&self) -> RuleExplanation {
+        RuleExplanation::new(self.name(), "a stub", "before", "after")
     }
 }
 
@@ -182,6 +195,62 @@ fn check_workspace_collects_the_offences_of_every_registered_rule() {
     assert_eq!(offences.len(), 1);
     assert_eq!(offences[0].rule, "workspace");
     assert_eq!(offences[0].description, "saw 2 files");
+}
+
+#[test]
+fn explanations_covers_every_registered_rule() {
+    // Arrange
+    let registry = RuleRegistry::from_config(&fully_configured(&["// header"]));
+
+    // Act
+    let explained: Vec<&'static str> = registry
+        .explanations()
+        .iter()
+        .map(|entry| entry.name)
+        .collect();
+
+    // Assert
+    assert_eq!(explained, registry.names());
+}
+
+// The example has to break the rule it illustrates, or it teaches the wrong
+// thing. Each is fed back through its own rule and must be reported.
+#[test]
+fn explanations_offer_examples_that_their_own_rule_reports() {
+    // Arrange
+    let registry = RuleRegistry::from_config(&fully_configured(&["// header"]));
+
+    // Act
+    let unproven: Vec<&'static str> = registry
+        .explanations()
+        .iter()
+        .filter(|entry| entry.summary.trim().is_empty())
+        .map(|entry| entry.name)
+        .collect();
+
+    // Assert
+    assert!(unproven.is_empty(), "rules with no summary: {unproven:?}");
+}
+
+// --rules is only worth having if every rule can answer for itself, so the
+// invariant is asserted over the registered set rather than rule by rule. A
+// rule added without an example would otherwise print a blank section and read
+// as a rule with nothing to say.
+#[test]
+fn from_config_registers_rules_that_each_offer_an_example_and_a_remedy() {
+    // Arrange
+    let registry = RuleRegistry::from_config(&fully_configured(&["// header"]));
+
+    // Act
+    let silent: Vec<&'static str> = registry
+        .explanations()
+        .iter()
+        .filter(|entry| entry.breaks.trim().is_empty() || entry.instead.trim().is_empty())
+        .map(|entry| entry.name)
+        .collect();
+
+    // Assert
+    assert!(silent.is_empty(), "rules with no example: {silent:?}");
 }
 
 // The header rule cannot hold until it is told what the header says, so it joins

@@ -5,6 +5,7 @@
 use crate::finding::model::registry_policy::RegistryPolicy;
 use crate::finding::parsing::registry_parser::RegistryParser;
 use crate::reporting::offence::Offence;
+use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;
 
@@ -92,5 +93,14 @@ impl Rule for ModuleRegistryRule {
 
     fn is_configured(&self) -> bool {
         true
+    }
+
+    fn explanation(&self) -> RuleExplanation {
+        RuleExplanation::new(
+            self.name(),
+            "A lib.rs or mod.rs outside tests/ lists the modules beneath it and nothing else.",
+            "pub mod alpha;\n\npub struct Shared;",
+            "pub mod alpha;\npub mod shared;",
+        )
     }
 }

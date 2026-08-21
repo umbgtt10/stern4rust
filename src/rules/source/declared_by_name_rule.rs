@@ -13,6 +13,7 @@ use syn::Meta;
 use syn::parse_file;
 
 use crate::reporting::offence::Offence;
+use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;
 
@@ -137,5 +138,14 @@ impl Rule for DeclaredByNameRule {
 
     fn is_configured(&self) -> bool {
         true
+    }
+
+    fn explanation(&self) -> RuleExplanation {
+        RuleExplanation::new(
+            self.name(),
+            "A module is declared by name: `mod alpha;` reaches alpha.rs or alpha/mod.rs.",
+            "#[path = \"other.rs\"]\nmod alpha;",
+            "mod alpha;",
+        )
     }
 }

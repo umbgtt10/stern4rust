@@ -8,6 +8,7 @@ use syn::ItemMod;
 use syn::parse_file;
 
 use crate::reporting::offence::Offence;
+use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;
 
@@ -145,5 +146,14 @@ impl Rule for TestFileNamePostfixRule {
 
     fn is_configured(&self) -> bool {
         true
+    }
+
+    fn explanation(&self) -> RuleExplanation {
+        RuleExplanation::new(
+            self.name(),
+            "A file that holds tests is named for it: <X>_tests.rs.",
+            "tests/widget_spec.rs",
+            "tests/widget_tests.rs",
+        )
     }
 }

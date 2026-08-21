@@ -10,5 +10,7 @@ pub mod offence_threshold;
 pub mod output_format;
 pub mod package_roster;
 pub mod report_printer;
+pub mod rule_explanation;
+pub mod rule_listing;
 pub mod run_outcome;
 pub mod scan_totals;

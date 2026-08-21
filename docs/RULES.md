@@ -7,6 +7,12 @@ Every offence carries a **correction** as well as a description — what to do,
 not only what is wrong — and the field is required, so a rule cannot be added
 without answering it.
 
+Each rule also carries an **explanation** — what it wants, a scrap of source
+that breaks it and the same scrap put right — and that field is required too.
+`cargo stern4rust --rules` prints all twenty-one, in text or with
+`--format json`, without scanning anything. See
+[ADR-RulesExplainThemselves](ADRs/ADR-RulesExplainThemselves.md).
+
 | rule | ADR | needs configuration |
 |---|---|---|
 | `readable-source` | [R004](ADRs/R004-ADR-ReadableSourceRule.md) | no |

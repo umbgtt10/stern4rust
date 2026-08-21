@@ -9,6 +9,7 @@ use syn::spanned::Spanned;
 
 use crate::finding::model::import_path::ImportPath;
 use crate::reporting::offence::Offence;
+use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;
 
@@ -129,5 +130,14 @@ impl Rule for OrderedImportsRule {
 
     fn is_configured(&self) -> bool {
         true
+    }
+
+    fn explanation(&self) -> RuleExplanation {
+        RuleExplanation::new(
+            self.name(),
+            "Imports in src/ run in alphabetic order.",
+            "use zzz::Zed;\nuse aaa::Alpha;",
+            "use aaa::Alpha;\nuse zzz::Zed;",
+        )
     }
 }

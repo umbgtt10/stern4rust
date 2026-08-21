@@ -8,6 +8,7 @@ use std::path::Path;
 use crate::finding::model::package_tree::PackageTree;
 use crate::finding::parsing::module_declaration_finder::ModuleDeclarationFinder;
 use crate::reporting::offence::Offence;
+use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;
 
@@ -121,5 +122,14 @@ impl Rule for RegistryCompletenessRule {
 
     fn is_configured(&self) -> bool {
         true
+    }
+
+    fn explanation(&self) -> RuleExplanation {
+        RuleExplanation::new(
+            self.name(),
+            "A registry declares every file beside it, so nothing in the tree goes uncompiled.",
+            "src/alpha.rs and src/beta.rs, with mod.rs naming only alpha",
+            "pub mod alpha;\npub mod beta;",
+        )
     }
 }

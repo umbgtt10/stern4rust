@@ -458,8 +458,6 @@ fn render_with_differing_rosters_keeps_the_summary_line_intact() {
     assert_eq!(report.matches("summary:").count(), 1);
 }
 
-// These three builders shipped in 0.4.0 with no test touching them directly.
-// tested-public-api found all six -- three here and three on the JSON printer.
 #[test]
 fn with_baseline_puts_the_suppressed_count_in_the_report() {
     // Arrange
