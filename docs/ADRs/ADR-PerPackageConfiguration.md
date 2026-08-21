@@ -164,11 +164,27 @@ Anything finer is what `exclude` is for.
 
 ## What this does not solve
 
-**A package whose files disagree with each other.** `system-tests` wants
-`paired-test-file` for its `src/`, where the files are ordinary source, and not
-for its `tests/`, where they are scenarios. The section skips it for both. The
-rule set is per package because the manifest is; a directory-level answer would
-need a different unit and is not proposed here.
+**A package whose files disagree with each other** — in principle. The example
+this section first gave was wrong, and the correction is worth keeping.
+
+It claimed `system-tests` wanted `paired-test-file` for its `src/` and not its
+`tests/`, and that skipping it per package cost the `src/` something.
+`PairedTestFileRule::applies_to` requires a path under `tests/`, so the rule
+cannot reach `src/` at all: skipping it for the package costs exactly nothing,
+because there was never anything there to lose. All six of its offences in
+`system-tests` were under `tests/`, which is the only place they could have been.
+
+Two tests now pin that, and both fail if the scope check is removed — measured,
+not assumed. A `src/widget_tests.rs` is a source file whose name happens to end
+that way, and this rule has nothing to say about it. The stand-down stays honest
+only while that holds, so it is now something a change would break rather than
+something a reader has to remember.
+
+The general shape remains unaddressed: a rule that *does* read both trees —
+`header`, `imported-paths`, `readable-source`, `directory-file-count` — cannot be
+applied to one and not the other. Nothing has asked for that yet. Building it
+from a guess is what this ADR's last paragraph warns against, and the example
+that motivated it evaporated on inspection.
 
 **Choosing the sections.** Nothing in this decision says which rules a package
 should stand down on. That stayed a reading of what actually fired: fourteen

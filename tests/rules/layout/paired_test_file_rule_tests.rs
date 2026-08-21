@@ -79,6 +79,24 @@ fn check_workspace_of_a_proptest_file_reports_nothing() {
     assert!(offences.is_empty(), "expected none, got {offences:?}");
 }
 
+// The scope is the directory, not the name. A `<X>_tests.rs` that lives under
+// `src/` is a source file whose name happens to end that way, and this rule has
+// nothing to say about it -- it asks whether a *test* names a source file that
+// exists, and a file in `src/` is not a test.
+//
+// Pinned because a decision rests on it. `system-tests` in `etheram-raft` stands
+// this rule down for the whole package, and that costs its `src/` nothing only
+// while the rule cannot reach `src/` in the first place. If that ever changed,
+// the stand-down would start hiding real findings and nothing else would say so.
+#[test]
+fn check_workspace_of_a_source_file_named_like_a_test_reports_nothing() {
+    // Arrange & Act
+    let offences = check(&["src/widget.rs", "src/widget_tests.rs"]);
+
+    // Assert
+    assert!(offences.is_empty());
+}
+
 // A helper under tests/ is not a test file and names no source file.
 #[test]
 fn check_workspace_of_a_support_file_reports_nothing() {
@@ -143,6 +161,18 @@ fn check_workspace_of_an_all_tests_registry_reports_nothing() {
 
     // Assert
     assert!(offences.is_empty(), "expected none, got {offences:?}");
+}
+
+// The same fact from the other side: a source tree holding nothing but files
+// named like tests still reports nothing, so the emptiness above is not an
+// accident of the pairing happening to succeed.
+#[test]
+fn check_workspace_of_only_source_files_named_like_tests_reports_nothing() {
+    // Arrange & Act
+    let offences = check(&["src/alpha_tests.rs", "src/beta_tests.rs"]);
+
+    // Assert
+    assert!(offences.is_empty());
 }
 
 // Every unpaired file is named, because each is a separate rename.
