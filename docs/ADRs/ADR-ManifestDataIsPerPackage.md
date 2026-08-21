@@ -88,10 +88,18 @@ package answers for itself, and a workspace mixing MIT and Apache-2.0 — which
 this family will have, since the tools are MIT and `etheram-*` is Apache-2.0 —
 gets both rules holding rather than both standing down.
 
-This ADR exists because the fix is not a repaired comparison. Making the guard
-say what it meant would keep a whole-workspace scan judging every file against
-a single licence, which is wrong in a different way and would fire against
-correct code. **The aggregate is the defect; the comparison is a symptom.**
+This ADR exists because the fix is not only a repaired comparison. Saying what
+the guard meant -- one licence, and every selected package declared it -- would
+be *safe*: a workspace whose members disagree returns `None` and the rule stands
+down, so it would never fire against correct code. An earlier draft of this ADR
+claimed otherwise and was wrong.
+
+What it would not do is **work**. A mixed-licence workspace is exactly the shape
+this family is heading for -- the tools are MIT, `etheram-*` is Apache-2.0 -- and
+under the repaired aggregate every file in it goes unjudged, silently, forever.
+The rule would be correct and useless. **The aggregate is the defect; the
+comparison is a symptom**, and the corrected aggregate survives in the runner as
+the one thing the *report* can honestly claim about a whole run.
 
 ## Consequences
 

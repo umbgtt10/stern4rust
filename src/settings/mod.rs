@@ -8,3 +8,4 @@ pub mod config_file;
 pub mod header_source;
 pub mod manifest_resolver;
 pub mod rule_selection;
+pub mod scanned_package;

@@ -21,41 +21,13 @@ fn config_for(packages: &[&str]) -> Config {
     }
 }
 
-// No single answer means no expectation, and the rule reports the manifest
-// rather than every file in it.
 #[test]
-fn license_of_an_unknown_package_is_none() {
+fn packages_names_the_package_it_could_not_find() {
     // Arrange
     let config = config_for(&["no-such-package"]);
 
     // Act
-    let license = ManifestResolver::license(&config);
-
-    // Assert
-    assert!(license.is_none());
-}
-
-// The expectation `spdx-matches-manifest` holds every header to, taken from the
-// package being judged rather than from a flag.
-#[test]
-fn license_of_this_crate_returns_what_the_manifest_declares() {
-    // Arrange
-    let config = config_for(&["cargo-stern4rust"]);
-
-    // Act
-    let license = ManifestResolver::license(&config);
-
-    // Assert
-    assert_eq!(license.as_deref(), Some("MIT"));
-}
-
-#[test]
-fn package_roots_names_the_package_it_could_not_find() {
-    // Arrange
-    let config = config_for(&["no-such-package"]);
-
-    // Act
-    let error = ManifestResolver::package_roots(&config).expect_err("an error");
+    let error = ManifestResolver::packages(&config).expect_err("an error");
 
     // Assert
     assert!(error.to_string().contains("no-such-package"));
@@ -63,37 +35,68 @@ fn package_roots_names_the_package_it_could_not_find() {
 
 // A typo must fail loudly rather than scan nothing and pass.
 #[test]
-fn package_roots_of_an_unknown_package_is_an_error() {
+fn packages_of_an_unknown_package_is_an_error() {
     // Arrange
     let config = config_for(&["no-such-package"]);
 
     // Act
-    let result = ManifestResolver::package_roots(&config);
+    let result = ManifestResolver::packages(&config);
+
+    // Assert
+    assert!(result.is_err());
+}
+
+// A name that is not in the workspace is an error rather than an empty result,
+// so a typo in a gate script cannot scan nothing and report success.
+#[test]
+fn packages_of_an_unknown_package_returns_an_error() {
+    // Arrange
+    let config = config_for(&["no-such-package"]);
+
+    // Act
+    let result = ManifestResolver::packages(&config);
 
     // Assert
     assert!(result.is_err());
 }
 
 #[test]
-fn package_roots_of_this_crate_by_name_returns_its_directory() {
+fn packages_of_this_crate_by_name_returns_its_directory() {
     // Arrange
     let config = config_for(&["cargo-stern4rust"]);
 
     // Act
-    let roots = ManifestResolver::package_roots(&config).expect("resolve");
+    let roots = ManifestResolver::packages(&config).expect("resolve");
 
     // Assert
     assert_eq!(roots.len(), 1);
-    assert!(roots[0].join("Cargo.toml").exists());
+    assert!(roots[0].root.join("Cargo.toml").exists());
+}
+
+// The expectation `spdx-matches-manifest` holds every header to, taken from the
+// package being judged rather than from a flag -- and carried on the package
+// rather than aggregated across the run.
+#[test]
+fn packages_of_this_crate_carries_the_licence_its_manifest_declares() {
+    // Arrange
+    let config = config_for(&["cargo-stern4rust"]);
+
+    // Act
+    let packages = ManifestResolver::packages(&config).expect("resolve packages");
+
+    // Assert
+    assert_eq!(packages.len(), 1);
+    assert_eq!(packages[0].name, "cargo-stern4rust");
+    assert_eq!(packages[0].license.as_deref(), Some("MIT"));
 }
 
 #[test]
-fn package_roots_without_a_named_package_returns_this_crate() {
+fn packages_without_a_named_package_returns_this_crate() {
     // Arrange
     let config = config_for(&[]);
 
     // Act
-    let roots = ManifestResolver::package_roots(&config).expect("resolve");
+    let roots = ManifestResolver::packages(&config).expect("resolve");
 
     // Assert
     assert_eq!(roots.len(), 1);

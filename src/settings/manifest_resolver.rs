@@ -2,7 +2,6 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::collections::BTreeSet;
 use std::fs::read_to_string;
 use std::path::Path;
 use std::path::PathBuf;
@@ -17,6 +16,7 @@ use toml::Value;
 
 use crate::finding::model::manifest_dependency::ManifestDependency;
 use crate::settings::config::Config;
+use crate::settings::scanned_package::ScannedPackage;
 
 // Turns the requested packages into the directories to walk.
 //
@@ -28,32 +28,28 @@ pub struct ManifestResolver;
 impl ManifestResolver {
     pub const MANIFEST: &'static str = "Cargo.toml";
 
-    pub fn package_roots(config: &Config) -> Result<Vec<PathBuf>> {
+    // Every package the run will walk, each carrying what its own manifest says
+    // about it.
+    //
+    // Replaces the pair this used to be -- a list of bare directories, and one
+    // licence aggregated across all of them. The aggregate could not answer for
+    // a workspace: it compared a set of distinct licence strings against a count
+    // of packages, which are only ever the same length when there is one
+    // package, so four members all declaring Apache-2.0 read as none declaring
+    // it. See
+    // [ADR-ManifestDataIsPerPackage](../../docs/ADRs/ADR-ManifestDataIsPerPackage.md).
+    pub fn packages(config: &Config) -> Result<Vec<ScannedPackage>> {
         let metadata = Self::metadata(config)?;
         Ok(Self::selected(&metadata, config)?
             .into_iter()
-            .map(|package| Self::manifest_dir(package.manifest_path.as_std_path()))
+            .map(|package| {
+                ScannedPackage::new(
+                    package.name.as_str(),
+                    Self::manifest_dir(package.manifest_path.as_std_path()),
+                    package.license.clone(),
+                )
+            })
             .collect())
-    }
-
-    // The one licence the scanned packages agree on, read from the manifest so
-    // that `spdx-matches-manifest` needs no flag to hold.
-    //
-    // None where there is no single answer: no `license` field, or several
-    // packages declaring different ones. Errors are swallowed rather than
-    // reported, because `package_roots` runs moments later and says the same
-    // thing better.
-    pub fn license(config: &Config) -> Option<String> {
-        let metadata = Self::metadata(config).ok()?;
-        let selected = Self::selected(&metadata, config).ok()?;
-        let declared: BTreeSet<&String> = selected
-            .iter()
-            .filter_map(|package| package.license.as_ref())
-            .collect();
-        if declared.len() != 1 || declared.len() != selected.len() {
-            return None;
-        }
-        declared.into_iter().next().cloned()
     }
 
     // Every dependency each member manifest declares, as written. None when the

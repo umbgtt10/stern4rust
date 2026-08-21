@@ -20,6 +20,7 @@ use crate::settings::config_file::ConfigFile;
 use crate::settings::header_source::HeaderSource;
 use crate::settings::manifest_resolver::ManifestResolver;
 use crate::settings::rule_selection::RuleSelection;
+use crate::settings::scanned_package::ScannedPackage;
 use crate::source_file::SourceFile;
 use crate::source_reader::SourceReader;
 use crate::source_walker::SourceWalker;
@@ -52,11 +53,20 @@ impl Runner {
     pub fn run(args: Args) -> Result<RunOutcome> {
         let config = Self::config_from(args)?;
         Self::validate_selection(&config)?;
-        // The one piece of configuration that comes from the package being
-        // judged rather than from the command line, read once for the run.
         let config = Config {
-            manifest_license: ManifestResolver::license(&config),
             workspace_dependencies: ManifestResolver::workspace_dependencies(&config),
+            ..config
+        };
+        let packages = ManifestResolver::packages(&config)?;
+        // What the report answers for. A rule that stood down for any package
+        // did not apply to this run, so the licence stated here is the one every
+        // scanned package agrees on and nothing otherwise. Checking is per
+        // package; only the summary is aggregate, and it understates rather than
+        // overstates -- see
+        // [ADR-PerPackageConfiguration](../docs/ADRs/ADR-PerPackageConfiguration.md),
+        // where the per-package report is the piece still to come.
+        let config = Config {
+            manifest_license: Self::agreed_license(&packages),
             ..config
         };
         let registry = RuleRegistry::from_config(&config);
@@ -67,14 +77,21 @@ impl Runner {
             ));
         }
 
-        let roots = ManifestResolver::package_roots(&config)?;
         let exclusions = ExclusionSet::new(&config.excludes)?;
         let mut offences = Vec::new();
         let mut files_scanned = 0usize;
         let mut excluded = Vec::new();
         let mut fixed = 0usize;
 
-        for root in &roots {
+        for package in &packages {
+            // Everything the manifest decides is decided here, by the package
+            // about to be walked, rather than once for the run.
+            let package_config = Config {
+                manifest_license: package.license.clone(),
+                ..config.clone()
+            };
+            let registry = RuleRegistry::from_config(&package_config);
+            let root = &package.root;
             // Read the whole package before judging it. Rules whose subject is
             // the tree -- "there is exactly one all_tests.rs" -- cannot be
             // answered a file at a time, and the file that carries the offence
@@ -131,6 +148,22 @@ impl Runner {
             &offences,
         );
         Ok(RunOutcome::of(offences.len()))
+    }
+
+    // The licence every scanned package declares, or None where they do not all
+    // declare the same one. This is the aggregate the old `license` meant to be
+    // and never was: it compared a set of distinct licences against a count of
+    // packages, so it could only ever answer for a single-package scan.
+    fn agreed_license(packages: &[ScannedPackage]) -> Option<String> {
+        let mut declared = packages.iter().map(|package| package.license.as_ref());
+        let first = declared.next().flatten()?;
+        if packages
+            .iter()
+            .all(|package| package.license.as_ref() == Some(first))
+        {
+            return Some(first.clone());
+        }
+        None
     }
 
     // A misspelled rule name is an error rather than a switch that quietly
