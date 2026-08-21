@@ -2,9 +2,11 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::settings::package_config::PackageConfig;
 use anyhow::Context;
 use anyhow::Result;
 use serde::Deserialize;
+use std::collections::BTreeMap;
 use std::fs::read_to_string;
 use std::path::Path;
 use std::path::PathBuf;
@@ -41,6 +43,10 @@ pub struct ConfigFile {
     pub skip: Vec<String>,
     #[serde(default)]
     pub exclude: Vec<String>,
+    // A section per package, keyed by the name its manifest declares. Absent
+    // for the packages that apply everything, which is most of them.
+    #[serde(default, rename = "package")]
+    pub packages: BTreeMap<String, PackageConfig>,
 }
 
 impl ConfigFile {

@@ -7,5 +7,7 @@ pub mod config;
 pub mod config_file;
 pub mod header_source;
 pub mod manifest_resolver;
+pub mod package_config;
+pub mod package_sections;
 pub mod rule_selection;
 pub mod scanned_package;

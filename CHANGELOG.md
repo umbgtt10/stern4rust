@@ -4,6 +4,65 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **A `[package.<name>]` section per member, in one `stern4rust.toml` at the
+  workspace root.** A workspace whose members want different rules says so in
+  one file and is judged in one call, rather than a config beside every manifest
+  and a call each.
+
+  Precedence runs command line, package, root, default, and each level
+  *replaces* the one below rather than adding to it -- the argument already made
+  for the command line against the file, one level down.
+
+  `baseline` and `offence-threshold` are not keys a section has: a baseline is a
+  set of fingerprints for one run and the threshold is about how the report
+  ends, so neither is a property of a package. The per-package struct simply
+  lacks them, so `deny_unknown_fields` rejects them with the message it already
+  gives a misspelled key.
+
+  A section naming a package the run does not scan is an error, for the reason a
+  misspelled `--rule` is: it reads as a rule set being applied, and a package
+  quietly running every rule when its section said to skip one is the silence
+  this tool refuses. `deny_unknown_fields` cannot catch it, because the section
+  name is data rather than a key.
+
+  Measured on `etheram-raft`: four files and four calls became one file and one
+  call, over 250 files, and the trap they carried went with them --
+  `--manifest-path node/Cargo.toml` without `--package` measured 243 files and
+  read as though it had measured 127.
+
+  See [ADR-PerPackageConfiguration](docs/ADRs/ADR-PerPackageConfiguration.md).
+
+### Fixed
+
+- **`spdx-matches-manifest` can now apply to a workspace.** It never has.
+  `ManifestResolver::license` compared a set of distinct licence strings against
+  a count of packages, and those are only ever the same length when there is one
+  package -- so four members all declaring `Apache-2.0` read as none declaring
+  it, and the rule stood down saying the licence was missing.
+
+  The licence is now resolved per package inside the scan loop, along with the
+  rule registry and the exclusion set. `package_roots` and `license` are
+  replaced by `packages()`, which returns each package with its own.
+
+  **This is a behaviour change.** Any repository scanning more than one package
+  at once will see the rule move from *not applied* to *applied*, and offences
+  may appear. They are real: the rule was never able to speak there.
+
+  See [ADR-ManifestDataIsPerPackage](docs/ADRs/ADR-ManifestDataIsPerPackage.md).
+
+### Changed
+
+- **A rule any package stands down on is reported as skipped for the run.** The
+  report still answers for the run as a whole, so it understates: a rule named
+  as skipped may have applied to every package but one. Overstating -- claiming
+  twenty-one applied when one package applied twenty -- is the direction that
+  would make a stand-down invisible, which is the one thing a subset may never
+  be. The per-package report is still to come.
+
 ## [0.9.2] - 2026-08-21
 
 ### Fixed

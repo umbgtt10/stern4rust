@@ -32,4 +32,19 @@ impl ScannedPackage {
             license,
         }
     }
+
+    // The licence every scanned package declares, or None where they do not all
+    // declare the same one.
+    //
+    // This is what the report answers for, and it is deliberately the weaker
+    // question. Checking is per package; a run-wide claim can only be made where
+    // there is nothing to disagree about, so it understates rather than
+    // overstates.
+    pub fn agreed_license(packages: &[Self]) -> Option<String> {
+        let first = packages.first()?.license.as_ref()?;
+        packages
+            .iter()
+            .all(|package| package.license.as_ref() == Some(first))
+            .then(|| first.clone())
+    }
 }

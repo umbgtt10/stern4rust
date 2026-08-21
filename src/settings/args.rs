@@ -6,7 +6,7 @@ use crate::reporting::output_format::OutputFormat;
 use clap::Parser;
 use std::path::PathBuf;
 
-#[derive(Debug, Parser)]
+#[derive(Clone, Debug, Parser)]
 #[command(name = "cargo-stern4rust")]
 #[command(bin_name = "cargo stern4rust")]
 #[command(version)]

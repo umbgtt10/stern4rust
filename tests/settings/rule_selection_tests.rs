@@ -24,6 +24,46 @@ fn selection(selected: &[&str], skipped: &[&str]) -> RuleSelection {
     )
 }
 
+// A rule named twice is skipped once, so the report does not list it twice.
+#[test]
+fn also_skipping_a_rule_already_skipped_names_it_once() {
+    // Arrange
+    let selection = RuleSelection::new(Vec::new(), vec!["paired-test-file".to_string()]);
+
+    // Act
+    let widened = selection.also_skipping(&["paired-test-file".to_string()]);
+
+    // Assert
+    assert_eq!(widened.unknown_in(&["header"]), vec!["paired-test-file"]);
+}
+
+// Folding every package section's stand-downs into the run-level answer, so the
+// report cannot claim a rule applied when one package stood it down.
+#[test]
+fn also_skipping_adds_to_what_was_already_skipped() {
+    // Arrange
+    let selection = RuleSelection::new(Vec::new(), vec!["test-naming".to_string()]);
+
+    // Act
+    let widened = selection.also_skipping(&["paired-test-file".to_string()]);
+
+    // Assert
+    assert!(!widened.includes("paired-test-file"));
+    assert!(!widened.includes("test-naming"));
+}
+
+#[test]
+fn also_skipping_leaves_the_rules_it_was_not_given_applying() {
+    // Arrange
+    let selection = RuleSelection::new(Vec::new(), Vec::new());
+
+    // Act
+    let widened = selection.also_skipping(&["paired-test-file".to_string()]);
+
+    // Assert
+    assert!(widened.includes("header"));
+}
+
 #[test]
 fn default_includes_every_rule() {
     // Arrange & Act

@@ -11,6 +11,97 @@
 use std::path::PathBuf;
 use stern4rust::settings::scanned_package::ScannedPackage;
 
+#[test]
+fn agreed_license_of_no_packages_returns_nothing() {
+    // Arrange & Act
+    let agreed = ScannedPackage::agreed_license(&[]);
+
+    // Assert
+    assert!(agreed.is_none());
+}
+
+// The case the old aggregate got wrong in the other direction: it compared a
+// set of distinct licences against a count of packages, so four members all
+// declaring one read as none declaring it.
+#[test]
+fn agreed_license_over_four_packages_declaring_one_licence_returns_it() {
+    // Arrange
+    let packages: Vec<ScannedPackage> = ["a", "b", "c", "d"]
+        .iter()
+        .map(|name| ScannedPackage::new(name, PathBuf::from(*name), Some("Apache-2.0".to_string())))
+        .collect();
+
+    // Act
+    let agreed = ScannedPackage::agreed_license(&packages);
+
+    // Assert
+    assert_eq!(agreed.as_deref(), Some("Apache-2.0"));
+}
+
+// What the report answers for, and deliberately the weaker question: checking
+// is per package, so a run-wide claim can only be made where there is nothing
+// to disagree about.
+#[test]
+fn agreed_license_where_every_package_declares_the_same_one_returns_it() {
+    // Arrange
+    let packages = [
+        ScannedPackage::new(
+            "node",
+            PathBuf::from("node"),
+            Some("Apache-2.0".to_string()),
+        ),
+        ScannedPackage::new(
+            "node-infra",
+            PathBuf::from("node-infra"),
+            Some("Apache-2.0".to_string()),
+        ),
+    ];
+
+    // Act
+    let agreed = ScannedPackage::agreed_license(&packages);
+
+    // Assert
+    assert_eq!(agreed.as_deref(), Some("Apache-2.0"));
+}
+
+#[test]
+fn agreed_license_where_one_package_declares_nothing_returns_nothing() {
+    // Arrange
+    let packages = [
+        ScannedPackage::new(
+            "node",
+            PathBuf::from("node"),
+            Some("Apache-2.0".to_string()),
+        ),
+        ScannedPackage::new("other", PathBuf::from("other"), None),
+    ];
+
+    // Act
+    let agreed = ScannedPackage::agreed_license(&packages);
+
+    // Assert
+    assert!(agreed.is_none());
+}
+
+#[test]
+fn agreed_license_where_packages_disagree_returns_nothing() {
+    // Arrange
+    let packages = [
+        ScannedPackage::new("tool", PathBuf::from("tool"), Some("MIT".to_string())),
+        ScannedPackage::new(
+            "node",
+            PathBuf::from("node"),
+            Some("Apache-2.0".to_string()),
+        ),
+    ];
+
+    // Act
+    let agreed = ScannedPackage::agreed_license(&packages);
+
+    // Assert
+    assert!(agreed.is_none());
+}
+
 // Two packages of the same name from different roots are different packages,
 // which is what lets the scan loop key configuration on one.
 #[test]

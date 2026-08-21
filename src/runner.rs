@@ -19,6 +19,8 @@ use crate::settings::config::Config;
 use crate::settings::config_file::ConfigFile;
 use crate::settings::header_source::HeaderSource;
 use crate::settings::manifest_resolver::ManifestResolver;
+use crate::settings::package_config::PackageConfig;
+use crate::settings::package_sections::PackageSections;
 use crate::settings::rule_selection::RuleSelection;
 use crate::settings::scanned_package::ScannedPackage;
 use crate::source_file::SourceFile;
@@ -51,13 +53,15 @@ pub struct Runner;
 
 impl Runner {
     pub fn run(args: Args) -> Result<RunOutcome> {
-        let config = Self::config_from(args)?;
+        let sections = PackageSections::load(&Self::manifest_directory(&args.manifest_path))?;
+        let config = Self::config_from(&args, None)?;
         Self::validate_selection(&config)?;
         let config = Config {
             workspace_dependencies: ManifestResolver::workspace_dependencies(&config),
             ..config
         };
         let packages = ManifestResolver::packages(&config)?;
+        sections.validate(&packages)?;
         // What the report answers for. A rule that stood down for any package
         // did not apply to this run, so the licence stated here is the one every
         // scanned package agrees on and nothing otherwise. Checking is per
@@ -66,7 +70,8 @@ impl Runner {
         // [ADR-PerPackageConfiguration](../docs/ADRs/ADR-PerPackageConfiguration.md),
         // where the per-package report is the piece still to come.
         let config = Config {
-            manifest_license: Self::agreed_license(&packages),
+            manifest_license: ScannedPackage::agreed_license(&packages),
+            selection: config.selection.also_skipping(&sections.skipped_anywhere()),
             ..config
         };
         let registry = RuleRegistry::from_config(&config);
@@ -77,7 +82,6 @@ impl Runner {
             ));
         }
 
-        let exclusions = ExclusionSet::new(&config.excludes)?;
         let mut offences = Vec::new();
         let mut files_scanned = 0usize;
         let mut excluded = Vec::new();
@@ -88,9 +92,11 @@ impl Runner {
             // about to be walked, rather than once for the run.
             let package_config = Config {
                 manifest_license: package.license.clone(),
-                ..config.clone()
+                workspace_dependencies: config.workspace_dependencies.clone(),
+                ..Self::config_from(&args, sections.of(&package.name))?
             };
             let registry = RuleRegistry::from_config(&package_config);
+            let exclusions = ExclusionSet::new(&package_config.excludes)?;
             let root = &package.root;
             // Read the whole package before judging it. Rules whose subject is
             // the tree -- "there is exactly one all_tests.rs" -- cannot be
@@ -150,22 +156,6 @@ impl Runner {
         Ok(RunOutcome::of(offences.len()))
     }
 
-    // The licence every scanned package declares, or None where they do not all
-    // declare the same one. This is the aggregate the old `license` meant to be
-    // and never was: it compared a set of distinct licences against a count of
-    // packages, so it could only ever answer for a single-package scan.
-    fn agreed_license(packages: &[ScannedPackage]) -> Option<String> {
-        let mut declared = packages.iter().map(|package| package.license.as_ref());
-        let first = declared.next().flatten()?;
-        if packages
-            .iter()
-            .all(|package| package.license.as_ref() == Some(first))
-        {
-            return Some(first.clone());
-        }
-        None
-    }
-
     // A misspelled rule name is an error rather than a switch that quietly
     // matches nothing, and asking for the header rule without a header file is
     // an error rather than an empty run. Both would otherwise look exactly like
@@ -199,12 +189,14 @@ impl Runner {
     // would make `--rule header` mean "header plus whatever the file already
     // selected", which is the opposite of what naming one rule means everywhere
     // else in this tool.
-    fn config_from(args: Args) -> Result<Config> {
+    fn config_from(args: &Args, section: Option<&PackageConfig>) -> Result<Config> {
         let directory = Self::manifest_directory(&args.manifest_path);
         let file = ConfigFile::load(&directory)?;
         let found = file.as_ref();
         let header_file = args
             .header_file
+            .clone()
+            .or_else(|| section.and_then(|s| s.header_file_from(&directory)))
             .or_else(|| found.and_then(|file| file.header_file_from(&directory)));
         let expected_header = match &header_file {
             Some(path) => HeaderSource::read(path)?,
@@ -226,22 +218,36 @@ impl Runner {
             // reader can always see that one is in force.
             baseline: args
                 .baseline
+                .clone()
                 .or_else(|| found.and_then(|file| file.baseline_from(&directory)))
                 .or_else(|| Self::discovered_baseline(&directory, args.write_baseline)),
             write_baseline: args.write_baseline,
             fix: args.fix,
             config_file: found.map(|_| directory.join(ConfigFile::NAME)),
-            manifest_path: args.manifest_path,
-            max_files_per_directory: found.and_then(|file| file.max_files_per_directory),
-            max_subfolders_per_directory: found.and_then(|file| file.max_subfolders_per_directory),
-            packages: args.packages,
-            excludes: Self::preferred(args.excludes, found.map(|file| &file.exclude)),
+            manifest_path: args.manifest_path.clone(),
+            max_files_per_directory: section
+                .and_then(|s| s.max_files_per_directory)
+                .or_else(|| found.and_then(|file| file.max_files_per_directory)),
+            max_subfolders_per_directory: section
+                .and_then(|s| s.max_subfolders_per_directory)
+                .or_else(|| found.and_then(|file| file.max_subfolders_per_directory)),
+            packages: args.packages.clone(),
+            excludes: Self::preferred(
+                args.excludes.clone(),
+                Self::section_or_root(section.map(|s| &s.exclude), found.map(|file| &file.exclude)),
+            ),
             expected_header,
             format: args.format,
             offence_threshold: OffenceThreshold::new(threshold),
             selection: RuleSelection::new(
-                Self::preferred(args.rules, found.map(|file| &file.rules)),
-                Self::preferred(args.skipped_rules, found.map(|file| &file.skip)),
+                Self::preferred(
+                    args.rules.clone(),
+                    Self::section_or_root(section.map(|s| &s.rules), found.map(|file| &file.rules)),
+                ),
+                Self::preferred(
+                    args.skipped_rules.clone(),
+                    Self::section_or_root(section.map(|s| &s.skip), found.map(|file| &file.skip)),
+                ),
             ),
         })
     }
@@ -252,6 +258,19 @@ impl Runner {
     fn discovered_baseline(directory: &Path, writing: bool) -> Option<PathBuf> {
         let path = directory.join(Self::BASELINE_NAME);
         (writing || path.exists()).then_some(path)
+    }
+
+    // A section states its whole list rather than adding to the root's, which is
+    // the argument already made for the command line against the file, one level
+    // down: a reader who wants to know what a package skips reads one list.
+    fn section_or_root<'a>(
+        section: Option<&'a Vec<String>>,
+        root: Option<&'a Vec<String>>,
+    ) -> Option<&'a Vec<String>> {
+        match section {
+            Some(values) if !values.is_empty() => Some(values),
+            _ => root,
+        }
     }
 
     fn preferred(from_args: Vec<String>, from_file: Option<&Vec<String>>) -> Vec<String> {

@@ -96,6 +96,86 @@ fn load_of_a_directory_without_a_config_is_none() {
     assert!(loaded.is_none());
 }
 
+// A package with nothing to say needs no section, which is the honest rendering
+// of "this one applies everything".
+#[test]
+fn load_of_a_file_with_no_sections_reads_no_packages() {
+    // Arrange
+    let path = directory("no_sections", Some("header-file = \"docs/header.txt\"\n"));
+
+    // Act
+    let file = ConfigFile::load(&path).expect("read").expect("a file");
+
+    // Assert
+    assert!(file.packages.is_empty());
+}
+
+// baseline is a set of fingerprints for one run and offence-threshold is about
+// how the report ends. Neither is a property of a package, so neither is a key
+// a section has -- and deny_unknown_fields says so without a check of its own.
+#[test]
+fn load_of_a_section_naming_a_run_level_key_is_an_error() {
+    // Arrange
+    let path = directory(
+        "section_baseline",
+        Some("[package.node]\nbaseline = \"stern4rust-baseline.json\"\n"),
+    );
+
+    // Act
+    let result = ConfigFile::load(&path);
+
+    // Assert
+    assert!(result.is_err());
+}
+
+#[test]
+fn load_of_a_section_naming_an_unknown_key_is_an_error() {
+    // Arrange
+    let path = directory(
+        "section_typo",
+        Some("[package.node]\nskkip = [\"header\"]\n"),
+    );
+
+    // Act
+    let result = ConfigFile::load(&path);
+
+    // Assert
+    assert!(result.is_err());
+}
+
+// Every key a section may carry, so that adding one to the struct without
+// meaning to is caught here rather than in a repository.
+#[test]
+fn load_of_a_section_reads_every_key_a_package_may_set() {
+    // Arrange
+    let path = directory(
+        "section_full",
+        Some(
+            r#"
+[package.node]
+rules = ["header"]
+skip = ["paired-test-file"]
+exclude = ["vendor/**"]
+header-file = "docs/other.txt"
+max-files-per-directory = 30
+max-subfolders-per-directory = 8
+"#,
+        ),
+    );
+
+    // Act
+    let file = ConfigFile::load(&path).expect("read").expect("a file");
+
+    // Assert
+    let node = &file.packages["node"];
+    assert_eq!(node.rules, vec!["header"]);
+    assert_eq!(node.skip, vec!["paired-test-file"]);
+    assert_eq!(node.exclude, vec!["vendor/**"]);
+    assert_eq!(node.max_files_per_directory, Some(30));
+    assert_eq!(node.max_subfolders_per_directory, Some(8));
+    assert!(node.header_file.is_some());
+}
+
 // Every key is optional, so a repository can set one thing without restating
 // the defaults for everything else.
 #[test]
@@ -135,4 +215,37 @@ fn load_of_an_unknown_key_is_an_error() {
 
     // Assert
     assert!(loaded.is_err());
+}
+
+// A workspace whose members want different rules says so in one file, in a
+// section each, rather than in a stern4rust.toml beside every manifest.
+#[test]
+fn load_reads_a_section_for_each_named_package() {
+    // Arrange
+    let path = directory(
+        "sections",
+        Some(
+            r#"
+header-file = "docs/header.txt"
+
+[package.validation]
+skip = ["paired-test-file"]
+
+[package.system-tests]
+skip = ["paired-test-file"]
+exclude = ["**/generated/**"]
+"#,
+        ),
+    );
+
+    // Act
+    let file = ConfigFile::load(&path).expect("read").expect("a file");
+
+    // Assert
+    assert_eq!(file.packages.len(), 2);
+    assert_eq!(file.packages["validation"].skip, vec!["paired-test-file"]);
+    assert_eq!(
+        file.packages["system-tests"].exclude,
+        vec!["**/generated/**"]
+    );
 }

@@ -23,6 +23,21 @@ impl RuleSelection {
         Self { selected, skipped }
     }
 
+    // The same selection, standing down on these as well.
+    //
+    // Used to fold every package section's skips into the run-level answer, so
+    // the report cannot claim a rule applied when one package stood it down.
+    pub fn also_skipping(&self, more: &[String]) -> Self {
+        let mut skipped = self.skipped.clone();
+        skipped.extend(more.iter().cloned());
+        skipped.sort();
+        skipped.dedup();
+        Self {
+            selected: self.selected.clone(),
+            skipped,
+        }
+    }
+
     // Skipping wins over selecting. Asking for a rule and excluding it in the
     // same breath is a contradiction, and the safer reading of a contradiction
     // is the narrower one.
