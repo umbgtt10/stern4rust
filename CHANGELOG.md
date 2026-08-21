@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.2] - 2026-08-21
+
+### Fixed
+
+- **A workspace run no longer throws away offences from different members that
+  happen to share a path.** Offences were deduplicated by content across the
+  whole run. A path is relative to its package, so `src/lib.rs` in one member
+  and `src/lib.rs` in another are two real files rendered as one string, and the
+  second finding was discarded -- silently, with the summary, the omitted count
+  and the exit code all counting the smaller number.
+
+  Measured on `etheram-embassy`, whose 31 members repeat `src/lib.rs` and
+  `tests/all_tests.rs` throughout: **390 offences reported as 364**, across four
+  rules. `tests-layout` was the worst hit, reporting 4 of 12.
+
+  Deduplication now happens per package, which is the widest scope in which two
+  identical offences are certainly one finding. The case the original
+  deduplication was written for still holds: the workspace question is asked
+  once per package root, so a rule whose subject is the workspace can state the
+  same finding twice while walking one member, and those still collapse.
+
+  A checker that quietly reports less than it found is the failure this tool
+  exists to refuse, and it was doing it to itself. The regression test builds a
+  two-member workspace whose members carry identically named files.
+
 ## [0.10.1] - 2026-08-21
 
 ### Fixed

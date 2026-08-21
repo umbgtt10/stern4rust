@@ -143,11 +143,12 @@ impl Runner {
             // is often the one that does not exist.
             let outcome = exclusions.apply(SourceWalker::walk(root), root);
             let mut files: Vec<SourceFile> = Vec::new();
+            let mut found: Vec<Offence> = Vec::new();
             for path in outcome.kept {
                 files_scanned += 1;
                 match SourceReader::read(root, &path) {
                     Ok(file) => files.push(file),
-                    Err(offence) => offences.push(*offence),
+                    Err(offence) => found.push(*offence),
                 }
             }
             if config.fix {
@@ -156,9 +157,29 @@ impl Runner {
                 fixed += count;
             }
             for file in &files {
-                offences.extend(registry.check(file));
+                found.extend(registry.check(file));
             }
-            offences.extend(registry.check_workspace(&files));
+            found.extend(registry.check_workspace(&files));
+
+            // Deduplicated per package, because a package is the widest scope in
+            // which two identical offences are certainly one finding.
+            //
+            // The workspace question is asked once per package root, so a rule
+            // whose subject is the workspace rather than the package can state
+            // the same finding twice while walking one member. Those collapse.
+            //
+            // Across members they must not. A path is relative to its package,
+            // so `src/lib.rs` in one member and `src/lib.rs` in another are two
+            // real files rendered as one string, and collapsing by content alone
+            // threw the second away. Measured on `etheram-embassy`, whose 31
+            // members repeat `src/lib.rs` and `tests/all_tests.rs` throughout:
+            // 390 offences reported as 364, across four rules, with the summary
+            // and the exit code both counting the smaller number. A checker that
+            // quietly reports less than it found is the failure this tool exists
+            // to refuse, and it was doing it to itself.
+            let mut seen = HashSet::new();
+            found.retain(|offence| seen.insert(offence.clone()));
+            offences.extend(found);
             excluded.push(outcome.excluded);
         }
 
@@ -166,16 +187,6 @@ impl Runner {
         // without this the report jumps between files. Sorting is the report's
         // business rather than any rule's -- a rule states facts, and their
         // order on the page is not one of them.
-        // The workspace question is asked once per package root, so a rule whose
-        // subject is the *workspace* rather than the package -- the manifest
-        // rules -- states the same finding once per member. The same sentence
-        // about the same line of the same file is one finding, not several.
-        //
-        // By content rather than by `dedup`, because two findings about one
-        // manifest interleave once sorted and consecutive-only removal misses
-        // every copy after the first pair.
-        let mut seen = HashSet::new();
-        offences.retain(|offence| seen.insert(offence.clone()));
         offences.sort_by(|left, right| left.sort_key().cmp(&right.sort_key()));
 
         if config.write_baseline {

@@ -70,6 +70,52 @@ edition = \"2021\"
     path
 }
 
+// Two members whose files have the same package-relative names, each carrying
+// the same offence. `src/widget.rs` in `alpha` and `src/widget.rs` in `beta`
+// are two different files that render as one string, which is the whole of the
+// bug this pins.
+fn probe_twin_workspace(name: &str) -> PathBuf {
+    let root = env::temp_dir().join(format!("stern4rust_twin_{name}"));
+    let _ = fs::remove_dir_all(&root);
+    for member in ["alpha", "beta"] {
+        fs::create_dir_all(root.join(member).join("src")).expect("create the member");
+        fs::write(
+            root.join(member).join("Cargo.toml"),
+            format!(
+                "[package]
+name = \"{member}\"
+version = \"0.1.0\"
+edition = \"2021\"
+"
+            ),
+        )
+        .expect("write the member manifest");
+        fs::write(
+            root.join(member).join("src/lib.rs"),
+            "pub mod widget;
+",
+        )
+        .expect("write the registry");
+        fs::write(
+            root.join(member).join("src/widget.rs"),
+            "pub fn widget_count() -> usize {
+    0
+}
+",
+        )
+        .expect("write the module");
+    }
+    fs::write(
+        root.join("Cargo.toml"),
+        "[workspace]
+resolver = \"2\"
+members = [\"alpha\", \"beta\"]
+",
+    )
+    .expect("write the workspace manifest");
+    root
+}
+
 // A real workspace, judged whole and judged one member at a time.
 //
 // Both bugs in the per-package configuration reached a release past a full unit
@@ -342,6 +388,55 @@ fn run_reporting_in_json_names_the_member_that_stood_a_rule_down() {
         .find(|package| package["package"] == "alpha")
         .expect("alpha");
     assert_eq!(alpha["rules_skipped"].as_array().expect("array").len(), 0);
+}
+
+// Two packages, two real files, one string. Deduplicating the report by offence
+// content alone collapsed them into one finding and the summary counted one --
+// silently, which is the failure this whole tool exists to refuse. Measured on
+// `etheram-embassy`: 390 offences reported as 364, across four rules, because
+// a 31-member workspace repeats `src/lib.rs` and `tests/all_tests.rs` in every
+// member.
+#[test]
+fn run_reporting_over_twin_members_counts_each_members_offence() {
+    // Arrange
+    let root = probe_twin_workspace("counts_each");
+
+    // Act
+    let report = report_for(&root, None);
+
+    // Assert
+    let occurrences = report.matches("src/widget.rs").count();
+    assert!(
+        occurrences >= 2,
+        "expected a finding per member, got {occurrences} in {report}"
+    );
+}
+
+// The same run said as data, so the count is read rather than inferred from
+// how many times a path happens to appear in a table.
+#[test]
+fn run_reporting_over_twin_members_in_json_carries_both_findings() {
+    // Arrange
+    let root = probe_twin_workspace("json_both");
+    let manifest = root.join("Cargo.toml");
+
+    // Act
+    let (_, report) = Runner::run_reporting(args_from(&[
+        "cargo-stern4rust",
+        "--manifest-path",
+        &manifest.to_string_lossy(),
+        "--format",
+        "json",
+        "--rule",
+        "tested-public-api",
+    ]))
+    .expect("the run itself should succeed");
+
+    // Assert
+    let document: Value = from_str(&report).expect("valid json");
+    let offences = document["offences"].as_array().expect("an offences array");
+    assert_eq!(offences.len(), 2, "{report}");
+    assert_eq!(document["offences_found"], 2);
 }
 
 // The two printers must not give different pictures, which is the whole of
