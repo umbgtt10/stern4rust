@@ -74,7 +74,14 @@ impl Runner {
         // where the per-package report is the piece still to come.
         let config = Config {
             manifest_license: ScannedPackage::agreed_license(&packages),
-            selection: config.selection.also_skipping(&sections.skipped_anywhere()),
+            selection: config.selection.also_skipping(
+                &sections.skipped_anywhere(
+                    &packages
+                        .iter()
+                        .map(|package| package.name.as_str())
+                        .collect::<Vec<_>>(),
+                ),
+            ),
             ..config
         };
         let registry = RuleRegistry::from_config(&config);

@@ -97,7 +97,7 @@ dependencies = [
 
 [[package]]
 name = "cargo-stern4rust"
-version = "0.9.4"
+version = "0.9.5"
 dependencies = [
  "anyhow",
  "cargo_metadata",

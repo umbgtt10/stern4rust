@@ -50,11 +50,16 @@ impl PackageSections {
     // acceptable while the report names it. Until the report speaks per package,
     // this is what keeps it honest -- it understates, naming a rule as skipped
     // even where most packages applied it.
-    pub fn skipped_anywhere(&self) -> Vec<String> {
+    //
+    // Only the packages this run walks. Counting a section for one it does not
+    // made a scoped run contradict itself: the roster listed a rule as applied
+    // while the summary beneath it called the same rule skipped.
+    pub fn skipped_anywhere(&self, scanned: &[&str]) -> Vec<String> {
         let mut skipped: Vec<String> = self
             .sections
-            .values()
-            .flat_map(|section| section.skip.iter().cloned())
+            .iter()
+            .filter(|(name, _)| scanned.contains(&name.as_str()))
+            .flat_map(|(_, section)| section.skip.iter().cloned())
             .collect();
         skipped.sort();
         skipped.dedup();

@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.5] - 2026-08-21
+
+### Fixed
+
+- **A scoped run no longer contradicts itself.** `--package node` listed
+  `paired-test-file` among the rules it applied and, three lines below, reported
+  `rules_skipped=1` for the same rule — because the summary folded in every
+  section's stand-downs, including sections for packages the run was not
+  walking. It counts only the packages actually scanned now.
+
 ## [0.9.4] - 2026-08-21
 
 ### Fixed

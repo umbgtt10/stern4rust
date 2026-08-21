@@ -87,10 +87,38 @@ fn skipped_anywhere_collects_what_any_section_stands_down_on() {
     ]);
 
     // Act
-    let skipped = sections.skipped_anywhere();
+    let skipped = sections.skipped_anywhere(&["validation", "system-tests"]);
 
     // Assert
     assert_eq!(skipped, vec!["paired-test-file", "test-naming"]);
+}
+
+#[test]
+fn skipped_anywhere_counts_a_section_for_a_package_this_run_does_scan() {
+    // Arrange
+    let sections = skipping(&[("validation", &["paired-test-file"])]);
+
+    // Act
+    let skipped = sections.skipped_anywhere(&["node", "validation"]);
+
+    // Assert
+    assert_eq!(skipped, vec!["paired-test-file"]);
+}
+
+// Only the packages this run is walking. Folding in a section for one it is not
+// made `--package node` report paired-test-file as skipped while the roster
+// above it listed the rule as applied -- the same run contradicting itself,
+// which is worse than the understatement it was meant to be.
+#[test]
+fn skipped_anywhere_ignores_sections_for_packages_this_run_does_not_scan() {
+    // Arrange
+    let sections = skipping(&[("validation", &["paired-test-file"])]);
+
+    // Act
+    let skipped = sections.skipped_anywhere(&["node"]);
+
+    // Assert
+    assert!(skipped.is_empty());
 }
 
 // One rule stood down on by two packages is one rule, not two.
@@ -103,7 +131,7 @@ fn skipped_anywhere_names_a_rule_two_sections_share_once() {
     ]);
 
     // Act
-    let skipped = sections.skipped_anywhere();
+    let skipped = sections.skipped_anywhere(&["validation", "system-tests"]);
 
     // Assert
     assert_eq!(skipped, vec!["paired-test-file"]);
@@ -112,7 +140,7 @@ fn skipped_anywhere_names_a_rule_two_sections_share_once() {
 #[test]
 fn skipped_anywhere_without_any_section_is_empty() {
     // Arrange & Act
-    let skipped = sections(&[]).skipped_anywhere();
+    let skipped = sections(&[]).skipped_anywhere(&[]);
 
     // Assert
     assert!(skipped.is_empty());
