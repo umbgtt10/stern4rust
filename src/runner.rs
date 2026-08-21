@@ -55,6 +55,17 @@ pub struct Runner;
 
 impl Runner {
     pub fn run(args: Args) -> Result<RunOutcome> {
+        let (outcome, report) = Self::run_reporting(args)?;
+        println!("{report}");
+        Ok(outcome)
+    }
+
+    // The same run, handing back what it would have printed.
+    //
+    // Both per-package bugs left the run perfectly Ok while the report
+    // contradicted itself, so a test asserting on the outcome could not see
+    // either. This is the seam that lets one assert on what was said.
+    pub fn run_reporting(args: Args) -> Result<(RunOutcome, String)> {
         let sections = PackageSections::load(&Self::manifest_directory(&args.manifest_path))?;
         let config = Self::config_from(&args, None)?;
         Self::validate_selection(&config)?;
@@ -161,11 +172,11 @@ impl Runner {
         offences.sort_by(|left, right| left.sort_key().cmp(&right.sort_key()));
 
         if config.write_baseline {
-            return Self::record(&config, offences);
+            return Self::record(&config, offences).map(|outcome| (outcome, String::new()));
         }
         let baselined = Self::baselined(&config, offences)?;
         let offences = baselined.kept;
-        Self::report(
+        let report = Self::report(
             &config,
             &registry,
             ScanTotals::new(files_scanned, fixed),
@@ -174,7 +185,7 @@ impl Runner {
             &rosters,
             &offences,
         );
-        Ok(RunOutcome::of(offences.len()))
+        Ok((RunOutcome::of(offences.len()), report))
     }
 
     // A misspelled rule name is an error rather than a switch that quietly
@@ -388,7 +399,7 @@ impl Runner {
         baselined: &BaselineOutcome,
         rosters: &[PackageRoster],
         offences: &[Offence],
-    ) {
+    ) -> String {
         let threshold = config.offence_threshold;
         let applied = Self::owned(&registry.names());
         let skipped = Self::owned(&RuleRegistry::skipped_names(&config.selection));
@@ -411,7 +422,7 @@ impl Runner {
                     baselined.stale,
                 )
                 .with_fixed(totals.fixed)
-                .print(offences),
+                .render(offences),
             OutputFormat::Json => JsonPrinter::new(totals.files_scanned)
                 .with_threshold(threshold)
                 .with_rules(applied, skipped, unconfigured_names)
@@ -423,7 +434,7 @@ impl Runner {
                     baselined.stale,
                 )
                 .with_fixed(totals.fixed)
-                .print(offences),
+                .render(offences),
         }
     }
 

@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **`Runner::run_reporting`** — the same run, handing back what it would have
+  printed. Both per-package bugs left the run perfectly `Ok` while the report
+  contradicted itself, so every test asserting on the outcome was blind to them.
+  `run` prints what this builds, so a test reads the same words a reader does.
+
 ## [0.9.5] - 2026-08-21
 
 ### Fixed

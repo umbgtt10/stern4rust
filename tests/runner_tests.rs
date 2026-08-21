@@ -124,6 +124,32 @@ skip = [\"test-free-source\"]
     root
 }
 
+// The invariant both per-package bugs broke, in the shape they broke it: a run
+// must never name a rule as skipped that its own roster lists as applied.
+//
+// 0.9.3 broke it by failing outright; 0.9.5 by folding stand-downs from packages
+// the run was not walking into the summary, so `--package alpha` reported a rule
+// applied and skipped three lines apart. Nothing caught the second -- the run
+// stays perfectly Ok while contradicting itself, and every test asserted on the
+// outcome rather than on what was said.
+fn report_for(root: &Path, package: Option<&str>) -> String {
+    let manifest = root.join("Cargo.toml");
+    let mut parts = vec![
+        "cargo-stern4rust".to_string(),
+        "--manifest-path".to_string(),
+        manifest.to_string_lossy().into_owned(),
+    ];
+    if let Some(name) = package {
+        parts.push("--package".to_string());
+        parts.push(name.to_string());
+    }
+    Runner::run_reporting(args_from(
+        &parts.iter().map(String::as_str).collect::<Vec<_>>(),
+    ))
+    .expect("the run itself should succeed")
+    .1
+}
+
 fn run_with_header(name: &str, contents: &str) -> RunOutcome {
     let path = header_file(name, contents);
     Runner::run(args_from(&[
@@ -235,6 +261,55 @@ skip = [\"test-free-source\"]
     assert!(format!("{error}").contains("gamma"));
 }
 
+// And the whole workspace still names it, because there beta really does stand
+// it down -- so the tests above pin scoping rather than the rule vanishing.
+#[test]
+fn run_over_the_whole_workspace_reports_the_stand_down_its_section_asks_for() {
+    // Arrange
+    let root = probe_workspace("report_whole");
+
+    // Act
+    let report = report_for(&root, None);
+
+    // Assert
+    assert!(report.contains("test-free-source (skipped)"), "{report}");
+    assert!(report.contains("rules_skipped=1"), "{report}");
+}
+
+// The roster and the summary describe the same run and must agree about it.
+#[test]
+fn run_scoped_to_a_member_never_names_an_applied_rule_as_skipped() {
+    // Arrange
+    let root = probe_workspace("report_agree");
+
+    // Act
+    let report = report_for(&root, Some("alpha"));
+
+    // Assert
+    let applied = report
+        .lines()
+        .find(|line| line.trim_start().starts_with("applied:"))
+        .expect("a roster");
+    assert!(applied.contains("test-free-source"), "{report}");
+    assert!(!report.contains("test-free-source (skipped)"), "{report}");
+}
+
+#[test]
+fn run_scoped_to_a_member_without_a_section_reports_nothing_skipped() {
+    // Arrange
+    let root = probe_workspace("report_alpha");
+
+    // Act
+    let report = report_for(&root, Some("alpha"));
+
+    // Assert
+    assert!(
+        !report.contains("(skipped)"),
+        "alpha has no section, so nothing was stood down:\n{report}"
+    );
+    assert!(report.contains("rules_skipped=0"), "{report}");
+}
+
 // The 0.9.3 failure, in the invocation that hit it: scoping to the member with
 // no section left the section for the other one looking like a typo.
 #[test]
@@ -263,6 +338,19 @@ fn run_scoped_to_the_member_that_has_the_section_succeeds() {
 
     // Assert
     assert!(result.is_ok(), "{:?}", result.err());
+}
+
+#[test]
+fn run_scoped_to_the_member_with_a_section_reports_its_own_stand_down() {
+    // Arrange
+    let root = probe_workspace("report_beta");
+
+    // Act
+    let report = report_for(&root, Some("beta"));
+
+    // Assert
+    assert!(report.contains("test-free-source (skipped)"), "{report}");
+    assert!(report.contains("rules_skipped=1"), "{report}");
 }
 
 // A switch that quietly matched nothing would look exactly like a switch that
