@@ -120,6 +120,17 @@ line keeps its shape**, because every gate script in this family parses it with 
 regex and a changed summary would break all of them at once — see
 [ADR-MachineReadableReport](ADR-MachineReadableReport.md).
 
+**A block each only where they differ.** A roster that says the same thing as
+every other is said once, without a package name, which is what every
+single-package run and every workspace answering to one rule set prints today.
+The reader pays for the workspace they have rather than the one this decision
+anticipated: an ordinary run is unchanged, and only a genuinely mixed workspace
+costs a block per member.
+
+The summary keeps understating on purpose. `rules_skipped=1` where one of four
+packages stood a rule down is true of the run and coarse about the members; the
+blocks above it carry the detail, and the number below stays parseable.
+
 The property being protected is the one that makes a subset honest at all: a
 stand-down is only acceptable while the report names it. A per-package skip that
 vanished into an aggregate number would be a blind spot with a green tick over

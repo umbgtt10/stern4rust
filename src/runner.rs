@@ -10,8 +10,10 @@ use crate::reporting::json_printer::JsonPrinter;
 use crate::reporting::offence::Offence;
 use crate::reporting::offence_threshold::OffenceThreshold;
 use crate::reporting::output_format::OutputFormat;
+use crate::reporting::package_roster::PackageRoster;
 use crate::reporting::report_printer::ReportPrinter;
 use crate::reporting::run_outcome::RunOutcome;
+use crate::reporting::scan_totals::ScanTotals;
 use crate::rule_registry::RuleRegistry;
 use crate::rules::source::header_rule::HeaderRule;
 use crate::settings::args::Args;
@@ -86,6 +88,7 @@ impl Runner {
         let mut files_scanned = 0usize;
         let mut excluded = Vec::new();
         let mut fixed = 0usize;
+        let mut rosters: Vec<PackageRoster> = Vec::new();
 
         for package in &packages {
             // Everything the manifest decides is decided here, by the package
@@ -96,6 +99,16 @@ impl Runner {
                 ..Self::config_from(&args, sections.of(&package.name))?
             };
             let registry = RuleRegistry::from_config(&package_config);
+            rosters.push(PackageRoster::new(
+                &package.name,
+                Self::owned(&registry.names()),
+                Self::owned(&RuleRegistry::skipped_names(&package_config.selection)),
+                registry
+                    .unconfigured(&package_config)
+                    .into_iter()
+                    .map(|(name, requirement)| (name.to_string(), requirement.to_string()))
+                    .collect(),
+            ));
             let exclusions = ExclusionSet::new(&package_config.excludes)?;
             let root = &package.root;
             // Read the whole package before judging it. Rules whose subject is
@@ -147,10 +160,10 @@ impl Runner {
         Self::report(
             &config,
             &registry,
-            files_scanned,
+            ScanTotals::new(files_scanned, fixed),
             &Self::merged(excluded),
             &BaselineOutcome::new(Vec::new(), baselined.suppressed, baselined.stale),
-            fixed,
+            &rosters,
             &offences,
         );
         Ok(RunOutcome::of(offences.len()))
@@ -362,10 +375,10 @@ impl Runner {
     fn report(
         config: &Config,
         registry: &RuleRegistry,
-        files_scanned: usize,
+        totals: ScanTotals,
         excluded: &ExclusionOutcome,
         baselined: &BaselineOutcome,
-        fixed: usize,
+        rosters: &[PackageRoster],
         offences: &[Offence],
     ) {
         let threshold = config.offence_threshold;
@@ -378,9 +391,10 @@ impl Runner {
             .collect();
         let unconfigured_names = Self::owned(&registry.unconfigured_names(config));
         match config.format {
-            OutputFormat::Text => ReportPrinter::new(files_scanned)
+            OutputFormat::Text => ReportPrinter::new(totals.files_scanned)
                 .with_threshold(threshold)
                 .with_rules(applied.clone(), skipped.clone(), unconfigured.clone())
+                .with_package_rosters(rosters.to_vec())
                 .with_exclusions(excluded.excluded.clone())
                 .with_config_file(Self::shown(config))
                 .with_baseline(
@@ -388,9 +402,9 @@ impl Runner {
                     baselined.suppressed,
                     baselined.stale,
                 )
-                .with_fixed(fixed)
+                .with_fixed(totals.fixed)
                 .print(offences),
-            OutputFormat::Json => JsonPrinter::new(files_scanned)
+            OutputFormat::Json => JsonPrinter::new(totals.files_scanned)
                 .with_threshold(threshold)
                 .with_rules(applied, skipped, unconfigured_names)
                 .with_exclusions(excluded.excluded.clone())
@@ -400,7 +414,7 @@ impl Runner {
                     baselined.suppressed,
                     baselined.stale,
                 )
-                .with_fixed(fixed)
+                .with_fixed(totals.fixed)
                 .print(offences),
         }
     }

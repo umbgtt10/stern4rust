@@ -56,12 +56,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
-- **A rule any package stands down on is reported as skipped for the run.** The
-  report still answers for the run as a whole, so it understates: a rule named
-  as skipped may have applied to every package but one. Overstating -- claiming
-  twenty-one applied when one package applied twenty -- is the direction that
-  would make a stand-down invisible, which is the one thing a subset may never
-  be. The per-package report is still to come.
+- **The report names which rules ran against which package.** A workspace whose
+  members answer to different rule sets gets a block each; one whose members
+  agree gets one roster, said once and without a package name, which is exactly
+  what every run prints today. An ordinary single-package run is unchanged.
+
+  The `summary:` line keeps its shape and keeps answering for the run as a
+  whole, so it understates: `rules_skipped=1` where one package of four stood a
+  rule down is true and coarse. The blocks above it carry the detail, and every
+  gate script in this family goes on parsing the line below.
 
 ## [0.9.2] - 2026-08-21
 

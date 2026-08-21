@@ -8,5 +8,7 @@ pub mod offence;
 pub mod offence_fingerprint;
 pub mod offence_threshold;
 pub mod output_format;
+pub mod package_roster;
 pub mod report_printer;
 pub mod run_outcome;
+pub mod scan_totals;

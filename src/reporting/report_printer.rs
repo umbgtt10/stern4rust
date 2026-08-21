@@ -5,6 +5,7 @@
 use crate::reporting::column_widths::ColumnWidths;
 use crate::reporting::offence::Offence;
 use crate::reporting::offence_threshold::OffenceThreshold;
+use crate::reporting::package_roster::PackageRoster;
 use std::collections::BTreeSet;
 
 // One table for every rule. Columns are sized to their contents so the report
@@ -14,6 +15,7 @@ pub struct ReportPrinter {
     files_scanned: usize,
     threshold: OffenceThreshold,
     applied: Vec<String>,
+    rosters: Vec<PackageRoster>,
     skipped: Vec<String>,
     unconfigured: Vec<(String, String)>,
     exclusions: Vec<(String, usize)>,
@@ -30,6 +32,7 @@ impl ReportPrinter {
             files_scanned,
             threshold: OffenceThreshold::default(),
             applied: Vec::new(),
+            rosters: Vec::new(),
             skipped: Vec::new(),
             unconfigured: Vec::new(),
             exclusions: Vec::new(),
@@ -72,6 +75,13 @@ impl ReportPrinter {
 
     pub fn with_exclusions(self, exclusions: Vec<(String, usize)>) -> Self {
         Self { exclusions, ..self }
+    }
+
+    // One roster per package walked. Stated once where they agree, which is
+    // every single-package run and every workspace answering to one rule set,
+    // and separated only where they genuinely differ.
+    pub fn with_package_rosters(self, rosters: Vec<PackageRoster>) -> Self {
+        Self { rosters, ..self }
     }
 
     pub fn with_rules(
@@ -151,6 +161,9 @@ impl ReportPrinter {
     // Named, not counted. A count answers "how many", which is only useful to a
     // reader who already knows how many there are.
     fn roster(&self) -> String {
+        if !self.rosters.is_empty() {
+            return self.package_rosters();
+        }
         if self.applied.is_empty() {
             return String::new();
         }
@@ -160,6 +173,35 @@ impl ReportPrinter {
         }
         roster.push('\n');
         roster
+    }
+
+    // Said once where every package says the same, and a block each where they
+    // do not. A workspace answering to one rule set reads exactly as a single
+    // package does, which is what keeps this from costing every existing reader
+    // something for a case they do not have.
+    fn package_rosters(&self) -> String {
+        let first = &self.rosters[0];
+        if self.rosters.iter().all(|other| first.agrees_with(other)) {
+            return Self::lines_for(None, first);
+        }
+        self.rosters
+            .iter()
+            .map(|roster| Self::lines_for(Some(&roster.package), roster))
+            .collect()
+    }
+
+    fn lines_for(package: Option<&str>, roster: &PackageRoster) -> String {
+        let mut rendered = String::new();
+        if let Some(name) = package {
+            rendered.push_str(&format!("  {name}:\n"));
+        }
+        rendered.push_str(&format!("  applied: {}\n", roster.applied.join(", ")));
+        let absences = roster.absences();
+        if !absences.is_empty() {
+            rendered.push_str(&format!("  not applied: {}\n", absences.join(", ")));
+        }
+        rendered.push('\n');
+        rendered
     }
 
     // What --fix repaired, stated beside what it could not. A fixer reporting

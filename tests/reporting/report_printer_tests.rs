@@ -11,6 +11,7 @@
 
 use stern4rust::reporting::offence::Offence;
 use stern4rust::reporting::offence_threshold::OffenceThreshold;
+use stern4rust::reporting::package_roster::PackageRoster;
 use stern4rust::reporting::report_printer::ReportPrinter;
 
 fn many(count: usize) -> Vec<Offence> {
@@ -152,6 +153,51 @@ fn render_names_the_rules_that_were_not_applied() {
     );
 }
 
+// The reason a rule is missing travels with it, per package, or a reader with a
+// workspace has no idea which member to go and fix.
+#[test]
+fn render_of_a_package_whose_rule_could_not_run_names_the_requirement() {
+    // Arrange
+    let printer = ReportPrinter::new(9).with_package_rosters(vec![
+        PackageRoster::new("node", vec!["header".to_string()], Vec::new(), Vec::new()),
+        PackageRoster::new(
+            "fixture",
+            vec!["header".to_string()],
+            Vec::new(),
+            vec![(
+                "spdx-matches-manifest".to_string(),
+                "needs a `license` field in Cargo.toml".to_string(),
+            )],
+        ),
+    ]);
+
+    // Act
+    let report = printer.render(&[]);
+
+    // Assert
+    assert!(report.contains("spdx-matches-manifest (needs a `license` field in Cargo.toml)"));
+    assert!(report.contains("fixture:"));
+}
+
+// One package is not a workspace, and naming it would be noise.
+#[test]
+fn render_of_a_single_package_states_one_roster_without_naming_it() {
+    // Arrange
+    let printer = ReportPrinter::new(9).with_package_rosters(vec![PackageRoster::new(
+        "cargo-stern4rust",
+        vec!["header".to_string()],
+        Vec::new(),
+        Vec::new(),
+    )]);
+
+    // Act
+    let report = printer.render(&[]);
+
+    // Assert
+    assert!(report.contains("applied: header"));
+    assert!(!report.contains("cargo-stern4rust:"));
+}
+
 // Loudly, and naming the flag that raises it. A cap nobody was told about
 // reads as "that was all of them".
 #[test]
@@ -208,6 +254,67 @@ fn render_of_no_offences_with_a_skipped_rule_says_applied_rules_are_satisfied() 
     );
     assert!(!report.contains("All rules are satisfied."), "got {report}");
     assert!(report.contains("not applied: tests-layout"), "got {report}");
+}
+
+// A workspace whose members all answer to the same rules reads exactly as one
+// package does. This is the case that must not change: every repository in this
+// family is one rule set, every gate script parses what it prints, and a report
+// that grew a block per package for no reason would be worse than the one it
+// replaced.
+#[test]
+fn render_of_packages_that_agree_states_one_roster() {
+    // Arrange
+    let printer = ReportPrinter::new(9).with_package_rosters(vec![
+        PackageRoster::new(
+            "node",
+            vec!["header".to_string(), "test-naming".to_string()],
+            Vec::new(),
+            Vec::new(),
+        ),
+        PackageRoster::new(
+            "node-infra",
+            vec!["header".to_string(), "test-naming".to_string()],
+            Vec::new(),
+            Vec::new(),
+        ),
+    ]);
+
+    // Act
+    let report = printer.render(&[]);
+
+    // Assert
+    assert!(report.contains("applied: header, test-naming"));
+    assert!(!report.contains("node"));
+    assert_eq!(report.matches("applied:").count(), 1);
+}
+
+// And the case the block exists for. `applied: header, test-naming` would be
+// false for validation, which applies one of them.
+#[test]
+fn render_of_packages_that_differ_states_a_roster_each() {
+    // Arrange
+    let printer = ReportPrinter::new(9).with_package_rosters(vec![
+        PackageRoster::new(
+            "node",
+            vec!["header".to_string(), "test-naming".to_string()],
+            Vec::new(),
+            Vec::new(),
+        ),
+        PackageRoster::new(
+            "validation",
+            vec!["header".to_string()],
+            vec!["test-naming".to_string()],
+            Vec::new(),
+        ),
+    ]);
+
+    // Act
+    let report = printer.render(&[]);
+
+    // Assert
+    assert!(report.contains("node:"));
+    assert!(report.contains("validation:"));
+    assert!(report.contains("not applied: test-naming (skipped)"));
 }
 
 // Every offence carries what to do about it, so every row is followed by one.
@@ -326,6 +433,29 @@ fn render_summary_counts_every_offence_even_when_some_are_not_shown() {
         ),
         "got {report}"
     );
+}
+
+// Gate scripts across this family parse the summary with a regex. Whatever the
+// roster does above it, the line they read keeps its shape.
+#[test]
+fn render_with_differing_rosters_keeps_the_summary_line_intact() {
+    // Arrange
+    let printer = ReportPrinter::new(9).with_package_rosters(vec![
+        PackageRoster::new("node", vec!["header".to_string()], Vec::new(), Vec::new()),
+        PackageRoster::new(
+            "validation",
+            Vec::new(),
+            vec!["header".to_string()],
+            Vec::new(),
+        ),
+    ]);
+
+    // Act
+    let report = printer.render(&[]);
+
+    // Assert
+    assert!(report.contains("summary: files_scanned=9"));
+    assert_eq!(report.matches("summary:").count(), 1);
 }
 
 // These three builders shipped in 0.4.0 with no test touching them directly.
