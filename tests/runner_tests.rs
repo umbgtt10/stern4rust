@@ -25,6 +25,20 @@ fn args_from(parts: &[&str]) -> Args {
 }
 
 fn config_directory(name: &str, contents: &str) -> PathBuf {
+    let path = probe_package(name);
+    fs::write(path.join("stern4rust.toml"), contents).expect("write the config");
+    path
+}
+
+fn header_file(name: &str, contents: &str) -> PathBuf {
+    let path = env::temp_dir().join(format!("stern4rust_header_{name}.txt"));
+    fs::write(&path, contents).expect("write the header file");
+    path
+}
+
+// A package with no stern4rust.toml beside it. Tests that need the absence of a
+// config cannot point at this repository, because this repository has one.
+fn probe_package(name: &str) -> PathBuf {
     let path = env::temp_dir().join(format!("stern4rust_run_{name}"));
     let _ = fs::remove_dir_all(&path);
     fs::create_dir_all(path.join("src")).expect("create the package");
@@ -49,13 +63,6 @@ edition = \"2021\"
 ",
     )
     .expect("write the module");
-    fs::write(path.join("stern4rust.toml"), contents).expect("write the config");
-    path
-}
-
-fn header_file(name: &str, contents: &str) -> PathBuf {
-    let path = env::temp_dir().join(format!("stern4rust_header_{name}.txt"));
-    fs::write(&path, contents).expect("write the header file");
     path
 }
 
@@ -322,11 +329,14 @@ fn run_with_an_unusable_exclude_pattern_is_an_error() {
 
 #[test]
 fn run_with_the_header_rule_selected_but_no_header_file_is_an_error() {
-    // Arrange
+    // Arrange -- a package with nothing to supply the header. Pointing at this
+    // repository would not do: its own stern4rust.toml names a header file, so
+    // the rule would run and the test would pass for the wrong reason.
+    let path = probe_package("header_rule_with_no_header_file");
     let args = args_from(&[
         "cargo-stern4rust",
         "--manifest-path",
-        "Cargo.toml",
+        path.join("Cargo.toml").to_str().expect("manifest path"),
         "--rule",
         "header",
     ]);

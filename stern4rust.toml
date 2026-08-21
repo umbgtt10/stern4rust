@@ -1,0 +1,7 @@
+# House coding rules, enforced by `cargo stern4rust` first in stage 2.
+#
+# The header rule is the one rule that cannot hold until it is told what the
+# header says. Naming the file here rather than in the gate script means a
+# hand-run of `cargo stern4rust` checks exactly what the gate checks -- which is
+# what every other repository in this family does, and what this one did not.
+header-file = "docs/header.txt"

@@ -96,14 +96,13 @@ function Invoke-Stern4RustSelfGate {
     Write-Host "Own rules stern4rust..." -ForegroundColor Cyan
 
     $manifestPath = (Resolve-Path (Join-Path $PSScriptRoot "..\Cargo.toml")).Path
-    $headerPath = (Resolve-Path (Join-Path $PSScriptRoot "..\docs\header.txt")).Path
 
     # Built from source rather than run from whatever is installed. The gate has
     # to judge the tree it is standing in, not the last version that happened to
     # be published.
     $previousErrorActionPreference = $ErrorActionPreference
     $ErrorActionPreference = "Continue"
-    $output = & cargo run --quiet --manifest-path $manifestPath -- --manifest-path $manifestPath --header-file $headerPath 2>&1
+    $output = & cargo run --quiet --manifest-path $manifestPath -- --manifest-path $manifestPath 2>&1
     $ErrorActionPreference = $previousErrorActionPreference
     $exitCode = $LASTEXITCODE
     $output | ForEach-Object { Write-Host $_ }

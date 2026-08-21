@@ -49,6 +49,18 @@ whatever is installed. A tool that enforces a rule it does not satisfy is not
 worth installing, so every `.rs` file here carries the header in
 `docs/header.txt`.
 
+All twenty-one rules are enforced, with nothing skipped and nothing
+unconfigured. `stern4rust.toml` names the header file, rather than the gate
+script passing `--header-file`, so a hand-run of `cargo stern4rust` checks
+exactly what the gate checks -- which is what every other repository in this
+family does. The flag still overrides the config and is still covered by tests;
+it simply is not the only way in any more.
+
+One consequence is worth knowing before writing a test here. Any test that
+needs the *absence* of a config cannot point at this repository's own manifest,
+because a `stern4rust.toml` now sits beside it. `probe_package` in
+`tests/runner_tests.rs` builds a package without one for exactly that reason.
+
 ## Architecture
 
 One rule, one file, one implementation.
