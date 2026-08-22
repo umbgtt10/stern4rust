@@ -88,6 +88,28 @@ fn check_a_test_file_reports_nothing() {
     assert!(offences.is_empty(), "expected none, got {offences:?}");
 }
 
+// The offence quotes what the reader will search for, and that is the import,
+// not the gate above it.
+#[test]
+fn check_an_out_of_order_attributed_import_names_the_import_not_the_attribute() {
+    // Arrange & Act
+    let offences = check(
+        "src/widget.rs",
+        "#[cfg(feature = \"alpha\")]\nuse zeta_crate::Zeta;\n#[cfg(feature = \"zeta\")]\nuse alpha_crate::Alpha;\n\npub struct W;\n",
+    );
+
+    // Assert
+    assert_eq!(
+        offences[0].subject.as_deref(),
+        Some("use alpha_crate::Alpha;")
+    );
+    assert!(
+        offences[0].description.contains("use zeta_crate::Zeta;"),
+        "{:?}",
+        offences[0].description
+    );
+}
+
 #[test]
 fn check_an_unsorted_import_block_reports_it() {
     // Arrange & Act
@@ -126,6 +148,38 @@ fn check_an_uppercase_first_segment_reports_nothing() {
 
     // Assert
     assert!(offences.is_empty(), "expected none, got {offences:?}");
+}
+
+// An item's span starts at its first attribute, so reading the line the span
+// begins on gave a cfg-gated import its `#[cfg(...)]` line as the thing to
+// sort. `embassy-logging` has four such imports and every one was reported,
+// with corrections that ordered them by feature name: following all of them
+// would have put `rtt_sink` above `qemu_sink` above `host_sink` -- the paths
+// in reverse, by the rule that exists to alphabetise them.
+#[test]
+fn check_attributed_imports_in_order_reports_nothing() {
+    // Arrange & Act
+    let offences = check(
+        "src/widget.rs",
+        "#[cfg(feature = \"zeta\")]\nuse alpha_crate::Alpha;\n#[cfg(feature = \"alpha\")]\nuse zeta_crate::Zeta;\n\npub struct W;\n",
+    );
+
+    // Assert
+    assert!(offences.is_empty(), "expected none, got {offences:?}");
+}
+
+// The attribute must not hide a real disorder either. Same two attributes, the
+// paths the wrong way round.
+#[test]
+fn check_attributed_imports_out_of_order_reports_it() {
+    // Arrange & Act
+    let offences = check(
+        "src/widget.rs",
+        "#[cfg(feature = \"alpha\")]\nuse zeta_crate::Zeta;\n#[cfg(feature = \"zeta\")]\nuse alpha_crate::Alpha;\n\npub struct W;\n",
+    );
+
+    // Assert
+    assert_eq!(offences.len(), 1);
 }
 
 // A blank line ends a block, so the first import of the next one is compared

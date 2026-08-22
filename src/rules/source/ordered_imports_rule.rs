@@ -62,9 +62,25 @@ impl OrderedImportsRule {
 
     // The text as written, taken from the line rather than rebuilt from the
     // syntax tree, so the offence quotes what the reader will search for.
+    //
+    // Anchored on the `use` keyword, not on the item. An item's span begins at
+    // its first attribute, so a gated import read from `span().start()` was
+    // judged -- and quoted -- by its `#[cfg(...)]` line instead of its path.
+    //
+    // The corrections that produced were not merely noisy, they were wrong.
+    // `embassy-logging` gates four imports on three features, and following
+    // every correction would have ordered them by feature name: `rtt_sink`
+    // above `qemu_sink` above `host_sink`, the paths in reverse, by the rule
+    // that exists to alphabetise them. It cut both ways -- two imports genuinely
+    // out of order went unreported because their attributes happened to sort.
+    //
+    // `follows` deliberately keeps the item span. An attributed import sitting
+    // directly beneath another is consecutive, and anchoring that on the `use`
+    // line too would put the attribute in the gap and stop the pair being
+    // compared at all.
     fn text_of(file: &SourceFile, import: &ItemUse) -> String {
         file.lines()
-            .get(import.span().start().line - 1)
+            .get(import.use_token.span().start().line - 1)
             .map(|line| line.trim().to_string())
             .unwrap_or_default()
     }

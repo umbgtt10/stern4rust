@@ -3,6 +3,15 @@
 What `cargo-stern4rust` does today. Anything not listed here is not built, and
 the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
+## Version 0.10.3
+
+### Rules
+
+- `ordered-imports` judges and quotes an attributed import by its path rather
+  than by the `#[cfg(...)]` above it. An item's span starts at its first
+  attribute, which had made the gate the sort key.
+  [R019](ADRs/R019-ADR-OrderedImportsRule.md)
+
 ## Version 0.10.2
 
 ### Reporting
@@ -381,7 +390,7 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
 ### Project
 
-- 722 tests, one test file per source file, `autotests = false` with a single
+- 725 tests, one test file per source file, `autotests = false` with a single
   `[[test]] all_tests`.
 - Two gates: stage 1 (fmt, clippy `-D warnings`, tests), stage 2 (`crap4rust`,
   `twin4rust`, `iceberg4rust`, and stern4rust against its own tree, built from

@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.3] - 2026-08-21
+
+### Fixed
+
+- **An attributed import is ordered by its path, not by its `#[cfg(...)]`.** An
+  item's span begins at its first attribute, so reading the line the span starts
+  on handed a gated import its attribute as the thing to sort -- and as the text
+  the offence quoted.
+
+  The corrections this produced were wrong rather than merely noisy.
+  `embassy-logging` gates four imports on three features, and following every
+  one would have ordered them by feature name: `rtt_sink` above `qemu_sink`
+  above `host_sink`, the import paths in reverse, by the rule that exists to
+  alphabetise them. It cut the other way too -- two imports genuinely out of
+  order went unreported because their attributes happened to sort.
+
+  Every `ordered-imports` offence in `etheram-embassy` was this, all seven.
+
+  `follows` deliberately still uses the item span: an attributed import sitting
+  directly beneath another is consecutive, and anchoring that on the `use` line
+  as well would put the attribute in the gap and stop the pair being compared.
+
 ## [0.10.2] - 2026-08-21
 
 ### Fixed

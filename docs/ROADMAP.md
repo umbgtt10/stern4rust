@@ -35,7 +35,7 @@ moment nobody is checking.
 Twenty-one rules, two output formats, autofix, baselines, exclusions, a config
 file, and `--rules` to say what each rule wants without a codebase to ask
 against. Every planned phase has shipped or been decided, and what each built is
-in [IMPLEMENTED-FEATURES.md](IMPLEMENTED-FEATURES.md). 722 tests, both gates
+in [IMPLEMENTED-FEATURES.md](IMPLEMENTED-FEATURES.md). 725 tests, both gates
 green, and the tool runs against its own tree on every build with zero
 offences.
 
@@ -58,10 +58,18 @@ consistent enough to state plainly: **every release since `0.10.0` was a defect
 that only a real codebase could surface.** `etheram-ibft` gave 0.10.0 an import
 comparator that fought `cargo fmt` and a correction that did not compile.
 `etheram-embassy` -- 31 members, mostly `no_std` -- gave 0.10.1 a predicate read
-without its negation, and 0.10.2 a workspace run that silently dropped 26 of 390
-offences. That last one is the sharpest argument for adoption there is: the tool
-was breaking its own first principle, and no amount of testing it against its
-own single-package tree was ever going to show it.
+without its negation, 0.10.2 a workspace run that silently dropped 26 of 390
+offences, and 0.10.3 an attributed import sorted by its `#[cfg(...)]` rather
+than by its path.
+
+Two of those are worth separating from the rest, because they are the failures
+this tool exists to refuse rather than ordinary bugs. 0.10.2 was reporting less
+than it found and saying nothing about it. 0.10.3 was issuing corrections that
+would have made a file worse -- following all of them would have put an import
+block in reverse alphabetical order, by the rule that alphabetises it. Neither
+could have been found by testing this crate against its own single-package,
+`std`, unattributed tree. A checking tool is only as honest as the codebases it
+has been pointed at.
 
 Deliberately no count here. The previous revision of this file named one, and
 it was wrong within a release -- a snapshot of somebody else's tree goes stale
