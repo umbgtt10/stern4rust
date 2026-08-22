@@ -4,6 +4,34 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.5] - 2026-08-22
+
+### Fixed
+
+- **A manifest finding is stated once, not once per workspace member.** This is
+  a regression introduced in `0.10.2` and it inflated rather than hid, which is
+  why it survived three releases.
+
+  `workspace-dependencies` reads every manifest in the workspace, and
+  `check_workspace` runs once per package, so the whole workspace's declarations
+  were handed to all of them. `0.10.2` moved deduplication inside the
+  per-package loop -- correctly, so that two members' `src/lib.rs` stop
+  collapsing into one -- and that removed the only thing suppressing these.
+
+  Found in `etheram-ibft-embassy`: **20 real findings reported as 580**, exactly
+  29 copies of each, which is its member count. Nothing in the report said so;
+  every copy was identical, so the number simply tracked how many members the
+  workspace had.
+
+  Each package is now handed only the declarations stated in its own manifest.
+  Filtering rather than deduplicating, because a finding about
+  `alpha/Cargo.toml` belongs to `alpha` and the loop walking the packages
+  already knows which one it is in -- deduplication would have to infer it.
+
+  The union is unchanged: all 20 distinct findings survive, across 12 files.
+  Verified against the four other gated repositories, none of which lost a
+  finding.
+
 ## [0.10.4] - 2026-08-22
 
 ### Fixed

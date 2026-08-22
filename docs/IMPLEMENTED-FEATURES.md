@@ -3,6 +3,14 @@
 What `cargo-stern4rust` does today. Anything not listed here is not built, and
 the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
+## Version 0.10.5
+
+### Reporting
+
+- A manifest finding is stated once per run rather than once per workspace
+  member. Each package is handed only the declarations from its own manifest.
+  [ADR-ManifestDataIsPerPackage](ADRs/ADR-ManifestDataIsPerPackage.md)
+
 ## Version 0.10.4
 
 ### Rules
@@ -398,7 +406,7 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
 ### Project
 
-- 734 tests, one test file per source file, `autotests = false` with a single
+- 740 tests, one test file per source file, `autotests = false` with a single
   `[[test]] all_tests`.
 - Two gates: stage 1 (fmt, clippy `-D warnings`, tests), stage 2 (`crap4rust`,
   `twin4rust`, `iceberg4rust`, and stern4rust against its own tree, built from

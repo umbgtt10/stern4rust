@@ -112,10 +112,24 @@ minor version with the changelog saying so plainly.
 **`workspace-dependencies` gets the same treatment for the same reason**, though
 its aggregate is less wrong — it reads every member's manifest already, because
 its question is about the workspace. What changes is that it is asked once per
-package rather than once per run, which is what makes the deduplication in the
-runner necessary rather than incidental. That deduplication is scoped to one
-package: across members, two identical offences are two files sharing a
-package-relative path, and 0.10.2 fixes the run that collapsed them.
+package rather than once per run, and that is the whole difficulty: the same
+finding is then available to be stated once per member.
+
+The answer is **filtering, not deduplication**. Each package is handed only the
+declarations stated in its own manifest, so the finding about `alpha/Cargo.toml`
+exists in exactly one package's registry — `alpha`'s — and nothing downstream
+has to work out whose it was.
+
+Deduplication was tried first and is not sufficient, in either direction. A
+global one collapses two members' `src/lib.rs` into one finding when they are
+two real files sharing a package-relative path; that was `0.10.2`. A per-package
+one lets a manifest finding through once per member; that was `0.10.5`, caused
+by `0.10.2` and surviving three releases because a count that is too large reads
+as a codebase with work to do rather than as a defect.
+
+The distinction deduplication cannot make, and the loop makes for free, is
+whether an offence is about a file *inside* the package that produced it. Two
+`src/lib.rs` are two files. Twenty-nine reports of `alpha/Cargo.toml` are one.
 
 **It is a prerequisite for
 [ADR-PerPackageConfiguration](ADR-PerPackageConfiguration.md), not a

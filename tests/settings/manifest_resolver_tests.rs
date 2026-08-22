@@ -187,3 +187,20 @@ fn workspace_package_names_is_unchanged_by_scoping_the_run() {
     // Assert
     assert_eq!(from_scoped, from_unscoped);
 }
+
+// The directory every manifest path in `workspace_dependencies` is stated
+// relative to, so the two can be compared. Read from cargo rather than from
+// `--manifest-path`, which may name a member of a larger workspace.
+#[test]
+fn workspace_root_of_this_crate_is_its_own_directory() {
+    // Arrange
+    let config = config_for(&[]);
+
+    // Act
+    let root = ManifestResolver::workspace_root(&config);
+
+    // Assert
+    let root = root.expect("this crate has a workspace root");
+    assert!(root.join("Cargo.toml").exists(), "{root:?}");
+    assert!(root.join("src").join("rule.rs").exists(), "{root:?}");
+}

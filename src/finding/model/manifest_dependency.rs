@@ -20,6 +20,27 @@ impl ManifestDependency {
     pub const SECTIONS: [&'static str; 3] =
         ["dependencies", "dev-dependencies", "build-dependencies"];
 
+    // The subset declared in one manifest.
+    //
+    // `check_workspace` runs once per package, so handing every package the
+    // whole workspace's declarations stated each finding once per member --
+    // twenty real findings became 580 in a twenty-nine member workspace, every
+    // copy identical, the count simply tracking the member count. A finding
+    // about `alpha/Cargo.toml` belongs to `alpha`, and the loop walking the
+    // packages already knows which one it is in.
+    //
+    // `None` stays `None`: that is how a package outside a workspace tells the
+    // rule to stand down, and filtering must not turn it into an empty list.
+    pub fn in_manifest(all: &Option<Vec<Self>>, manifest: &str) -> Option<Vec<Self>> {
+        Some(
+            all.as_ref()?
+                .iter()
+                .filter(|dependency| dependency.manifest == manifest)
+                .cloned()
+                .collect(),
+        )
+    }
+
     pub fn new(manifest: &str, name: &str, section: &str, takes_from_workspace: bool) -> Self {
         Self {
             manifest: manifest.to_string(),

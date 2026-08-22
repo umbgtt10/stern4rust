@@ -35,7 +35,7 @@ moment nobody is checking.
 Twenty-one rules, two output formats, autofix, baselines, exclusions, a config
 file, and `--rules` to say what each rule wants without a codebase to ask
 against. Every planned phase has shipped or been decided, and what each built is
-in [IMPLEMENTED-FEATURES.md](IMPLEMENTED-FEATURES.md). 734 tests, both gates
+in [IMPLEMENTED-FEATURES.md](IMPLEMENTED-FEATURES.md). 740 tests, both gates
 green, and the tool runs against its own tree on every build with zero
 offences.
 
@@ -64,18 +64,29 @@ comparator that fought `cargo fmt` and a correction that did not compile.
 without its negation, 0.10.2 a workspace run that silently dropped 26 of 390
 offences, and 0.10.3 an attributed import sorted by its `#[cfg(...)]` rather
 than by its path. `etheram-raft-embassy` gave 0.10.4 the same rule sorting on
-the raw line, semicolon and `pub` included.
+the raw line, semicolon and `pub` included. `etheram-ibft-embassy` gave 0.10.5 a
+manifest finding stated once per member -- 20 of them reported as 580.
 
-Three of those are worth separating from the rest, because they are the
-failures this tool exists to refuse rather than ordinary bugs. 0.10.2 was
-reporting less than it found and saying nothing about it. 0.10.3 and 0.10.4 were
-both issuing corrections that would have made a file worse: following them put
+Four of those are worth separating from the rest, because they are the failures
+this tool exists to refuse rather than ordinary bugs. Each got the *count* or
+the *advice* wrong, which is the only two things it sells.
+
+0.10.2 reported less than it found and said nothing about it. 0.10.5 reported
+twenty-nine times more than there was, and said nothing about that either --
+every copy identical, the number simply tracking the member count. 0.10.3 and
+0.10.4 issued corrections that would have made a file worse: following them put
 an import block in an order `cargo fmt` immediately undoes, so the advice could
-not be taken at all. That is the same rule twice, wrong two different ways, and
-both times the giveaway was a repository where `cargo fmt --check` was clean and
-this tool disagreed.
+not be taken at all. That is one rule wrong two different ways, and both times
+the giveaway was a repository where `cargo fmt --check` was clean and this tool
+disagreed.
 
-None of the three could have been found by testing this crate against its own
+0.10.5 is the one to keep in view, because it was **self-inflicted**: the fix
+for 0.10.2 removed the only thing suppressing it. Reporting less and reporting
+more are the same failure wearing different clothes, and correcting one walked
+straight into the other. It then survived three releases, because a number that
+is too large reads as a codebase with a lot of work to do.
+
+None of the four could have been found by testing this crate against its own
 single-package, `std`, unattributed tree. A checking tool is only as honest as
 the codebases it has been pointed at.
 

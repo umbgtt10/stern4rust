@@ -130,6 +130,19 @@ impl ManifestResolver {
             .unwrap_or_default()
     }
 
+    // The directory every manifest path in `workspace_dependencies` is stated
+    // relative to.
+    //
+    // Not derivable from `--manifest-path`, which may name a member: cargo
+    // still reports the workspace above it, so a caller that assumed otherwise
+    // would compare a member-relative path against a workspace-relative one and
+    // match nothing.
+    pub fn workspace_root(config: &Config) -> Option<PathBuf> {
+        Self::metadata(config)
+            .ok()
+            .map(|metadata| metadata.workspace_root.as_std_path().to_path_buf())
+    }
+
     fn metadata(config: &Config) -> Result<Metadata> {
         let mut command = MetadataCommand::new();
         command.no_deps();

@@ -6,6 +6,7 @@ use crate::adoption::baseline::Baseline;
 use crate::adoption::baseline_outcome::BaselineOutcome;
 use crate::adoption::exclusion_outcome::ExclusionOutcome;
 use crate::adoption::exclusion_set::ExclusionSet;
+use crate::finding::model::manifest_dependency::ManifestDependency;
 use crate::reporting::json_printer::JsonPrinter;
 use crate::reporting::offence::Offence;
 use crate::reporting::offence_threshold::OffenceThreshold;
@@ -115,13 +116,35 @@ impl Runner {
         let mut excluded = Vec::new();
         let mut fixed = 0usize;
         let mut rosters: Vec<PackageRoster> = Vec::new();
+        // Read once: every manifest path in `workspace_dependencies` is stated
+        // relative to it.
+        let workspace_root = ManifestResolver::workspace_root(&config).unwrap_or_default();
 
         for package in &packages {
             // Everything the manifest decides is decided here, by the package
-            // about to be walked, rather than once for the run.
+            // about to be walked, rather than once for the run -- including
+            // which manifest declarations this package is answerable for.
+            //
+            // The whole workspace's declarations used to be handed to every
+            // package, and `check_workspace` runs once per package, so each
+            // finding was stated once per member. Twenty real findings became
+            // 580 in `etheram-ibft-embassy`, which has twenty-nine of them, and
+            // the report gave no sign: every copy was identical, so the count
+            // simply tracked the member count.
+            //
+            // Filtering here rather than deduplicating afterwards, because a
+            // finding about `alpha/Cargo.toml` belongs to `alpha` and to no
+            // other package. Deduplication would have to guess that; the loop
+            // already knows it.
             let package_config = Config {
                 manifest_license: package.license.clone(),
-                workspace_dependencies: config.workspace_dependencies.clone(),
+                workspace_dependencies: ManifestDependency::in_manifest(
+                    &config.workspace_dependencies,
+                    &ManifestResolver::relative_to(
+                        &workspace_root,
+                        &package.root.join(ManifestResolver::MANIFEST),
+                    ),
+                ),
                 ..Self::config_from(&args, sections.of(&package.name))?
             };
             let registry = RuleRegistry::from_config(&package_config);

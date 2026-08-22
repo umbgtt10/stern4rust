@@ -172,6 +172,66 @@ skip = [\"test-free-source\"]
     root
 }
 
+// A workspace where exactly one member declares a dependency directly instead
+// of taking it from the root. The finding is about that member's manifest, and
+// there is one of it however many members the workspace has.
+fn probe_workspace_with_a_direct_dependency(name: &str, members: usize) -> PathBuf {
+    let root = env::temp_dir().join(format!("stern4rust_direct_{name}"));
+    let _ = fs::remove_dir_all(&root);
+    let names: Vec<String> = (0..members).map(|index| format!("member{index}")).collect();
+    for (index, member) in names.iter().enumerate() {
+        fs::create_dir_all(root.join(member).join("src")).expect("create the member");
+        // Only the first member declares `serde` itself; the rest declare nothing.
+        let dependencies = if index == 0 {
+            "[dependencies]
+serde = { version = \"1\" }
+"
+        } else {
+            ""
+        };
+        fs::write(
+            root.join(member).join("Cargo.toml"),
+            format!(
+                "[package]
+name = \"{member}\"
+version = \"0.1.0\"
+edition = \"2021\"
+
+{dependencies}"
+            ),
+        )
+        .expect("write the member manifest");
+        fs::write(
+            root.join(member).join("src/lib.rs"),
+            "pub mod widget;
+",
+        )
+        .expect("write the registry");
+        fs::write(
+            root.join(member).join("src/widget.rs"),
+            "pub struct Widget;
+",
+        )
+        .expect("write the module");
+    }
+    let listed = names
+        .iter()
+        .map(|member| format!("\"{member}\""))
+        .collect::<Vec<_>>()
+        .join(", ");
+    fs::write(
+        root.join("Cargo.toml"),
+        format!(
+            "[workspace]
+resolver = \"2\"
+members = [{listed}]
+"
+        ),
+    )
+    .expect("write the workspace manifest");
+    root
+}
+
 // The invariant both per-package bugs broke, in the shape they broke it: a run
 // must never name a rule as skipped that its own roster lists as applied.
 //
@@ -388,6 +448,61 @@ fn run_reporting_in_json_names_the_member_that_stood_a_rule_down() {
         .find(|package| package["package"] == "alpha")
         .expect("alpha");
     assert_eq!(alpha["rules_skipped"].as_array().expect("array").len(), 0);
+}
+
+// The count must not track the member count, which is the shape the bug had.
+#[test]
+fn run_reporting_over_a_larger_workspace_states_the_same_manifest_finding_once() {
+    // Arrange
+    let root = probe_workspace_with_a_direct_dependency("larger", 11);
+    let manifest = root.join("Cargo.toml");
+
+    // Act
+    let (_, report) = Runner::run_reporting(args_from(&[
+        "cargo-stern4rust",
+        "--manifest-path",
+        &manifest.to_string_lossy(),
+        "--format",
+        "json",
+        "--rule",
+        "workspace-dependencies",
+    ]))
+    .expect("the run itself should succeed");
+
+    // Assert
+    let document: Value = from_str(&report).expect("valid json");
+    assert_eq!(document["offences_found"], 1, "{report}");
+}
+
+// One member declares it, so the report says so once -- not once per member.
+//
+// `workspace-dependencies` reads every manifest in the workspace, and the
+// registry that asks it is rebuilt for each package, so the same finding was
+// stated once per member. Six members, six copies of one offence. Found in
+// `etheram-ibft-embassy`, whose 29 members turned 20 real findings into 580.
+#[test]
+fn run_reporting_over_a_workspace_states_a_manifest_finding_once() {
+    // Arrange
+    let root = probe_workspace_with_a_direct_dependency("once", 6);
+    let manifest = root.join("Cargo.toml");
+
+    // Act
+    let (_, report) = Runner::run_reporting(args_from(&[
+        "cargo-stern4rust",
+        "--manifest-path",
+        &manifest.to_string_lossy(),
+        "--format",
+        "json",
+        "--rule",
+        "workspace-dependencies",
+    ]))
+    .expect("the run itself should succeed");
+
+    // Assert
+    let document: Value = from_str(&report).expect("valid json");
+    let offences = document["offences"].as_array().expect("an offences array");
+    assert_eq!(offences.len(), 1, "{report}");
+    assert_eq!(document["offences_found"], 1);
 }
 
 // Two packages, two real files, one string. Deduplicating the report by offence
