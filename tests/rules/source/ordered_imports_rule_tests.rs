@@ -62,6 +62,65 @@ fn check_a_file_that_does_not_parse_reports_nothing() {
     assert!(offences.is_empty(), "expected none, got {offences:?}");
 }
 
+// The same pair the wrong way round is still a real disorder.
+#[test]
+fn check_a_path_prefixed_by_the_next_one_reports_it() {
+    // Arrange & Act
+    let offences = check(
+        "src/widget.rs",
+        "use aaa_crate::select::select4;\nuse aaa_crate::select::select;\n\npub struct W;\n",
+    );
+
+    // Assert
+    assert_eq!(offences.len(), 1);
+}
+
+// Two imports where one path is a prefix of the other at the last segment.
+// Compared as written, the shorter line ends in `;` (0x3B) where the longer
+// carries on with `4` (0x34), so a raw text sort demands the longer first --
+// while rustfmt compares parsed segments and demands the shorter. Found in
+// `etheram-raft-embassy` on `select` beside `select4` and `Either` beside
+// `Either4`, where `cargo fmt --check` was clean and this rule wanted the
+// opposite order, so the corrections could not be applied at all.
+#[test]
+fn check_a_path_that_prefixes_the_next_one_reports_nothing() {
+    // Arrange & Act
+    let offences = check(
+        "src/widget.rs",
+        "use aaa_crate::select::select;\nuse aaa_crate::select::select4;\n\npub struct W;\n",
+    );
+
+    // Assert
+    assert!(offences.is_empty(), "expected none, got {offences:?}");
+}
+
+// A `pub use` sorts among plain ones by its path. Compared as written, `pub`
+// (0x70) precedes `use` (0x75), so every re-export read as belonging above
+// every import regardless of what it named.
+#[test]
+fn check_a_public_re_export_is_ordered_by_its_path_not_its_visibility() {
+    // Arrange & Act
+    let offences = check(
+        "src/widget.rs",
+        "use aaa_crate::Alpha;\npub use zzz_crate::Zed;\n\npub struct W;\n",
+    );
+
+    // Assert
+    assert!(offences.is_empty(), "expected none, got {offences:?}");
+}
+
+#[test]
+fn check_a_public_re_export_out_of_order_by_path_reports_it() {
+    // Arrange & Act
+    let offences = check(
+        "src/widget.rs",
+        "use zzz_crate::Zed;\npub use aaa_crate::Alpha;\n\npub struct W;\n",
+    );
+
+    // Assert
+    assert_eq!(offences.len(), 1);
+}
+
 #[test]
 fn check_a_sorted_import_block_reports_nothing() {
     // Arrange & Act

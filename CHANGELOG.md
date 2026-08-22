@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.4] - 2026-08-22
+
+### Fixed
+
+- **Imports are ordered by their path, not by the line they are written on.**
+  The comparison used the raw text, which misleads twice.
+
+  It ends in `;` (0x3B), and that loses to any digit or letter -- so one path
+  being a prefix of another at the final segment inverted the pair, and
+  `aaa::select` read as belonging *after* `aaa::select4`.
+
+  It may also open with `pub `, whose `p` beats the `u` of `use` -- so every
+  re-export read as belonging above every plain import, whatever it named.
+
+  Found in `etheram-raft-embassy` on `select` beside `select4`, `Either` beside
+  `Either4`, and a `pub use` among ordinary imports. `cargo fmt --check` was
+  clean on all of them, which makes this the same deadlock the case stand-downs
+  exist to prevent, reached through the comparison instead: the rule demanded an
+  order the formatter would immediately undo, so the corrections could not be
+  applied at all.
+
+  `ImportPath::is_ordered` now compares parsed segments, which is what rustfmt
+  compares. The extension stand-down above it is left alone -- segment order and
+  rustfmt agree there now, so it is belt and braces rather than load-bearing.
+
 ## [0.10.3] - 2026-08-21
 
 ### Fixed

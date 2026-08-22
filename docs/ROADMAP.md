@@ -35,7 +35,7 @@ moment nobody is checking.
 Twenty-one rules, two output formats, autofix, baselines, exclusions, a config
 file, and `--rules` to say what each rule wants without a codebase to ask
 against. Every planned phase has shipped or been decided, and what each built is
-in [IMPLEMENTED-FEATURES.md](IMPLEMENTED-FEATURES.md). 725 tests, both gates
+in [IMPLEMENTED-FEATURES.md](IMPLEMENTED-FEATURES.md). 734 tests, both gates
 green, and the tool runs against its own tree on every build with zero
 offences.
 
@@ -46,9 +46,12 @@ has shipped in full, the library surface is decided, and every remaining gap is
 a limit with no structural answer -- collected in
 [OPEN_POINTS.md](OPEN_POINTS.md).
 
-What remains is not a feature but adoption, and that has started.
-`etheram-core`, `etheram-raft` and `etheram-ibft` each carry a
-`stern4rust.toml` and gate on it. `etheram-ibft` was the hard one -- roughly
+What remains is not a feature but adoption, and that has started. Five
+repositories carry a `stern4rust.toml` and gate on it: `etheram-core`,
+`etheram-raft`, `etheram-ibft`, `etheram-embassy` and `etheram-raft-embassy`.
+The last two are green against a recorded baseline rather than against zero,
+which is what adoption looks like on a codebase that did not grow up under the
+rules. `etheram-ibft` was the hard one -- roughly
 1,950 offences taken down to a tail that needs decisions rather than edits --
 and it is where both of the `0.10.0` rule fixes came from: a codebase large
 enough to contain the shapes this crate's own tree never had.
@@ -60,16 +63,21 @@ comparator that fought `cargo fmt` and a correction that did not compile.
 `etheram-embassy` -- 31 members, mostly `no_std` -- gave 0.10.1 a predicate read
 without its negation, 0.10.2 a workspace run that silently dropped 26 of 390
 offences, and 0.10.3 an attributed import sorted by its `#[cfg(...)]` rather
-than by its path.
+than by its path. `etheram-raft-embassy` gave 0.10.4 the same rule sorting on
+the raw line, semicolon and `pub` included.
 
-Two of those are worth separating from the rest, because they are the failures
-this tool exists to refuse rather than ordinary bugs. 0.10.2 was reporting less
-than it found and saying nothing about it. 0.10.3 was issuing corrections that
-would have made a file worse -- following all of them would have put an import
-block in reverse alphabetical order, by the rule that alphabetises it. Neither
-could have been found by testing this crate against its own single-package,
-`std`, unattributed tree. A checking tool is only as honest as the codebases it
-has been pointed at.
+Three of those are worth separating from the rest, because they are the
+failures this tool exists to refuse rather than ordinary bugs. 0.10.2 was
+reporting less than it found and saying nothing about it. 0.10.3 and 0.10.4 were
+both issuing corrections that would have made a file worse: following them put
+an import block in an order `cargo fmt` immediately undoes, so the advice could
+not be taken at all. That is the same rule twice, wrong two different ways, and
+both times the giveaway was a repository where `cargo fmt --check` was clean and
+this tool disagreed.
+
+None of the three could have been found by testing this crate against its own
+single-package, `std`, unattributed tree. A checking tool is only as honest as
+the codebases it has been pointed at.
 
 Deliberately no count here. The previous revision of this file named one, and
 it was wrong within a release -- a snapshot of somebody else's tree goes stale
@@ -93,9 +101,9 @@ tomorrow.
 
 A repository that runs `cargo stern4rust` in its gate and stays green, where the
 conventions hold because the build enforces them rather than because somebody
-remembered. Three repositories now do. The sibling tools -- `crap4rust`,
-`grip4rust`, `iceberg4rust`, `twin4rust`, `slotgate` -- are the remaining test
-of it, and none of them passes yet.
+remembered. Five repositories now do, two of them against a baseline. The
+sibling tools -- `crap4rust`, `grip4rust`, `iceberg4rust`, `twin4rust`,
+`slotgate` -- are the remaining test of it, and none of them passes yet.
 
 ## Revision Policy
 

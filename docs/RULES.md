@@ -470,6 +470,12 @@ demanding the alphabet there writes a file **no edit can make green**: each run
 undoes the last. The rule asks `ImportPath` -- the same seam
 `test-file-structure` uses -- rather than deciding again.
 
+**Pairs it does judge are compared on the parsed path, not the line as
+written.** A line ends in `;` (0x3B), which loses to any digit or letter, so
+`aaa::select` compared as text sorts after `aaa::select4`; a line may open with
+`pub `, whose `p` beats the `u` of `use`, so every re-export sorted above every
+import. rustfmt compares segments and does neither.
+
 Case is read as a *shape* rather than as a first letter: the initial, and
 whether the segment is all capitals. `WAL_V2_MAGIC` and `WalRecord` both open
 with a capital and the style editions still disagree about them -- 2021 orders

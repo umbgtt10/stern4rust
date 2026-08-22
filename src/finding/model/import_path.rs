@@ -48,6 +48,26 @@ impl ImportPath {
             || Self::one_extends_the_other(previous, item)
     }
 
+    // Whether the pair is already in order, compared the way rustfmt compares:
+    // segment by segment, on the path alone.
+    //
+    // The line as written is the wrong thing to sort on, and in two ways. It
+    // ends in `;` (0x3B), which loses to any digit or letter, so
+    // `aaa::select` read as belonging *after* `aaa::select4` -- one path being
+    // a prefix of the other at the last segment is enough. And it may open with
+    // `pub `, whose `p` beats the `u` of `use`, so every re-export read as
+    // belonging above every plain import whatever it named.
+    //
+    // Both were found in `etheram-raft-embassy`, on `select` beside `select4`,
+    // `Either` beside `Either4`, and a `pub use` among ordinary ones.
+    // `cargo fmt --check` was clean on all of them, so this rule was demanding
+    // an order the formatter would immediately undo -- the deadlock the
+    // stand-downs above exist to prevent, reached through the comparison
+    // instead.
+    pub fn is_ordered(previous: &str, item: &str) -> bool {
+        Self::segments(previous) <= Self::segments(item)
+    }
+
     pub fn is_specially_ordered(import: &str) -> bool {
         let first = Self::first_segment(import);
         matches!(first, "self" | "super" | "crate")

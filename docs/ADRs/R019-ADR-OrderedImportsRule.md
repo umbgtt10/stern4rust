@@ -31,6 +31,15 @@ alphabet there would write a file **no edit could make green** — each run undo
 the last. That failure was hit once already, while fixing `imported-paths`, and
 is why the stand-down is decided per pair rather than per import.
 
+**The comparison is on the parsed path, not on the line as written.** That
+distinction turned out to carry weight: a line ends in `;` (0x3B), which loses
+to any digit or letter, so `aaa::select` compared as text sorts *after*
+`aaa::select4` — one path being a prefix of another at the final segment is
+enough to invert the pair. A line may also open with `pub `, whose `p` beats the
+`u` of `use`, so every re-export sorted above every plain import whatever it
+named. rustfmt compares segments and does neither. `ImportPath::is_ordered` is
+where this lives, beside the segment parsing it needs.
+
 A block ends where the lines stop being consecutive. A blank line or a comment
 between two imports separates them, and the first import of a block is compared
 with nothing. Item spans decide this, so a multi-line `use` is handled without a
@@ -51,6 +60,14 @@ finding one directory over.
 
 **Verified consistent with `cargo fmt` before the rule was written**, since that
 is the only way it could be wrong in a way no user could fix.
+
+That verification was necessary and, twice since, insufficient. It established
+which *pairs* rustfmt decides and stands down on exactly those; it did not
+establish what to compare the remaining pairs *by*. `0.10.3` fixed a gated
+import being sorted by its `#[cfg(...)]` line, and `0.10.4` the raw-text
+comparison above. Both were found the same way — a repository where
+`cargo fmt --check` was clean and this rule disagreed — and that check is now the
+one worth running against any codebase this rule is pointed at.
 
 A controlled experiment on default settings — neither this repository nor
 `etheram-ibft` has a `rustfmt.toml` — established what rustfmt actually does:

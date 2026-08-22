@@ -400,6 +400,10 @@ nothing asked it of the source tree, which is where `imported-paths` adds lines.
 The stand-downs are the design: `cargo fmt` runs first and sorts `self`,
 `super`, `crate` and uppercase-initial paths itself, so demanding the alphabet
 there would write a file no edit could make green.
+
+Pairs it does judge are compared on the parsed path, not the line: a trailing
+`;` would otherwise sort `aaa::select` after `aaa::select4`, and a leading
+`pub ` would sort every re-export above every import.
 [R019](docs/ADRs/R019-ADR-OrderedImportsRule.md)
 
 ### `workspace-dependencies`

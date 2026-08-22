@@ -215,6 +215,57 @@ fn decides_order_of_two_identical_paths_is_false() {
     assert!(!decides);
 }
 
+// Compared the way rustfmt compares: on the path, segment by segment.
+//
+// The line as written misleads twice. It ends in `;` (0x3B), which loses to any
+// digit or letter, so one path being a prefix of another at the last segment
+// inverted the pair. And it may open with `pub `, whose `p` beats the `u` of
+// `use`, so a re-export sorted above everything.
+#[test]
+fn is_ordered_of_a_pair_whose_first_path_prefixes_the_second_is_true() {
+    // Arrange & Act
+    let ordered = ImportPath::is_ordered("use aaa::select::select;", "use aaa::select::select4;");
+
+    // Assert
+    assert!(ordered);
+}
+
+#[test]
+fn is_ordered_of_a_pair_whose_second_path_prefixes_the_first_is_false() {
+    // Arrange & Act
+    let ordered = ImportPath::is_ordered("use aaa::select::select4;", "use aaa::select::select;");
+
+    // Assert
+    assert!(!ordered);
+}
+
+#[test]
+fn is_ordered_of_a_re_export_after_an_import_it_sorts_behind_is_true() {
+    // Arrange & Act
+    let ordered = ImportPath::is_ordered("use aaa::Alpha;", "pub use zzz::Zed;");
+
+    // Assert
+    assert!(ordered);
+}
+
+#[test]
+fn is_ordered_of_a_re_export_before_an_import_it_sorts_behind_is_false() {
+    // Arrange & Act
+    let ordered = ImportPath::is_ordered("use zzz::Zed;", "pub use aaa::Alpha;");
+
+    // Assert
+    assert!(!ordered);
+}
+
+#[test]
+fn is_ordered_of_an_identical_pair_is_true() {
+    // Arrange & Act
+    let ordered = ImportPath::is_ordered("use aaa::Alpha;", "use aaa::Alpha;");
+
+    // Assert
+    assert!(ordered);
+}
+
 #[test]
 fn is_specially_ordered_of_a_crate_path_is_true() {
     // Arrange & Act

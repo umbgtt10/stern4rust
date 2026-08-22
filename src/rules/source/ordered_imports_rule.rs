@@ -128,7 +128,9 @@ impl Rule for OrderedImportsRule {
             .filter_map(|pair| {
                 let previous = Self::text_of(file, pair[0]);
                 let import = Self::text_of(file, pair[1]);
-                if ImportPath::decides_order(&previous, &import) || previous <= import {
+                if ImportPath::decides_order(&previous, &import)
+                    || ImportPath::is_ordered(&previous, &import)
+                {
                     return None;
                 }
                 Some(self.offence(file, &previous, &import, pair[1].span().start().line))
