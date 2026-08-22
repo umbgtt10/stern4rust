@@ -1,4 +1,4 @@
-// Copyright 2025 Umberto Gotti <umberto.gotti@umbertogotti.dev>
+// Copyright 2026 Umberto Gotti <umberto.gotti@umbertogotti.dev>
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
@@ -137,7 +137,7 @@ impl Rule for HeaderRule {
             self.name(),
             "Every .rs file opens with the repository's header.",
             "pub struct Widget;",
-            "// Copyright 2025 ...
+            "// Copyright 2026 ...
 // SPDX-License-Identifier: MIT
 
 pub struct Widget;",

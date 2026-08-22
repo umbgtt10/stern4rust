@@ -1,4 +1,4 @@
-// Copyright 2025 Umberto Gotti <umberto.gotti@umbertogotti.dev>
+// Copyright 2026 Umberto Gotti <umberto.gotti@umbertogotti.dev>
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
@@ -326,7 +326,7 @@ fn run_against_this_crate_with_its_own_header_is_clean() {
     // Arrange & Act
     let outcome = run_with_header(
         "own",
-        "// Copyright 2025 Umberto Gotti <umberto.gotti@umbertogotti.dev>\n\
+        "// Copyright 2026 Umberto Gotti <umberto.gotti@umbertogotti.dev>\n\
          // Licensed under the MIT License\n\
          // SPDX-License-Identifier: MIT\n",
     );
