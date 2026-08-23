@@ -1,0 +1,22 @@
+Release 0.11.0: imported-paths covers type and trait position
+
+A minor bump rather than a patch, because the rule now reports code that
+passed under 0.10.x. Users should expect offences on upgrade.
+
+CHANGELOG says what is newly reported and, as importantly, what is not:
+`use std::io;` with `io::Result` is still the rule's shape rather than an
+exception to it, an imported type used bare is still fine, an uppercase-initial
+qualifier such as `<Vec<u8> as Iterator>::Item` is still read as a type rather
+than a route, and paths inside `use` statements are where paths belong.
+
+It also carries the numbers, because a rule tightening without them is an
+unpriced upgrade: six sibling repositories measured at 6, 7, 10, 14, 86 and 99
+offences at release time. And it says plainly that `--fix` will not clear them
+-- adding an import is not one of the corrections `--fix` is allowed to make,
+per ADR-FixOnlyWhatIsSafe.
+
+RULES.md and README.md restate the rule as covering anything a file names --
+a function it calls, a type it mentions, a trait it implements -- rather than
+just calls. R008 already carries the reasoning and why the omission existed.
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>

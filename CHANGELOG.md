@@ -4,6 +4,38 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] - 2026-08-23
+
+### Changed
+
+- **`imported-paths` now checks type and trait position, not only calls.** This
+  will report code that passed under `0.10.x`, so it is a minor bump rather
+  than a patch.
+
+  The rule only ever looked at call expressions. Its own rationale never was
+  scoped that way -- "a file's `use` statements are its list of dependencies; a
+  path written inline is a dependency that never reaches that list" is exactly
+  as true of `impl std::fmt::Display for Widget`, which leaves a reader
+  scanning the imports with no idea the file implements `Display`.
+
+  Reported now: `-> std::io::Result<()>`, `fn f(p: std::path::PathBuf)`,
+  `Option<std::path::PathBuf>`, `impl std::fmt::Display for Widget`.
+
+  Still accepted, unchanged: `use std::io;` followed by `io::Result`, an
+  imported type used bare, an uppercase-initial qualifier such as
+  `<Vec<u8> as Iterator>::Item`, and paths inside `use` statements themselves.
+
+  The omission was found from outside the tool. A repository in the same family
+  sat at twenty-one inline qualified paths with a completely green gate,
+  because every one of them was a type or a trait rather than a call.
+
+  **Expect offences on upgrade.** Measured across six sibling repositories at
+  the time of release: 6, 7, 10, 14, 86 and 99. The corrections the rule emits
+  are the fix, and `--fix` does not apply them -- adding an import is not one of
+  the corrections `--fix` is allowed to make.
+
+  This tool corrected fifteen of its own in the same commit.
+
 ## [0.10.5] - 2026-08-22
 
 ### Fixed

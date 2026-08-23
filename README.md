@@ -284,7 +284,8 @@ rather than a loop. [R001](docs/ADRs/R001-ADR-HeaderRule.md)
 
 ### `imported-paths`
 
-A function is called through a name this file imported, not through a path. A
+Anything this file names -- a function it calls, a type it mentions, a trait it
+implements -- is reached through a name it imported, not through a path. A
 file's `use` statements are its list of dependencies, and
 `syn::parse_file(...)` is a dependency that never reaches that list — the file
 compiles with nothing in it mentioning `syn`.

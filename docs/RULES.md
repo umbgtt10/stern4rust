@@ -197,13 +197,18 @@ are only meaningful together.
 
 ## `imported-paths`
 
-A function is called through a name this file imported, not through a path.
+Anything this file names -- a function it calls, a type it mentions, a trait it
+implements -- is reached through a name it imported, not through a path.
 
 A file's `use` statements are its list of dependencies. `syn::parse_file(...)`
 compiles with nothing in the file mentioning `syn`, so a reader scanning the top
 to find out what this file needs is quietly given a wrong answer.
 `std::env::args()` is a different cost: it spells out at the call site a route
 that belongs at the top, and spells it out again at every other call.
+
+Type position costs the same and was added in `0.11.0`. `-> std::io::Result<()>`
+and `impl std::fmt::Display for Widget` leave the import list just as wrong --
+in the second case, nothing at the top says this file implements `Display`.
 
 Three shapes are left alone. An **unqualified** call has nothing to import. A
 **type qualifier** -- `Widget::new()`, `Self::inner()` -- is not a path standing

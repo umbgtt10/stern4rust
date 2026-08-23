@@ -3,6 +3,20 @@
 What `cargo-stern4rust` does today. Anything not listed here is not built, and
 the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
+## Version 0.11.0
+
+- `imported-paths` extended from call expressions to type and trait position.
+  `-> std::io::Result<()>`, `fn f(p: std::path::PathBuf)`,
+  `Option<std::path::PathBuf>` and `impl std::fmt::Display for Widget` are
+  reported; `use std::io;` with `io::Result`, imported types, uppercase-initial
+  qualifiers and `use` statements themselves are not.
+- The rule body gained no new logic. The segment test `offending` already
+  performed became `offending_path`, and `visit_type_path` and
+  `visit_item_impl` call it. `impl X for Y` needs its own visit because syn
+  carries the trait as a bare `Path` rather than a `Type`.
+- Fifteen offences corrected in this tool's own sources and tests, using the
+  corrections the rule emits.
+
 ## Version 0.10.5
 
 ### Reporting
