@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.1] - 2026-08-23
+
+### Fixed
+
+- **`use std::io::{self, Write};` now counts as importing `io`.** A `self` in a
+  use group puts the parent module in scope, not a name spelled `self`, and the
+  use-tree reader took it literally. `io::Error` and `io::Result` were then
+  reported as unimported paths -- which is the one-imported-segment shape the
+  rule exists to encourage, so the tool was arguing against itself.
+
+  A false positive introduced by `0.11.0`: only type position reaches this,
+  because a `self` import is almost always a module used in type position
+  rather than called.
+
+  Found by upgrading a consumer. Four of that repository's remaining offences
+  were this and nothing else.
+
 ## [0.11.0] - 2026-08-23
 
 ### Changed

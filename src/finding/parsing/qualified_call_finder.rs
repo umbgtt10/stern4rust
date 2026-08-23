@@ -73,11 +73,30 @@ impl QualifiedCallFinder {
     }
 
     fn names(tree: &UseTree) -> Vec<String> {
+        Self::names_under(tree, None)
+    }
+
+    // `parent` is the segment a `self` inside this tree stands for.
+    // `use std::io::{self, Write};` puts `io` in scope, not a name spelled
+    // `self`, and reading the tree literally made `io::Error` look unimported
+    // -- reporting the very shape the rule exists to encourage.
+    fn names_under(tree: &UseTree, parent: Option<&str>) -> Vec<String> {
         match tree {
-            UseTree::Name(name) => vec![name.ident.to_string()],
+            UseTree::Name(name) => {
+                let ident = name.ident.to_string();
+                if ident == "self" {
+                    parent.map(ToString::to_string).into_iter().collect()
+                } else {
+                    vec![ident]
+                }
+            }
             UseTree::Rename(rename) => vec![rename.rename.to_string()],
-            UseTree::Path(path) => Self::names(&path.tree),
-            UseTree::Group(group) => group.items.iter().flat_map(Self::names).collect(),
+            UseTree::Path(path) => Self::names_under(&path.tree, Some(&path.ident.to_string())),
+            UseTree::Group(group) => group
+                .items
+                .iter()
+                .flat_map(|item| Self::names_under(item, parent))
+                .collect(),
             UseTree::Glob(_) => Vec::new(),
         }
     }

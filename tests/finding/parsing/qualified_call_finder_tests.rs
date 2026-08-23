@@ -226,3 +226,28 @@ fn find_reports_the_line_of_the_call() {
     // Assert
     assert_eq!(found[0].line, 3);
 }
+
+#[test]
+fn find_treats_a_bare_self_import_as_naming_its_parent_module() {
+    // Arrange & Act
+    let found = paths("use std::io::{self};\n\nfn outer(_e: io::Error) {}\n");
+
+    // Assert
+    assert!(found.is_empty(), "expected none, got {found:?}");
+}
+
+// `use std::io::{self, Write};` puts `io` in scope, not a name called `self`.
+// Reading the tree literally makes `io::Error` look unimported and reports a
+// path that is exactly the shape the rule asks for.
+#[test]
+fn find_treats_a_self_import_as_naming_its_parent_module() {
+    // Arrange & Act
+    let found =
+        paths("use std::io::{self, Write};\n\nfn outer() -> io::Result<()> {\n    Ok(())\n}\n");
+
+    // Assert
+    assert!(
+        found.is_empty(),
+        "the group imports `io`, so `io::Result` is one imported segment, got {found:?}"
+    );
+}
