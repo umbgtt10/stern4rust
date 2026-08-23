@@ -20,8 +20,19 @@ The house standard already says so — *"do not use fully qualified paths; use
 
 ## Decision
 
-A call is either unqualified, qualified by a type, or qualified by exactly one
+A path is either unqualified, qualified by a type, or qualified by exactly one
 segment that this file imported. Anything else is reported.
+
+Call position and type position ask the same question, so they share the
+answer. `impl std::fmt::Display for Widget` and `-> std::io::Result<()>` are
+reported for the reason `std::env::args()` is: nothing at the top of the file
+says this file needs them.
+
+Type position was originally left out, and the omission was found from the
+outside -- a sibling repository sat at twenty-one inline qualified paths with a
+green gate, because every one of them was a type or a trait rather than a call.
+The house standard the rule exists to enforce is not scoped to calls, and the
+rationale above never was either.
 
 Three shapes are deliberately left alone.
 

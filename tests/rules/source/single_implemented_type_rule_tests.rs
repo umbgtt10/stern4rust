@@ -13,6 +13,7 @@
 // reported, so the offence names the type to move rather than complaining that
 // the file has too many.
 
+use stern4rust::reporting::offence::Offence;
 use stern4rust::rule::Rule;
 use stern4rust::rules::source::single_implemented_type_rule::SingleImplementedTypeRule;
 use stern4rust::source_file::SourceFile;
@@ -23,7 +24,7 @@ const HEADER: &str = "// Copyright 2025 Umberto Gotti <umberto.gotti@umbertogott
 
 const RULE: &str = "single-implemented-type";
 
-fn check(path: &str, body: &str) -> Vec<stern4rust::reporting::offence::Offence> {
+fn check(path: &str, body: &str) -> Vec<Offence> {
     SingleImplementedTypeRule::new().check(&SourceFile::new(path, &format!("{HEADER}\n{body}")))
 }
 

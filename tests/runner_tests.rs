@@ -10,6 +10,7 @@
 // that could not run is an Err. Collapsing them would let "I could not read your
 // code" reach a gate script as a pass.
 
+use anyhow::Error;
 use clap::Parser;
 use serde_json::Value;
 use serde_json::from_str;
@@ -272,7 +273,7 @@ fn run_with_header(name: &str, contents: &str) -> RunOutcome {
     .expect("the run itself should succeed")
 }
 
-fn run_workspace(root: &Path, package: Option<&str>) -> Result<RunOutcome, anyhow::Error> {
+fn run_workspace(root: &Path, package: Option<&str>) -> Result<RunOutcome, Error> {
     let manifest = root.join("Cargo.toml");
     let mut parts = vec![
         "cargo-stern4rust".to_string(),

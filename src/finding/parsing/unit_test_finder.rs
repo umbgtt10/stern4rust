@@ -12,6 +12,7 @@ use syn::spanned::Spanned;
 use crate::finding::model::unit_test_site::UnitTestSite;
 use crate::finding::parsing::item_naming::ItemNaming;
 use crate::source_file::SourceFile;
+use proc_macro2::TokenStream;
 
 // Finds tests, and the machinery of tests, in the production source tree.
 //
@@ -130,7 +131,7 @@ impl UnitTestFinder {
     // A `not` applies to the group that follows it, so that group is walked with
     // the polarity flipped while everything beside it keeps the polarity it
     // inherited. Double negation therefore lands back on gating.
-    fn has_test_ident(stream: proc_macro2::TokenStream, negated: bool) -> bool {
+    fn has_test_ident(stream: TokenStream, negated: bool) -> bool {
         let mut trees = stream.into_iter().peekable();
         while let Some(tree) = trees.next() {
             match tree {

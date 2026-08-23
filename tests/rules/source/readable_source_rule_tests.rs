@@ -12,13 +12,14 @@
 // the tool reported one fewer offence than the tree contained, with no
 // indication anything had been skipped.
 
+use stern4rust::reporting::offence::Offence;
 use stern4rust::rule::Rule;
 use stern4rust::rules::source::readable_source_rule::ReadableSourceRule;
 use stern4rust::source_file::SourceFile;
 
 const RULE: &str = "readable-source";
 
-fn check(contents: &str) -> Vec<stern4rust::reporting::offence::Offence> {
+fn check(contents: &str) -> Vec<Offence> {
     ReadableSourceRule::new().check(&SourceFile::new("src/subject.rs", contents))
 }
 

@@ -10,6 +10,8 @@ use crate::finding::model::section::Section;
 use crate::finding::model::test_file_item::TestFileItem;
 use crate::finding::parsing::item_naming::ItemNaming;
 use crate::source_file::SourceFile;
+use syn::Attribute;
+use syn::Type;
 
 // Turns a test file into the list of items the structure rule reasons about.
 //
@@ -58,7 +60,7 @@ impl TestFileParser {
     // `#[test]`, `#[tokio::test]` and any other harness spelled the same way.
     // Matching the last path segment rather than the whole path is what keeps
     // this from having to enumerate test frameworks.
-    fn is_test(attrs: &[syn::Attribute]) -> bool {
+    fn is_test(attrs: &[Attribute]) -> bool {
         attrs.iter().any(|attr| {
             attr.path()
                 .segments
@@ -77,9 +79,9 @@ impl TestFileParser {
         ItemNaming::identifier(item).unwrap_or_else(|| ItemNaming::source_line(file, start_line))
     }
 
-    fn type_name(ty: &syn::Type) -> String {
+    fn type_name(ty: &Type) -> String {
         match ty {
-            syn::Type::Path(path) => path
+            Type::Path(path) => path
                 .path
                 .segments
                 .last()

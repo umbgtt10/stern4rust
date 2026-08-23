@@ -13,10 +13,11 @@
 // A trait impl counts as much as an inherent one. Both are behaviour, and a
 // reader looking for what a type does opens the file either way.
 
+use stern4rust::finding::model::implemented_type::ImplementedType;
 use stern4rust::finding::parsing::implemented_type_finder::ImplementedTypeFinder;
 use stern4rust::source_file::SourceFile;
 
-fn found(body: &str) -> Vec<stern4rust::finding::model::implemented_type::ImplementedType> {
+fn found(body: &str) -> Vec<ImplementedType> {
     ImplementedTypeFinder::find(&SourceFile::new("src/subject.rs", body)).expect("parses")
 }
 

@@ -14,6 +14,7 @@
 // Both registry files hold nothing but the header and `pub mod` declarations.
 // Anything else in them is logic living where nobody looks for it.
 
+use stern4rust::reporting::offence::Offence;
 use stern4rust::rule::Rule;
 use stern4rust::rules::layout::tests_layout_rule::TestsLayoutRule;
 use stern4rust::source_file::SourceFile;
@@ -28,7 +29,7 @@ const RULE: &str = "tests-layout";
 
 const TEST_BODY: &str = "#[test]\nfn alpha_does_something() {}\n";
 
-fn check(files: &[(&str, &str)]) -> Vec<stern4rust::reporting::offence::Offence> {
+fn check(files: &[(&str, &str)]) -> Vec<Offence> {
     let files: Vec<SourceFile> = files
         .iter()
         .map(|(path, body)| SourceFile::new(path, &format!("{HEADER}\n{body}")))
@@ -344,7 +345,7 @@ fn check_workspace_of_an_unparseable_registry_says_it_was_not_checked() {
     ]);
 
     // Assert
-    let skipped: Vec<&stern4rust::reporting::offence::Offence> = offences
+    let skipped: Vec<&Offence> = offences
         .iter()
         .filter(|offence| offence.description.contains("could not be parsed"))
         .collect();

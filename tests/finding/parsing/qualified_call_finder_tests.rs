@@ -14,10 +14,11 @@
 // one imported segment, and idiomatic -- and `syn::parse_file` with nothing
 // importing `syn` at all.
 
+use stern4rust::finding::model::qualified_call::QualifiedCall;
 use stern4rust::finding::parsing::qualified_call_finder::QualifiedCallFinder;
 use stern4rust::source_file::SourceFile;
 
-fn found(body: &str) -> Vec<stern4rust::finding::model::qualified_call::QualifiedCall> {
+fn found(body: &str) -> Vec<QualifiedCall> {
     QualifiedCallFinder::find(&SourceFile::new("src/subject.rs", body)).expect("parses")
 }
 

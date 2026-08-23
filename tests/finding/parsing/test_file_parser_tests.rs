@@ -12,10 +12,11 @@
 // implements or it sorts as an empty string and drifts to the top.
 
 use stern4rust::finding::model::section::Section;
+use stern4rust::finding::model::test_file_item::TestFileItem;
 use stern4rust::finding::parsing::test_file_parser::TestFileParser;
 use stern4rust::source_file::SourceFile;
 
-fn items(contents: &str) -> Vec<stern4rust::finding::model::test_file_item::TestFileItem> {
+fn items(contents: &str) -> Vec<TestFileItem> {
     TestFileParser::parse(&SourceFile::new("tests/a_tests.rs", contents)).expect("parses")
 }
 

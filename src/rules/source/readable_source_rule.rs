@@ -8,6 +8,7 @@ use crate::reporting::offence::Offence;
 use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;
+use syn::Error;
 
 // Every .rs file can be read and parsed.
 //
@@ -34,7 +35,7 @@ impl ReadableSourceRule {
 
     // A parse error's span can be the call site rather than a real position, so
     // line 0 is reported as line 1 instead of as a line no editor can go to.
-    fn line_of(error: &syn::Error) -> usize {
+    fn line_of(error: &Error) -> usize {
         error.span().start().line.max(1)
     }
 }

@@ -7,9 +7,13 @@ use std::collections::BTreeSet;
 use syn::Expr;
 use syn::ExprCall;
 use syn::Item;
+use syn::ItemImpl;
+use syn::Path;
+use syn::TypePath;
 use syn::UseTree;
 use syn::parse_file;
 use syn::spanned::Spanned;
+use syn::visit;
 use syn::visit::Visit;
 use syn::visit::visit_expr_call;
 
@@ -85,8 +89,15 @@ impl QualifiedCallFinder {
         if entry.qself.is_some() {
             return None;
         }
-        let segments: Vec<String> = entry
-            .path
+        self.offending_path(&entry.path, node.func.span().start().line)
+    }
+
+    // The whole of the rule, in segments. A path is fine when it is a single
+    // name, when a type qualifies it, or when its one qualifier was imported;
+    // anything else is a route that belongs in the import list. Call position
+    // and type position ask the same question, so they share the answer.
+    fn offending_path(&self, path: &Path, line: usize) -> Option<QualifiedCall> {
+        let segments: Vec<String> = path
             .segments
             .iter()
             .map(|segment| segment.ident.to_string())
@@ -98,10 +109,7 @@ impl QualifiedCallFinder {
         if segments.len() == 2 && self.imported.contains(first) {
             return None;
         }
-        Some(QualifiedCall::new(
-            &segments.join("::"),
-            node.func.span().start().line,
-        ))
+        Some(QualifiedCall::new(&segments.join("::"), line))
     }
 
     fn is_type(segment: &str) -> bool {
@@ -141,6 +149,29 @@ impl QualifiedCallFinder {
 }
 
 impl<'ast> Visit<'ast> for QualifiedCallFinder {
+    // A type reached through a path is the same dependency a call reached
+    // through one is: absent from the import list, invisible to a reader
+    // scanning the top of the file for what this file needs.
+    fn visit_type_path(&mut self, node: &'ast TypePath) {
+        if node.qself.is_none()
+            && let Some(found) = self.offending_path(&node.path, node.path.span().start().line)
+        {
+            self.found.push(found);
+        }
+        visit::visit_type_path(self, node);
+    }
+
+    // `impl std::fmt::Display for Widget` carries the trait as a bare `Path`
+    // rather than a `Type`, so it needs its own visit or it is missed.
+    fn visit_item_impl(&mut self, node: &'ast ItemImpl) {
+        if let Some((_, path, _)) = node.trait_.as_ref()
+            && let Some(found) = self.offending_path(path, path.span().start().line)
+        {
+            self.found.push(found);
+        }
+        visit::visit_item_impl(self, node);
+    }
+
     fn visit_expr_call(&mut self, node: &'ast ExprCall) {
         if let Some(call) = self.offending(node) {
             self.found.push(call);

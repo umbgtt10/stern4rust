@@ -8,13 +8,14 @@
 // tests/ alone -- a #[test] under tests/ is the whole point of tests/, and a
 // rule that reported it would report every test in the workspace.
 
+use stern4rust::reporting::offence::Offence;
 use stern4rust::rule::Rule;
 use stern4rust::rules::source::test_free_source_rule::TestFreeSourceRule;
 use stern4rust::source_file::SourceFile;
 
 const RULE: &str = "test-free-source";
 
-fn check(path: &str, body: &str) -> Vec<stern4rust::reporting::offence::Offence> {
+fn check(path: &str, body: &str) -> Vec<Offence> {
     TestFreeSourceRule::new().check(&SourceFile::new(path, body))
 }
 

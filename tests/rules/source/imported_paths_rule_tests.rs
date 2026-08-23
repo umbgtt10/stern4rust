@@ -30,6 +30,18 @@ fn check_of_a_call_qualified_by_an_imported_module_finds_nothing() {
     assert!(found.is_empty(), "expected none, got {found:?}");
 }
 
+#[test]
+fn check_of_a_generic_argument_reached_through_a_path_reports_it() {
+    // Arrange & Act
+    let found = check(
+        "src/a.rs",
+        "fn outer() -> Option<std::path::PathBuf> {\n    None\n}\n",
+    );
+
+    // Assert
+    assert_eq!(found.len(), 1, "expected one, got {found:?}");
+}
+
 // The correction keeps `env` rather than proposing a bare `args()`.
 #[test]
 fn check_of_a_multi_segment_call_names_the_import_to_add() {
@@ -44,6 +56,15 @@ fn check_of_a_multi_segment_call_names_the_import_to_add() {
         found[0].correction,
         "add `use std::env;` and call `env::args`"
     );
+}
+
+#[test]
+fn check_of_a_parameter_type_reached_through_a_path_reports_it() {
+    // Arrange & Act
+    let found = check("src/a.rs", "fn outer(_p: std::path::PathBuf) {}\n");
+
+    // Assert
+    assert_eq!(found.len(), 1, "expected one, got {found:?}");
 }
 
 #[test]
@@ -65,6 +86,22 @@ fn check_of_a_path_qualified_call_reports_it() {
     );
 }
 
+#[test]
+fn check_of_a_return_type_reached_through_a_path_reports_it() {
+    // Arrange & Act
+    let found = check(
+        "src/a.rs",
+        "fn outer() -> std::io::Result<()> {\n    Ok(())\n}\n",
+    );
+
+    // Assert
+    assert_eq!(found.len(), 1, "expected one, got {found:?}");
+    assert_eq!(
+        found[0].correction,
+        "add `use std::io;` and call `io::Result`"
+    );
+}
+
 // Unlike single-implemented-type, tests/ is not exempt: a test file has the
 // same reader and the same list of dependencies at its top.
 #[test]
@@ -77,6 +114,72 @@ fn check_of_a_test_file_reports_it_too() {
 
     // Assert
     assert_eq!(found.len(), 1);
+}
+
+#[test]
+fn check_of_a_trait_implemented_through_a_path_reports_it() {
+    // Arrange & Act
+    let found = check(
+        "src/a.rs",
+        "struct Widget;\n\nimpl std::fmt::Display for Widget {}\n",
+    );
+
+    // Assert
+    assert_eq!(found.len(), 1, "expected one, got {found:?}");
+}
+
+#[test]
+fn check_of_a_type_qualified_associated_type_finds_nothing() {
+    // Arrange & Act
+    let found = check(
+        "src/a.rs",
+        "use std::iter::Iterator;\n\nfn outer() -> <Vec<u8> as Iterator>::Item {\n    todo!()\n}\n",
+    );
+
+    // Assert
+    assert!(
+        found.is_empty(),
+        "an uppercase-initial qualifier is a type, not a route, got {found:?}"
+    );
+}
+
+#[test]
+fn check_of_a_type_qualified_by_an_imported_module_finds_nothing() {
+    // Arrange & Act
+    let found = check(
+        "src/a.rs",
+        "use std::io;\n\nfn outer() -> io::Result<()> {\n    Ok(())\n}\n",
+    );
+
+    // Assert
+    assert!(
+        found.is_empty(),
+        "one imported segment is the rule's shape in type position too, got {found:?}"
+    );
+}
+
+#[test]
+fn check_of_a_use_statement_itself_finds_nothing() {
+    // Arrange & Act
+    let found = check("src/a.rs", "use std::path::PathBuf;\n\nfn outer() {}\n");
+
+    // Assert
+    assert!(
+        found.is_empty(),
+        "the import list is where paths belong, got {found:?}"
+    );
+}
+
+#[test]
+fn check_of_an_imported_type_finds_nothing() {
+    // Arrange & Act
+    let found = check(
+        "src/a.rs",
+        "use std::path::PathBuf;\n\nfn outer(_p: PathBuf) {}\n",
+    );
+
+    // Assert
+    assert!(found.is_empty(), "expected none, got {found:?}");
 }
 
 #[test]

@@ -15,6 +15,7 @@
 // file rather than among its items -- so they are allowed without the rule
 // having to know they exist.
 
+use stern4rust::reporting::offence::Offence;
 use stern4rust::rule::Rule;
 use stern4rust::rules::layout::module_registry_rule::ModuleRegistryRule;
 use stern4rust::source_file::SourceFile;
@@ -25,7 +26,7 @@ const HEADER: &str = "// Copyright 2025 Umberto Gotti <umberto.gotti@umbertogott
 
 const RULE: &str = "module-registry";
 
-fn check(path: &str, body: &str) -> Vec<stern4rust::reporting::offence::Offence> {
+fn check(path: &str, body: &str) -> Vec<Offence> {
     ModuleRegistryRule::new().check(&SourceFile::new(path, &format!("{HEADER}\n{body}")))
 }
 
