@@ -148,10 +148,12 @@ impl UnitTestFinder {
                         return true;
                     }
                 }
-                TokenTree::Group(group) => {
-                    if Self::has_test_ident(group.stream(), negated) {
-                        return true;
-                    }
+                // A guard rather than a nested `if`. Safe here because the
+                // condition is a pure predicate: a group that does not match
+                // simply falls through to the catch-all, which is what the
+                // nested `if` did by falling out of its own block.
+                TokenTree::Group(group) if Self::has_test_ident(group.stream(), negated) => {
+                    return true;
                 }
                 _ => {}
             }

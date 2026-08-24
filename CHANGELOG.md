@@ -4,6 +4,63 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0] - 2026-08-24
+
+How the gates are run, and where the crate lives. No rule changed, so nothing
+this tool reports about your code moves. Minor rather than patch because the
+published crate moved to `core/` and the repository became a workspace.
+
+### Added
+- `xtask/`, a real crate replacing the stage 2 PowerShell script. Each of the
+  four gates is a `Gate` implementation constructed against a `CommandRunner`
+  trait, so the argument lists and failure messages are covered by 64
+  integration tests rather than being unobservable shell. It is a workspace
+  member and the own-rules gate covers it -- the crate that runs the gates is
+  held to the rules this tool exists to enforce.
+- `.github/workflows/ci.yml`: both stages on Ubuntu, Windows and macOS, for
+  every pull request and every push to `main`. CI runs `just stage1` /
+  `just stage2` -- the same two commands a developer runs -- so there is no
+  second definition of the gates to drift out of step.
+
+### Changed
+- Gates run through `just stage1` / `just stage2` on all three platforms.
+- **The repository is a workspace: `core/` holds the published crate, `xtask/`
+  runs the gates.** The split is load-bearing rather than tidy-minded. While the
+  crate sat at the repository root, its package directory *was* the repository
+  root, so a scan of the package walked `xtask/tests/**` and reported its test
+  functions as living "in the source tree" -- files belonging to a different
+  package entirely. `--package` does not narrow it, because the scope is the
+  directory.
+
+  The published crate is unaffected: same name, same lib name, same binary, and
+  `cargo package` still verifies.
+- **The own-rules gate runs first rather than last.** Its corrections are
+  renames, file moves and directory splits, so a layout it is about to reject is
+  one the other three would have measured for nothing -- the same reason every
+  sibling repository puts `stern4rust` ahead of the rest. It earned the position
+  on its first run there, catching a misordered test in `xtask`.
+- The own-rules gate passes `--package` to the tool. The workspace root is a
+  virtual manifest, which names no single package, so the tool refuses to guess.
+  Two flags that look alike now sit either side of the `--`: cargo gets `--bin`
+  to choose what to build, the tool gets `--package` to choose what to read.
+- Three tests in `core/tests/settings/manifest_resolver_tests.rs` assert facts
+  about this repository's own layout, so the split changed their answers rather
+  than breaking them. An unnamed scan now resolves to two members, the root now
+  declares `[workspace.dependencies]`, and the workspace root is now one
+  directory above the crate. All three were renamed to say what they check, and
+  the first two now assert member and dependency *names* rather than a count --
+  a count of two would still pass if the wrong two came back.
+- CI checks formatting instead of applying it (`cargo fmt --check` when `CI` is
+  set), so drift fails the build rather than being silently rewritten where
+  nobody is there to review it. A local `just stage1` still formats in place.
+- Eight ADRs cited `run_stage_2.ps1` in their enforcement sections. The
+  invariants still hold, so the mechanism reference moved to `just stage2`
+  rather than the decisions being rewritten.
+
+### Removed
+- `scripts/run_stage_1.ps1` and `scripts/run_stage_2.ps1`. A Windows-only gate
+  is not a gate contributors on Linux or macOS can run.
+
 ## [0.11.1] - 2026-08-23
 
 ### Fixed

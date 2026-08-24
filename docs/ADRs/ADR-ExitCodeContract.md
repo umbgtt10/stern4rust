@@ -74,7 +74,7 @@ it is a behavioural change and it is why this ADR exists separately from the
 rule that caused it.
 
 A gate script gets the distinction for free and does not have to parse
-anything. `run_stage_2.ps1` relies on exactly this.
+anything. `just stage2` relies on exactly this.
 
 An unreadable file no longer stops the run, so a package with a permissions
 problem produces a report plus one offence rather than a bare error. The tool

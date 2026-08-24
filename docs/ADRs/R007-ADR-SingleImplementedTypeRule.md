@@ -127,7 +127,7 @@ the conjunction independently: a trait impl counts, several impls of one type
 count once, a type without an impl does not count, an impl for a type declared
 elsewhere does not count, and the walk descends into inline modules.
 
-`run_stage_2.ps1` runs the compiled binary against this crate's own tree, which
+`just stage2` runs the compiled binary against this crate's own tree, which
 is what caught `report_printer.rs` the moment the rule was registered.
 
 ## Related

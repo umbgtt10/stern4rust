@@ -1,35 +1,27 @@
-[package]
-name = "cargo-stern4rust"
-version = "0.11.1"
+# A virtual workspace rather than a package at the root. `core/` is the
+# published crate and `xtask/` runs the gates.
+#
+# The split is not cosmetic. While the crate sat at the repository root, its
+# package directory *was* the repository root, so a scan of the package walked
+# `xtask/tests/**` and reported its test functions as living "in the source
+# tree" -- files belonging to a different package entirely. `--package` does
+# not narrow it, because the scope is the directory. Giving each crate its own
+# directory is what separates them.
+[workspace]
+members = ["core", "xtask"]
+resolver = "3"
+
+# Declared once here; every member takes them with `.workspace = true`, so a
+# version is bumped in one place and no two members can disagree.
+[workspace.package]
+version = "0.12.0"
 edition = "2024"
 rust-version = "1.85"
 authors = ["Umberto Gotti <umberto.gotti@umbertogotti.dev>"]
-description = "Cargo subcommand that fails the build when a Rust workspace breaks a house coding rule, such as AAA test structure or one struct per file"
 license = "MIT"
-readme = "README.md"
 repository = "https://github.com/umbgtt10/stern4rust"
-documentation = "https://docs.rs/cargo-stern4rust"
-keywords = ["cargo", "subcommand", "lint", "conventions", "cli"]
-categories = [
-    "development-tools::cargo-plugins",
-    "development-tools",
-    "command-line-utilities",
-]
 
-autotests = false
-
-[lib]
-name = "stern4rust"
-
-[[bin]]
-name = "cargo-stern4rust"
-path = "src/main.rs"
-
-[[test]]
-name = "all_tests"
-path = "tests/all_tests.rs"
-
-[dependencies]
+[workspace.dependencies]
 anyhow = "1.0.98"
 cargo_metadata = "0.23.1"
 globset = "0.4.16"
@@ -41,6 +33,3 @@ serde_json = "1.0"
 toml = "0.9"
 syn = { version = "2.0", features = ["full", "parsing", "printing", "visit"] }
 walkdir = "2.5.0"
-
-[dev-dependencies]
-clap = { version = "4.6.0", features = ["derive"] }
