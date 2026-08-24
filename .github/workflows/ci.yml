@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    name: ${{ matrix.stage }} (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        stage: [stage1, stage2]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          components: clippy, rustfmt, llvm-tools
+
+      - name: Cache cargo registry and build artifacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.stage }}
+
+      - name: Install just
+        uses: extractions/setup-just@v4
+
+      # Stage 2 only. Nothing in this repository's own tests shells out to
+      # coverage -- it is the crap4rust gate that needs llvm-cov, and that gate
+      # runs in stage 2 alone.
+      - name: Install cargo-llvm-cov
+        if: matrix.stage == 'stage2'
+        run: cargo install --locked cargo-llvm-cov
+
+      # Not cached: caching cargo-installed binaries makes `cargo install` skip
+      # a reinstall even when a newer version is published, so the gate would
+      # quietly keep testing against a stale tool.
+      #
+      # cargo-stern4rust is absent by design. This repository is stern4rust, and
+      # its own-rules gate builds the tool from source so that the tree being
+      # judged is the tree being changed -- a rule this checkout breaks is a
+      # rule it is about to publish.
+      - name: Install house gate tools
+        if: matrix.stage == 'stage2'
+        run: |
+          cargo install --locked cargo-crap4rust
+          cargo install --locked cargo-twin4rust
+          cargo install --locked cargo-iceberg4rust
+
+      - name: Run ${{ matrix.stage }}
+        run: just ${{ matrix.stage }}

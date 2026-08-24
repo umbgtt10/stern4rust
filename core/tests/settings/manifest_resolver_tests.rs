@@ -90,8 +90,11 @@ fn packages_of_this_crate_carries_the_licence_its_manifest_declares() {
     assert_eq!(packages[0].license.as_deref(), Some("MIT"));
 }
 
+// This repository is a workspace of two members, so a scan naming no package
+// resolves to both. Asserted by name rather than by count alone: a count of two
+// would still pass if the wrong two came back.
 #[test]
-fn packages_without_a_named_package_returns_this_crate() {
+fn packages_without_a_named_package_returns_every_workspace_member() {
     // Arrange
     let config = config_for(&[]);
 
@@ -99,7 +102,13 @@ fn packages_without_a_named_package_returns_this_crate() {
     let roots = ManifestResolver::packages(&config).expect("resolve");
 
     // Assert
-    assert_eq!(roots.len(), 1);
+    let names: Vec<String> = roots
+        .iter()
+        .map(|package| package.name.to_string())
+        .collect();
+    assert_eq!(names.len(), 2);
+    assert!(names.contains(&String::from("cargo-stern4rust")));
+    assert!(names.contains(&String::from("xtask")));
 }
 
 #[test]
@@ -143,10 +152,13 @@ fn relative_to_strips_the_root_prefix() {
     assert_eq!(relative, "src/a.rs");
 }
 
-// This crate is a single package, not a workspace, so there is no root to
-// centralise into and the rule stays silent rather than reporting.
+// This repository is a workspace and centralises its versions in
+// `[workspace.dependencies]`, so there is a root to compare members against and
+// the rule has something to report on. It returned `None` while the crate sat
+// alone at the root, which is a different codebase rather than a different
+// answer.
 #[test]
-fn workspace_dependencies_of_a_package_that_is_not_a_workspace_is_none() {
+fn workspace_dependencies_of_a_workspace_names_what_the_root_declares() {
     // Arrange
     let config = config_for(&["cargo-stern4rust"]);
 
@@ -154,7 +166,13 @@ fn workspace_dependencies_of_a_package_that_is_not_a_workspace_is_none() {
     let declared = ManifestResolver::workspace_dependencies(&config);
 
     // Assert
-    assert!(declared.is_none());
+    let declared = declared.expect("the workspace root declares dependencies");
+    let names: Vec<&str> = declared
+        .iter()
+        .map(|dependency| dependency.name.as_str())
+        .collect();
+    assert!(names.contains(&"syn"));
+    assert!(names.contains(&"walkdir"));
 }
 
 // What a `[package.<name>]` section is checked against. The workspace rather
@@ -191,8 +209,11 @@ fn workspace_package_names_is_unchanged_by_scoping_the_run() {
 // The directory every manifest path in `workspace_dependencies` is stated
 // relative to, so the two can be compared. Read from cargo rather than from
 // `--manifest-path`, which may name a member of a larger workspace.
+// The root is the repository, one directory above this crate, since the crate
+// moved into `core/`. Checked by reaching a file that only exists under the
+// real root: a bare `Cargo.toml` check would pass against `core/` too.
 #[test]
-fn workspace_root_of_this_crate_is_its_own_directory() {
+fn workspace_root_of_this_crate_is_the_repository_root() {
     // Arrange
     let config = config_for(&[]);
 
@@ -202,5 +223,9 @@ fn workspace_root_of_this_crate_is_its_own_directory() {
     // Assert
     let root = root.expect("this crate has a workspace root");
     assert!(root.join("Cargo.toml").exists(), "{root:?}");
-    assert!(root.join("src").join("rule.rs").exists(), "{root:?}");
+    assert!(
+        root.join("core").join("src").join("rule.rs").exists(),
+        "{root:?}"
+    );
+    assert!(root.join("xtask").join("Cargo.toml").exists(), "{root:?}");
 }

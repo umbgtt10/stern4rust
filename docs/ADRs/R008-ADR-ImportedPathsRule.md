@@ -157,7 +157,7 @@ renamed import, grouped import, descent into function bodies, and macros.
 
 `tests/finding/model/qualified_call_tests.rs` — 5 tests on the two correction shapes.
 
-`run_stage_2.ps1` runs the compiled binary against this crate's own tree, which
+`just stage2` runs the compiled binary against this crate's own tree, which
 is what surfaced all 15 of its own offences.
 
 ## Related

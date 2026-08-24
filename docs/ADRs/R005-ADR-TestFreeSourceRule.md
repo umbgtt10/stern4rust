@@ -155,7 +155,7 @@ itself, including that `tests/` is exempt and that the correction names the
 mirrored file.
 
 `tests/rule_registry_tests.rs` pins that the rule is registered and needs no
-configuration. `run_stage_2.ps1` runs the compiled binary against this crate's
+configuration. `just stage2` runs the compiled binary against this crate's
 own tree, which has never contained a `#[cfg(test)]`.
 
 ## Related

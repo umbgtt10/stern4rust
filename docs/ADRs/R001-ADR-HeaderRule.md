@@ -142,7 +142,7 @@ the header, both normalisation cases, and the empty-expected-header no-op.
 Beyond the unit tests, the rule is dogfooded end to end:
 `runner_tests::run_against_this_crate_with_its_own_header_is_clean` runs the
 whole tool against this crate with `docs/header.txt` and requires a clean
-report, and `run_stage_2.ps1` does the same through the compiled binary. A
+report, and `just stage2` does the same through the compiled binary. A
 new file added here without a header fails this crate's own build.
 
 ## Related

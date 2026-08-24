@@ -152,7 +152,7 @@ rule can be wrong are ways the parser can be wrong:
 `tests/test_file_parser_tests.rs` (17 tests), `tests/section_tests.rs`, and
 `tests/test_file_item_tests.rs`.
 
-Dogfooded through the compiled binary in `run_stage_2.ps1`, which is what
+Dogfooded through the compiled binary in `just stage2`, which is what
 caught this crate's own new test file breaking the rule while the rule for
 `003-ADR-TestsLayoutRule` was being written.
 

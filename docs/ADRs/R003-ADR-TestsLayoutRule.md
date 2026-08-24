@@ -178,7 +178,7 @@ the byte-identical-rows defect.
 
 `tests/rule_registry_tests.rs::check_workspace_collects_the_offences_of_every_registered_rule`
 pins that the registry actually fans the workspace question out to every
-rule and hands it the whole file set, and `run_stage_2.ps1` runs the compiled
+rule and hands it the whole file set, and `just stage2` runs the compiled
 binary against this crate's own tree — where, unavoidably and correctly, the rule's own test file is
 subject to it.
 

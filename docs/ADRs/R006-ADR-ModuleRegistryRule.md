@@ -123,7 +123,7 @@ line.
 other, including the private-`mod` disagreement in both directions and that
 `extern crate alloc` is permitted under `source()` and not under `tests()`.
 
-`run_stage_2.ps1` runs the compiled binary against this crate's own tree, where
+`just stage2` runs the compiled binary against this crate's own tree, where
 `src/lib.rs` and `src/rules/mod.rs` are pure `pub mod` lists.
 
 ## Related
