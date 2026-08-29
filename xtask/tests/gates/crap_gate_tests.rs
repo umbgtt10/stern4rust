@@ -13,7 +13,6 @@ const CLEAN_REPORT: &str = r#"{
   "crappy_percent": 0.0,
   "functions": []
 }"#;
-
 const CRAPPY_REPORT: &str = r#"{
   "total_functions": 2,
   "crappy_functions": 1,

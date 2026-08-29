@@ -22,11 +22,8 @@ use stern4rust::source_file::SourceFile;
 const HEADER: &str = "// Copyright 2025 Umberto Gotti <umberto.gotti@umbertogotti.dev>\n\
                       // Licensed under the MIT License\n\
                       // SPDX-License-Identifier: MIT\n";
-
 const REGISTRY: &str = "pub mod alpha_tests;\npub mod beta_tests;\n";
-
 const RULE: &str = "tests-layout";
-
 const TEST_BODY: &str = "#[test]\nfn alpha_does_something() {}\n";
 
 fn check(files: &[(&str, &str)]) -> Vec<Offence> {

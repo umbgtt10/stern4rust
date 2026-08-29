@@ -13,9 +13,9 @@ this case already covered?" requires reading the file rather than scanning
 it, so cases get covered twice and gaps stay open.
 
 The house standard already specifies the shape — header, then imports, then
-constants, then helpers, then tests; each group alphabetical; imports run
-together and everything else separated by one blank line. Nothing enforced
-it, so it held in the files written on a good day.
+constants, then helpers, then tests; each group alphabetical; imports and
+constants run together and helpers and tests separated by one blank line.
+Nothing enforced it, so it held in the files written on a good day.
 
 Two forces made the implementation less obvious than the specification.
 
@@ -45,7 +45,13 @@ The rule compares adjacent items only, and each pair is judged on three
 independent questions: section order (a section index may never descend),
 alphabetic order (within a section, case-insensitively), and spacing (the
 number of blank lines between two entries of the same section — zero for
-imports, one for everything else).
+imports and constants, one for helpers and tests).
+
+The spacing split is between lists and bodies rather than between imports and
+the rest. Imports and constants are both runs of one-line declarations, read by
+scanning down a column, where a blank line between entries doubles the height
+of the list and says nothing about it. Helpers and tests are multi-line bodies,
+where the gap is the only thing marking where one ends and the next begins.
 
 `TestFileParser` folds the contiguous run of `//` and `#[...]` lines above an
 item back into that item, so a block's first line is the first line of its
@@ -133,6 +139,33 @@ for the reason recorded above — comment blocks belong to the item below
 them, and a file-level comment block belongs to nobody. Any bulk reordering
 of a real test suite should be done against a backup and diffed, not trusted.
 
+**Packing constants costs something on the constants that are not one-liners.**
+The rule packs imports and constants on the argument that both are runs of
+one-line declarations read by scanning down a column. That argument is exactly
+true of `const RULE: &str = "test-file-structure";` and not true of every
+constant, and the rule does not currently tell them apart. Two shapes pay for
+it:
+
+- **A multi-line constant.** Two six-line JSON fixtures in
+  `xtask/tests/gates/crap_gate_tests.rs` now meet as `}"#;` immediately above
+  `const CRAPPY_REPORT: &str = r#"{`, with no boundary between two blocks that
+  each span a third of a screen. For a body, the blank line was doing the job
+  this rule says gaps are for.
+- **A constant introduced by a comment.** `TestFileParser` folds the comment
+  into the item below it, so the comment now runs on from the previous
+  constant and reads as a trailing note on it. Imports never carry comments,
+  so the shape had no equivalent while they were the only packed group.
+
+A line-continued constant — a `HEADER` whose continuations are indented under
+it — is unaffected in practice: the eye still finds the next `const`.
+
+The information needed to separate the cases is already present. `TestFileItem`
+carries `first_line` and `last_line`, so "is this constant a single line,
+comment included?" is answerable where `spacing` runs. A refinement requiring
+zero blank lines between single-line constants and one between constants that
+span lines would belong in the rule rather than in `Section`, since it depends
+on the item and not on its section. It is not implemented.
+
 **What this rule does not catch.** It judges *shape*, not content. The AAA
 convention — `// Arrange`, `// Act`, `// Assert` inside a test body, and the
 naming pattern `<method>_<description>_<outcome>` — is not checked here at
@@ -143,9 +176,15 @@ rather than `stern4rust`'s.
 
 ## Enforcement
 
-`tests/rules/testing/test_file_structure_rule_tests.rs` — 28 tests covering all
+`tests/rules/testing/test_file_structure_rule_tests.rs` — 29 tests covering all
 three questions, the registry and non-test-tree exclusions, the
-comment-introducing-a-test case, and the reporting contract.
+comment-introducing-a-test case, and the reporting contract. Spacing is pinned
+in both directions per group: `check_constants_run_together_reports_nothing`
+and `check_constants_separated_by_a_blank_line_reports_it` are the packed pair,
+`check_a_blank_line_between_imports_reports_it` the other packed group, and
+`check_two_blank_lines_between_tests_reports_it` the separated one.
+`blank_lines_between_entries_of_imports_and_constants_is_none` pins the table
+they all read from.
 
 The parser is tested separately from the rule, because most of the ways this
 rule can be wrong are ways the parser can be wrong:

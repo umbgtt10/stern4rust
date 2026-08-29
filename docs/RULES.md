@@ -100,8 +100,28 @@ together, and does so without needing `--header-file`.
 ## `test-file-structure`
 
 A test file reads top to bottom in one order: header, imports, constants,
-helpers, tests. Each group alphabetical, case-insensitively. Imports run
-together; everything else is separated by exactly one blank line.
+helpers, tests. Each group alphabetical, case-insensitively. Imports and
+constants run together; helpers and tests are separated by exactly one blank
+line.
+
+The split is between lists and bodies rather than between imports and the rest.
+Imports and constants are both runs of one-line declarations, read by scanning
+down a column: a blank line between each entry doubles the height of the list
+and tells the reader nothing about it. Helpers and tests are multi-line bodies,
+where the gap is the only thing marking where one ends and the next begins.
+
+The count is exact in both directions, so two blank lines between constants is
+an offence for the same reason zero between tests is.
+
+**The packing is applied per section, not per constant**, and the "runs of
+one-line declarations" argument is not true of every constant. A constant whose
+value spans lines is packed against its neighbour like any other, so two
+multi-line fixtures meet with no boundary between them; and a constant
+introduced by a comment has that comment folded into it, so the comment runs on
+from the constant above and reads as a trailing note on it. Constants whose
+values are continued across indented lines are unaffected in practice. See
+[R002](ADRs/R002-ADR-TestFileStructureRule.md) for the cost and the refinement
+that would separate the cases.
 
 `Helpers` is defined by **exclusion** — whatever is neither an import, nor a
 constant, nor a test. That is what keeps the set of item kinds closed: a

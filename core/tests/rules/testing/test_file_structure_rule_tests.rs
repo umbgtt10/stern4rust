@@ -4,8 +4,8 @@
 
 // A test file reads top to bottom in one order: header, imports, constants,
 // helpers, tests. Each group is alphabetical, and the spacing between entries is
-// part of the shape rather than a matter of taste -- imports run together, and
-// everything else is separated by exactly one blank line.
+// part of the shape rather than a matter of taste -- imports and constants run
+// together, and helpers and tests are separated by exactly one blank line.
 //
 // The order is what makes a test file skimmable without reading it. Once a
 // constant appears below a helper, or a test lands between two others out of
@@ -24,7 +24,6 @@ use stern4rust::source_file::SourceFile;
 const HEADER: &str = "// Copyright 2025 Umberto Gotti <umberto.gotti@umbertogotti.dev>\n\
                       // Licensed under the MIT License\n\
                       // SPDX-License-Identifier: MIT\n";
-
 const RULE: &str = "test-file-structure";
 
 fn check(contents: &str) -> Vec<Offence> {
@@ -122,7 +121,6 @@ fn check_a_file_in_the_expected_shape_reports_nothing() {
                     use beta::Two;\n\
                     \n\
                     const FIRST: usize = 1;\n\
-                    \n\
                     const SECOND: usize = 2;\n\
                     \n\
                     fn helper_a() {}\n\
@@ -322,9 +320,8 @@ fn check_an_import_after_a_test_reports_the_section_order() {
 
 #[test]
 fn check_constants_out_of_alphabetic_order_reports_the_later_one() {
-    // Arrange
+    // Arrange -- packed, so the only thing wrong with the pair is their order
     let contents = "const SECOND: usize = 2;\n\
-                    \n\
                     const FIRST: usize = 1;\n";
 
     // Act
@@ -335,10 +332,29 @@ fn check_constants_out_of_alphabetic_order_reports_the_later_one() {
     assert!(offences[0].description.contains("FIRST"));
 }
 
+// Constants pack like imports: both are runs of one-line declarations read by
+// scanning down a column, so the gap that separates two test bodies would only
+// double the height of the list here.
 #[test]
-fn check_constants_run_together_without_a_blank_line_reports_it() {
+fn check_constants_run_together_reports_nothing() {
     // Arrange
     let contents = "const FIRST: usize = 1;\n\
+                    const SECOND: usize = 2;\n";
+
+    // Act
+    let offences = check(contents);
+
+    // Assert
+    assert!(offences.is_empty(), "expected none, got {offences:?}");
+}
+
+// The count is exact in both directions, so the separated pair is the offence
+// now and the packed pair is the shape.
+#[test]
+fn check_constants_separated_by_a_blank_line_reports_it() {
+    // Arrange
+    let contents = "const FIRST: usize = 1;\n\
+                    \n\
                     const SECOND: usize = 2;\n";
 
     // Act

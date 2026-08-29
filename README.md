@@ -519,8 +519,16 @@ at all. The correction names the exact path to rename to.
 ### `test-file-structure`
 
 A test file reads top to bottom in one order: header, imports, constants,
-helpers, tests. Each group is alphabetical; imports run together and everything
-else is separated by exactly one blank line.
+helpers, tests. Each group is alphabetical; imports and constants run together
+and helpers and tests are separated by exactly one blank line. The split is
+between lists and bodies: a run of one-line declarations is read by scanning
+down a column, where a blank line between entries only doubles the height of
+the list.
+
+The packing is per section rather than per constant, so a multi-line constant
+is packed against its neighbour like any other and a constant introduced by a
+comment has that comment run on from the constant above.
+[R002](docs/ADRs/R002-ADR-TestFileStructureRule.md) records what that costs.
 
 ```rust
 #[test]

@@ -16,7 +16,6 @@ use stern4rust::source_file::SourceFile;
 
 const APACHE: &str = "// Copyright 2025 Umberto Gotti\n\
                       // Licensed under the Apache License, Version 2.0\n";
-
 const MIT: &str = "// Copyright 2025 Umberto Gotti\n\
                    // SPDX-License-Identifier: MIT\n";
 
