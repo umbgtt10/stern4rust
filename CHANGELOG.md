@@ -4,6 +4,46 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0] - 2026-08-29
+
+One rule changed, and it moves what this tool reports about your code. Every
+test file with two or more constants separated by blank lines becomes an
+offence on upgrade. `--fix` repairs all of it, and repaired twelve files in
+this repository.
+
+### Changed
+- **`test-file-structure`: constants pack like imports.** The spacing split is
+  now between lists and bodies rather than between imports and everything else.
+  Imports and constants are both runs of one-line declarations, read by scanning
+  down a column, where a blank line between entries doubles the height of the
+  list and says nothing about it. Helpers and tests are multi-line bodies, where
+  the gap is the only thing marking where one ends and the next begins.
+
+  The count stays exact in both directions, so a blank line between two
+  constants is now an offence for the same reason its absence between two tests
+  already was.
+
+  The packing is per section rather than per constant, and the "runs of
+  one-line declarations" argument is not true of every constant. Two shapes pay
+  for it, and both are worth seeing before you upgrade:
+
+  - **A multi-line constant** is packed against its neighbour like any other.
+    Two six-line JSON fixtures in this repository's own `crap_gate_tests.rs`
+    now meet as `}"#;` immediately above `const CRAPPY_REPORT: &str = r#"{`,
+    with no boundary between two blocks that each span a third of a screen.
+  - **A constant introduced by a comment** has that comment folded into it by
+    `TestFileParser`, so the comment now runs on from the constant above and
+    reads as a trailing note on it. Imports never carry comments, so the shape
+    had no equivalent while they were the only packed group.
+
+  A constant continued across indented lines is unaffected in practice. The
+  refinement that would separate single-line constants from the rest is
+  described in [R002](docs/ADRs/R002-ADR-TestFileStructureRule.md) and is not
+  implemented.
+
+  `Section::blank_lines_between_entries` is the single source, so the `--fix`
+  rewriter followed without a second change. [R002](docs/ADRs/R002-ADR-TestFileStructureRule.md)
+
 ## [0.12.0] - 2026-08-24
 
 How the gates are run, and where the crate lives. No rule changed, so nothing

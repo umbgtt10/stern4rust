@@ -18,9 +18,7 @@ use stern4rust::source_file::SourceFile;
 const HEADER: &str = "// Copyright 2025 Umberto Gotti <umberto.gotti@umbertogotti.dev>\n\
                       // Licensed under the MIT License\n\
                       // SPDX-License-Identifier: MIT\n";
-
 const RULE: &str = "arrange-act-assert";
-
 // A raw string holding lines that begin with markers. Excluding it is the
 // difference between this rule passing and failing this crate.
 const WITH_EMBEDDED_SOURCE: &str = r##"#[test]

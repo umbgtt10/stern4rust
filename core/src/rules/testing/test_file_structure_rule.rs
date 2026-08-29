@@ -13,8 +13,8 @@ use crate::source_file::SourceFile;
 
 // A test file reads top to bottom in one order: header, imports, constants,
 // helpers, tests. Each group is alphabetical, and the spacing is part of the
-// shape -- imports run together, everything else is separated by exactly one
-// blank line.
+// shape -- imports and constants run together, helpers and tests are separated
+// by exactly one blank line.
 //
 // The order is what makes a test file skimmable without reading it. Once a
 // constant sits below a helper, or a test lands between two others out of order,

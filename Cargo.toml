@@ -14,7 +14,7 @@ resolver = "3"
 # Declared once here; every member takes them with `.workspace = true`, so a
 # version is bumped in one place and no two members can disagree.
 [workspace.package]
-version = "0.12.0"
+version = "0.13.0"
 edition = "2024"
 rust-version = "1.85"
 authors = ["Umberto Gotti <umberto.gotti@umbertogotti.dev>"]

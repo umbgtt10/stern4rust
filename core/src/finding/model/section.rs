@@ -28,11 +28,17 @@ impl Section {
         }
     }
 
-    // Imports are the one group written without gaps. Everything else is
-    // separated by exactly one blank line.
+    // Imports and constants are the groups written without gaps. Helpers and
+    // tests are separated by exactly one blank line.
+    //
+    // Constants pack for the same reason imports do: both are lists of one-line
+    // declarations read by scanning down a column, and a blank line between
+    // each entry doubles the height of the list without telling the reader
+    // anything. Helpers and tests are multi-line bodies, where the gap is what
+    // marks where one ends and the next begins.
     pub fn blank_lines_between_entries(self) -> usize {
         match self {
-            Self::Imports => 0,
+            Self::Imports | Self::Constants => 0,
             _ => 1,
         }
     }

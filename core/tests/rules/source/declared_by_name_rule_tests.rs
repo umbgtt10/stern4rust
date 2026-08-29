@@ -21,7 +21,6 @@ use stern4rust::source_file::SourceFile;
 const HEADER: &str = "// Copyright 2025 Umberto Gotti <umberto.gotti@umbertogotti.dev>\n\
                       // Licensed under the MIT License\n\
                       // SPDX-License-Identifier: MIT\n";
-
 const RULE: &str = "declared-by-name";
 
 fn check(path: &str, body: &str) -> Vec<Offence> {
