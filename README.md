@@ -5,8 +5,9 @@ names every file that breaks one.
 
 It is in the same family as
 [`cargo-crap4rust`](https://crates.io/crates/cargo-crap4rust),
-[`cargo-twin4rust`](https://crates.io/crates/cargo-twin4rust) and
-[`cargo-iceberg4rust`](https://crates.io/crates/cargo-iceberg4rust), and shares
+[`cargo-twin4rust`](https://crates.io/crates/cargo-twin4rust),
+[`cargo-iceberg4rust`](https://crates.io/crates/cargo-iceberg4rust) and
+[`cargo-dry4rust`](https://crates.io/crates/cargo-dry4rust), and shares
 their character: it measures what it can state precisely, it is opinionated
 about what good looks like, and it fails the build rather than warning.
 
@@ -44,6 +45,7 @@ Both must be green before a change is complete, and both run the same way on
 Windows, Linux and macOS. Stage 1 is formatting, clippy and tests — cargo
 built-ins only, so it works on a fresh checkout with none of the tools below
 installed. Stage 2 is `cargo xtask stage2`, which runs, in order: **own rules**,
+`cargo dry4rust` (no duplication beyond `dry4rust-baseline.json`),
 `cargo crap4rust` (complexity against coverage), `cargo twin4rust` (every source
 file has a mirrored test file) and `cargo iceberg4rust` (file risk).
 
@@ -63,6 +65,7 @@ Everything the two stages need, none of which ships with cargo:
 | [`just`](https://github.com/casey/just) | `cargo install just` | both stages |
 | [`cargo-llvm-cov`](https://github.com/taiki-e/cargo-llvm-cov) | `cargo install cargo-llvm-cov` | stage 2 |
 | `llvm-tools` rustup component | `rustup component add llvm-tools` | stage 2 |
+| `cargo-dry4rust` | `cargo install cargo-dry4rust` | stage 2 |
 | `cargo-crap4rust` | `cargo install cargo-crap4rust` | stage 2 |
 | `cargo-twin4rust` | `cargo install cargo-twin4rust` | stage 2 |
 | `cargo-iceberg4rust` | `cargo install cargo-iceberg4rust` | stage 2 |

@@ -53,21 +53,31 @@ a fresh checkout with none of the house tools installed.
 Stage 2 is `cargo xtask stage2` -- a real crate under `xtask/`, gated like any
 other code, rather than a script. Each gate is a `Gate` implementation
 constructed against a `CommandRunner` trait, so the argument lists and the
-failure messages are covered by `xtask`'s own integration tests. It runs four
+failure messages are covered by `xtask`'s own integration tests. It runs five
 gates, in this order:
 
 | gate | asks |
 |---|---|
 | own rules | does this tool satisfy the rules it enforces |
+| `cargo dry4rust` | did this change add duplicated code |
 | `cargo crap4rust` | is any function complex and untested |
 | `cargo twin4rust` | does every source file have a mirrored test file |
 | `cargo iceberg4rust` | is any file's private implementation risk too high |
 
 The own-rules gate runs **first**, where the PowerShell script ran it last. Its
 corrections are renames, file moves and directory splits, so a layout it is
-about to reject is one the other three would have measured for nothing -- the
+about to reject is one the others would have measured for nothing -- the
 same reason every sibling repository puts `stern4rust` ahead of the rest. It
 caught a misordered test in `xtask` on its first run in that position.
+
+`dry4rust` runs **second** for the same reason: removing a duplicate moves code
+between files, which changes what the three behind it measure. It scans
+`core/src` only -- tests repeat their arrangement by design -- and checks with
+zero ceilings against `dry4rust-baseline.json`, the duplication already there
+when the gate arrived. So it fails on what a change adds, not on what it
+inherited; a duplicate removed is admitted, a copy added to a recorded group is
+not. Re-record the baseline only to drop groups that are gone, never to admit
+new ones: `cargo dry4rust --path core/src --baseline "$PWD/dry4rust-baseline.json" baseline`.
 
 It runs `stern4rust` against itself, built from source rather than from whatever
 is installed. A tool that enforces a rule it does not satisfy is not worth
@@ -79,6 +89,7 @@ the gates is not exempt from the rules it exists to enforce.
 
 `cargo install just`
 `cargo install cargo-llvm-cov`
+`cargo install cargo-dry4rust`
 `cargo install cargo-crap4rust`
 `cargo install cargo-twin4rust`
 `cargo install cargo-iceberg4rust`
@@ -158,7 +169,8 @@ in a gate script would otherwise scan nothing and report success.
 ## Publishing
 
 The crate publishes as `cargo-stern4rust` so cargo resolves `cargo stern4rust`,
-matching `cargo-crap4rust`, `cargo-twin4rust` and `cargo-iceberg4rust`. The
+matching `cargo-crap4rust`, `cargo-twin4rust`, `cargo-iceberg4rust` and
+`cargo-dry4rust`. The
 library is `stern4rust`.
 
 `core/src/main.rs` strips the repeated subcommand name that cargo inserts as

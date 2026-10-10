@@ -1,0 +1,64 @@
+// Copyright 2026 Umberto Gotti <umberto.gotti@umbertogotti.dev>
+// Licensed under the MIT License
+// SPDX-License-Identifier: MIT
+
+use crate::gates::gate::Gate;
+use crate::process::command_runner::CommandRunner;
+
+const BINARY: &str = "cargo-dry4rust";
+const CEILING_EXCEEDED: i32 = 1;
+
+pub struct DryGate<'a> {
+    runner: &'a dyn CommandRunner,
+    path: String,
+    baseline: String,
+}
+
+impl<'a> DryGate<'a> {
+    pub fn new(runner: &'a dyn CommandRunner, path: String, baseline: String) -> Self {
+        Self {
+            runner,
+            path,
+            baseline,
+        }
+    }
+}
+
+impl Gate for DryGate<'_> {
+    fn label(&self) -> String {
+        String::from("Duplication")
+    }
+
+    fn run(&self) -> Result<(), String> {
+        if !self.runner.is_available(BINARY) {
+            return Err(format!(
+                "{BINARY} is not installed -- run: cargo install {BINARY}"
+            ));
+        }
+
+        // Zero ceilings against the baseline: what the baseline records was here
+        // before the gate was, and anything beyond it is what a change added.
+        let args = vec![
+            String::from("dry4rust"),
+            String::from("--path"),
+            self.path.clone(),
+            String::from("--baseline"),
+            self.baseline.clone(),
+            String::from("check"),
+            String::from("--max-exact"),
+            String::from("0"),
+            String::from("--max-near"),
+            String::from("0"),
+        ];
+
+        // 1 is the tool's own "a ceiling was exceeded"; 2 is a configuration or a
+        // baseline it refused, which means it measured nothing.
+        match self.runner.run_streaming("cargo", &args)? {
+            Some(0) => Ok(()),
+            Some(CEILING_EXCEEDED) => {
+                Err(format!("duplication was added beyond {}", self.baseline))
+            }
+            code => Err(format!("exit code {code:?}")),
+        }
+    }
+}
