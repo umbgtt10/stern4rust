@@ -4,9 +4,9 @@
 
 use syn::Attribute;
 use syn::Item;
-use syn::ItemMod;
 use syn::parse_file;
 
+use crate::finding::parsing::inline_module::InlineModule;
 use crate::reporting::offence::Offence;
 use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;
@@ -62,14 +62,12 @@ impl TestFileNamePostfixRule {
             .iter()
             .map(|item| match item {
                 Item::Fn(function) if Self::is_test(&function.attrs) => 1,
-                Item::Mod(module) => Self::inside(module).map(Self::tests_in).unwrap_or_default(),
+                Item::Mod(module) => InlineModule::items(module)
+                    .map(Self::tests_in)
+                    .unwrap_or_default(),
                 _ => 0,
             })
             .sum()
-    }
-
-    fn inside(module: &ItemMod) -> Option<&[Item]> {
-        module.content.as_ref().map(|(_, items)| items.as_slice())
     }
 
     // The last segment is what says so, which is what lets `#[tokio::test]`

@@ -12,6 +12,7 @@ use syn::Lit;
 use syn::Meta;
 use syn::parse_file;
 
+use crate::finding::parsing::inline_module::InlineModule;
 use crate::reporting::offence::Offence;
 use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;
@@ -54,7 +55,7 @@ impl DeclaredByNameRule {
             .flat_map(|item| match item {
                 Item::Mod(module) => once(module)
                     .chain(
-                        Self::inside(module)
+                        InlineModule::items(module)
                             .map(Self::declarations)
                             .unwrap_or_default(),
                     )
@@ -62,10 +63,6 @@ impl DeclaredByNameRule {
                 _ => Vec::new(),
             })
             .collect()
-    }
-
-    fn inside(module: &ItemMod) -> Option<&[Item]> {
-        module.content.as_ref().map(|(_, items)| items.as_slice())
     }
 
     // Only the bare `#[path = "..."]`. A `cfg_attr` wrapping one is a

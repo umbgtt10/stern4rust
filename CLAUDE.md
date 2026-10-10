@@ -11,7 +11,7 @@ hand, every time, forever — and the ones that quietly stop being true across a
 codebase the moment nobody is checking.
 
 The rule set is **open by design**: there will be fifteen to twenty of them, and
-there are twenty-one today, one past the range, and `core/src/rules/` is grouped into
+there are twenty-two today, two past the range, and `core/src/rules/` is grouped into
 subfolders because `directory-file-count` would not allow a twenty-first file. That is the constraint every decision here answers to.
 Adding a rule costs a file under `core/src/rules/`, its `pub mod` line, one entry in
 `RuleRegistry::all`, a mirrored test file, an `R<NNN>` ADR and a `RULES.md`
@@ -78,15 +78,18 @@ when the gate arrived. So it fails on what a change adds, not on what it
 inherited; a duplicate removed is admitted, a copy added to a recorded group is
 not.
 
-It counts only code units of 20 AST nodes or more. At dry4rust's default of 10,
-the one-line accessors every rule must write -- `explanation`,
-`check_workspace`, `applies_to` -- form recorded groups that a new rule would
-grow, so every rule added would fail the gate. 20 is the lowest floor that
-leaves them out and still catches a rule's `check` copied from another's.
+It counts only code units of 25 AST nodes or more. Below that sit units whose
+body is a single call: the accessors every rule must write -- `explanation`,
+`check_workspace`, `applies_to` -- and a `check` that hands its two halves to
+`SourceItems::offences`. Each such unit carries the `Rule` signature, so any two
+look alike; at dry4rust's default of 10 they form groups that every rule added
+would grow, failing the gate for a rule set that is open by design. 25 leaves
+them out and still catches a rule's twelve-line `check` copied from another's,
+which is what this gate first caught.
 
 Re-record the baseline only to drop groups that are gone, never to admit new
 ones, and at the same floor -- a baseline matches only at the floor it was
-recorded at: `cargo dry4rust --path core/src --min-nodes 20 --baseline "$PWD/dry4rust-baseline.json" baseline`.
+recorded at: `cargo dry4rust --path core/src --min-nodes 25 --baseline "$PWD/dry4rust-baseline.json" baseline`.
 
 It runs `stern4rust` against itself, built from source rather than from whatever
 is installed. A tool that enforces a rule it does not satisfy is not worth
@@ -106,7 +109,7 @@ the gates is not exempt from the rules it exists to enforce.
 cargo-stern4rust is deliberately not in that list; the gate builds it from this
 checkout.
 
-All twenty-one rules are enforced, with nothing skipped and nothing
+All twenty-two rules are enforced, with nothing skipped and nothing
 unconfigured. `stern4rust.toml` names the header file, rather than the gate
 script passing `--header-file`, so a hand-run of `cargo stern4rust` checks
 exactly what the gate checks -- which is what every other repository in this

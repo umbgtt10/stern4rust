@@ -7,9 +7,9 @@
       "members": 4,
       "names": [
         "TestFileRewriter::governs",
+        "TestFileNamePostfixRule::applies_to",
         "TestNamingRule::applies_to",
-        "ArrangeActAssertRule::applies_to",
-        "TestFileNamePostfixRule::applies_to"
+        "ArrangeActAssertRule::applies_to"
       ]
     },
     {
@@ -23,38 +23,11 @@
     },
     {
       "kind": "exact",
-      "fingerprint": "061f03a80f9a5947",
-      "members": 2,
-      "names": [
-        "Runner::baseline_shown",
-        "Runner::shown"
-      ]
-    },
-    {
-      "kind": "exact",
-      "fingerprint": "1141f54252d4d456",
-      "members": 2,
-      "names": [
-        "PackageTree::directory_name",
-        "PackageTree::module_name"
-      ]
-    },
-    {
-      "kind": "exact",
       "fingerprint": "28b8ef9870e79af4",
       "members": 2,
       "names": [
-        "ReportPrinter::unmatched",
-        "ExclusionOutcome::unmatched_patterns"
-      ]
-    },
-    {
-      "kind": "exact",
-      "fingerprint": "2d963f2006378966",
-      "members": 2,
-      "names": [
-        "ReportPrinter::with_baseline",
-        "JsonPrinter::with_baseline"
+        "ExclusionOutcome::unmatched_patterns",
+        "ReportPrinter::unmatched"
       ]
     },
     {
@@ -62,17 +35,8 @@
       "fingerprint": "63720196e094a2dd",
       "members": 2,
       "names": [
-        "DirectoryFileCountRule::is_index",
-        "PackageTree::is_registry"
-      ]
-    },
-    {
-      "kind": "exact",
-      "fingerprint": "77927e7d38e87af1",
-      "members": 2,
-      "names": [
-        "TestFileStructureRule::is_registry",
-        "ModuleRegistryRule::is_registry"
+        "PackageTree::is_registry",
+        "DirectoryFileCountRule::is_index"
       ]
     },
     {
@@ -86,32 +50,11 @@
     },
     {
       "kind": "exact",
-      "fingerprint": "7c2921ea6b3cc5e9",
-      "members": 3,
-      "names": [
-        "PackageConfig::header_file_from",
-        "ConfigFile::baseline_from",
-        "ConfigFile::header_file_from"
-      ]
-    },
-    {
-      "kind": "exact",
-      "fingerprint": "828ae15f03e0c3d2",
-      "members": 4,
-      "names": [
-        "PureTraitsRule::inside",
-        "DeclaredByNameRule::inside",
-        "TestFileNamePostfixRule::inside",
-        "ImplementedTypeFinder::inside"
-      ]
-    },
-    {
-      "kind": "exact",
       "fingerprint": "a9c15a997b5c0f97",
       "members": 2,
       "names": [
-        "ReportPrinter::new",
-        "JsonPrinter::new"
+        "JsonPrinter::new",
+        "ReportPrinter::new"
       ]
     },
     {
@@ -119,10 +62,10 @@
       "fingerprint": "c4062732a9634f22",
       "members": 4,
       "names": [
-        "TestNamingRule::is_test",
-        "ArrangeActAssertRule::is_test",
+        "TestFileParser::is_test",
         "TestFileNamePostfixRule::is_test",
-        "TestFileParser::is_test"
+        "TestNamingRule::is_test",
+        "ArrangeActAssertRule::is_test"
       ]
     },
     {
@@ -135,21 +78,12 @@
       ]
     },
     {
-      "kind": "exact",
-      "fingerprint": "edb9fbaf8343ab80",
-      "members": 2,
-      "names": [
-        "ReportPrinter::with_rules",
-        "JsonPrinter::with_rules"
-      ]
-    },
-    {
       "kind": "near",
       "fingerprint": "13f7b6ebe445e10c",
       "members": 2,
       "names": [
-        "RuleExplanation::new",
-        "TestFileItem::new"
+        "TestFileItem::new",
+        "RuleExplanation::new"
       ]
     },
     {
@@ -159,15 +93,6 @@
       "names": [
         "<TestNamingRule as Rule>::check",
         "<ArrangeActAssertRule as Rule>::check"
-      ]
-    },
-    {
-      "kind": "near",
-      "fingerprint": "e6c835ff8095df1e",
-      "members": 2,
-      "names": [
-        "RuleRegistry::check",
-        "RuleRegistry::check_workspace"
       ]
     }
   ]

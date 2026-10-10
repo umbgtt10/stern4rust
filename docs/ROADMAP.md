@@ -32,17 +32,17 @@ moment nobody is checking.
 
 ## Current Baseline
 
-Twenty-one rules, two output formats, autofix, baselines, exclusions, a config
+Twenty-two rules, two output formats, autofix, baselines, exclusions, a config
 file, and `--rules` to say what each rule wants without a codebase to ask
 against. Every planned phase has shipped or been decided, and what each built is
-in [IMPLEMENTED-FEATURES.md](IMPLEMENTED-FEATURES.md). 740 tests, both gates
-green, and the tool runs against its own tree on every build with zero
-offences.
+in [IMPLEMENTED-FEATURES.md](IMPLEMENTED-FEATURES.md). Both gates are green, and
+the tool runs against its own tree on every build with zero offences.
 
 ## What is left
 
-Nothing is planned. The rule set is at twenty-one, the original candidate list
-has shipped in full, the library surface is decided, and every remaining gap is
+Nothing is planned. The rule set is at twenty-two -- the original candidate list
+shipped in full, and `returned-mutations` turned the family's written `&mut`
+standard into a gate -- the library surface is decided, and every remaining gap is
 a limit with no structural answer -- collected in
 [OPEN_POINTS.md](OPEN_POINTS.md).
 

@@ -1,6 +1,6 @@
 # Rules
 
-Twenty-one rules, each independent, each naming itself in the report. This is the
+Twenty-two rules, each independent, each naming itself in the report. This is the
 reference; the reasoning behind each one is in its ADR.
 
 Every offence carries a **correction** as well as a description — what to do,
@@ -9,7 +9,7 @@ without answering it.
 
 Each rule also carries an **explanation** — what it wants, a scrap of source
 that breaks it and the same scrap put right — and that field is required too.
-`cargo stern4rust --rules` prints all twenty-one, in text or with
+`cargo stern4rust --rules` prints all twenty-two, in text or with
 `--format json`, without scanning anything. See
 [ADR-RulesExplainThemselves](ADRs/ADR-RulesExplainThemselves.md).
 
@@ -33,6 +33,7 @@ that breaks it and the same scrap put right — and that field is required too.
 | `workspace-dependencies` | [R021](ADRs/R021-ADR-WorkspaceDependenciesRule.md) | no |
 | `single-implemented-type` | [R007](ADRs/R007-ADR-SingleImplementedTypeRule.md) | no |
 | `pure-traits` | [R014](ADRs/R014-ADR-PureTraitsRule.md) | no |
+| `returned-mutations` | [R022](ADRs/R022-ADR-ReturnedMutationsRule.md) | no |
 | `test-naming` | [R012](ADRs/R012-ADR-TestNamingRule.md) | no |
 | `tested-public-api` | [R013](ADRs/R013-ADR-TestedPublicApiRule.md) | no |
 | `header` | [R001](ADRs/R001-ADR-HeaderRule.md) | `--header-file` |
@@ -447,6 +448,53 @@ will say nothing. Nor a default inherited from a supertrait in another crate, no
 whether a removed body was moved into the implementors or simply deleted --
 `rustc` guarantees each implementor has *a* body, not the right one. Anything
 inside a macro is invisible, as everywhere else in this tool.
+
+## `returned-mutations`
+
+A function returns its output; it does not write it through a `&mut` parameter.
+**No parameter of a function in `src/` may have a type that is, or structurally
+contains, a mutable reference.**
+
+A `&mut T` argument is an output dressed as an input: the caller hands in a place
+for the function to write, and the call's real result is the edit it leaves
+behind rather than the value it returns. The reader of the signature cannot tell
+what comes back without reading the body, and the caller has to build the
+destination before there is anything to put in it. Returning the value makes the
+output something the signature names and the caller owns.
+
+The type is walked through references, tuples, slices, arrays and
+angle-bracketed generic arguments, so `(&mut A, B)` and `Vec<&mut T>` are both
+reported. Every offending parameter is reported separately, because each is its
+own edit.
+
+Three things are left alone, each because the edit does not live there:
+
+- **The `&mut self` receiver.** It carries no parameter type, so it falls out of
+  the check by shape. A method mutating the thing it belongs to is the point of a
+  method.
+- **Trait impl methods.** `impl Display for X` takes `&mut Formatter` because
+  `Display` says so, and no implementor can change that. Where the trait is the
+  author's own, the `&mut` is reported once, at the declaration -- the one place
+  changing it is both possible and enough. The same split as `pure-traits` and
+  `registry-completeness`.
+- **Callback contracts.** `impl FnMut(&mut T)` and `fn(&mut T)` describe the
+  callback's parameter list, not this function's, so the walk stops at a
+  parenthesised `Fn`-trait argument and at a bare function pointer.
+
+| offence | correction |
+|---|---|
+| `` `render::out` is a `&mut` parameter, so its result is written through an argument instead of being returned `` | `` return the new value instead of writing it through `&mut out` `` |
+
+`tests/` is exempt: a test file hands a fake a `&mut` to stand in for a real
+collaborator, and a stand-in shaped that way is what those fakes are for.
+
+**Does not catch:** interior mutability -- `&Cell<T>`, `&RefCell<T>`,
+`&Mutex<T>` mutate through a shared reference the rule never sees; raw `*mut T`
+pointers; a `&mut` inside an `impl Trait` or `dyn` bound such as
+`impl Iterator<Item = &mut T>`; a `&mut` reaching a function through a generic,
+as `fn f<W: Write>(w: W)` called with `&mut buf`; and anything a macro
+generates. Only the signature is read, so a `&mut` parameter the body never
+writes is still reported -- the signature still says the call writes through it.
 
 ## `declared-by-name`
 

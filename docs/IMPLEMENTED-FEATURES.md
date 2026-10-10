@@ -3,6 +3,19 @@
 What `cargo-stern4rust` does today. Anything not listed here is not built, and
 the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
+## Version 0.14.0
+
+### Rules
+
+- **`returned-mutations`** -- a function returns its output; it does not write
+  it through a `&mut` parameter. Any parameter in `src/` whose type is, or
+  structurally contains, a mutable reference is reported against that
+  parameter. `&mut self`, trait impl methods (reported once at the author's own
+  trait declaration instead) and callback contracts are left alone; `tests/` is
+  exempt. Clean on this repository and on `slotgate`; 43 offences across five
+  other `*4rust` tools. On by default.
+  [R022](ADRs/R022-ADR-ReturnedMutationsRule.md)
+
 ## Version 0.11.0
 
 - `imported-paths` extended from call expressions to type and trait position.
@@ -67,7 +80,7 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
 - **`--rules`** lists every rule with a line saying what it wants, a scrap of
   source that breaks it and the same scrap put right, then exits without
-  scanning. All twenty-one, in registry order, so the listing reads in the same
+  scanning. All twenty-two, in registry order, so the listing reads in the same
   order as the roster a report prints. Honours `--format`, so the same listing
   is available as JSON. Nothing is walked, read or judged, so it works in a
   checkout with no manifest worth reading and always exits clean.
@@ -426,4 +439,4 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
   `twin4rust`, `iceberg4rust`, and stern4rust against its own tree, built from
   source rather than from whatever is installed).
 - Self-gating: a rule that would fail this repository cannot be merged into it.
-- Thirty-three ADRs — twenty-one `R` rule ADRs, twelve unnumbered.
+- Thirty-four ADRs — twenty-two `R` rule ADRs, twelve unnumbered.

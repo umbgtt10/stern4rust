@@ -48,6 +48,7 @@ rule; anything without is the machinery the rules run on.
 | [R016](R016-ADR-PairedTestFileRule.md) | `paired-test-file` | A `tests/a/b_tests.rs` names the source file it exercises and `src/a/b.rs` exists, matched by path rather than by name alone. The other side of the pairing from `twin4rust`. `_proptest_tests.rs` and `all_tests.rs` are exempt; a harness crate skips the rule. |
 | [R015](R015-ADR-TestFileNamePostfixRule.md) | `test-file-name-postfix` | A file under `tests/` holding at least one test is named `<X>_tests.rs`. One direction only -- holding a test obliges the name. `src/` and registries are exempt because the rule that owns each already reports them, and this rule's correction would be wrong for both. |
 | [R014](R014-ADR-PureTraitsRule.md) | `pure-traits` | No method in a `trait` declaration may have a default body -- a default hides which question an implementor actually answered. The other half, that every implementor implements every method, is `rustc`'s `E0046` and needs no rule. |
+| [R022](R022-ADR-ReturnedMutationsRule.md) | `returned-mutations` | A function returns its output; a `&mut` parameter -- or one structurally containing a mutable reference -- is an offence. `&mut self`, trait impls (reported at the declaration instead) and `Fn`-trait/bare-fn callback contracts are left alone. |
 
 ## Everything else
 

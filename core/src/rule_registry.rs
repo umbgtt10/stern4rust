@@ -20,6 +20,7 @@ use crate::rules::source::imported_paths_rule::ImportedPathsRule;
 use crate::rules::source::ordered_imports_rule::OrderedImportsRule;
 use crate::rules::source::pure_traits_rule::PureTraitsRule;
 use crate::rules::source::readable_source_rule::ReadableSourceRule;
+use crate::rules::source::returned_mutations_rule::ReturnedMutationsRule;
 use crate::rules::source::single_implemented_type_rule::SingleImplementedTypeRule;
 use crate::rules::source::test_free_source_rule::TestFreeSourceRule;
 use crate::rules::testing::arrange_act_assert_rule::ArrangeActAssertRule;
@@ -70,6 +71,7 @@ impl RuleRegistry {
             Box::new(PairedTestFileRule::new()),
             Box::new(PureTraitsRule::new()),
             Box::new(RegistryCompletenessRule::new()),
+            Box::new(ReturnedMutationsRule::new()),
             Box::new(SingleImplementedTypeRule::new()),
             Box::new(SpdxMatchesManifestRule::new(
                 config.manifest_license.clone(),

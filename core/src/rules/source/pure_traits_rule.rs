@@ -3,12 +3,12 @@
 // SPDX-License-Identifier: MIT
 
 use syn::Item;
-use syn::ItemMod;
 use syn::ItemTrait;
 use syn::TraitItem;
 use syn::TraitItemFn;
-use syn::parse_file;
 
+use crate::finding::parsing::inline_module::InlineModule;
+use crate::finding::parsing::source_items::SourceItems;
 use crate::reporting::offence::Offence;
 use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;
@@ -39,13 +39,10 @@ pub struct PureTraitsRule;
 
 impl PureTraitsRule {
     pub const SOURCE_ROOT: &'static str = "src/";
+    const NAME: &'static str = "pure-traits";
 
     pub fn new() -> Self {
         Self
-    }
-
-    fn applies_to(file: &SourceFile) -> bool {
-        file.relative_path().starts_with(Self::SOURCE_ROOT)
     }
 
     // Descends into inline modules: a body does not stop being a body for
@@ -55,7 +52,7 @@ impl PureTraitsRule {
             .iter()
             .flat_map(|item| match item {
                 Item::Trait(declaration) => vec![declaration],
-                Item::Mod(module) => Self::inside(module)
+                Item::Mod(module) => InlineModule::items(module)
                     .map(Self::declarations)
                     .unwrap_or_default(),
                 _ => Vec::new(),
@@ -63,13 +60,9 @@ impl PureTraitsRule {
             .collect()
     }
 
-    fn inside(module: &ItemMod) -> Option<&[Item]> {
-        module.content.as_ref().map(|(_, items)| items.as_slice())
-    }
-
     // Every body is reported rather than the trait once, because each one is a
     // separate edit in a different set of files.
-    fn bodies(&self, file: &SourceFile, declaration: &ItemTrait) -> Vec<Offence> {
+    fn bodies(file: &SourceFile, declaration: &ItemTrait) -> Vec<Offence> {
         let declared_by = declaration.ident.to_string();
         declaration
             .items
@@ -78,18 +71,18 @@ impl PureTraitsRule {
                 TraitItem::Fn(method) if method.default.is_some() => Some(method),
                 _ => None,
             })
-            .map(|method| self.offence(file, &declared_by, method))
+            .map(|method| Self::offence(file, &declared_by, method))
             .collect()
     }
 
     // Reported against the method rather than the trait, because the body is
     // what has to go.
-    fn offence(&self, file: &SourceFile, declared_by: &str, method: &TraitItemFn) -> Offence {
+    fn offence(file: &SourceFile, declared_by: &str, method: &TraitItemFn) -> Offence {
         let subject = format!("{declared_by}::{}", method.sig.ident);
         Offence::new(
             file.relative_path(),
             method.sig.ident.span().start().line,
-            self.name(),
+            Self::NAME,
             format!(
                 "`{subject}` has a default body, so an implementor that says nothing about it \
                  cannot be told from one that chose it"
@@ -108,20 +101,11 @@ impl Default for PureTraitsRule {
 
 impl Rule for PureTraitsRule {
     fn name(&self) -> &'static str {
-        "pure-traits"
+        Self::NAME
     }
 
     fn check(&self, file: &SourceFile) -> Vec<Offence> {
-        if !Self::applies_to(file) {
-            return Vec::new();
-        }
-        let Ok(syntax) = parse_file(&file.contents()) else {
-            return Vec::new();
-        };
-        Self::declarations(&syntax.items)
-            .into_iter()
-            .flat_map(|declaration| self.bodies(file, declaration))
-            .collect()
+        SourceItems::offences(Self::SOURCE_ROOT, file, Self::declarations, Self::bodies)
     }
 
     fn check_workspace(&self, _files: &[SourceFile]) -> Vec<Offence> {

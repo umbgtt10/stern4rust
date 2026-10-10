@@ -16,7 +16,7 @@ already own correctness. These are the things a reviewer would otherwise have to
 say by hand, every time, forever — and the ones that quietly stop being true
 across a codebase the moment nobody is checking.
 
-> **Status: twenty-one rules.** The set below is what is implemented and
+> **Status: twenty-two rules.** The set below is what is implemented and
 > gated. `stern4rust` runs against its own tree on every build, so a rule that
 > would fail this repository cannot be merged into it.
 
@@ -419,6 +419,19 @@ here. With no default to fall back on, `rustc` rejects an incomplete impl with
 Associated types and associated constants may still carry defaults; neither is
 behaviour. `tests/` is exempt, where a trait with a body is a deliberate fake.
 [R014](docs/ADRs/R014-ADR-PureTraitsRule.md)
+
+### `returned-mutations`
+
+A function returns its output; it does not write it through a `&mut` parameter.
+Any parameter in `src/` whose type is, or structurally contains, a mutable
+reference is reported against that parameter, with the correction to return the
+new value instead.
+
+`&mut self` is left alone -- it is the one mutating channel the standard keeps.
+So is a trait impl, whose signature is the trait's: where the trait is your own,
+the `&mut` is reported once, at the declaration. A callback's own contract,
+`impl FnMut(&mut T)` or `fn(&mut T)`, is not descended into. `tests/` is exempt.
+[R022](docs/ADRs/R022-ADR-ReturnedMutationsRule.md)
 
 ### `declared-by-name`
 

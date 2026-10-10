@@ -113,7 +113,7 @@ which is the one thing every finding in this tool must do.
 `Rule::requirement` returns `Option<&'static str>`, so the printer names no rule
 in particular -- the same reason `is_configured` is answered by the rule rather
 than by an `if` in the registry. `None` where a rule needs nothing, which is
-nineteen of the twenty-one.
+twenty of the twenty-two.
 
 ## Consequences
 

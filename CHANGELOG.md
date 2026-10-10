@@ -4,6 +4,47 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.0] - 2026-10-10
+
+One rule added, and it is on by default, so it moves what this tool reports
+about your code. A `&mut` parameter in `src/` becomes an offence on upgrade; to
+adopt it later, add `skip = ["returned-mutations"]` to your `stern4rust.toml`
+before you next install.
+
+### Added
+- **`returned-mutations`: a function returns its output; it does not write it
+  through a `&mut` parameter.** Any parameter in `src/` whose type is, or
+  structurally contains, a mutable reference is reported against that
+  parameter, with the correction to return the new value instead. The type is
+  walked through references, tuples, slices, arrays and angle-bracketed generic
+  arguments. A constructor that stores the borrow is reported like any other
+  parameter. [R022](docs/ADRs/R022-ADR-ReturnedMutationsRule.md)
+
+  Three things are left alone, because the edit does not live there:
+
+  - **`&mut self`** -- the one mutating channel the house standard keeps.
+  - **Trait impl methods** -- `impl Display` takes `&mut Formatter` because
+    `Display` says so. Where the trait is your own, the `&mut` is reported once,
+    at the declaration.
+  - **Callback contracts** -- `impl FnMut(&mut T)` and `fn(&mut T)` describe the
+    callback's parameters, not the function's.
+
+  `tests/` is exempt. The rule is clean on this repository and on `slotgate`,
+  and reports 43 offences across the other `*4rust` tools, which adopt it with
+  this release. The other repositories in the family skip it for now.
+
+### Changed
+- Stage 2 gains a fifth gate, `cargo dry4rust`, second after the own-rules
+  check: no duplicated code in `core/src` beyond `dry4rust-baseline.json`, the
+  duplication already there when the gate arrived, counting units of 25 AST
+  nodes or more. It caught the new rule copying `pure-traits`' `check` before
+  release.
+- What it caught is shared rather than copied. `InlineModule::items` replaces
+  five private copies of the same inline-module accessor, and
+  `SourceItems::offences` carries the `src/` guard, the parse and the
+  find-then-judge that `pure-traits` and `returned-mutations` each repeated. No
+  offence a rule reports changed.
+
 ## [0.13.0] - 2026-08-29
 
 One rule changed, and it moves what this tool reports about your code. Every

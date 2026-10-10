@@ -66,7 +66,7 @@ before a consumer exists would be guessing at what they need, and this
 repository has rejected that shape of guess before.
 
 **Make the surface private and test through the binary.** Rejected: it would
-mean testing 21 rules through a process boundary and a printed report, when each
+mean testing every rule through a process boundary and a printed report, when each
 is currently testable against a string of source. The house standard that
 produced the wide surface is also what makes the rules cheap to test, and that
 trade is the right one.

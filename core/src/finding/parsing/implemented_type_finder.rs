@@ -5,12 +5,12 @@
 use std::collections::BTreeSet;
 
 use syn::Item;
-use syn::ItemMod;
 use syn::Type;
 use syn::parse_file;
 use syn::spanned::Spanned;
 
 use crate::finding::model::implemented_type::ImplementedType;
+use crate::finding::parsing::inline_module::InlineModule;
 use crate::source_file::SourceFile;
 
 // The types a file both declares and gives behaviour to.
@@ -50,7 +50,9 @@ impl ImplementedTypeFinder {
             .flat_map(|item| match item {
                 Item::Struct(inner) => vec![Self::at(&inner.ident.to_string(), item)],
                 Item::Enum(inner) => vec![Self::at(&inner.ident.to_string(), item)],
-                Item::Mod(module) => Self::inside(module).map(Self::declared).unwrap_or_default(),
+                Item::Mod(module) => InlineModule::items(module)
+                    .map(Self::declared)
+                    .unwrap_or_default(),
                 _ => Vec::new(),
             })
             .collect()
@@ -63,7 +65,7 @@ impl ImplementedTypeFinder {
                 Item::Impl(inner) => Self::implemented_name(&inner.self_ty)
                     .into_iter()
                     .collect::<BTreeSet<String>>(),
-                Item::Mod(module) => Self::inside(module)
+                Item::Mod(module) => InlineModule::items(module)
                     .map(Self::implemented)
                     .unwrap_or_default(),
                 _ => BTreeSet::new(),
@@ -73,10 +75,6 @@ impl ImplementedTypeFinder {
 
     fn at(name: &str, item: &Item) -> ImplementedType {
         ImplementedType::new(name, item.span().start().line)
-    }
-
-    fn inside(module: &ItemMod) -> Option<&[Item]> {
-        module.content.as_ref().map(|(_, items)| items.as_slice())
     }
 
     fn implemented_name(target: &Type) -> Option<String> {
