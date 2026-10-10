@@ -12,14 +12,21 @@ pub struct DryGate<'a> {
     runner: &'a dyn CommandRunner,
     path: String,
     baseline: String,
+    min_nodes: String,
 }
 
 impl<'a> DryGate<'a> {
-    pub fn new(runner: &'a dyn CommandRunner, path: String, baseline: String) -> Self {
+    pub fn new(
+        runner: &'a dyn CommandRunner,
+        path: String,
+        baseline: String,
+        min_nodes: String,
+    ) -> Self {
         Self {
             runner,
             path,
             baseline,
+            min_nodes,
         }
     }
 }
@@ -37,13 +44,16 @@ impl Gate for DryGate<'_> {
         }
 
         // Zero ceilings against the baseline: what the baseline records was here
-        // before the gate was, and anything beyond it is what a change added.
+        // before the gate was, and anything beyond it is what a change added. The
+        // baseline was recorded at this floor and only matches at this floor.
         let args = vec![
             String::from("dry4rust"),
             String::from("--path"),
             self.path.clone(),
             String::from("--baseline"),
             self.baseline.clone(),
+            String::from("--min-nodes"),
+            self.min_nodes.clone(),
             String::from("check"),
             String::from("--max-exact"),
             String::from("0"),

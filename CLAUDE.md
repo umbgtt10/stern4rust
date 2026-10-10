@@ -76,8 +76,17 @@ between files, which changes what the three behind it measure. It scans
 zero ceilings against `dry4rust-baseline.json`, the duplication already there
 when the gate arrived. So it fails on what a change adds, not on what it
 inherited; a duplicate removed is admitted, a copy added to a recorded group is
-not. Re-record the baseline only to drop groups that are gone, never to admit
-new ones: `cargo dry4rust --path core/src --baseline "$PWD/dry4rust-baseline.json" baseline`.
+not.
+
+It counts only code units of 20 AST nodes or more. At dry4rust's default of 10,
+the one-line accessors every rule must write -- `explanation`,
+`check_workspace`, `applies_to` -- form recorded groups that a new rule would
+grow, so every rule added would fail the gate. 20 is the lowest floor that
+leaves them out and still catches a rule's `check` copied from another's.
+
+Re-record the baseline only to drop groups that are gone, never to admit new
+ones, and at the same floor -- a baseline matches only at the floor it was
+recorded at: `cargo dry4rust --path core/src --min-nodes 20 --baseline "$PWD/dry4rust-baseline.json" baseline`.
 
 It runs `stern4rust` against itself, built from source rather than from whatever
 is installed. A tool that enforces a rule it does not satisfy is not worth

@@ -22,6 +22,7 @@ const CRAP_THRESHOLD: &str = "15";
 const ICEBERG_THRESHOLD: &str = "20";
 const DRY_PATH: &str = "core/src";
 const DRY_BASELINE: &str = "dry4rust-baseline.json";
+const DRY_MIN_NODES: &str = "20";
 
 // Reading the real process argv and wiring the concrete runner are the two
 // things no test can reach, so they are all this binary does.
@@ -59,12 +60,16 @@ fn run_stage2() -> ExitCode {
     // moves code between files, which changes what the three behind it measure.
     // The published crate's source only -- tests repeat their arrangement by
     // design -- against a baseline of what was already duplicated when the gate
-    // arrived, so it fails on what a change adds.
+    // arrived, so it fails on what a change adds. The floor is the lowest that
+    // leaves out the one-line accessors every rule must write -- `explanation`,
+    // `check_workspace`, `applies_to` -- which would otherwise grow a recorded
+    // group with each rule added, in a rule set that is open by design.
     let root = workspace_root();
     let dry = DryGate::new(
         &runner,
         root.join(DRY_PATH).to_string_lossy().into_owned(),
         root.join(DRY_BASELINE).to_string_lossy().into_owned(),
+        String::from(DRY_MIN_NODES),
     );
 
     // The published crate only. CRAP scores functions against their coverage,

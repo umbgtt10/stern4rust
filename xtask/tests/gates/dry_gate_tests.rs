@@ -11,6 +11,7 @@ fn gate(runner: &FakeCommandRunner) -> DryGate<'_> {
         runner,
         String::from("/repo/core/src"),
         String::from("/repo/dry4rust-baseline.json"),
+        String::from("20"),
     )
 }
 
@@ -27,9 +28,11 @@ fn label_names_the_duplication_gate() {
 }
 
 // The baseline is what turns a zero ceiling into a gate on what a change adds
-// rather than a wall made of what was already there.
+// rather than a wall made of what was already there. The floor keeps out the
+// one-line accessors every rule has to write, which would otherwise grow a
+// recorded group with each rule added.
 #[test]
-fn run_checks_the_path_against_the_baseline_with_zero_ceilings() {
+fn run_checks_the_path_above_the_floor_against_the_baseline_with_zero_ceilings() {
     // Arrange
     let runner = FakeCommandRunner::new();
 
@@ -45,6 +48,8 @@ fn run_checks_the_path_against_the_baseline_with_zero_ceilings() {
             String::from("/repo/core/src"),
             String::from("--baseline"),
             String::from("/repo/dry4rust-baseline.json"),
+            String::from("--min-nodes"),
+            String::from("20"),
             String::from("check"),
             String::from("--max-exact"),
             String::from("0"),

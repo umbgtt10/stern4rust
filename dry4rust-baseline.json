@@ -7,9 +7,9 @@
       "members": 4,
       "names": [
         "TestFileRewriter::governs",
-        "TestFileNamePostfixRule::applies_to",
         "TestNamingRule::applies_to",
-        "ArrangeActAssertRule::applies_to"
+        "ArrangeActAssertRule::applies_to",
+        "TestFileNamePostfixRule::applies_to"
       ]
     },
     {
@@ -19,15 +19,6 @@
       "names": [
         "DirectorySubfolderCountRule::shown",
         "DirectoryFileCountRule::shown"
-      ]
-    },
-    {
-      "kind": "exact",
-      "fingerprint": "0579faa8a8f314e2",
-      "members": 2,
-      "names": [
-        "Exclusion::pattern",
-        "SourceFile::relative_path"
       ]
     },
     {
@@ -50,53 +41,11 @@
     },
     {
       "kind": "exact",
-      "fingerprint": "1b1c5269aba1548c",
-      "members": 21,
-      "names": [
-        "<OrderedImportsRule as Rule>::explanation",
-        "<ReadableSourceRule as Rule>::explanation",
-        "<PureTraitsRule as Rule>::explanation",
-        "<TestFreeSourceRule as Rule>::explanation",
-        "<HeaderRule as Rule>::explanation",
-        "<ImportedPathsRule as Rule>::explanation",
-        "<SingleImplementedTypeRule as Rule>::explanation",
-        "<DeclaredByNameRule as Rule>::explanation",
-        "<ModuleRegistryRule as Rule>::explanation",
-        "<TestFileNamePostfixRule as Rule>::explanation",
-        "<DirectorySubfolderCountRule as Rule>::explanation",
-        "<PairedTestFileRule as Rule>::explanation",
-        "<DirectoryFileCountRule as Rule>::explanation",
-        "<RegistryCompletenessRule as Rule>::explanation",
-        "<TestsLayoutRule as Rule>::explanation",
-        "<TestNamingRule as Rule>::explanation",
-        "<ArrangeActAssertRule as Rule>::explanation",
-        "<TestedPublicApiRule as Rule>::explanation",
-        "<TestFileStructureRule as Rule>::explanation",
-        "<WorkspaceDependenciesRule as Rule>::explanation",
-        "<SpdxMatchesManifestRule as Rule>::explanation"
-      ]
-    },
-    {
-      "kind": "exact",
       "fingerprint": "28b8ef9870e79af4",
       "members": 2,
       "names": [
-        "ExclusionOutcome::unmatched_patterns",
-        "ReportPrinter::unmatched"
-      ]
-    },
-    {
-      "kind": "exact",
-      "fingerprint": "2cfe0e445d149037",
-      "members": 7,
-      "names": [
-        "<DirectorySubfolderCountRule as Rule>::check",
-        "<PairedTestFileRule as Rule>::check",
-        "<DirectoryFileCountRule as Rule>::check",
-        "<RegistryCompletenessRule as Rule>::check",
-        "<TestsLayoutRule as Rule>::check",
-        "<TestedPublicApiRule as Rule>::check",
-        "<WorkspaceDependenciesRule as Rule>::check"
+        "ReportPrinter::unmatched",
+        "ExclusionOutcome::unmatched_patterns"
       ]
     },
     {
@@ -104,43 +53,8 @@
       "fingerprint": "2d963f2006378966",
       "members": 2,
       "names": [
-        "JsonPrinter::with_baseline",
-        "ReportPrinter::with_baseline"
-      ]
-    },
-    {
-      "kind": "exact",
-      "fingerprint": "4a00afee41419170",
-      "members": 2,
-      "names": [
-        "SourceFile::contents",
-        "HeaderRule::expected_text"
-      ]
-    },
-    {
-      "kind": "exact",
-      "fingerprint": "4b28c21cfbc5cfe4",
-      "members": 2,
-      "names": [
-        "OrderedImportsRule::applies_to",
-        "PureTraitsRule::applies_to"
-      ]
-    },
-    {
-      "kind": "exact",
-      "fingerprint": "63532d7dea94bfeb",
-      "members": 10,
-      "names": [
-        "JsonPrinter::with_fixed",
-        "JsonPrinter::with_config_file",
-        "JsonPrinter::with_exclusions",
-        "JsonPrinter::with_package_rosters",
-        "JsonPrinter::with_threshold",
-        "ReportPrinter::with_fixed",
-        "ReportPrinter::with_config_file",
-        "ReportPrinter::with_exclusions",
-        "ReportPrinter::with_package_rosters",
-        "ReportPrinter::with_threshold"
+        "ReportPrinter::with_baseline",
+        "JsonPrinter::with_baseline"
       ]
     },
     {
@@ -148,23 +62,8 @@
       "fingerprint": "63720196e094a2dd",
       "members": 2,
       "names": [
-        "PackageTree::is_registry",
-        "DirectoryFileCountRule::is_index"
-      ]
-    },
-    {
-      "kind": "exact",
-      "fingerprint": "77712f5a0b5b282f",
-      "members": 8,
-      "names": [
-        "PackageSections::new",
-        "OffenceThreshold::new",
-        "RuleRegistry::new",
-        "HeaderRule::new",
-        "DirectorySubfolderCountRule::new",
-        "DirectoryFileCountRule::new",
-        "WorkspaceDependenciesRule::new",
-        "SpdxMatchesManifestRule::new"
+        "DirectoryFileCountRule::is_index",
+        "PackageTree::is_registry"
       ]
     },
     {
@@ -172,8 +71,8 @@
       "fingerprint": "77927e7d38e87af1",
       "members": 2,
       "names": [
-        "ModuleRegistryRule::is_registry",
-        "TestFileStructureRule::is_registry"
+        "TestFileStructureRule::is_registry",
+        "ModuleRegistryRule::is_registry"
       ]
     },
     {
@@ -200,60 +99,10 @@
       "fingerprint": "828ae15f03e0c3d2",
       "members": 4,
       "names": [
-        "ImplementedTypeFinder::inside",
         "PureTraitsRule::inside",
         "DeclaredByNameRule::inside",
-        "TestFileNamePostfixRule::inside"
-      ]
-    },
-    {
-      "kind": "exact",
-      "fingerprint": "93f3b42cf138e0f5",
-      "members": 2,
-      "names": [
-        "Offence::with_subject",
-        "Offence::with_expected"
-      ]
-    },
-    {
-      "kind": "exact",
-      "fingerprint": "9cff957c87a24819",
-      "members": 14,
-      "names": [
-        "<OrderedImportsRule as Rule>::check_workspace",
-        "<ReadableSourceRule as Rule>::check_workspace",
-        "<PureTraitsRule as Rule>::check_workspace",
-        "<TestFreeSourceRule as Rule>::check_workspace",
-        "<HeaderRule as Rule>::check_workspace",
-        "<ImportedPathsRule as Rule>::check_workspace",
-        "<SingleImplementedTypeRule as Rule>::check_workspace",
-        "<DeclaredByNameRule as Rule>::check_workspace",
-        "<ModuleRegistryRule as Rule>::check_workspace",
-        "<TestFileNamePostfixRule as Rule>::check_workspace",
-        "<TestNamingRule as Rule>::check_workspace",
-        "<ArrangeActAssertRule as Rule>::check_workspace",
-        "<TestFileStructureRule as Rule>::check_workspace",
-        "<SpdxMatchesManifestRule as Rule>::check_workspace"
-      ]
-    },
-    {
-      "kind": "exact",
-      "fingerprint": "a6329d05f27a95b4",
-      "members": 3,
-      "names": [
-        "PublicEntryPoint::new",
-        "ImplementedType::new",
-        "QualifiedCall::new"
-      ]
-    },
-    {
-      "kind": "exact",
-      "fingerprint": "a7d0f2a5e2c0508d",
-      "members": 3,
-      "names": [
-        "RuleSelection::new",
-        "ExclusionOutcome::new",
-        "ScanTotals::new"
+        "TestFileNamePostfixRule::inside",
+        "ImplementedTypeFinder::inside"
       ]
     },
     {
@@ -261,39 +110,8 @@
       "fingerprint": "a9c15a997b5c0f97",
       "members": 2,
       "names": [
-        "JsonPrinter::new",
-        "ReportPrinter::new"
-      ]
-    },
-    {
-      "kind": "exact",
-      "fingerprint": "ab316fe1d36458f5",
-      "members": 2,
-      "names": [
-        "RuleRegistry::names",
-        "RuleRegistry::explanations"
-      ]
-    },
-    {
-      "kind": "exact",
-      "fingerprint": "b35c9afd22324cd8",
-      "members": 2,
-      "names": [
-        "UnitTestFinder::is_cfg_attr_test",
-        "UnitTestFinder::is_cfg_test"
-      ]
-    },
-    {
-      "kind": "exact",
-      "fingerprint": "b3df0f0d0ed90f8f",
-      "members": 6,
-      "names": [
-        "PackageSections::is_empty",
-        "TestFileItem::sort_key",
-        "ExclusionSet::is_empty",
-        "Baseline::is_empty",
-        "RuleRegistry::is_empty",
-        "<SpdxMatchesManifestRule as Rule>::is_configured"
+        "ReportPrinter::new",
+        "JsonPrinter::new"
       ]
     },
     {
@@ -301,48 +119,10 @@
       "fingerprint": "c4062732a9634f22",
       "members": 4,
       "names": [
-        "TestFileParser::is_test",
-        "TestFileNamePostfixRule::is_test",
         "TestNamingRule::is_test",
-        "ArrangeActAssertRule::is_test"
-      ]
-    },
-    {
-      "kind": "exact",
-      "fingerprint": "c576a4a4b08f4f3e",
-      "members": 3,
-      "names": [
-        "ExclusionOutcome::excluded_total",
-        "JsonPrinter::excluded_total",
-        "ReportPrinter::excluded_total"
-      ]
-    },
-    {
-      "kind": "exact",
-      "fingerprint": "cb28c3b5aabf616f",
-      "members": 2,
-      "names": [
-        "RegistryPolicy::tests",
-        "RegistryPolicy::source"
-      ]
-    },
-    {
-      "kind": "exact",
-      "fingerprint": "cccf62d6f64bd154",
-      "members": 2,
-      "names": [
-        "SourceFile::lines",
-        "HeaderRule::expected"
-      ]
-    },
-    {
-      "kind": "exact",
-      "fingerprint": "d4cdcacbd2ed64f1",
-      "members": 3,
-      "names": [
-        "<OffenceThreshold as Default>::default",
-        "<DirectorySubfolderCountRule as Default>::default",
-        "<DirectoryFileCountRule as Default>::default"
+        "ArrangeActAssertRule::is_test",
+        "TestFileNamePostfixRule::is_test",
+        "TestFileParser::is_test"
       ]
     },
     {
@@ -356,29 +136,11 @@
     },
     {
       "kind": "exact",
-      "fingerprint": "e856ffb31d8db187",
-      "members": 2,
-      "names": [
-        "JsonPrinter::print",
-        "ReportPrinter::print"
-      ]
-    },
-    {
-      "kind": "exact",
-      "fingerprint": "eae38ed9078888e0",
-      "members": 2,
-      "names": [
-        "TestFreeSourceRule::applies_to",
-        "SingleImplementedTypeRule::applies_to"
-      ]
-    },
-    {
-      "kind": "exact",
       "fingerprint": "edb9fbaf8343ab80",
       "members": 2,
       "names": [
-        "JsonPrinter::with_rules",
-        "ReportPrinter::with_rules"
+        "ReportPrinter::with_rules",
+        "JsonPrinter::with_rules"
       ]
     },
     {
@@ -386,17 +148,8 @@
       "fingerprint": "13f7b6ebe445e10c",
       "members": 2,
       "names": [
-        "TestFileItem::new",
-        "RuleExplanation::new"
-      ]
-    },
-    {
-      "kind": "near",
-      "fingerprint": "39aeb71bfb2bff75",
-      "members": 2,
-      "names": [
-        "QualifiedCall::segments",
-        "Baseline::len"
+        "RuleExplanation::new",
+        "TestFileItem::new"
       ]
     },
     {
