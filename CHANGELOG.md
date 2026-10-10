@@ -45,6 +45,18 @@ before you next install.
   find-then-judge that `pure-traits` and `returned-mutations` each repeated. No
   offence a rule reports changed.
 
+### Fixed
+- **`--fix` no longer duplicates the end of a multi-line string constant.**
+  `TestFileParser` folds the comment lines directly above an item into it, and
+  it walked upwards over any line starting with `//` -- including the
+  continuation lines of a string literal above, which the `HEADER` fixture most
+  test files share has. The constant below claimed those lines too, and the
+  rewrite printed them twice, in every such file, whether or not it had
+  anything to fix; the code still compiled, because the duplicates read as
+  comments. The walk now stops at the item above. 0.13.0, the release before
+  this one, has the bug. Detection was unaffected, so `test-file-structure`
+  reported nothing on the files `--fix` was corrupting.
+
 ## [0.13.0] - 2026-08-29
 
 One rule changed, and it moves what this tool reports about your code. Every

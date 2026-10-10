@@ -92,6 +92,21 @@ fn rewrite_leaves_the_order_of_imports_to_rustfmt() {
     );
 }
 
+// The shape that duplicated lines in every test file sharing the HEADER fixture:
+// the constant below a multi-line string whose lines start with `//`.
+#[test]
+fn rewrite_of_a_constant_below_a_string_of_comment_lines_is_none() {
+    // Arrange
+    let contents = "const HEADER: &str = \"// one\\n\\\n                      // two\\n\";\n\
+                    const RULE: &str = \"x\";\n\n#[test]\nfn alpha() {}\n";
+
+    // Act
+    let rewritten = rewrite(contents);
+
+    // Assert
+    assert!(rewritten.is_none(), "got {rewritten:?}");
+}
+
 #[test]
 fn rewrite_of_a_correct_file_is_none() {
     // Arrange

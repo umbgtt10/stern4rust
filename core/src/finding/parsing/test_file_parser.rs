@@ -19,7 +19,9 @@ use syn::Type;
 // explanatory comment are invisible here -- which is why the rule does not need
 // to know where the header ends. What it does need is for a comment introducing
 // an item to count as part of that item, so each block is extended upwards over
-// the comment lines directly above it.
+// the comment lines directly above it -- but never past the item above, whose
+// own lines can look like comments: a string literal's continuation lines may
+// start with `//`.
 pub struct TestFileParser;
 
 impl TestFileParser {
@@ -28,18 +30,23 @@ impl TestFileParser {
     // pile noise on top of a compile error.
     pub fn parse(file: &SourceFile) -> Option<Vec<TestFileItem>> {
         let syntax = parse_file(&file.contents()).ok()?;
+        let mut floor = 1;
         Some(
             syntax
                 .items
                 .iter()
-                .map(|item| Self::item(file, item))
+                .map(|item| {
+                    let parsed = Self::item(file, item, floor);
+                    floor = parsed.last_line + 1;
+                    parsed
+                })
                 .collect(),
         )
     }
 
-    fn item(file: &SourceFile, item: &Item) -> TestFileItem {
+    fn item(file: &SourceFile, item: &Item, floor: usize) -> TestFileItem {
         let span = item.span();
-        let first_line = Self::with_leading_comments(file, span.start().line);
+        let first_line = Self::with_leading_comments(file, span.start().line, floor);
         TestFileItem::new(
             Self::section(item),
             Self::name(file, item, span.start().line),
@@ -93,9 +100,9 @@ impl TestFileParser {
     // An import sorts and reports as it was written, which is how rustfmt orders
     // them and how a reader would look for one.
 
-    fn with_leading_comments(file: &SourceFile, start_line: usize) -> usize {
+    fn with_leading_comments(file: &SourceFile, start_line: usize, floor: usize) -> usize {
         let mut first = start_line;
-        while first > 1 && Self::is_comment(file, first - 1) {
+        while first > floor && Self::is_comment(file, first - 1) {
             first -= 1;
         }
         first

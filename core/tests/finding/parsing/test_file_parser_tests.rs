@@ -193,3 +193,17 @@ fn parse_starts_a_test_block_at_its_attribute() {
     // Assert
     assert_eq!(found[0].first_line, 1);
 }
+
+// A string literal's continuation lines can start with `//` -- the HEADER
+// fixture most test files share does. Folding them into the item below claimed
+// lines of the item above, and the rewrite printed them twice.
+#[test]
+fn parse_stops_folding_comments_at_the_item_above() {
+    // Arrange & Act
+    let found = items(
+        "const HEADER: &str = \"// one\\n\\\n                      // two\\n\";\nconst RULE: &str = \"x\";\n",
+    );
+
+    // Assert
+    assert_eq!(found[1].first_line, 3);
+}
