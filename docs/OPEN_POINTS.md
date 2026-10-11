@@ -257,3 +257,29 @@ could clear.
 What remains open is the rest of the trade: a lowercase type this crate cannot
 name -- someone's `mod widget` holding `struct widget` -- is still reported, and
 an uppercase-named module still passes.
+
+## `single-implemented-type` bounds the count, not which type is the subject
+
+The rule reads "a source file has one subject: at most one type that *carries
+behaviour*", and behaviour means an `impl` block. It counts impl-bearing types
+and stops at two. It never checks that the one it allows is the type the file is
+*named after*.
+
+So a file named for a data type can keep all its behaviour in a different,
+impl-bearing struct and pass clean. The filename advertises one subject; the
+logic lives in another. Found in `etheram-ibft`: `wal_record.rs` holds
+`WalRecord` -- a plain enum, no `impl` -- beside `WalEntryReader`, a struct that
+carries the whole parsing impl. One impl-bearing type, so the rule is satisfied,
+yet the named subject does nothing and the work is done by a type the filename
+does not mention.
+
+The permissiveness is deliberate and load-bearing: a file is allowed any number
+of data-only companions next to its one implemented type, which is what lets
+`cursor.rs` sit `ConsensusWalCursor` beside five `Wal*Fields` bundles and
+`action.rs` sit `Action` beside `TimerKey`. A strict one-*type*-per-file rule
+would shatter that into dozens of one-field files. What is open is the narrower
+shape the count misses: when the single implemented type is not the file's named
+subject, the mismatch is exactly where a reviewer stops looking, because the
+header and the registry both point at the data type whose name the file wears.
+A rule here would compare the behaviour-carrier's name against the file stem and
+report the divergence -- a layout correction, like most of the others.
