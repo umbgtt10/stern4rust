@@ -3,6 +3,18 @@
 What `cargo-stern4rust` does today. Anything not listed here is not built, and
 the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
+## Version 0.17.0
+
+### Rules
+
+- **`owned-functions`** -- a file with a subject owns its functions: a source
+  file that declares a type or a trait, or holds an impl block, holds no free
+  function, nested ones included. Functions a framework or the language
+  requires free and `main` in an entry file are left out; files of functions
+  alone, `tests/`, `lib.rs`, `mod.rs` and `build.rs` are untouched. Clean on
+  this repository; 170 offences across eleven other repositories in the family.
+  On by default. [R024](ADRs/R024-ADR-OwnedFunctionsRule.md)
+
 ## Version 0.16.0
 
 ### Rules

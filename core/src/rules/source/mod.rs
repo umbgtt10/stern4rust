@@ -7,6 +7,7 @@ pub mod header_rule;
 pub mod imported_paths_rule;
 pub mod named_subject_rule;
 pub mod ordered_imports_rule;
+pub mod owned_functions_rule;
 pub mod pure_traits_rule;
 pub mod readable_source_rule;
 pub mod returned_mutations_rule;

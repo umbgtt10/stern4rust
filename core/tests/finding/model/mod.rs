@@ -4,6 +4,7 @@
 
 pub mod declared_item_tests;
 pub mod file_stem_tests;
+pub mod free_function_tests;
 pub mod implemented_type_tests;
 pub mod import_path_tests;
 pub mod manifest_dependency_tests;

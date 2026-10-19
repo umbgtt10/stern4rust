@@ -4,6 +4,7 @@
 
 pub mod declared_item;
 pub mod file_stem;
+pub mod free_function;
 pub mod implemented_type;
 pub mod import_path;
 pub mod manifest_dependency;

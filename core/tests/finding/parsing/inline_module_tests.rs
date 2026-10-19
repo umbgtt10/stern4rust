@@ -6,6 +6,7 @@
 // this one line, so a rule that descends into `mod a { ... }` reads it from here.
 
 use stern4rust::finding::parsing::inline_module::InlineModule;
+use stern4rust::finding::parsing::item_naming::ItemNaming;
 use syn::Item;
 use syn::ItemMod;
 use syn::parse_file;
@@ -15,6 +16,26 @@ fn module(source: &str) -> ItemMod {
         Some(Item::Mod(module)) => module,
         _ => panic!("expected a module"),
     }
+}
+
+// Every item, the inline modules themselves and what they hold, in source order:
+// what a walker that wants one kind of item filters.
+#[test]
+fn flatten_lists_every_item_descending_into_inline_modules() {
+    // Arrange
+    let items = parse_file("struct A;\nmod inner {\n    struct B;\n}\nmod outside;\n")
+        .expect("parses")
+        .items;
+
+    // Act
+    let flattened = InlineModule::flatten(&items);
+
+    // Assert
+    let names: Vec<String> = flattened
+        .iter()
+        .filter_map(|item| ItemNaming::identifier(item))
+        .collect();
+    assert_eq!(names, ["A", "inner", "B", "outside"]);
 }
 
 // `mod inner;` declares a module whose items live in another file, which the

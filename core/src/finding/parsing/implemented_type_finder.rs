@@ -2,15 +2,12 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::collections::BTreeSet;
-
 use syn::Item;
-use syn::Type;
 use syn::parse_file;
 
 use crate::finding::model::implemented_type::ImplementedType;
 use crate::finding::parsing::declared_item_finder::DeclaredItemFinder;
-use crate::finding::parsing::inline_module::InlineModule;
+use crate::finding::parsing::impl_blocks::ImplBlocks;
 use crate::source_file::SourceFile;
 
 // The types a file both declares and gives behaviour to.
@@ -35,45 +32,17 @@ impl ImplementedTypeFinder {
     // For a caller that has parsed the file already and asks more of it than
     // this.
     //
-    // The two halves are gathered separately rather than in one pass with two
-    // accumulators handed down. Each answers one question and returns it, which
-    // is what lets the recursion be an expression instead of a side effect. The
-    // declarations are DeclaredItemFinder's, which named-subject reads too.
-    //
-    // Both descend into inline modules: a nested type with behaviour is still a
-    // second subject in the same file.
+    // The two halves are gathered separately: the declarations are
+    // DeclaredItemFinder's, which named-subject reads too, and the impl blocks'
+    // types are ImplBlocks', which owned-functions reads. Both descend into
+    // inline modules: a nested type with behaviour is still a second subject in
+    // the same file.
     pub fn among(items: &[Item]) -> Vec<ImplementedType> {
-        let implemented = Self::implemented(items);
+        let implemented = ImplBlocks::of(items);
         DeclaredItemFinder::types(items)
             .into_iter()
-            .filter(|candidate| implemented.contains(&candidate.name))
+            .filter(|candidate| implemented.targets().contains(&candidate.name))
             .map(|declared| ImplementedType::new(&declared.name, declared.line))
             .collect()
-    }
-
-    fn implemented(items: &[Item]) -> BTreeSet<String> {
-        items
-            .iter()
-            .flat_map(|item| match item {
-                Item::Impl(inner) => Self::implemented_name(&inner.self_ty)
-                    .into_iter()
-                    .collect::<BTreeSet<String>>(),
-                Item::Mod(module) => InlineModule::items(module)
-                    .map(Self::implemented)
-                    .unwrap_or_default(),
-                _ => BTreeSet::new(),
-            })
-            .collect()
-    }
-
-    fn implemented_name(target: &Type) -> Option<String> {
-        match target {
-            Type::Path(path) => path
-                .path
-                .segments
-                .last()
-                .map(|segment| segment.ident.to_string()),
-            _ => None,
-        }
     }
 }

@@ -4,6 +4,9 @@
 
 pub mod call_site_finder_tests;
 pub mod declared_item_finder_tests;
+pub mod free_function_finder_tests;
+pub mod identifiers_tests;
+pub mod impl_blocks_tests;
 pub mod implemented_type_finder_tests;
 pub mod inline_module_tests;
 pub mod item_naming_tests;

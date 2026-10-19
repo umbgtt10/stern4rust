@@ -8,7 +8,7 @@ A report names the rule that was broken and says what to do about that one
 offence. It does not say what the rule is for, and it cannot be read at all
 without a codebase to run against. So the question a first run raises — what
 does this rule actually want, and what does satisfying it look like — has no
-answer in the tool. It is answered in `README.md` and in twenty-three rule ADRs,
+answer in the tool. It is answered in `README.md` and in twenty-four rule ADRs,
 which is the right place for the reasoning and the wrong place for a person who
 has just been told `pure-traits` is broken and wants to know what that means.
 
@@ -50,7 +50,7 @@ took no `self` and read no field.
 
 ### Every rule the registry can hold
 
-The listing registers all twenty-three, including the two that stay out of an
+The listing registers all twenty-four, including the two that stay out of an
 ordinary run until something configures them: `header` until it is told what the
 header says, and `spdx-matches-manifest` until a manifest declares a licence.
 Both are handed a stand-in that nothing reads.

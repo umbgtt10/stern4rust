@@ -48,16 +48,17 @@ impl PureTraitsRule {
     // Descends into inline modules: a body does not stop being a body for
     // sitting one level down.
     fn declarations(items: &[Item]) -> Vec<&ItemTrait> {
-        items
-            .iter()
-            .flat_map(|item| match item {
-                Item::Trait(declaration) => vec![declaration],
-                Item::Mod(module) => InlineModule::items(module)
-                    .map(Self::declarations)
-                    .unwrap_or_default(),
-                _ => Vec::new(),
-            })
+        InlineModule::flatten(items)
+            .into_iter()
+            .filter_map(Self::as_trait)
             .collect()
+    }
+
+    fn as_trait(item: &Item) -> Option<&ItemTrait> {
+        match item {
+            Item::Trait(declaration) => Some(declaration),
+            _ => None,
+        }
     }
 
     // Every body is reported rather than the trait once, because each one is a

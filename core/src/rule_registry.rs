@@ -19,6 +19,7 @@ use crate::rules::source::header_rule::HeaderRule;
 use crate::rules::source::imported_paths_rule::ImportedPathsRule;
 use crate::rules::source::named_subject_rule::NamedSubjectRule;
 use crate::rules::source::ordered_imports_rule::OrderedImportsRule;
+use crate::rules::source::owned_functions_rule::OwnedFunctionsRule;
 use crate::rules::source::pure_traits_rule::PureTraitsRule;
 use crate::rules::source::readable_source_rule::ReadableSourceRule;
 use crate::rules::source::returned_mutations_rule::ReturnedMutationsRule;
@@ -70,6 +71,7 @@ impl RuleRegistry {
             Box::new(ModuleRegistryRule::new()),
             Box::new(NamedSubjectRule::new()),
             Box::new(OrderedImportsRule::new()),
+            Box::new(OwnedFunctionsRule::new()),
             Box::new(PairedTestFileRule::new()),
             Box::new(PureTraitsRule::new()),
             Box::new(RegistryCompletenessRule::new()),

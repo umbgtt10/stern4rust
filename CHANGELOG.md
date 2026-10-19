@@ -4,6 +4,36 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.0] - 2026-10-19
+
+One rule added, and it is on by default, so it moves what this tool reports
+about your code. A free function beside a type, a trait or an impl block becomes
+an offence on upgrade; to adopt it later, add `skip = ["owned-functions"]` to
+your `stern4rust.toml` before you next install.
+
+### Added
+- **`owned-functions`: a file with a subject owns its functions.** A source file
+  that declares a struct, an enum or a trait, or holds an impl block, holds no
+  free function -- at module level, in an inline module, or nested in another
+  function. One offence per function, with the correction saying where it goes:
+  into the subject's impl as an associated function when the impl calls it or it
+  names the subject, otherwise into a file of its own. Beside a trait only a
+  file of its own is offered. Functions something requires to be free -- an
+  `#[embassy_executor::task]`, `#[panic_handler]`, `#[no_mangle]` and the like,
+  `extern "..."` functions -- and `main` in an entry file are left out, and so
+  are files of functions alone. `tests/`, `lib.rs`, `mod.rs` and `build.rs` are
+  exempt. [R024](docs/ADRs/R024-ADR-OwnedFunctionsRule.md)
+
+  The rule is clean on this repository and on `etheram-core`, `beggar`,
+  `slotgate` and `twin4rust`, and reports 170 offences across the other eleven
+  repositories in the family.
+
+### Changed
+- `ImplementedTypeFinder` takes the types its impl blocks are for from the new
+  `ImplBlocks`, and the descent into inline modules that `ImplBlocks` and
+  `pure-traits` would each have carried is `InlineModule::flatten`. No offence a
+  rule reports changed.
+
 ## [0.16.0] - 2026-10-19
 
 One rule added, and it is on by default, so it moves what this tool reports

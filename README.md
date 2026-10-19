@@ -16,7 +16,7 @@ already own correctness. These are the things a reviewer would otherwise have to
 say by hand, every time, forever — and the ones that quietly stop being true
 across a codebase the moment nobody is checking.
 
-> **Status: twenty-three rules.** The set below is what is implemented and
+> **Status: twenty-four rules.** The set below is what is implemented and
 > gated. `stern4rust` runs against its own tree on every build, so a rule that
 > would fail this repository cannot be merged into it.
 
@@ -413,6 +413,19 @@ is named after it, `listener.rs` holding `UdpListenerTask` is not. `lib.rs`,
 `src/bin/` are exempt, and a file of functions alone has nothing to be named
 after. The offence names the file to rename to.
 [R023](docs/ADRs/R023-ADR-NamedSubjectRule.md)
+
+### `owned-functions`
+
+A file with a subject owns its functions. A source file that declares a type or
+a trait, or holds an impl block, holds no free function -- at module level, in an
+inline module, or nested in another function. The offence says where it goes:
+into the subject's impl as an associated function when the impl calls it or it
+names the subject, otherwise into a file of its own. Functions a framework or
+the language requires free (`#[embassy_executor::task]`, `#[panic_handler]`,
+`#[no_mangle]`, `extern "C"` and the like) and `main` in an entry file are left
+alone, and so is a file of functions alone. `tests/`, `lib.rs`, `mod.rs` and
+`build.rs` are exempt.
+[R024](docs/ADRs/R024-ADR-OwnedFunctionsRule.md)
 
 ### `pure-traits`
 

@@ -2,6 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use std::iter::once;
+
 use syn::Item;
 use syn::ItemMod;
 
@@ -19,5 +21,21 @@ impl InlineModule {
     // reaches when it reads that file.
     pub fn items(module: &ItemMod) -> Option<&[Item]> {
         module.content.as_ref().map(|(_, items)| items.as_slice())
+    }
+
+    // Every item, an inline module and then what it holds, in source order. A
+    // walker after one kind of item filters this rather than writing the
+    // descent again: ImplBlocks and PureTraitsRule each carried it.
+    pub fn flatten(items: &[Item]) -> Vec<&Item> {
+        items
+            .iter()
+            .flat_map(|item| {
+                let nested = match item {
+                    Item::Mod(module) => Self::items(module).map(Self::flatten).unwrap_or_default(),
+                    _ => Vec::new(),
+                };
+                once(item).chain(nested)
+            })
+            .collect()
     }
 }
