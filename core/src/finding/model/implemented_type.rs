@@ -2,6 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::finding::model::type_name::TypeName;
+
 // A type a file both declares and gives behaviour to -- one of the file's
 // subjects.
 //
@@ -21,17 +23,9 @@ impl ImplementedType {
         }
     }
 
-    // The file this type would live in on its own: PascalCase to snake_case, so
+    // The file this type would live in on its own: its words in snake_case, so
     // the correction names a path rather than describing a convention.
     pub fn suggested_file(&self) -> String {
-        let mut file = String::new();
-        for (index, character) in self.name.chars().enumerate() {
-            if character.is_uppercase() && index > 0 {
-                file.push('_');
-            }
-            file.extend(character.to_lowercase());
-        }
-        file.push_str(".rs");
-        file
+        TypeName::new(&self.name).file_name()
     }
 }

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 pub mod call_site_finder;
+pub mod declared_item_finder;
 pub mod implemented_type_finder;
 pub mod inline_module;
 pub mod item_naming;

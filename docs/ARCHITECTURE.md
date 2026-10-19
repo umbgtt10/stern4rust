@@ -73,8 +73,8 @@ A set of finders and parsers sits beside the rules in `src/finding/`, each
 turning a file into the items one rule reasons about: `TestFileParser` (sections
 and ordering), `RegistryParser` (strays in an `all_tests.rs` or `mod.rs`),
 `UnitTestFinder` (tests and test machinery in the source tree),
-`ImplementedTypeFinder`, `QualifiedCallFinder`, `ModuleDeclarationFinder`,
-`PublicEntryPointFinder` and `CallSiteFinder`. `PackageTree` models the
+`ImplementedTypeFinder`, `DeclaredItemFinder`, `QualifiedCallFinder`,
+`ModuleDeclarationFinder`, `PublicEntryPointFinder` and `CallSiteFinder`. `PackageTree` models the
 directory shape the tree-wide rules ask about.
 
 A rule needs one only when the finding is worth testing on its own. The simplest

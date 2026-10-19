@@ -2,6 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+pub mod declared_item;
+pub mod file_stem;
 pub mod implemented_type;
 pub mod import_path;
 pub mod manifest_dependency;
@@ -13,4 +15,5 @@ pub mod registry_policy;
 pub mod section;
 pub mod test_file_item;
 pub mod test_marker;
+pub mod type_name;
 pub mod unit_test_site;

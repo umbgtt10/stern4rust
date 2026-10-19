@@ -16,7 +16,7 @@ already own correctness. These are the things a reviewer would otherwise have to
 say by hand, every time, forever — and the ones that quietly stop being true
 across a codebase the moment nobody is checking.
 
-> **Status: twenty-two rules.** The set below is what is implemented and
+> **Status: twenty-three rules.** The set below is what is implemented and
 > gated. `stern4rust` runs against its own tree on every build, so a rule that
 > would fail this repository cannot be merged into it.
 
@@ -401,6 +401,18 @@ block. Structs and enums *without* `impl` blocks are unlimited, so the payload
 types a subject needs stay beside it. The offence names the type to move and the
 file to move it to.
 [R007](docs/ADRs/R007-ADR-SingleImplementedTypeRule.md)
+
+### `named-subject`
+
+A source file is named after its subject: a type it implements -- declared there
+with an `impl` block -- or, with none, one of the traits and types it declares.
+The stem may be the type's name or its last words, since the words in front
+usually belong to the crate: `loopback/src/driver.rs` holding `LoopbackDriver`
+is named after it, `listener.rs` holding `UdpListenerTask` is not. `lib.rs`,
+`main.rs`, `mod.rs`, `build.rs`, `tests/`, `benches/`, `examples/` and
+`src/bin/` are exempt, and a file of functions alone has nothing to be named
+after. The offence names the file to rename to.
+[R023](docs/ADRs/R023-ADR-NamedSubjectRule.md)
 
 ### `pure-traits`
 

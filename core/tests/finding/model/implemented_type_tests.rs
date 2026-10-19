@@ -50,14 +50,24 @@ fn suggested_file_of_a_single_word_name_is_that_word() {
     assert_eq!(file, "widget.rs");
 }
 
-// An acronym separates letter by letter. The suggestion is a starting point for
-// a reader rather than a name to be adopted unread, and this is the one shape
-// where it reads worse than what a person would pick.
+// Rust's naming guidelines write an acronym as one capital and the rest lower
+// case, and then it is a word like any other.
 #[test]
-fn suggested_file_of_an_acronym_separates_every_capital() {
+fn suggested_file_of_a_title_case_acronym_separates_at_each_capital() {
     // Arrange & Act
     let file = ImplementedType::new("HttpClient", 1).suggested_file();
 
     // Assert
     assert_eq!(file, "http_client.rs");
+}
+
+// An acronym in capitals is one word, not one word per letter: `HTTPServer`
+// lives in `http_server.rs`, and `h_t_t_p_server.rs` is a name nobody would pick.
+#[test]
+fn suggested_file_of_an_all_capitals_acronym_keeps_it_one_word() {
+    // Arrange & Act
+    let file = ImplementedType::new("HTTPServer", 1).suggested_file();
+
+    // Assert
+    assert_eq!(file, "http_server.rs");
 }

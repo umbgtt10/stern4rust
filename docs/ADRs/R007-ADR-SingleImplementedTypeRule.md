@@ -118,10 +118,10 @@ out to be wrong it will be wrong visibly, in a file whose name stops matching.
 
 ## Enforcement
 
-`tests/rules/source/single_implemented_type_rule_tests.rs` — 10 tests covering one
+`tests/rules/source/single_implemented_type_rule_tests.rs` — 11 tests covering one
 subject, one subject with plain data beside it, two subjects, an enum as the
-second subject, a file whose named subject is declared second, the `tests/`
-exemption, and that every type after the first is reported rather than only the
+second subject, a file whose named subject is declared second, one named after
+by its last words, the `tests/` exemption, and that every type after the first is reported rather than only the
 second.
 
 `tests/finding/parsing/implemented_type_finder_tests.rs` — 10 tests pinning the two halves of
@@ -150,6 +150,26 @@ baselined offence moves from it to the companion. Since 0.15.0.
 
 The narrower gap the count still misses -- a named subject that carries no impl at
 all, its behaviour living in a companion -- stays open (`docs/OPEN_POINTS.md`).
+
+## Amendment, 2026-10-19: named after, as named-subject reads it
+
+[R023](R023-ADR-NamedSubjectRule.md) holds a file to the name of its subject,
+and reads "named after" more widely than this rule did: the stem is the type's
+name or its last words, so `listener.rs` is named after `UdpListener`. With two
+readings, the two rules could disagree about one file -- named-subject satisfied
+by `UdpListener`, this rule taking a companion declared above it as the subject
+and asking for `UdpListener` to move. The subject is now found through the same
+`FileStem::names`, so the two always agree on which type a file is about. No
+baselined offence in the family moves beyond what 0.15.0 moved.
+
+The suggested file now comes from `TypeName`, whose words keep an acronym in
+capitals together: `HTTPServer` belongs in `http_server.rs`, where the old
+mapping offered `h_t_t_p_server.rs`. The correction is not part of an offence's
+fingerprint, so no baseline changes.
+
+R023 also closes the gap above: a file named after a data type, with its
+behaviour in a companion, is named after none of the types it implements. Since
+0.16.0.
 
 ## Related
 

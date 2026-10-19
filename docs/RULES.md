@@ -1,6 +1,6 @@
 # Rules
 
-Twenty-two rules, each independent, each naming itself in the report. This is the
+Twenty-three rules, each independent, each naming itself in the report. This is the
 reference; the reasoning behind each one is in its ADR.
 
 Every offence carries a **correction** as well as a description — what to do,
@@ -9,7 +9,7 @@ without answering it.
 
 Each rule also carries an **explanation** — what it wants, a scrap of source
 that breaks it and the same scrap put right — and that field is required too.
-`cargo stern4rust --rules` prints all twenty-two, in text or with
+`cargo stern4rust --rules` prints all twenty-three, in text or with
 `--format json`, without scanning anything. See
 [ADR-RulesExplainThemselves](ADRs/ADR-RulesExplainThemselves.md).
 
@@ -32,6 +32,7 @@ that breaks it and the same scrap put right — and that field is required too.
 | `spdx-matches-manifest` | [R020](ADRs/R020-ADR-SpdxMatchesManifestRule.md) | `license` in the manifest |
 | `workspace-dependencies` | [R021](ADRs/R021-ADR-WorkspaceDependenciesRule.md) | no |
 | `single-implemented-type` | [R007](ADRs/R007-ADR-SingleImplementedTypeRule.md) | no |
+| `named-subject` | [R023](ADRs/R023-ADR-NamedSubjectRule.md) | no |
 | `pure-traits` | [R014](ADRs/R014-ADR-PureTraitsRule.md) | no |
 | `returned-mutations` | [R022](ADRs/R022-ADR-ReturnedMutationsRule.md) | no |
 | `test-naming` | [R012](ADRs/R012-ADR-TestNamingRule.md) | no |
@@ -395,8 +396,9 @@ in the syntax tree and correctly does not count.
 
 The subject is the implemented type the file is named after, wherever it stands
 in the file -- `WireClientRequest` in `wire_client_request.rs` -- and every other
-one is reported, so the offence names the type to move. A file with no type named
-for it takes the first as its subject. The walk descends into inline modules, since
+one is reported, so the offence names the type to move. Named after is read as
+`named-subject` reads it, so `UdpListener` is the subject of `listener.rs`. A
+file with no type named for it takes the first as its subject. The walk descends into inline modules, since
 wrapping a second subject in `mod detail { ... }` changes nothing a reader cares
 about.
 
@@ -410,7 +412,49 @@ an impl block, which is the shape `test-file-structure` asks for.
 **Does not catch:** size. One type with forty methods satisfies this completely
 -- that is `crap4rust`'s question. It says nothing about free functions, and does
 not treat a `trait` with default method bodies as a subject -- `pure-traits`
-covers the other half of that gap.
+covers the other half of that gap. Nor does it ask whether the file is named
+after its subject; `named-subject` does.
+
+## `named-subject`
+
+A source file is named after its subject.
+
+The candidates are the types the file implements, as `single-implemented-type`
+counts them: a `struct` or `enum` declared in the file with at least one `impl`
+block there. A file with none is named after one of the traits and types it
+declares instead, traits first, since a trait declares behaviour and a data type
+does not. A trait beside an implemented type is that type's companion and not a
+candidate.
+
+**Named after** means the file's stem is the type's name, underscores and case
+aside, or its last whole words. The words in front are usually the crate's:
+`loopback/src/driver.rs` holding `LoopbackDriver` reads right where it stands,
+and so does `listener.rs` holding `UdpEiListener`. A type's name splits at its
+capitals, a run of capitals being one word, so `http_server.rs` is named after
+`HTTPServer`. Only the front may be left out: `protocol_observer.rs` holding
+`Observer` claims more than the type says, and `dex.rs` is not named after
+`Index`.
+
+One offence per file, against the first candidate's declaration, listing every
+candidate:
+
+| offence | correction |
+|---|---|
+| `` `listener.rs` is named after none of the types it implements: `UdpListenerTask` `` | rename the file to `udp_listener_task.rs`, or rename `UdpListenerTask` after the file |
+| `` `cluster_query_types.rs` is named after none of the traits and types it declares: `QueryRequest`, `QueryResponse` `` | rename the file to `query_request.rs`, or rename `QueryRequest` after the file |
+
+A file with two implemented types, one of them named for it, is
+`single-implemented-type`'s, which reports the other, and this rule is silent.
+
+Exempt: `lib.rs`, `main.rs`, `mod.rs` and `build.rs`, named for their role in the
+package, and `tests/`, `benches/`, `examples/` and `src/bin/`, named for what they
+exercise or run. A file of functions and constants alone has nothing to be named
+after.
+
+**Does not catch:** whether a name is a good one -- `data.rs` holding `MetaData`
+is named after it. Only the stem is read, so `udp/listener.rs` holding
+`TcpListener` passes. A trait beside an implemented type is not checked, and a
+type declared by a macro is invisible.
 
 ## `pure-traits`
 

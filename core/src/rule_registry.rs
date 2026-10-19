@@ -17,6 +17,7 @@ use crate::rules::manifest::workspace_dependencies_rule::WorkspaceDependenciesRu
 use crate::rules::source::declared_by_name_rule::DeclaredByNameRule;
 use crate::rules::source::header_rule::HeaderRule;
 use crate::rules::source::imported_paths_rule::ImportedPathsRule;
+use crate::rules::source::named_subject_rule::NamedSubjectRule;
 use crate::rules::source::ordered_imports_rule::OrderedImportsRule;
 use crate::rules::source::pure_traits_rule::PureTraitsRule;
 use crate::rules::source::readable_source_rule::ReadableSourceRule;
@@ -67,6 +68,7 @@ impl RuleRegistry {
             )),
             Box::new(ImportedPathsRule::new()),
             Box::new(ModuleRegistryRule::new()),
+            Box::new(NamedSubjectRule::new()),
             Box::new(OrderedImportsRule::new()),
             Box::new(PairedTestFileRule::new()),
             Box::new(PureTraitsRule::new()),

@@ -7,9 +7,9 @@ use std::collections::BTreeSet;
 use syn::Item;
 use syn::Type;
 use syn::parse_file;
-use syn::spanned::Spanned;
 
 use crate::finding::model::implemented_type::ImplementedType;
+use crate::finding::parsing::declared_item_finder::DeclaredItemFinder;
 use crate::finding::parsing::inline_module::InlineModule;
 use crate::source_file::SourceFile;
 
@@ -29,32 +29,25 @@ impl ImplementedTypeFinder {
     // None means the file does not parse. readable-source reports that.
     pub fn find(file: &SourceFile) -> Option<Vec<ImplementedType>> {
         let syntax = parse_file(&file.contents()).ok()?;
-        let implemented = Self::implemented(&syntax.items);
-        Some(
-            Self::declared(&syntax.items)
-                .into_iter()
-                .filter(|candidate| implemented.contains(&candidate.name))
-                .collect(),
-        )
+        Some(Self::among(&syntax.items))
     }
 
+    // For a caller that has parsed the file already and asks more of it than
+    // this.
+    //
     // The two halves are gathered separately rather than in one pass with two
     // accumulators handed down. Each answers one question and returns it, which
-    // is what lets the recursion be an expression instead of a side effect.
+    // is what lets the recursion be an expression instead of a side effect. The
+    // declarations are DeclaredItemFinder's, which named-subject reads too.
     //
     // Both descend into inline modules: a nested type with behaviour is still a
     // second subject in the same file.
-    fn declared(items: &[Item]) -> Vec<ImplementedType> {
-        items
-            .iter()
-            .flat_map(|item| match item {
-                Item::Struct(inner) => vec![Self::at(&inner.ident.to_string(), item)],
-                Item::Enum(inner) => vec![Self::at(&inner.ident.to_string(), item)],
-                Item::Mod(module) => InlineModule::items(module)
-                    .map(Self::declared)
-                    .unwrap_or_default(),
-                _ => Vec::new(),
-            })
+    pub fn among(items: &[Item]) -> Vec<ImplementedType> {
+        let implemented = Self::implemented(items);
+        DeclaredItemFinder::types(items)
+            .into_iter()
+            .filter(|candidate| implemented.contains(&candidate.name))
+            .map(|declared| ImplementedType::new(&declared.name, declared.line))
             .collect()
     }
 
@@ -71,10 +64,6 @@ impl ImplementedTypeFinder {
                 _ => BTreeSet::new(),
             })
             .collect()
-    }
-
-    fn at(name: &str, item: &Item) -> ImplementedType {
-        ImplementedType::new(name, item.span().start().line)
     }
 
     fn implemented_name(target: &Type) -> Option<String> {

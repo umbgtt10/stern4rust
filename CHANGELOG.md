@@ -4,6 +4,43 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.0] - 2026-10-19
+
+One rule added, and it is on by default, so it moves what this tool reports
+about your code. A source file not named after its subject becomes an offence on
+upgrade; to adopt it later, add `skip = ["named-subject"]` to your
+`stern4rust.toml` before you next install.
+
+### Added
+- **`named-subject`: a source file is named after its subject.** The subject is
+  a type the file implements, as `single-implemented-type` counts them, or with
+  none, one of the traits and types it declares. The file's stem must be the
+  type's name, underscores and case aside, or its last whole words, so
+  `loopback/src/driver.rs` holding `LoopbackDriver` passes and `listener.rs`
+  holding `UdpListenerTask` does not. One offence per file, with the file to
+  rename to. `lib.rs`, `main.rs`, `mod.rs`, `build.rs`, `tests/`, `benches/`,
+  `examples/` and `src/bin/` are exempt, and a file of functions alone has
+  nothing to be named after. It closes the gap `single-implemented-type` left
+  open: a file named after a data type whose behaviour lives in a companion.
+  [R023](docs/ADRs/R023-ADR-NamedSubjectRule.md)
+
+  The rule is clean on this repository and on `etheram-core`, `beggar`,
+  `braintax4rust`, `grip4rust`, `iceberg4rust`, `slotgate` and `twin4rust`, and
+  reports 57 offences across the other eight repositories in the family.
+
+### Changed
+- `single-implemented-type` reads "named after" as `named-subject` does, so the
+  two rules agree on which type a file is about: `UdpListener` is the subject of
+  `listener.rs`, and a companion declared above it is the type to move. No
+  baselined offence in the family moves beyond what 0.15.0 moved.
+  [R007](docs/ADRs/R007-ADR-SingleImplementedTypeRule.md)
+
+### Fixed
+- **A suggested file keeps an acronym in capitals as one word.**
+  `single-implemented-type` asked for `HTTPServer` to move into
+  `h_t_t_p_server.rs`; it now says `http_server.rs`. The correction is not part
+  of an offence's fingerprint, so no baseline changes.
+
 ## [0.15.0] - 2026-10-19
 
 One rule changes which offence it reports, not how many. Where a

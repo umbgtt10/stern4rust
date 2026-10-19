@@ -3,6 +3,20 @@
 What `cargo-stern4rust` does today. Anything not listed here is not built, and
 the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
+## Version 0.16.0
+
+### Rules
+
+- **`named-subject`** -- a source file is named after its subject: a type it
+  implements, or with none, one of the traits and types it declares. The stem
+  may be the type's name or its last whole words. Entry points, module roots,
+  `tests/`, `benches/`, `examples/` and `src/bin/` are exempt. Clean on this
+  repository; 57 offences across eight other repositories in the family. On by
+  default. [R023](ADRs/R023-ADR-NamedSubjectRule.md)
+- **`single-implemented-type`** finds a file's subject through the same reading
+  of "named after", and its suggested file keeps an acronym in capitals as one
+  word. [R007](ADRs/R007-ADR-SingleImplementedTypeRule.md)
+
 ## Version 0.15.0
 
 ### Rules

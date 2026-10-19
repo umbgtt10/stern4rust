@@ -573,7 +573,7 @@ fn run_reporting_with_rules_in_json_carries_the_same_rules_as_the_text() {
     // Assert
     let parsed: Value = from_str(&report).expect("valid json");
     let rules = parsed["rules"].as_array().expect("a rules array");
-    assert_eq!(rules.len(), 22);
+    assert_eq!(rules.len(), 23);
     assert!(rules.iter().all(|entry| {
         !entry["name"].as_str().unwrap_or_default().is_empty()
             && !entry["breaks"].as_str().unwrap_or_default().is_empty()
@@ -615,6 +615,7 @@ fn run_reporting_with_rules_names_every_rule_the_registry_holds() {
         "directory-subfolder-count",
         "imported-paths",
         "module-registry",
+        "named-subject",
         "ordered-imports",
         "paired-test-file",
         "pure-traits",

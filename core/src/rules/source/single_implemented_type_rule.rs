@@ -2,8 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::path::Path;
-
+use crate::finding::model::file_stem::FileStem;
 use crate::finding::model::implemented_type::ImplementedType;
 use crate::finding::parsing::implemented_type_finder::ImplementedTypeFinder;
 use crate::reporting::offence::Offence;
@@ -44,15 +43,14 @@ impl SingleImplementedTypeRule {
     // every other one is reported, so the offence names the type to move rather
     // than saying the file has too many. Taking the first instead blamed the
     // subject whenever a companion was declared above it. With no type named for
-    // the file, the first stands in.
+    // the file, the first stands in. "Named after" is named-subject's reading --
+    // the stem is the type's name or its last words -- so the two rules agree on
+    // which type a file is about.
     fn subject<'a>(file: &SourceFile, found: &'a [ImplementedType]) -> Option<&'a ImplementedType> {
-        let file_name = Path::new(file.relative_path())
-            .file_name()
-            .and_then(|name| name.to_str())
-            .unwrap_or_default();
+        let stem = FileStem::of(file.relative_path());
         found
             .iter()
-            .find(|candidate| candidate.suggested_file() == file_name)
+            .find(|candidate| stem.names(&candidate.name))
             .or_else(|| found.first())
     }
 

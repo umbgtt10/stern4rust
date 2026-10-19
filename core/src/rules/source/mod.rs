@@ -5,6 +5,7 @@
 pub mod declared_by_name_rule;
 pub mod header_rule;
 pub mod imported_paths_rule;
+pub mod named_subject_rule;
 pub mod ordered_imports_rule;
 pub mod pure_traits_rule;
 pub mod readable_source_rule;

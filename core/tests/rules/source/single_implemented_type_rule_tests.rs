@@ -53,6 +53,31 @@ fn check_a_file_named_after_its_second_implemented_type_reports_the_first() {
     );
 }
 
+// "Named after" is what named-subject means by it: the file's stem may be the
+// last words of the type's name, the rest supplied by where the file sits.
+// `listener.rs` is named after `UdpListener`, so `Backoff` above it is the type
+// to move, as it would be in `udp_listener.rs`.
+#[test]
+fn check_a_file_named_after_the_last_words_of_its_second_implemented_type_reports_the_first() {
+    // Arrange & Act
+    let offences = check(
+        "src/listener.rs",
+        "pub struct Backoff;\nimpl Backoff {}\n\npub struct UdpListener;\nimpl UdpListener {}\n",
+    );
+
+    // Assert
+    assert_eq!(offences.len(), 1, "got {offences:?}");
+    assert_eq!(offences[0].subject.as_deref(), Some("Backoff"));
+    assert_eq!(
+        offences[0].description,
+        "`Backoff` is a second type with an impl block; this file's subject is already `UdpListener`"
+    );
+    assert_eq!(
+        offences[0].correction,
+        "move `Backoff` and its impl blocks into backoff.rs"
+    );
+}
+
 // Data has no behaviour to be the subject of.
 #[test]
 fn check_a_file_of_plain_data_declarations_reports_nothing() {

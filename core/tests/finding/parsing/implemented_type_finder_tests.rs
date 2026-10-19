@@ -16,6 +16,7 @@
 use stern4rust::finding::model::implemented_type::ImplementedType;
 use stern4rust::finding::parsing::implemented_type_finder::ImplementedTypeFinder;
 use stern4rust::source_file::SourceFile;
+use syn::parse_file;
 
 fn found(body: &str) -> Vec<ImplementedType> {
     ImplementedTypeFinder::find(&SourceFile::new("src/subject.rs", body)).expect("parses")
@@ -23,6 +24,21 @@ fn found(body: &str) -> Vec<ImplementedType> {
 
 fn names(body: &str) -> Vec<String> {
     found(body).into_iter().map(|found| found.name).collect()
+}
+
+// For a caller that has parsed the file already and asks more of it than this.
+#[test]
+fn among_finds_the_implemented_types_in_parsed_items() {
+    // Arrange
+    let items = parse_file("pub struct A;\nimpl A {}\n\npub struct B;\n")
+        .expect("parses")
+        .items;
+
+    // Act
+    let found = ImplementedTypeFinder::among(&items);
+
+    // Assert
+    assert_eq!(found, [ImplementedType::new("A", 1)]);
 }
 
 // A reader looking for what a type does opens the file either way.
