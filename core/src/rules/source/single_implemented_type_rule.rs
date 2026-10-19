@@ -2,6 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use std::path::Path;
+
 use crate::finding::model::implemented_type::ImplementedType;
 use crate::finding::parsing::implemented_type_finder::ImplementedTypeFinder;
 use crate::reporting::offence::Offence;
@@ -38,8 +40,22 @@ impl SingleImplementedTypeRule {
         !file.relative_path().starts_with(Self::TESTS_ROOT)
     }
 
-    // The first is taken as the subject and every later one is reported, so the
-    // offence names the type to move rather than saying the file has too many.
+    // The subject is the type the file is named after, wherever it stands, and
+    // every other one is reported, so the offence names the type to move rather
+    // than saying the file has too many. Taking the first instead blamed the
+    // subject whenever a companion was declared above it. With no type named for
+    // the file, the first stands in.
+    fn subject<'a>(file: &SourceFile, found: &'a [ImplementedType]) -> Option<&'a ImplementedType> {
+        let file_name = Path::new(file.relative_path())
+            .file_name()
+            .and_then(|name| name.to_str())
+            .unwrap_or_default();
+        found
+            .iter()
+            .find(|candidate| candidate.suggested_file() == file_name)
+            .or_else(|| found.first())
+    }
+
     fn offence(&self, file: &SourceFile, subject: &str, extra: &ImplementedType) -> Offence {
         Offence::new(
             file.relative_path(),
@@ -76,12 +92,12 @@ impl Rule for SingleImplementedTypeRule {
             return Vec::new();
         }
         let found = ImplementedTypeFinder::find(file).unwrap_or_default();
-        let Some(subject) = found.first() else {
+        let Some(subject) = Self::subject(file, &found) else {
             return Vec::new();
         };
         found
             .iter()
-            .skip(1)
+            .filter(|extra| *extra != subject)
             .map(|extra| self.offence(file, &subject.name, extra))
             .collect()
     }

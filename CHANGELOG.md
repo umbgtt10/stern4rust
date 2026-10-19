@@ -4,6 +4,33 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.15.0] - 2026-10-19
+
+One rule changes which offence it reports, not how many. Where a
+`single-implemented-type` offence is baselined against a file's own subject --
+the type the file is named after, declared below a companion -- the entry goes
+stale on upgrade and the companion is reported as new. Move the companion, or
+re-record the baseline, when you install.
+
+### Fixed
+- **`single-implemented-type` names the type to move, not the file's own
+  subject.** The first implemented type in a file was taken as its subject, so a
+  companion declared above the subject was never named: the subject was reported
+  instead, with the correction to move it into the file it was already in.
+  `etheram-ibft-embassy`'s `wire_client_request.rs` declares `WireTransaction`
+  above `WireClientRequest`, and the rule asked for `WireClientRequest` to move
+  into `wire_client_request.rs`. The subject is now the implemented type the
+  file is named after, wherever it stands, and every other one is reported. A
+  file with no type named for it keeps the old reading. The rule reports as many
+  offences as before, on the same files.
+  [R007](docs/ADRs/R007-ADR-SingleImplementedTypeRule.md)
+
+### Changed
+- The repository builds on Rust 1.99.1, pinned in `rust-toolchain.toml`, so
+  neither a machine's default compiler nor CI's `stable` changes what the gates
+  run on unannounced. The published crate is unaffected: it still needs Rust
+  1.85 or later.
+
 ## [0.14.0] - 2026-10-10
 
 One rule added, and it is on by default, so it moves what this tool reports

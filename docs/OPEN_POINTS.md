@@ -7,24 +7,6 @@ why the sharp ones are collected here.
 
 Ordered by how likely they are to mislead somebody.
 
-## A fixture tree inside the package is judged like the package
-
-The walker skips only `target/` and `.git/`. A tree of sample code that a tool
-analyses — fixtures, vendored source, generated output — is judged as though
-this repository had written it, and the report says so plainly rather than
-quietly declining to look.
-
-The fix is layout, not a skip, and both repositories that had the problem have
-since taken it: `grip4rust` and `crap4rust` each moved their fixture trees out of
-the published package into a sibling `fixture/`, leaving the analysis unchanged.
-`grip4rust` is now at 53 offences over 75 files, `crap4rust` at 163 over 67.
-
-Where a tree genuinely cannot be moved — vendored code, generated output —
-`--exclude <glob>` now covers it, and reports every pattern with the number of
-files it removed so that an exclusion stays something the reader can see rather
-than a silence. See
-[ADR-ExclusionsAreCounted](ADRs/ADR-ExclusionsAreCounted.md).
-
 ## A `cfg_attr`-gated path still misleads `registry-completeness`
 
 `registry-completeness` resolves a declaration to the file it names by
@@ -188,9 +170,9 @@ default ([R022](ADRs/R022-ADR-ReturnedMutationsRule.md)).
 The `*4rust` tools and `slotgate` run it. Every other repository that installs
 stern4rust skips it in its own `stern4rust.toml` for now -- the etheram
 repositories and `faction` held most of the 238 offences the census counted.
-What is open is when each removes its skip: the order is the owners' to set,
-and `etheram-ibft` and `etheram-ibft-embassy` stay untouched while their
-campaign runs.
+What is open is when each removes its skip: the order is the owners' to set. The
+campaign that held `etheram-ibft` and `etheram-ibft-embassy` back closed on
+2026-10-17, so nothing now keeps either from starting.
 
 ## Imports are sorted but never packed
 
@@ -259,6 +241,11 @@ name -- someone's `mod widget` holding `struct widget` -- is still reported, and
 an uppercase-named module still passes.
 
 ## `single-implemented-type` bounds the count, not which type is the subject
+
+**Status, 2026-10-19, half closed in 0.15.0:** the rule now knows which type the file is named after
+when it *reports*. The subject is the implemented type named for the file, wherever it stands, and the
+others are the ones reported, so a companion declared above its subject is no longer blamed on the subject
+(R007's amendment). What stays open is the shape below, where the named type carries no impl at all.
 
 The rule reads "a source file has one subject: at most one type that *carries
 behaviour*", and behaviour means an `impl` block. It counts impl-bearing types

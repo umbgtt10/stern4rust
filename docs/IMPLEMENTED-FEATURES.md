@@ -3,6 +3,15 @@
 What `cargo-stern4rust` does today. Anything not listed here is not built, and
 the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
+## Version 0.15.0
+
+### Rules
+
+- **`single-implemented-type`** reports the companion rather than the subject.
+  The subject is the implemented type the file is named after, wherever it
+  stands in the file; with no type named for the file, the first. The count of
+  offences is unchanged. [R007](ADRs/R007-ADR-SingleImplementedTypeRule.md)
+
 ## Version 0.14.0
 
 ### Rules

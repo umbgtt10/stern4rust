@@ -9,9 +9,9 @@
 // second type with an impl block, because then the file has two things to be
 // named after and its name can only describe one of them.
 //
-// The first implemented type is taken as the subject and every later one is
-// reported, so the offence names the type to move rather than complaining that
-// the file has too many.
+// The subject is the implemented type the file is named after, and every other
+// one is reported, so the offence names the type to move rather than complaining
+// that the file has too many. A file with no type named for it takes the first.
 
 use stern4rust::reporting::offence::Offence;
 use stern4rust::rule::Rule;
@@ -25,6 +25,32 @@ const RULE: &str = "single-implemented-type";
 
 fn check(path: &str, body: &str) -> Vec<Offence> {
     SingleImplementedTypeRule::new().check(&SourceFile::new(path, &format!("{HEADER}\n{body}")))
+}
+
+// The subject is the type the file is named after, wherever it sits in the file.
+// Taking the first implemented type instead blames the subject when a companion
+// comes before it: etheram-ibft-embassy's `wire_client_request.rs` declares
+// `WireTransaction` with its impl blocks above `WireClientRequest`, and the
+// correction to make is moving `WireTransaction` out, not the file's own enum.
+#[test]
+fn check_a_file_named_after_its_second_implemented_type_reports_the_first() {
+    // Arrange & Act
+    let offences = check(
+        "src/wire_client_request.rs",
+        "pub struct WireTransaction;\nimpl WireTransaction {}\n\npub enum WireClientRequest {\n    One,\n}\nimpl WireClientRequest {}\n",
+    );
+
+    // Assert
+    assert_eq!(offences.len(), 1, "got {offences:?}");
+    assert_eq!(offences[0].subject.as_deref(), Some("WireTransaction"));
+    assert_eq!(
+        offences[0].description,
+        "`WireTransaction` is a second type with an impl block; this file's subject is already `WireClientRequest`"
+    );
+    assert_eq!(
+        offences[0].correction,
+        "move `WireTransaction` and its impl blocks into wire_transaction.rs"
+    );
 }
 
 // Data has no behaviour to be the subject of.

@@ -393,8 +393,10 @@ does not make this file that type's home. *At least one impl block*, inherent or
 trait, because both are behaviour -- though `#[derive(...)]` is not an impl block
 in the syntax tree and correctly does not count.
 
-The first implemented type is the subject; every later one is reported, so the
-offence names the type to move. The walk descends into inline modules, since
+The subject is the implemented type the file is named after, wherever it stands
+in the file -- `WireClientRequest` in `wire_client_request.rs` -- and every other
+one is reported, so the offence names the type to move. A file with no type named
+for it takes the first as its subject. The walk descends into inline modules, since
 wrapping a second subject in `mod detail { ... }` changes nothing a reader cares
 about.
 

@@ -43,7 +43,8 @@ an impl block in the syntax tree and correctly does not count — a derived
 
 The first implemented type is taken as the subject and every later one is
 reported, so the offence names the type to move rather than announcing that the
-file has too many. The correction names the file it would live in, PascalCase
+file has too many. *(Amended 2026-10-19, below: the subject is the type the file
+is named after.)* The correction names the file it would live in, PascalCase
 mapped to snake_case: *"move `ColumnWidths` and its impl blocks into
 column_widths.rs"*.
 
@@ -117,10 +118,11 @@ out to be wrong it will be wrong visibly, in a file whose name stops matching.
 
 ## Enforcement
 
-`tests/rules/source/single_implemented_type_rule_tests.rs` — 9 tests covering one
+`tests/rules/source/single_implemented_type_rule_tests.rs` — 10 tests covering one
 subject, one subject with plain data beside it, two subjects, an enum as the
-second subject, the `tests/` exemption, and that every type after the first is
-reported rather than only the second.
+second subject, a file whose named subject is declared second, the `tests/`
+exemption, and that every type after the first is reported rather than only the
+second.
 
 `tests/finding/parsing/implemented_type_finder_tests.rs` — 10 tests pinning the two halves of
 the conjunction independently: a trait impl counts, several impls of one type
@@ -129,6 +131,25 @@ elsewhere does not count, and the walk descends into inline modules.
 
 `just stage2` runs the compiled binary against this crate's own tree, which
 is what caught `report_printer.rs` the moment the rule was registered.
+
+## Amendment, 2026-10-19: the subject is the type the file is named after
+
+Taking the first implemented type as the subject reported the wrong one whenever a
+companion was declared above it. `etheram-ibft-embassy`'s `wire_client_request.rs`
+declares `WireTransaction`, with its two `From` impls, above `WireClientRequest`,
+with its own: the rule said `WireClientRequest` was the second type and asked for
+it to move into `wire_client_request.rs` -- the file it was already in -- while the
+companion that should move went unnamed.
+
+The subject is now the implemented type whose name, mapped to snake_case, is the
+file's name, wherever it stands in the file, and every other implemented type is
+reported. A file with no type named for it keeps the old reading: the first is the
+subject. The count is unchanged -- the rule reports exactly as many offences as
+before, on the same files -- but where the named subject was declared second, a
+baselined offence moves from it to the companion. Since 0.15.0.
+
+The narrower gap the count still misses -- a named subject that carries no impl at
+all, its behaviour living in a companion -- stays open (`docs/OPEN_POINTS.md`).
 
 ## Related
 
