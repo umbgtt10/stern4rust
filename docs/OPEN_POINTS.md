@@ -239,3 +239,42 @@ could clear.
 What remains open is the rest of the trade: a lowercase type this crate cannot
 name -- someone's `mod widget` holding `struct widget` -- is still reported, and
 an uppercase-named module still passes.
+
+## No rule sees a constructor that works a dependency before storing it
+
+`RaftProtocol::new` in `etheram-raft` took its cluster membership as
+`mut cluster_membership: Box<dyn ClusterMembership>` only to send it an event
+before storing it -- a constructor operating a dependency it was handed, and the
+one call that reached that bookkeeper around its owner. Nothing reported it, and
+nothing here could: `returned-mutations` reads a parameter's type, and a `mut`
+binding on a value the function owns changes nothing the caller can see. The
+fix was structural -- the owner, `Bookkeepers`, now sends the event through its
+own entry point -- not a different return type (`etheram-raft` `9b3ab05`).
+
+A census on 2026-10-20 over sixteen repositories, 2,939 files under `src/`,
+weighed three rules:
+
+- **No `mut` by-value parameter anywhere:** 216 offences -- 126 builders
+  (`with_x(mut self) -> Self`), 84 others, 6 `FnMut` callbacks -- and not one
+  the smell. Sorting an owned `Vec`, folding an image through `apply_x(mut
+  image)`, an Embassy task's `mut runner`: honest local mutation, which the rule
+  would push into a rebinding or worse code.
+- **No `mut` parameter in a constructor** (a function returning `Self` with no
+  receiver): 4 offences, none the smell -- three `FnMut` observers a
+  constructor must call, one `Vec` sorted before it is stored.
+- **No `mut` dependency in a constructor**, a dependency being a `dyn Trait`
+  anywhere in the parameter's type or an `impl Trait` other than the `Fn`
+  family: 0 offences, and the one known case caught.
+
+Only the third earns a rule: no false positive anywhere, and it says what the
+house standard already says -- a constructor stores what it is given. It is
+insurance against a rare smell rather than a cleanup, which is why it waits.
+What it owes before it ships:
+
+- the syntactic test for a dependency, and whether a generic parameter bounded
+  by a non-`Fn` trait counts;
+- the rebinding that would defeat it, `let mut dependency = dependency;` inside
+  the constructor, reported as the same offence;
+- whether a constructor that calls a dependency's `&self` methods before
+  storing it is the same smell or a different rule.
+
