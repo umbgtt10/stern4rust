@@ -11,6 +11,7 @@
 
 use stern4rust::reporting::offence::Offence;
 use stern4rust::reporting::rule_explanation::RuleExplanation;
+use stern4rust::reporting::unconfigured_rule::UnconfiguredRule;
 use stern4rust::rule::Rule;
 use stern4rust::rule_registry::RuleRegistry;
 use stern4rust::settings::config::Config;
@@ -269,6 +270,7 @@ fn from_config_with_a_header_registers_the_header_rule_alongside_the_others() {
             "declared-by-name",
             "directory-file-count",
             "directory-subfolder-count",
+            "distinct-tuple-elements",
             "immutable-returns",
             "imported-paths",
             "module-registry",
@@ -330,6 +332,7 @@ fn from_config_with_a_skip_leaves_that_rule_out() {
             "declared-by-name",
             "directory-file-count",
             "directory-subfolder-count",
+            "distinct-tuple-elements",
             "immutable-returns",
             "imported-paths",
             "module-registry",
@@ -367,6 +370,7 @@ fn from_config_without_a_header_registers_the_rules_that_need_no_configuration()
             "declared-by-name",
             "directory-file-count",
             "directory-subfolder-count",
+            "distinct-tuple-elements",
             "immutable-returns",
             "imported-paths",
             "module-registry",
@@ -405,6 +409,7 @@ fn known_names_lists_every_rule_the_tool_has() {
             "declared-by-name",
             "directory-file-count",
             "directory-subfolder-count",
+            "distinct-tuple-elements",
             "immutable-returns",
             "imported-paths",
             "module-registry",
@@ -505,11 +510,11 @@ fn unconfigured_names_each_rule_with_what_it_is_waiting_for() {
     assert_eq!(
         unconfigured,
         [
-            (
+            UnconfiguredRule::new(
                 "spdx-matches-manifest",
                 "needs a `license` field in Cargo.toml"
             ),
-            ("header", "needs --header-file")
+            UnconfiguredRule::new("header", "needs --header-file")
         ]
     );
 }

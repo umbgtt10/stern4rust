@@ -1,6 +1,6 @@
 # R029-ADR-DistinctTupleElementsRule
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-10-20
 
 ## Context
@@ -66,9 +66,26 @@ fixture's `center -> (f64, f64)` -- and are offences anyway: a named key that
 derives `Ord` orders the same way, and `x` and `y` are better as fields than as
 a convention.
 
-**This crate has one offence**, `Offence::sort_key -> (&str, usize,
-&'static str)`, which the change that builds the rule fixes first: a rule that
-would fail this repository cannot be merged into it.
+**This crate had two offences**, fixed in the change that built the rule: a rule
+that would fail this repository cannot be merged into it. `Offence::sort_key ->
+(&str, usize, &'static str)` became an `OffenceOrder`, whose fields order exactly
+as the tuple did, and `RuleRegistry::unconfigured -> Vec<(&str, &str)>` returns
+`UnconfiguredRule`s.
+
+**Re-run with this tool's finders**, the built rule against the sixteen
+repositories: **81 offences**, against the census's 86 -- the scanner also read
+tuples inside `impl Iterator<Item = ...>`, which this rule does not descend into.
+
+| repository | offences |
+|---|---:|
+| an analysis workspace | 49 |
+| `etheram-ibft` | 11 |
+| `etheram-raft` | 7 |
+| `dry4rust` | 5 |
+| `etheram-embassy` | 4 |
+| `etheram-raft-embassy`, `etheram-tools` | 2 each |
+| `grip4rust` | 1 |
+| `etheram-core`, `etheram-ibft-embassy`, `braintax4rust`, `crap4rust`, `iceberg4rust`, `slotgate`, `stern4rust`, `twin4rust` | **0** |
 
 ## Rejected alternatives
 
@@ -104,13 +121,29 @@ the analysis workspace holds a third of the offences.
 
 ## Enforcement
 
-To be written test-first when the rule is built: a repeated type at top level,
-wrapped in `Option`, `Result` and `Vec`, in a map key; distinct types left alone;
-lifetimes ignored, aliases not resolved; `impl Fn(A, A)` and `()` not tuples;
-trait impls left alone; private functions reported; `tests/` exempt; the
-unparseable file; `check_workspace`, `is_configured`, the name and the
-requirement; `tests/rule_registry_tests.rs` updated; this crate's
-`Offence::sort_key` replaced by a named key first.
+`tests/rules/source/distinct_tuple_elements_rule_tests.rs` -- sixteen tests: a
+private function, an inherent method, a trait declaration and a function in an
+inline module, each reported; a tuple wrapped in a generic; two repeated tuples
+reported once; the offence naming the tuple and offering a struct; distinct
+types, a returned callback taking two of one type and a trait impl left alone;
+`tests/` exempt; the unparseable file; `check_workspace`, `is_configured`, the
+name and the requirement.
+
+`tests/finding/parsing/repeated_tuple_finder_tests.rs` (nine) pins the search:
+top level, wrapped, in a `Vec`, the outer tuple first, lifetimes ignored, an
+alias not resolved, `()` and a callback's parameters not tuples.
+`tests/finding/parsing/type_walk_tests.rs` (six) pins the walk both type searches
+share, and `tests/finding/model/repeated_tuple_tests.rs` the model.
+
+`tests/reporting/offence_order_tests.rs` (three) and
+`tests/reporting/unconfigured_rule_tests.rs` (one) pin the two types this
+repository's own offences became; the registry's test of `unconfigured` now
+expects `UnconfiguredRule`s with the same names and requirements.
+
+`tests/rule_registry_tests.rs` -- the four rule-name lists include
+`distinct-tuple-elements` -- and `tests/runner_tests.rs`, whose `--rules`
+listing now holds twenty-six rules. Stage 2 runs this tool, built from the
+checkout, against this crate with every rule applied and zero offences.
 
 ## Related
 

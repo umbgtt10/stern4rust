@@ -15,6 +15,14 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
   exempt. Clean on this repository and on fifteen of the sixteen repositories in
   the family; two offences in the other. On by default.
   [R028](ADRs/R028-ADR-ImmutableReturnsRule.md)
+- **`distinct-tuple-elements`** -- a tuple in a return type repeats no element
+  type: any function in `src/`, private or public, whose return type holds a
+  tuple with two elements of one type -- at the top, in a generic, behind a
+  reference -- is reported once, with the correction to return a struct. Types
+  compare as written, lifetimes ignored, aliases unresolved. Clean on this
+  repository after two fixes here and on seven other repositories in the
+  family; 81 offences across the other eight. On by default.
+  [R029](ADRs/R029-ADR-DistinctTupleElementsRule.md)
 
 ## Version 0.17.0
 

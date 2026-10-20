@@ -2,11 +2,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use syn::GenericArgument;
-use syn::PathArguments;
-use syn::PathSegment;
 use syn::Type;
 use syn::TypeReference;
+
+use crate::finding::parsing::type_walk::TypeWalk;
 
 // Whether a type holds a mutable reference anywhere it structurally can: through
 // references, tuples, arrays, slices and generic arguments.
@@ -28,35 +27,10 @@ impl MutableReferenceSearch {
 
     pub fn finds_in(&self, ty: &Type) -> bool {
         match ty {
-            Type::Reference(reference) => self.lends(reference) || self.finds_in(&reference.elem),
-            Type::Tuple(tuple) => tuple.elems.iter().any(|elem| self.finds_in(elem)),
-            Type::Paren(inner) => self.finds_in(&inner.elem),
-            Type::Group(inner) => self.finds_in(&inner.elem),
-            Type::Array(array) => self.finds_in(&array.elem),
-            Type::Slice(slice) => self.finds_in(&slice.elem),
-            Type::Path(path) => path
-                .path
-                .segments
-                .iter()
-                .any(|segment| self.in_segment(segment)),
-            _ => false,
-        }
-    }
-
-    fn in_argument(&self, argument: &GenericArgument) -> bool {
-        match argument {
-            GenericArgument::Type(ty) => self.finds_in(ty),
-            _ => false,
-        }
-    }
-
-    fn in_segment(&self, segment: &PathSegment) -> bool {
-        match &segment.arguments {
-            PathArguments::AngleBracketed(arguments) => arguments
-                .args
-                .iter()
-                .any(|argument| self.in_argument(argument)),
-            _ => false,
+            Type::Reference(reference) if self.lends(reference) => true,
+            _ => TypeWalk::children(ty)
+                .into_iter()
+                .any(|child| self.finds_in(child)),
         }
     }
 

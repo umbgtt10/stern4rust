@@ -155,7 +155,7 @@ impl Runner {
                 registry
                     .unconfigured(&package_config)
                     .into_iter()
-                    .map(|(name, requirement)| (name.to_string(), requirement.to_string()))
+                    .map(|rule| (rule.name.to_string(), rule.requirement.to_string()))
                     .collect(),
             ));
             let exclusions = ExclusionSet::new(&package_config.excludes)?;
@@ -465,7 +465,7 @@ impl Runner {
         let unconfigured: Vec<(String, String)> = registry
             .unconfigured(config)
             .into_iter()
-            .map(|(name, requirement)| (name.to_string(), requirement.to_string()))
+            .map(|rule| (rule.name.to_string(), rule.requirement.to_string()))
             .collect();
         let unconfigured_names = Self::owned(&registry.unconfigured_names(config));
         match config.format {

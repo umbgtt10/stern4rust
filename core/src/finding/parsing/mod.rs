@@ -16,6 +16,8 @@ pub mod mutable_reference_search;
 pub mod public_entry_point_finder;
 pub mod qualified_call_finder;
 pub mod registry_parser;
+pub mod repeated_tuple_finder;
 pub mod source_items;
 pub mod test_file_parser;
+pub mod type_walk;
 pub mod unit_test_finder;

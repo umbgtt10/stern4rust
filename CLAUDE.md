@@ -11,7 +11,7 @@ hand, every time, forever — and the ones that quietly stop being true across a
 codebase the moment nobody is checking.
 
 The rule set is **open by design**: there will be fifteen to twenty of them, and
-there are twenty-five today, five past the range, and `core/src/rules/` is grouped into
+there are twenty-six today, six past the range, and `core/src/rules/` is grouped into
 subfolders because `directory-file-count` would not allow a twenty-first file. That is the constraint every decision here answers to.
 Adding a rule costs a file under `core/src/rules/`, its `pub mod` line, one entry in
 `RuleRegistry::all`, a mirrored test file, an `R<NNN>` ADR and a `RULES.md`
@@ -109,7 +109,7 @@ the gates is not exempt from the rules it exists to enforce.
 cargo-stern4rust is deliberately not in that list; the gate builds it from this
 checkout.
 
-All twenty-five rules are enforced, with nothing skipped and nothing
+All twenty-six rules are enforced, with nothing skipped and nothing
 unconfigured. `stern4rust.toml` names the header file, rather than the gate
 script passing `--header-file`, so a hand-run of `cargo stern4rust` checks
 exactly what the gate checks -- which is what every other repository in this

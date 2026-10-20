@@ -6,10 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-One rule added, on by default, so it moves what this tool reports about your
-code once it is released. A function returning a mutable reference becomes an
-offence; to adopt it later, add `skip = ["immutable-returns"]` to your
-`stern4rust.toml` once you install a version that knows the name.
+Two rules added, both on by default, so they move what this tool reports about
+your code once it is released. A function returning a mutable reference, and one
+returning a tuple that repeats an element type, become offences; to adopt either
+later, add `skip = ["immutable-returns"]` or `skip = ["distinct-tuple-elements"]`
+to your `stern4rust.toml` once you install a version that knows the name.
 
 ### Added
 - **`immutable-returns`: a function does not hand out a mutable reference.** Any
@@ -24,6 +25,19 @@ offence; to adopt it later, add `skip = ["immutable-returns"]` to your
 
   The rule is clean on this repository and on fifteen of the sixteen
   repositories in the family, and reports two offences in the other.
+- **`distinct-tuple-elements`: a tuple in a return type repeats no element
+  type.** Any function in `src/`, private or public, whose return type holds a
+  tuple with two elements of one type -- `-> (u64, u64)`,
+  `-> Option<(Instant, Instant)>`, `-> Vec<(usize, usize)>` -- is reported once,
+  naming the tuple and the repeated type, with the correction to return a struct
+  whose fields say which is which. Types are compared as written, lifetimes
+  ignored and aliases unresolved, so `(Height, u64)` passes. Tuples of distinct
+  types, a returned callback's parameter list and trait impl methods are left
+  alone; `tests/` is exempt.
+  [R029](docs/ADRs/R029-ADR-DistinctTupleElementsRule.md)
+
+  The rule is clean on this repository and on seven others in the family, and
+  reports 81 offences across the other eight.
 
 ### Changed
 - The type walk `returned-mutations` carried privately is now
@@ -31,6 +45,12 @@ offence; to adopt it later, add `skip = ["immutable-returns"]` to your
   `&'static mut`; the signatures it collected -- free functions, inherent methods,
   trait declarations, inline modules -- are `AuthoredSignatures`. No offence
   `returned-mutations` reports changed.
+- The shape both type searches walk is `TypeWalk`, one level of a type's parts.
+- `Offence::sort_key` returns an `OffenceOrder` -- file, line, rule, ordered
+  exactly as the tuple was -- and `RuleRegistry::unconfigured` returns
+  `UnconfiguredRule`s rather than `(&str, &str)` pairs: the two places this
+  repository broke `distinct-tuple-elements`. The report's order and content are
+  unchanged.
 
 ## [0.17.0] - 2026-10-19
 

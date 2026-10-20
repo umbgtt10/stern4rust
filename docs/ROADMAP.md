@@ -62,7 +62,7 @@ nothing of the last.
 
 ## Current Baseline
 
-Twenty-five rules, two output formats, autofix, baselines, exclusions, a config
+Twenty-six rules, two output formats, autofix, baselines, exclusions, a config
 file, and `--rules` to say what each rule wants without a codebase to ask
 against. Every planned phase has shipped or been decided, and what each built is
 in [IMPLEMENTED-FEATURES.md](IMPLEMENTED-FEATURES.md). Both gates are green, and
@@ -70,10 +70,11 @@ the tool runs against its own tree on every build with zero offences.
 
 ## What is left
 
-The rule set is at twenty-five, with seven more proposed (R025-R027, R029-R032),
+The rule set is at twenty-six, with six more proposed (R025-R027, R030-R032),
 each sized by a census before it is built -- the original candidate list
 shipped in full, `returned-mutations` turned the family's written `&mut`
-standard into a gate, `immutable-returns` closed its mirror, `named-subject` holds a file to the name of what it
+standard into a gate, `immutable-returns` closed its mirror, `distinct-tuple-elements` names what position alone
+told apart, `named-subject` holds a file to the name of what it
 holds, and `owned-functions` keeps everything in it the subject's -- the library surface is decided, and every remaining gap is
 a limit with no structural answer -- collected in
 [OPEN_POINTS.md](OPEN_POINTS.md).

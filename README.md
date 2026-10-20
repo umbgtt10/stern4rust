@@ -16,7 +16,7 @@ already own correctness. These are the things a reviewer would otherwise have to
 say by hand, every time, forever — and the ones that quietly stop being true
 across a codebase the moment nobody is checking.
 
-> **Status: twenty-five rules.** The set below is what is implemented and
+> **Status: twenty-six rules.** The set below is what is implemented and
 > gated. `stern4rust` runs against its own tree on every build, so a rule that
 > would fail this repository cannot be merged into it.
 
@@ -472,6 +472,21 @@ left alone -- a static handed over once, as an embedded executor needs, with no
 type behind it -- and so are trait impls, reported at the author's own trait
 declaration, and a returned callback's contract. `tests/` is exempt.
 [R028](docs/ADRs/R028-ADR-ImmutableReturnsRule.md)
+
+### `distinct-tuple-elements`
+
+A tuple in a return type repeats no element type. `-> (u64, u64)` says nothing
+about which number is which, and a caller that swaps them still compiles; a
+struct with named fields says it instead. Reported wherever the tuple sits --
+`Option<(Instant, Instant)>`, `Vec<(usize, usize)>` -- in private functions as
+much as public ones, once per function, naming the tuple and the type it
+repeats.
+
+Types are compared as written, lifetimes ignored and nothing resolved:
+`&'a str` and `&'static str` are one type, and `(Height, u64)` passes -- an alias
+that names a meaning is the cure. Tuples of distinct types, a returned
+callback's parameter list and trait impls are left alone. `tests/` is exempt.
+[R029](docs/ADRs/R029-ADR-DistinctTupleElementsRule.md)
 
 ### `declared-by-name`
 

@@ -1,6 +1,6 @@
 # Rules
 
-Twenty-five rules, each independent, each naming itself in the report. This is the
+Twenty-six rules, each independent, each naming itself in the report. This is the
 reference; the reasoning behind each one is in its ADR.
 
 Every offence carries a **correction** as well as a description — what to do,
@@ -9,7 +9,7 @@ without answering it.
 
 Each rule also carries an **explanation** — what it wants, a scrap of source
 that breaks it and the same scrap put right — and that field is required too.
-`cargo stern4rust --rules` prints all twenty-five, in text or with
+`cargo stern4rust --rules` prints all twenty-six, in text or with
 `--format json`, without scanning anything. See
 [ADR-RulesExplainThemselves](ADRs/ADR-RulesExplainThemselves.md).
 
@@ -37,6 +37,7 @@ that breaks it and the same scrap put right — and that field is required too.
 | `pure-traits` | [R014](ADRs/R014-ADR-PureTraitsRule.md) | no |
 | `returned-mutations` | [R022](ADRs/R022-ADR-ReturnedMutationsRule.md) | no |
 | `immutable-returns` | [R028](ADRs/R028-ADR-ImmutableReturnsRule.md) | no |
+| `distinct-tuple-elements` | [R029](ADRs/R029-ADR-DistinctTupleElementsRule.md) | no |
 | `test-naming` | [R012](ADRs/R012-ADR-TestNamingRule.md) | no |
 | `tested-public-api` | [R013](ADRs/R013-ADR-TestedPublicApiRule.md) | no |
 | `header` | [R001](ADRs/R001-ADR-HeaderRule.md) | `--header-file` |
@@ -622,6 +623,44 @@ Three things are left alone:
 an `Rc<RefCell<T>>` -- which mutates through a shared reference; raw `*mut T`
 pointers; a `&mut` inside an `impl Trait` bound such as
 `impl Iterator<Item = &mut T>`; and anything a macro generates.
+
+## `distinct-tuple-elements`
+
+A tuple in a return type repeats no element type. **No function in `src/` may
+return a type holding a tuple with two elements of the same type.**
+
+`-> (u64, u64)` returns two numbers and says nothing about which is which, and a
+caller that swaps them still compiles. Most tuples are not like that: in
+`(PathBuf, u64)` the types say which element is which and a swap does not
+compile. The rule asks only about the narrow case, two elements of one type,
+where position is the only thing telling them apart.
+
+The return type is walked as the other signature rules walk it -- through
+references, tuples, slices, arrays and angle-bracketed generic arguments -- so
+`Option<(Instant, Instant)>` and `Vec<(usize, usize)>` are reported, private
+functions as much as public ones, since a private function's callers can swap
+its results as easily. The outer tuple is found first; one offence per function.
+
+Types are compared as written, with lifetimes and needless whitespace dropped and
+nothing resolved: `&'a str` and `&'static str` are one type, and `(Height, u64)`
+passes even where `Height` aliases `u64`. An alias that names what a value means
+is the cure for the ambiguity, not a way around it.
+
+Left alone: tuples of distinct types; a returned callback's parameter list,
+`impl Fn(u8, u8) -> u8`, which is its contract; and trait impl methods, whose
+signature is the trait's -- a trait of the author's own is reported at its
+declaration.
+
+| offence | correction |
+|---|---|
+| `` `bounds` returns `(u64, u64)`, whose `u64`s only their position tells apart `` | `` return a struct whose fields say which `u64` is which `` |
+
+`tests/` is exempt.
+
+**Does not catch:** a tuple inside an `impl Trait` or `dyn` bound, such as
+`impl Iterator<Item = (u64, u64)>`; parameter lists with two arguments of one
+type, which have the same problem on the way in; two types that convert into each
+other silently; and anything a macro generates.
 
 ## `declared-by-name`
 

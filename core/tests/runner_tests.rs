@@ -573,7 +573,7 @@ fn run_reporting_with_rules_in_json_carries_the_same_rules_as_the_text() {
     // Assert
     let parsed: Value = from_str(&report).expect("valid json");
     let rules = parsed["rules"].as_array().expect("a rules array");
-    assert_eq!(rules.len(), 25);
+    assert_eq!(rules.len(), 26);
     assert!(rules.iter().all(|entry| {
         !entry["name"].as_str().unwrap_or_default().is_empty()
             && !entry["breaks"].as_str().unwrap_or_default().is_empty()

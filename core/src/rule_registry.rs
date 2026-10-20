@@ -4,6 +4,7 @@
 
 use crate::reporting::offence::Offence;
 use crate::reporting::rule_explanation::RuleExplanation;
+use crate::reporting::unconfigured_rule::UnconfiguredRule;
 use crate::rule::Rule;
 use crate::rules::layout::directory_file_count_rule::DirectoryFileCountRule;
 use crate::rules::layout::directory_subfolder_count_rule::DirectorySubfolderCountRule;
@@ -15,6 +16,7 @@ use crate::rules::layout::tests_layout_rule::TestsLayoutRule;
 use crate::rules::manifest::spdx_matches_manifest_rule::SpdxMatchesManifestRule;
 use crate::rules::manifest::workspace_dependencies_rule::WorkspaceDependenciesRule;
 use crate::rules::source::declared_by_name_rule::DeclaredByNameRule;
+use crate::rules::source::distinct_tuple_elements_rule::DistinctTupleElementsRule;
 use crate::rules::source::header_rule::HeaderRule;
 use crate::rules::source::immutable_returns_rule::ImmutableReturnsRule;
 use crate::rules::source::imported_paths_rule::ImportedPathsRule;
@@ -68,6 +70,7 @@ impl RuleRegistry {
                     .max_subfolders_per_directory
                     .unwrap_or(DirectorySubfolderCountRule::DEFAULT_LIMIT),
             )),
+            Box::new(DistinctTupleElementsRule::new()),
             Box::new(ImmutableReturnsRule::new()),
             Box::new(ImportedPathsRule::new()),
             Box::new(ModuleRegistryRule::new()),
@@ -134,21 +137,23 @@ impl RuleRegistry {
     pub fn unconfigured_names(&self, config: &Config) -> Vec<&'static str> {
         self.unconfigured(config)
             .into_iter()
-            .map(|(name, _)| name)
+            .map(|rule| rule.name)
             .collect()
     }
 
     // Each with what it was waiting for, taken from the rule rather than
     // guessed at by the printer. A rule that could not run is built by `all`
     // even though `from_config` dropped it, which is what lets it still answer.
-    pub fn unconfigured(&self, config: &Config) -> Vec<(&'static str, &'static str)> {
+    pub fn unconfigured(&self, config: &Config) -> Vec<UnconfiguredRule> {
         let applied = self.names();
         Self::all(config)
             .iter()
             .filter(|rule| {
                 config.selection.includes(rule.name()) && !applied.contains(&rule.name())
             })
-            .map(|rule| (rule.name(), rule.requirement().unwrap_or("not configured")))
+            .map(|rule| {
+                UnconfiguredRule::new(rule.name(), rule.requirement().unwrap_or("not configured"))
+            })
             .collect()
     }
 

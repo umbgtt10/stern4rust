@@ -16,6 +16,8 @@ pub mod mutable_reference_search_tests;
 pub mod public_entry_point_finder_tests;
 pub mod qualified_call_finder_tests;
 pub mod registry_parser_tests;
+pub mod repeated_tuple_finder_tests;
 pub mod source_items_tests;
 pub mod test_file_parser_tests;
+pub mod type_walk_tests;
 pub mod unit_test_finder_tests;

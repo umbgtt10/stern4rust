@@ -13,6 +13,7 @@ pub mod public_entry_point;
 pub mod qualified_call;
 pub mod registry_item;
 pub mod registry_policy;
+pub mod repeated_tuple;
 pub mod section;
 pub mod test_file_item;
 pub mod test_marker;

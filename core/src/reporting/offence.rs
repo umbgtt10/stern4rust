@@ -6,6 +6,8 @@ use std::fmt::Debug;
 
 use serde::Serialize;
 
+use crate::reporting::offence_order::OffenceOrder;
+
 // One thing wrong with one file. Every rule reports in this currency, so the
 // report is a single table rather than one section per rule, and a new rule
 // costs nothing in the printer.
@@ -67,7 +69,7 @@ impl Offence {
     // every tree-wide one after every per-file one. Grouping by file and then by
     // line is what lets a reader -- or a tool consuming the report -- work
     // through one file at a time instead of jumping between them.
-    pub fn sort_key(&self) -> (&str, usize, &'static str) {
-        (&self.file, self.line, self.rule)
+    pub fn sort_key(&self) -> OffenceOrder<'_> {
+        OffenceOrder::new(&self.file, self.line, self.rule)
     }
 }
