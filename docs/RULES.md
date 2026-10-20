@@ -1,6 +1,6 @@
 # Rules
 
-Twenty-four rules, each independent, each naming itself in the report. This is the
+Twenty-five rules, each independent, each naming itself in the report. This is the
 reference; the reasoning behind each one is in its ADR.
 
 Every offence carries a **correction** as well as a description — what to do,
@@ -9,7 +9,7 @@ without answering it.
 
 Each rule also carries an **explanation** — what it wants, a scrap of source
 that breaks it and the same scrap put right — and that field is required too.
-`cargo stern4rust --rules` prints all twenty-four, in text or with
+`cargo stern4rust --rules` prints all twenty-five, in text or with
 `--format json`, without scanning anything. See
 [ADR-RulesExplainThemselves](ADRs/ADR-RulesExplainThemselves.md).
 
@@ -36,6 +36,7 @@ that breaks it and the same scrap put right — and that field is required too.
 | `owned-functions` | [R024](ADRs/R024-ADR-OwnedFunctionsRule.md) | no |
 | `pure-traits` | [R014](ADRs/R014-ADR-PureTraitsRule.md) | no |
 | `returned-mutations` | [R022](ADRs/R022-ADR-ReturnedMutationsRule.md) | no |
+| `immutable-returns` | [R028](ADRs/R028-ADR-ImmutableReturnsRule.md) | no |
 | `test-naming` | [R012](ADRs/R012-ADR-TestNamingRule.md) | no |
 | `tested-public-api` | [R013](ADRs/R013-ADR-TestedPublicApiRule.md) | no |
 | `header` | [R001](ADRs/R001-ADR-HeaderRule.md) | `--header-file` |
@@ -580,6 +581,47 @@ pointers; a `&mut` inside an `impl Trait` or `dyn` bound such as
 as `fn f<W: Write>(w: W)` called with `&mut buf`; and anything a macro
 generates. Only the signature is read, so a `&mut` parameter the body never
 writes is still reported -- the signature still says the call writes through it.
+
+## `immutable-returns`
+
+A function does not hand out a mutable reference. **No function in `src/` may
+have a return type that is, or structurally contains, a mutable reference.**
+
+`&mut self` is the one channel through which the house standard lets a type
+change. A function returning `&mut T` opens a second one, owned by whoever holds
+the reference: the caller changes the type's internals without going through any
+of its methods, and every invariant the type keeps holds only while nobody uses
+what it lent. `returned-mutations` stops a mutation coming in through a
+parameter; this rule stops one going out through a return value.
+
+The return type is walked as `returned-mutations` walks a parameter's -- through
+references, tuples, slices, arrays and angle-bracketed generic arguments -- by the
+same `MutableReferenceSearch`, so `Option<&mut T>` and `(usize, &mut [T])` are
+both reported. One offence per function.
+
+Three things are left alone:
+
+- **`&'static mut`.** A static handed over once -- the `StaticCell` shape an
+  embedded executor needs for its stack resources -- has no type behind it to
+  lend. The search passes over it but still looks inside it, so a borrow it
+  points at is found.
+- **Trait impl methods.** `DerefMut`, `IndexMut`, `AsMut` return `&mut` because
+  the trait says so. Where the trait is the author's own, it is reported once, at
+  the declaration.
+- **Callback contracts.** A returned `impl FnMut(&mut T)` says what the caller's
+  closure receives, not what this function lends.
+
+| offence | correction |
+|---|---|
+| `` `total_mut` returns a mutable reference, so its caller can change what it lends without going through its methods `` | `` return the value, or give the type a method that makes the change `` |
+| the same, for `-> &mut Self` | `` take and return `self` by value instead of `&mut Self` `` |
+
+`tests/` is exempt.
+
+**Does not catch:** interior mutability handed out -- `&RefCell<T>`, `&Cell<T>`,
+an `Rc<RefCell<T>>` -- which mutates through a shared reference; raw `*mut T`
+pointers; a `&mut` inside an `impl Trait` bound such as
+`impl Iterator<Item = &mut T>`; and anything a macro generates.
 
 ## `declared-by-name`
 

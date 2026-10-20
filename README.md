@@ -16,7 +16,7 @@ already own correctness. These are the things a reviewer would otherwise have to
 say by hand, every time, forever — and the ones that quietly stop being true
 across a codebase the moment nobody is checking.
 
-> **Status: twenty-four rules.** The set below is what is implemented and
+> **Status: twenty-five rules.** The set below is what is implemented and
 > gated. `stern4rust` runs against its own tree on every build, so a rule that
 > would fail this repository cannot be merged into it.
 
@@ -457,6 +457,21 @@ So is a trait impl, whose signature is the trait's: where the trait is your own,
 the `&mut` is reported once, at the declaration. A callback's own contract,
 `impl FnMut(&mut T)` or `fn(&mut T)`, is not descended into. `tests/` is exempt.
 [R022](docs/ADRs/R022-ADR-ReturnedMutationsRule.md)
+
+### `immutable-returns`
+
+A function does not hand out a mutable reference. Any function in `src/` whose
+return type is, or structurally contains, a mutable reference is reported --
+`-> &mut T`, `-> Option<&mut T>`, `-> (usize, &mut [T])` -- with the correction
+to return the value or give the type a method that makes the change, and for
+`-> &mut Self` to take and return `self` by value.
+
+`returned-mutations`' mirror: that rule stops a mutation coming in through a
+parameter, this one stops it going out through a return value. `&'static mut` is
+left alone -- a static handed over once, as an embedded executor needs, with no
+type behind it -- and so are trait impls, reported at the author's own trait
+declaration, and a returned callback's contract. `tests/` is exempt.
+[R028](docs/ADRs/R028-ADR-ImmutableReturnsRule.md)
 
 ### `declared-by-name`
 

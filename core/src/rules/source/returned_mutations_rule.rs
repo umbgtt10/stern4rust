@@ -3,20 +3,12 @@
 // SPDX-License-Identifier: MIT
 
 use syn::FnArg;
-use syn::GenericArgument;
-use syn::ImplItem;
-use syn::Item;
-use syn::ItemImpl;
-use syn::ItemTrait;
 use syn::Pat;
-use syn::PathArguments;
-use syn::PathSegment;
 use syn::Signature;
-use syn::TraitItem;
-use syn::Type;
 use syn::spanned::Spanned;
 
-use crate::finding::parsing::inline_module::InlineModule;
+use crate::finding::parsing::authored_signatures::AuthoredSignatures;
+use crate::finding::parsing::mutable_reference_search::MutableReferenceSearch;
 use crate::finding::parsing::source_items::SourceItems;
 use crate::reporting::offence::Offence;
 use crate::reporting::rule_explanation::RuleExplanation;
@@ -60,50 +52,6 @@ impl ReturnedMutationsRule {
         Self
     }
 
-    // The signatures whose `&mut` arguments are the author's to remove: free
-    // functions, inherent methods and trait declarations. Trait impls are the
-    // deliberate omission -- their shape is the trait's.
-    fn signatures(items: &[Item]) -> Vec<&Signature> {
-        items.iter().flat_map(Self::signatures_in_item).collect()
-    }
-
-    fn signatures_in_item(item: &Item) -> Vec<&Signature> {
-        match item {
-            Item::Fn(function) => vec![&function.sig],
-            Item::Impl(block) => Self::signatures_in_impl(block),
-            Item::Trait(declaration) => Self::signatures_in_trait(declaration),
-            Item::Mod(module) => InlineModule::items(module)
-                .map(Self::signatures)
-                .unwrap_or_default(),
-            _ => Vec::new(),
-        }
-    }
-
-    fn signatures_in_impl(block: &ItemImpl) -> Vec<&Signature> {
-        if block.trait_.is_some() {
-            return Vec::new();
-        }
-        block
-            .items
-            .iter()
-            .filter_map(|item| match item {
-                ImplItem::Fn(method) => Some(&method.sig),
-                _ => None,
-            })
-            .collect()
-    }
-
-    fn signatures_in_trait(declaration: &ItemTrait) -> Vec<&Signature> {
-        declaration
-            .items
-            .iter()
-            .filter_map(|item| match item {
-                TraitItem::Fn(method) => Some(&method.sig),
-                _ => None,
-            })
-            .collect()
-    }
-
     // Every offending parameter is reported, because turning each one into a
     // return value is a separate edit.
     fn offences(file: &SourceFile, signature: &Signature) -> Vec<Offence> {
@@ -122,7 +70,7 @@ impl ReturnedMutationsRule {
         let FnArg::Typed(typed) = argument else {
             return None;
         };
-        if !Self::references_mut(&typed.ty) {
+        if !MutableReferenceSearch::new(false).finds_in(&typed.ty) {
             return None;
         }
         Some((
@@ -135,40 +83,6 @@ impl ReturnedMutationsRule {
         match pattern {
             Pat::Ident(binding) => binding.ident.to_string(),
             _ => "_".to_string(),
-        }
-    }
-
-    // A mutable reference anywhere a parameter's type structurally contains it is
-    // the argument the caller writes through -- but a callback's own contract,
-    // written `FnMut(&mut T)` or `fn(&mut T)`, is not descended into.
-    fn references_mut(ty: &Type) -> bool {
-        match ty {
-            Type::Reference(reference) => {
-                reference.mutability.is_some() || Self::references_mut(&reference.elem)
-            }
-            Type::Tuple(tuple) => tuple.elems.iter().any(Self::references_mut),
-            Type::Paren(inner) => Self::references_mut(&inner.elem),
-            Type::Group(inner) => Self::references_mut(&inner.elem),
-            Type::Array(array) => Self::references_mut(&array.elem),
-            Type::Slice(slice) => Self::references_mut(&slice.elem),
-            Type::Path(path) => path.path.segments.iter().any(Self::segment_references_mut),
-            _ => false,
-        }
-    }
-
-    fn segment_references_mut(segment: &PathSegment) -> bool {
-        match &segment.arguments {
-            PathArguments::AngleBracketed(arguments) => {
-                arguments.args.iter().any(Self::argument_references_mut)
-            }
-            _ => false,
-        }
-    }
-
-    fn argument_references_mut(argument: &GenericArgument) -> bool {
-        match argument {
-            GenericArgument::Type(ty) => Self::references_mut(ty),
-            _ => false,
         }
     }
 
@@ -201,7 +115,12 @@ impl Rule for ReturnedMutationsRule {
     }
 
     fn check(&self, file: &SourceFile) -> Vec<Offence> {
-        SourceItems::offences(Self::SOURCE_ROOT, file, Self::signatures, Self::offences)
+        SourceItems::offences(
+            Self::SOURCE_ROOT,
+            file,
+            AuthoredSignatures::of,
+            Self::offences,
+        )
     }
 
     fn check_workspace(&self, _files: &[SourceFile]) -> Vec<Offence> {

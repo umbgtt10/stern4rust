@@ -4,6 +4,7 @@
 
 pub mod declared_by_name_rule;
 pub mod header_rule;
+pub mod immutable_returns_rule;
 pub mod imported_paths_rule;
 pub mod named_subject_rule;
 pub mod ordered_imports_rule;

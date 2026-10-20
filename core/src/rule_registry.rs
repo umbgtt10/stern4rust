@@ -16,6 +16,7 @@ use crate::rules::manifest::spdx_matches_manifest_rule::SpdxMatchesManifestRule;
 use crate::rules::manifest::workspace_dependencies_rule::WorkspaceDependenciesRule;
 use crate::rules::source::declared_by_name_rule::DeclaredByNameRule;
 use crate::rules::source::header_rule::HeaderRule;
+use crate::rules::source::immutable_returns_rule::ImmutableReturnsRule;
 use crate::rules::source::imported_paths_rule::ImportedPathsRule;
 use crate::rules::source::named_subject_rule::NamedSubjectRule;
 use crate::rules::source::ordered_imports_rule::OrderedImportsRule;
@@ -67,6 +68,7 @@ impl RuleRegistry {
                     .max_subfolders_per_directory
                     .unwrap_or(DirectorySubfolderCountRule::DEFAULT_LIMIT),
             )),
+            Box::new(ImmutableReturnsRule::new()),
             Box::new(ImportedPathsRule::new()),
             Box::new(ModuleRegistryRule::new()),
             Box::new(NamedSubjectRule::new()),

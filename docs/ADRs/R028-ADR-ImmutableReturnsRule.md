@@ -1,6 +1,6 @@
 # R028-ADR-ImmutableReturnsRule
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-10-20
 
 ## Context
@@ -57,6 +57,10 @@ Four functions return a mutable reference:
 The rule is insurance rather than a cleanup: the family already does not lend
 its internals, and two offences fix by returning `Self`.
 
+**Re-run with this tool's finders**, the built rule against all sixteen
+repositories on the day it landed: the same two offences, the two
+`&'static mut` left alone, and fifteen repositories clean, this one among them.
+
 ## Rejected alternatives
 
 **Folding it into R022.** The detection is shared, but the concern is not: R022
@@ -77,6 +81,11 @@ write.
 **`&mut self` is the only way a type changes**, and R022 and this rule between
 them make every other mutation visible in a return value.
 
+**The walk R022 carried privately is shared.** `MutableReferenceSearch` asks
+"does this type hold a mutable reference", with statics skipped or not, and
+`AuthoredSignatures` collects the signatures an author can change; both rules
+read them, and R022's offences did not change.
+
 **Two offences on the day it ships**, both in one analysis workspace.
 
 ### What this rule does not catch
@@ -89,13 +98,26 @@ them make every other mutation visible in a return value.
 
 ## Enforcement
 
-To be written test-first when the rule is built: `&mut T`, wrapped and in a
-tuple; a named lifetime; `&'static mut` left alone; trait impls left alone and a
-crate's own trait reported at its declaration; `impl FnMut(&mut T)` not
-descended; `-> &mut Self` and its correction; `tests/` exempt; the unparseable
-file; `check_workspace`, `is_configured`, the name and the requirement;
-`tests/rule_registry_tests.rs` updated. This crate returns no mutable reference
-today.
+`tests/rules/source/immutable_returns_rule_tests.rs` -- eighteen tests: a free
+function, an inherent method and a trait declaration returning `&mut`, each
+reported; a `&mut` inside a generic and inside a tuple; a function in an inline
+module; `-> &mut Self` offered `self` by value and any other `&mut` offered the
+value; a shared reference, a value, a `&'static mut`, a trait impl and a
+returned `impl FnMut(&mut T)` each left alone; `tests/` exempt; the unparseable
+file; `check_workspace`, `is_configured`, the name and the requirement.
+
+`tests/finding/parsing/mutable_reference_search_tests.rs` (twelve tests) pins
+the walk on its own, statics skipped and not, and
+`tests/finding/parsing/authored_signatures_tests.rs` (six) the signatures it is
+applied to. `returned-mutations`' own tests are unchanged and still pass on the
+shared walk.
+
+`tests/rule_registry_tests.rs` -- the four rule-name lists include
+`immutable-returns` -- and `tests/runner_tests.rs`, whose `--rules` listing now
+holds twenty-five rules.
+
+Stage 2 runs this tool, built from the checkout, against this crate with every
+rule applied and zero offences.
 
 ## Related
 

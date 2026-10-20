@@ -4,6 +4,34 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+One rule added, on by default, so it moves what this tool reports about your
+code once it is released. A function returning a mutable reference becomes an
+offence; to adopt it later, add `skip = ["immutable-returns"]` to your
+`stern4rust.toml` once you install a version that knows the name.
+
+### Added
+- **`immutable-returns`: a function does not hand out a mutable reference.** Any
+  function in `src/` whose return type is, or structurally contains, a mutable
+  reference -- `-> &mut T`, `-> Option<&mut T>`, `-> (usize, &mut [T])` -- is
+  reported, one offence per function, with the correction to return the value or
+  give the type a method that makes the change; for `-> &mut Self`, to take and
+  return `self` by value. `&'static mut` is left alone, and so are trait impl
+  methods (reported at the author's own trait declaration) and a returned
+  callback's contract. `tests/` is exempt.
+  [R028](docs/ADRs/R028-ADR-ImmutableReturnsRule.md)
+
+  The rule is clean on this repository and on fifteen of the sixteen
+  repositories in the family, and reports two offences in the other.
+
+### Changed
+- The type walk `returned-mutations` carried privately is now
+  `MutableReferenceSearch`, shared with `immutable-returns`, which can pass over
+  `&'static mut`; the signatures it collected -- free functions, inherent methods,
+  trait declarations, inline modules -- are `AuthoredSignatures`. No offence
+  `returned-mutations` reports changed.
+
 ## [0.17.0] - 2026-10-19
 
 One rule added, and it is on by default, so it moves what this tool reports

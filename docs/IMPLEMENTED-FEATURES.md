@@ -3,6 +3,19 @@
 What `cargo-stern4rust` does today. Anything not listed here is not built, and
 the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 
+## Unreleased
+
+### Rules
+
+- **`immutable-returns`** -- a function does not hand out a mutable reference:
+  any function in `src/` whose return type is, or structurally contains, a
+  mutable reference is reported, with `-> &mut Self` offered `self` by value.
+  `&'static mut`, trait impl methods (reported at the author's own trait
+  declaration) and returned callback contracts are left alone; `tests/` is
+  exempt. Clean on this repository and on fifteen of the sixteen repositories in
+  the family; two offences in the other. On by default.
+  [R028](ADRs/R028-ADR-ImmutableReturnsRule.md)
+
 ## Version 0.17.0
 
 ### Rules
