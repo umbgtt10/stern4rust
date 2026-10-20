@@ -28,7 +28,11 @@ file one type's ([R007](ADRs/R007-ADR-SingleImplementedTypeRule.md),
 [R026](ADRs/R026-ADR-ImplementedInOneFileRule.md)), and where everything sits is
 decided by a rule rather than a writer
 ([R019](ADRs/R019-ADR-OrderedImportsRule.md),
-[R027](ADRs/R027-ADR-OrderedImplFunctionsRule.md)). `grip4rust` scores the
+[R027](ADRs/R027-ADR-OrderedImplFunctionsRule.md)). A function's signature says what it
+gives back: no mutable reference lent
+([R028](ADRs/R028-ADR-ImmutableReturnsRule.md)), no two positions a caller can
+swap ([R029](ADRs/R029-ADR-DistinctTupleElementsRule.md)), and failures a test
+can match ([R030](ADRs/R030-ADR-TypedErrorsRule.md)). `grip4rust` scores the
 result -- pure functions, public entry points, trait seams, injected
 dependencies -- which makes it this tool's measure of whether the rules are
 working rather than a neighbour that happens to share a family name.
