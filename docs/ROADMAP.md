@@ -15,6 +15,29 @@ The rules are the things a reviewer would otherwise have to say by hand, every
 time, forever — and the ones that quietly stop being true across a codebase the
 moment nobody is checking.
 
+**The newer rules lean one way: towards functional code with few side effects,
+built to be tested.** A function returns what it produces rather than writing it
+through a parameter ([R022](ADRs/R022-ADR-ReturnedMutationsRule.md)). A
+constructor stores the dependencies it is given rather than operating them
+(an open point). A function is a type's tested contract or its private detail,
+with no third state between them
+([R013](ADRs/R013-ADR-TestedPublicApiRule.md),
+[R025](ADRs/R025-ADR-PublicOrPrivateRule.md)). A type is one file's subject and a
+file one type's ([R007](ADRs/R007-ADR-SingleImplementedTypeRule.md),
+[R024](ADRs/R024-ADR-OwnedFunctionsRule.md),
+[R026](ADRs/R026-ADR-ImplementedInOneFileRule.md)), and where everything sits is
+decided by a rule rather than a writer
+([R019](ADRs/R019-ADR-OrderedImportsRule.md),
+[R027](ADRs/R027-ADR-OrderedImplFunctionsRule.md)). `grip4rust` scores the
+result -- pure functions, public entry points, trait seams, injected
+dependencies -- which makes it this tool's measure of whether the rules are
+working rather than a neighbour that happens to share a family name.
+
+That direction matters most where most code is written by agents. Code that can
+be tested without mocking the world, changed in one place and found where a rule
+says it is, is code an agent can work on safely in a session that remembers
+nothing of the last.
+
 ## Guiding Principles
 
 1. **A finding is worth as much as what can be done with it.** Every offence
