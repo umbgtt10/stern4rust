@@ -32,7 +32,10 @@ decided by a rule rather than a writer
 gives back: no mutable reference lent
 ([R028](ADRs/R028-ADR-ImmutableReturnsRule.md)), no two positions a caller can
 swap ([R029](ADRs/R029-ADR-DistinctTupleElementsRule.md)), and failures a test
-can match ([R030](ADRs/R030-ADR-TypedErrorsRule.md)). `grip4rust` scores the
+can match ([R030](ADRs/R030-ADR-TypedErrorsRule.md)). A constant has one home:
+private at the top of the file that reads it, or shared from a constants file
+([R031](ADRs/R031-ADR-LeadingConstantsRule.md),
+[R032](ADRs/R032-ADR-SharedConstantsRule.md)). `grip4rust` scores the
 result -- pure functions, public entry points, trait seams, injected
 dependencies -- which makes it this tool's measure of whether the rules are
 working rather than a neighbour that happens to share a family name.
