@@ -278,3 +278,63 @@ What it owes before it ships:
 - whether a constructor that calls a dependency's `&self` methods before
   storing it is the same smell or a different rule.
 
+## No rule sees an effect a function hides behind `()`
+
+A function that takes neither `&mut self` nor a `&mut` parameter and returns
+`()` can only act by side effect -- I/O, a log line, a static, a channel, a cell
+behind `&self`. With [R022](ADRs/R022-ADR-ReturnedMutationsRule.md), a rule
+saying such a function returns something would leave every effect in a
+signature: `&mut self`, or a value handed back. That is the functional core the
+newer rules lean towards, and what `grip4rust` scores as pure functions.
+
+A census on 2026-10-20 over sixteen repositories found 602 such functions in
+8,425 -- 348 `&self` methods, 158 associated or free functions, 9 consuming
+`self`, and 87 that already take a `&mut` parameter and are R022's. Read through,
+they are mostly where effects belong: log sinks, report printers, output
+dispatchers, transports, test-harness commands, firmware `init` and `run`. The
+rule would report the imperative shell for being one.
+
+It earns its place only scoped to the code that should be pure -- a protocol's
+core, not its adapters -- and this tool has no notion of which package is which.
+What it owes before it ships:
+
+- a way to name the core: a per-package opt-in in `stern4rust.toml`, the
+  inverse of the usual skip, so the rule is off unless a package says it is pure;
+- the census again, on the packages a repository would name, to see whether
+  what is left is a defect or a log line;
+- the same exemptions as [R024](ADRs/R024-ADR-OwnedFunctionsRule.md) for
+  functions a framework requires, and `-> !`.
+
+## No rule sees a literal repeated where a name belongs
+
+`32` written twenty-five times across a crate is a hash length nobody named, and
+the day it changes, the copy that was missed disagrees in silence. Clippy has no
+lint for it: `unreadable_literal`, `decimal_literal_representation` and
+`approx_constant` judge how a literal is written, not whether it wanted a name.
+
+A census on 2026-10-20 over sixteen repositories weighed two rules:
+
+- **No numeric literal outside a constant**, 0 and 1 excepted: 2,354 offences,
+  led by `2`, `3`, `5`, `4`, `32`, `8`, `100`, `10`, `20`, `100.0` and `1000.0` --
+  percentages, millisecond conversions, sizes, indices. The classic rule reports
+  arithmetic for being arithmetic. Rejected.
+- **The same literal twice or more in a crate**, outside constant initialisers,
+  0, 1, 2 and -1 excepted, values compared after normalising (`1_000u64` is
+  `1000`): 366 groups, 1,431 occurrences, 192 groups spanning more than one file.
+
+The second has real signal at its top: `32` repeated 25 to 32 times in each of
+`etheram-ibft`'s `evm`, `node`, `validation` and `system-tests` crates, a hash
+length; `4` across both flash-storage crates, a flash word; `5` fourteen times
+in one analysis crate, the number of terms in a model. Below that it is `3`, `4`
+and `5` as cluster sizes in test-support crates, and fixtures.
+
+What it owes before it ships:
+
+- a threshold: repeats spanning files only, a floor on the value, or both --
+  measured, not chosen;
+- the per-package skip for test-support crates, as
+  [R030](ADRs/R030-ADR-TypedErrorsRule.md) uses for harnesses;
+- where the named constant goes, which
+  [R032](ADRs/R032-ADR-SharedConstantsRule.md) answers: one file's constant is
+  private to it, a shared one lives in a constants file.
+
