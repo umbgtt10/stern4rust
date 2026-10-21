@@ -45,34 +45,15 @@ impl PairedTestFileRule {
         Self
     }
 
+    fn file_name(path: &str) -> &str {
+        path.rsplit('/').next().unwrap_or(path)
+    }
+
     fn is_test_file(path: &str) -> bool {
         path.starts_with(Self::TESTS_ROOT)
             && path.ends_with(Self::TESTS_POSTFIX)
             && !path.ends_with(Self::PROPTEST_POSTFIX)
             && Self::file_name(path) != Self::REGISTRY
-    }
-
-    fn file_name(path: &str) -> &str {
-        path.rsplit('/').next().unwrap_or(path)
-    }
-
-    // tests/a/b_tests.rs pairs with src/a/b.rs. By path rather than by name, so
-    // a test file in the wrong directory is as unpaired as one whose source is
-    // gone -- both leave a reader looking in the wrong place.
-    fn source_of(path: &str) -> String {
-        let without_root = path.strip_prefix(Self::TESTS_ROOT).unwrap_or(path);
-        let stem = without_root
-            .strip_suffix(Self::TESTS_POSTFIX)
-            .unwrap_or(without_root);
-        format!("{}{stem}.rs", Self::SOURCE_ROOT)
-    }
-
-    fn present(files: &[SourceFile]) -> BTreeSet<&str> {
-        files
-            .iter()
-            .map(SourceFile::relative_path)
-            .filter(|path| path.starts_with(Self::SOURCE_ROOT))
-            .collect()
     }
 
     // The correction does not say "create the missing file". Measured across a
@@ -90,6 +71,25 @@ impl PairedTestFileRule {
         )
         .with_subject(path)
         .with_expected(expected)
+    }
+
+    fn present(files: &[SourceFile]) -> BTreeSet<&str> {
+        files
+            .iter()
+            .map(SourceFile::relative_path)
+            .filter(|path| path.starts_with(Self::SOURCE_ROOT))
+            .collect()
+    }
+
+    // tests/a/b_tests.rs pairs with src/a/b.rs. By path rather than by name, so
+    // a test file in the wrong directory is as unpaired as one whose source is
+    // gone -- both leave a reader looking in the wrong place.
+    fn source_of(path: &str) -> String {
+        let without_root = path.strip_prefix(Self::TESTS_ROOT).unwrap_or(path);
+        let stem = without_root
+            .strip_suffix(Self::TESTS_POSTFIX)
+            .unwrap_or(without_root);
+        format!("{}{stem}.rs", Self::SOURCE_ROOT)
     }
 }
 

@@ -9,6 +9,7 @@ pub mod free_function_finder_tests;
 pub mod gated_modules_tests;
 pub mod identifiers_tests;
 pub mod impl_blocks_tests;
+pub mod impl_layout_parser_tests;
 pub mod implemented_type_finder_tests;
 pub mod inline_module_tests;
 pub mod item_naming_tests;

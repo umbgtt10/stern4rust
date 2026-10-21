@@ -45,6 +45,10 @@ impl RepeatedTupleFinder {
         ))
     }
 
+    fn text(ty: &Type) -> String {
+        Self::tightened(&Self::without_lifetimes(&ty.to_token_stream().to_string()))
+    }
+
     // Tokens rejoined the way the type is written: a space only between two words
     // and after a separator, so `& mut Vec < u8 >` reads `&mut Vec<u8>`.
     fn tightened(text: &str) -> String {
@@ -58,10 +62,6 @@ impl RepeatedTupleFinder {
                 format!("{joined}{word}")
             }
         })
-    }
-
-    fn text(ty: &Type) -> String {
-        Self::tightened(&Self::without_lifetimes(&ty.to_token_stream().to_string()))
     }
 
     fn without_lifetimes(text: &str) -> String {

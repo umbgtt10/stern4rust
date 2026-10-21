@@ -21,8 +21,10 @@
 //! `docs/ADRs/ADR-LibrarySurfaceIsNotAnApi.md`.
 
 pub mod adoption;
+pub mod blank_lines;
 pub mod finding;
 pub mod leading_constants_rewriter;
+pub mod ordered_impl_functions_rewriter;
 pub mod reporting;
 pub mod rewriter_registry;
 pub mod rule;

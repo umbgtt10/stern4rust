@@ -50,21 +50,6 @@ impl TestFileNamePostfixRule {
         file.is_under(Self::TESTS_ROOT, &Self::REGISTRIES)
     }
 
-    // Descends into inline modules: a test does not stop being a test for
-    // sitting one level down, and the file still holds it.
-    fn tests_in(items: &[Item]) -> usize {
-        items
-            .iter()
-            .map(|item| match item {
-                Item::Fn(function) if Self::is_test(&function.attrs) => 1,
-                Item::Mod(module) => InlineModule::items(module)
-                    .map(Self::tests_in)
-                    .unwrap_or_default(),
-                _ => 0,
-            })
-            .sum()
-    }
-
     // The last segment is what says so, which is what lets `#[tokio::test]`
     // count without naming any runtime here.
     fn is_test(attrs: &[Attribute]) -> bool {
@@ -74,14 +59,6 @@ impl TestFileNamePostfixRule {
                 .last()
                 .is_some_and(|segment| segment.ident == "test")
         })
-    }
-
-    fn suggested_name(relative_path: &str) -> String {
-        let stem = relative_path
-            .strip_suffix(".rs")
-            .unwrap_or(relative_path)
-            .to_string();
-        format!("{stem}{}", Self::POSTFIX)
     }
 
     // Reported at line 1: the offence is the file's name, not any one test in
@@ -102,6 +79,29 @@ impl TestFileNamePostfixRule {
         )
         .with_subject(path)
         .with_expected(&suggested)
+    }
+
+    fn suggested_name(relative_path: &str) -> String {
+        let stem = relative_path
+            .strip_suffix(".rs")
+            .unwrap_or(relative_path)
+            .to_string();
+        format!("{stem}{}", Self::POSTFIX)
+    }
+
+    // Descends into inline modules: a test does not stop being a test for
+    // sitting one level down, and the file still holds it.
+    fn tests_in(items: &[Item]) -> usize {
+        items
+            .iter()
+            .map(|item| match item {
+                Item::Fn(function) if Self::is_test(&function.attrs) => 1,
+                Item::Mod(module) => InlineModule::items(module)
+                    .map(Self::tests_in)
+                    .unwrap_or_default(),
+                _ => 0,
+            })
+            .sum()
     }
 }
 

@@ -23,10 +23,6 @@ pub struct PackageSections {
 }
 
 impl PackageSections {
-    pub fn new(sections: BTreeMap<String, PackageConfig>) -> Self {
-        Self { sections }
-    }
-
     // No file and a file with no sections are the same answer here. They differ
     // only for `ConfigFile::load`, which has to tell a missing file from an
     // unreadable one.
@@ -36,6 +32,14 @@ impl PackageSections {
                 .map(|file| file.packages)
                 .unwrap_or_default(),
         ))
+    }
+
+    pub fn new(sections: BTreeMap<String, PackageConfig>) -> Self {
+        Self { sections }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.sections.is_empty()
     }
 
     pub fn of(&self, name: &str) -> Option<&PackageConfig> {
@@ -64,10 +68,6 @@ impl PackageSections {
         skipped.sort();
         skipped.dedup();
         skipped
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.sections.is_empty()
     }
 
     // A section naming no package in the *workspace* is an error, for the reason

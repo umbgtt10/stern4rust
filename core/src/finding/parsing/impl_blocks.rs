@@ -54,19 +54,12 @@ impl ImplBlocks {
             .collect()
     }
 
-    pub fn targets(&self) -> &[String] {
-        &self.targets
-    }
-
     pub fn names(&self, identifier: &str) -> bool {
         self.uses.contains(identifier)
     }
 
-    fn collect(items: &[Item]) -> Vec<&ItemImpl> {
-        InlineModule::flatten(items)
-            .into_iter()
-            .filter_map(Self::as_impl)
-            .collect()
+    pub fn targets(&self) -> &[String] {
+        &self.targets
     }
 
     fn as_impl(item: &Item) -> Option<&ItemImpl> {
@@ -74,6 +67,13 @@ impl ImplBlocks {
             Item::Impl(block) => Some(block),
             _ => None,
         }
+    }
+
+    fn collect(items: &[Item]) -> Vec<&ItemImpl> {
+        InlineModule::flatten(items)
+            .into_iter()
+            .filter_map(Self::as_impl)
+            .collect()
     }
 
     fn target(self_ty: &Type) -> Option<String> {

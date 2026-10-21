@@ -23,6 +23,7 @@ use crate::rules::source::implemented_in_one_file_rule::ImplementedInOneFileRule
 use crate::rules::source::imported_paths_rule::ImportedPathsRule;
 use crate::rules::source::leading_constants_rule::LeadingConstantsRule;
 use crate::rules::source::named_subject_rule::NamedSubjectRule;
+use crate::rules::source::ordered_impl_functions_rule::OrderedImplFunctionsRule;
 use crate::rules::source::ordered_imports_rule::OrderedImportsRule;
 use crate::rules::source::owned_functions_rule::OwnedFunctionsRule;
 use crate::rules::source::public_or_private_rule::PublicOrPrivateRule;
@@ -50,6 +51,95 @@ pub struct RuleRegistry {
 }
 
 impl RuleRegistry {
+    pub fn from_config(config: &Config) -> Self {
+        let rules = Self::all(config)
+            .into_iter()
+            .filter(|rule| rule.is_configured() && config.selection.includes(rule.name()))
+            .collect();
+        Self { rules }
+    }
+
+    pub fn new(rules: Vec<Box<dyn Rule>>) -> Self {
+        Self { rules }
+    }
+
+    pub fn check(&self, file: &SourceFile) -> Vec<Offence> {
+        self.rules
+            .iter()
+            .flat_map(|rule| rule.check(file))
+            .collect()
+    }
+
+    // Asked once, after every file has been read, for the rules whose subject is
+    // the tree rather than a file in it.
+    pub fn check_workspace(&self, files: &[SourceFile]) -> Vec<Offence> {
+        self.rules
+            .iter()
+            .flat_map(|rule| rule.check_workspace(files))
+            .collect()
+    }
+
+    // In registry order, so `--rules` reads in the same order as the roster the
+    // report prints.
+    pub fn explanations(&self) -> Vec<RuleExplanation> {
+        self.rules.iter().map(|rule| rule.explanation()).collect()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.rules.is_empty()
+    }
+
+    // Every rule this tool has, whether or not this run configured or selected
+    // it. Read off the same list `from_config` narrows, so a rule cannot be
+    // applied by a default run while `--rule <name>` calls it unknown.
+    pub fn known_names() -> Vec<&'static str> {
+        Self::all(&Config::default())
+            .iter()
+            .map(|rule| rule.name())
+            .collect()
+    }
+
+    pub fn names(&self) -> Vec<&'static str> {
+        self.rules.iter().map(|rule| rule.name()).collect()
+    }
+
+    // What the switches turned off, which is not the same as what went
+    // unregistered: a header rule left out for want of a header file was never
+    // deselected by anybody.
+    pub fn skipped_names(selection: &RuleSelection) -> Vec<&'static str> {
+        Self::known_names()
+            .into_iter()
+            .filter(|name| !selection.includes(name))
+            .collect()
+    }
+
+    // Each with what it was waiting for, taken from the rule rather than
+    // guessed at by the printer. A rule that could not run is built by `all`
+    // even though `from_config` dropped it, which is what lets it still answer.
+    pub fn unconfigured(&self, config: &Config) -> Vec<UnconfiguredRule> {
+        let applied = self.names();
+        Self::all(config)
+            .iter()
+            .filter(|rule| {
+                config.selection.includes(rule.name()) && !applied.contains(&rule.name())
+            })
+            .map(|rule| {
+                UnconfiguredRule::new(rule.name(), rule.requirement().unwrap_or("not configured"))
+            })
+            .collect()
+    }
+
+    // Selected, but not registered, because it had nothing to work from. The
+    // third state: neither applied nor skipped. Reporting it as skipped would
+    // blame the reader for a choice they did not make, and reporting it as
+    // nothing at all would let a run check less than it appears to.
+    pub fn unconfigured_names(&self, config: &Config) -> Vec<&'static str> {
+        self.unconfigured(config)
+            .into_iter()
+            .map(|rule| rule.name)
+            .collect()
+    }
+
     // Every rule this tool has, in report order. The single list: `from_config`
     // narrows it and `known_names` reads its names, so neither can hold an idea
     // of the rule set that the other does not share.
@@ -80,6 +170,7 @@ impl RuleRegistry {
             Box::new(LeadingConstantsRule::new()),
             Box::new(ModuleRegistryRule::new()),
             Box::new(NamedSubjectRule::new()),
+            Box::new(OrderedImplFunctionsRule::new()),
             Box::new(OrderedImportsRule::new()),
             Box::new(OwnedFunctionsRule::new()),
             Box::new(PairedTestFileRule::new()),
@@ -102,94 +193,5 @@ impl RuleRegistry {
             )),
             Box::new(HeaderRule::new(config.expected_header.clone())),
         ]
-    }
-
-    pub fn from_config(config: &Config) -> Self {
-        let rules = Self::all(config)
-            .into_iter()
-            .filter(|rule| rule.is_configured() && config.selection.includes(rule.name()))
-            .collect();
-        Self { rules }
-    }
-
-    pub fn new(rules: Vec<Box<dyn Rule>>) -> Self {
-        Self { rules }
-    }
-
-    // Every rule this tool has, whether or not this run configured or selected
-    // it. Read off the same list `from_config` narrows, so a rule cannot be
-    // applied by a default run while `--rule <name>` calls it unknown.
-    pub fn known_names() -> Vec<&'static str> {
-        Self::all(&Config::default())
-            .iter()
-            .map(|rule| rule.name())
-            .collect()
-    }
-
-    // What the switches turned off, which is not the same as what went
-    // unregistered: a header rule left out for want of a header file was never
-    // deselected by anybody.
-    pub fn skipped_names(selection: &RuleSelection) -> Vec<&'static str> {
-        Self::known_names()
-            .into_iter()
-            .filter(|name| !selection.includes(name))
-            .collect()
-    }
-
-    // Selected, but not registered, because it had nothing to work from. The
-    // third state: neither applied nor skipped. Reporting it as skipped would
-    // blame the reader for a choice they did not make, and reporting it as
-    // nothing at all would let a run check less than it appears to.
-    pub fn unconfigured_names(&self, config: &Config) -> Vec<&'static str> {
-        self.unconfigured(config)
-            .into_iter()
-            .map(|rule| rule.name)
-            .collect()
-    }
-
-    // Each with what it was waiting for, taken from the rule rather than
-    // guessed at by the printer. A rule that could not run is built by `all`
-    // even though `from_config` dropped it, which is what lets it still answer.
-    pub fn unconfigured(&self, config: &Config) -> Vec<UnconfiguredRule> {
-        let applied = self.names();
-        Self::all(config)
-            .iter()
-            .filter(|rule| {
-                config.selection.includes(rule.name()) && !applied.contains(&rule.name())
-            })
-            .map(|rule| {
-                UnconfiguredRule::new(rule.name(), rule.requirement().unwrap_or("not configured"))
-            })
-            .collect()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.rules.is_empty()
-    }
-
-    pub fn names(&self) -> Vec<&'static str> {
-        self.rules.iter().map(|rule| rule.name()).collect()
-    }
-
-    // In registry order, so `--rules` reads in the same order as the roster the
-    // report prints.
-    pub fn explanations(&self) -> Vec<RuleExplanation> {
-        self.rules.iter().map(|rule| rule.explanation()).collect()
-    }
-
-    pub fn check(&self, file: &SourceFile) -> Vec<Offence> {
-        self.rules
-            .iter()
-            .flat_map(|rule| rule.check(file))
-            .collect()
-    }
-
-    // Asked once, after every file has been read, for the rules whose subject is
-    // the tree rather than a file in it.
-    pub fn check_workspace(&self, files: &[SourceFile]) -> Vec<Offence> {
-        self.rules
-            .iter()
-            .flat_map(|rule| rule.check_workspace(files))
-            .collect()
     }
 }

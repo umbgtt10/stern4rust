@@ -39,21 +39,6 @@ impl SingleImplementedTypeRule {
         !file.relative_path().starts_with(Self::TESTS_ROOT)
     }
 
-    // The subject is the type the file is named after, wherever it stands, and
-    // every other one is reported, so the offence names the type to move rather
-    // than saying the file has too many. Taking the first instead blamed the
-    // subject whenever a companion was declared above it. With no type named for
-    // the file, the first stands in. "Named after" is named-subject's reading --
-    // the stem is the type's name or its last words -- so the two rules agree on
-    // which type a file is about.
-    fn subject<'a>(file: &SourceFile, found: &'a [ImplementedType]) -> Option<&'a ImplementedType> {
-        let stem = FileStem::of(file.relative_path());
-        found
-            .iter()
-            .find(|candidate| stem.names(&candidate.name))
-            .or_else(|| found.first())
-    }
-
     fn offence(&self, file: &SourceFile, subject: &str, extra: &ImplementedType) -> Offence {
         Offence::new(
             file.relative_path(),
@@ -71,6 +56,21 @@ impl SingleImplementedTypeRule {
             ),
         )
         .with_subject(&extra.name)
+    }
+
+    // The subject is the type the file is named after, wherever it stands, and
+    // every other one is reported, so the offence names the type to move rather
+    // than saying the file has too many. Taking the first instead blamed the
+    // subject whenever a companion was declared above it. With no type named for
+    // the file, the first stands in. "Named after" is named-subject's reading --
+    // the stem is the type's name or its last words -- so the two rules agree on
+    // which type a file is about.
+    fn subject<'a>(file: &SourceFile, found: &'a [ImplementedType]) -> Option<&'a ImplementedType> {
+        let stem = FileStem::of(file.relative_path());
+        found
+            .iter()
+            .find(|candidate| stem.names(&candidate.name))
+            .or_else(|| found.first())
     }
 }
 

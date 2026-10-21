@@ -32,10 +32,6 @@ impl ExclusionSet {
         Ok(Self { exclusions })
     }
 
-    pub fn is_empty(&self) -> bool {
-        self.exclusions.is_empty()
-    }
-
     pub fn apply(&self, paths: Vec<PathBuf>, root: &Path) -> ExclusionOutcome {
         let mut counts = vec![0usize; self.exclusions.len()];
         let mut kept = Vec::new();
@@ -52,6 +48,10 @@ impl ExclusionSet {
             .map(|(exclusion, count)| (exclusion.pattern().to_string(), count))
             .collect();
         ExclusionOutcome::new(kept, excluded)
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.exclusions.is_empty()
     }
 
     fn covering(&self, path: &Path, root: &Path) -> Option<usize> {

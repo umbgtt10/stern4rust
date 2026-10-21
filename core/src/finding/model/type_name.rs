@@ -19,14 +19,14 @@ impl TypeName {
         }
     }
 
-    pub fn words(&self) -> &[String] {
-        &self.words
-    }
-
     // The file this type would live in on its own, so a correction names a path
     // rather than describing a convention.
     pub fn file_name(&self) -> String {
         format!("{}.rs", self.words.join("_"))
+    }
+
+    pub fn words(&self) -> &[String] {
+        &self.words
     }
 
     fn split(part: &str) -> Vec<String> {

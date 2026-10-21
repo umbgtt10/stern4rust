@@ -37,32 +37,18 @@ pub struct Baseline {
 }
 
 impl Baseline {
-    pub fn of(offences: &[Offence]) -> Self {
-        let mut counts: BTreeMap<String, usize> = BTreeMap::new();
-        for offence in offences {
-            *counts.entry(OffenceFingerprint::of(offence)).or_default() += 1;
-        }
-        Self { offences: counts }
-    }
-
     pub fn load(path: &Path) -> Result<Self> {
         let text = read_to_string(path)
             .with_context(|| format!("{} could not be read", path.display()))?;
         from_str(&text).with_context(|| format!("{} is not a valid baseline", path.display()))
     }
 
-    pub fn save(&self, path: &Path) -> Result<()> {
-        let text = to_string_pretty(self)
-            .with_context(|| format!("{} could not be rendered", path.display()))?;
-        write(path, text).with_context(|| format!("{} could not be written", path.display()))
-    }
-
-    pub fn len(&self) -> usize {
-        self.offences.values().sum()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.offences.is_empty()
+    pub fn of(offences: &[Offence]) -> Self {
+        let mut counts: BTreeMap<String, usize> = BTreeMap::new();
+        for offence in offences {
+            *counts.entry(OffenceFingerprint::of(offence)).or_default() += 1;
+        }
+        Self { offences: counts }
     }
 
     // Each fingerprint is forgiven up to the number of times the baseline
@@ -84,5 +70,19 @@ impl Baseline {
             }
         }
         BaselineOutcome::new(kept, suppressed, remaining.values().sum())
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.offences.is_empty()
+    }
+
+    pub fn len(&self) -> usize {
+        self.offences.values().sum()
+    }
+
+    pub fn save(&self, path: &Path) -> Result<()> {
+        let text = to_string_pretty(self)
+            .with_context(|| format!("{} could not be rendered", path.display()))?;
+        write(path, text).with_context(|| format!("{} could not be written", path.display()))
     }
 }

@@ -45,6 +45,31 @@ impl SpdxMatchesManifestRule {
         Self { license }
     }
 
+    fn declared_in(file: &SourceFile) -> Option<String> {
+        Self::header_of(file).into_iter().find_map(|line| {
+            line.split_once(Self::MARKER)
+                .map(|(_, found)| found.trim().to_string())
+        })
+    }
+
+    fn differs(&self, file: &SourceFile, found: &str, expected: &str) -> Offence {
+        Offence::new(
+            file.relative_path(),
+            1,
+            self.name(),
+            format!(
+                "{} declares `{found}` where the manifest declares `{expected}`",
+                file.relative_path()
+            ),
+            format!(
+                "change the header to `// {} {expected}`, or correct the manifest",
+                Self::MARKER
+            ),
+        )
+        .with_subject(file.relative_path())
+        .with_expected(expected)
+    }
+
     // Everything before the first line that is neither blank nor a comment.
     fn header_of(file: &SourceFile) -> Vec<&String> {
         file.lines()
@@ -54,13 +79,6 @@ impl SpdxMatchesManifestRule {
                 text.is_empty() || text.starts_with("//")
             })
             .collect()
-    }
-
-    fn declared_in(file: &SourceFile) -> Option<String> {
-        Self::header_of(file).into_iter().find_map(|line| {
-            line.split_once(Self::MARKER)
-                .map(|(_, found)| found.trim().to_string())
-        })
     }
 
     fn missing(&self, file: &SourceFile, expected: &str) -> Offence {
@@ -75,24 +93,6 @@ impl SpdxMatchesManifestRule {
             ),
             format!(
                 "add `// {} {expected}` to the header, or correct the manifest",
-                Self::MARKER
-            ),
-        )
-        .with_subject(file.relative_path())
-        .with_expected(expected)
-    }
-
-    fn differs(&self, file: &SourceFile, found: &str, expected: &str) -> Offence {
-        Offence::new(
-            file.relative_path(),
-            1,
-            self.name(),
-            format!(
-                "{} declares `{found}` where the manifest declares `{expected}`",
-                file.relative_path()
-            ),
-            format!(
-                "change the header to `// {} {expected}`, or correct the manifest",
                 Self::MARKER
             ),
         )

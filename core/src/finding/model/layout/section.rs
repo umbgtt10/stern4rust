@@ -17,17 +17,6 @@ pub enum Section {
 }
 
 impl Section {
-    // Reads as the thing itself, so an offence says "a constant follows a
-    // helper" rather than naming an enum variant at the reader.
-    pub fn label(self) -> &'static str {
-        match self {
-            Self::Imports => "import",
-            Self::Constants => "constant",
-            Self::Helpers => "helper",
-            Self::Tests => "test",
-        }
-    }
-
     // Imports and constants are the groups written without gaps. Helpers and
     // tests are separated by exactly one blank line.
     //
@@ -40,6 +29,17 @@ impl Section {
         match self {
             Self::Imports | Self::Constants => 0,
             _ => 1,
+        }
+    }
+
+    // Reads as the thing itself, so an offence says "a constant follows a
+    // helper" rather than naming an enum variant at the reader.
+    pub fn label(self) -> &'static str {
+        match self {
+            Self::Imports => "import",
+            Self::Constants => "constant",
+            Self::Helpers => "helper",
+            Self::Tests => "test",
         }
     }
 }

@@ -2,6 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::blank_lines::BlankLines;
 use crate::finding::model::layout::constant_layout::ConstantLayout;
 use crate::finding::parsing::constant_layout_parser::ConstantLayoutParser;
 use crate::rules::source::leading_constants_rule::LeadingConstantsRule;
@@ -30,20 +31,13 @@ impl LeadingConstantsRewriter {
         Self
     }
 
-    // The scope leading-constants applies, asked of the file rather than of the
-    // rule, as the test-file rewriter asks its own: a rule answers questions
-    // about a file, and authorising edits would be a second job.
-    fn governs(file: &SourceFile) -> bool {
-        file.is_under(Self::SOURCE_ROOT, &Self::REGISTRIES)
-    }
-
     fn assemble(file: &SourceFile, layout: &ConstantLayout) -> String {
         let lines = file.lines();
-        let head = Self::without_trailing_blanks(
-            lines[..layout.insertion_line - 1]
+        let head = BlankLines::without_trailing(
+            &lines[..layout.insertion_line - 1]
                 .iter()
                 .map(String::as_str)
-                .collect(),
+                .collect::<Vec<&str>>(),
         );
         let moved: Vec<&str> = layout
             .misplaced
@@ -67,6 +61,13 @@ impl LeadingConstantsRewriter {
         out
     }
 
+    // The scope leading-constants applies, asked of the file rather than of the
+    // rule, as the test-file rewriter asks its own: a rule answers questions
+    // about a file, and authorising edits would be a second job.
+    fn governs(file: &SourceFile) -> bool {
+        file.is_under(Self::SOURCE_ROOT, &Self::REGISTRIES)
+    }
+
     // Everything from the insertion point on, less the moved constants. A blank
     // line left beside one already kept where a constant was is dropped, so the
     // gap a constant leaves is one blank line, not two.
@@ -85,23 +86,7 @@ impl LeadingConstantsRewriter {
             after_removal &= blank;
             kept.push(line);
         }
-        Self::trimmed(kept)
-    }
-
-    fn trimmed(lines: Vec<&str>) -> Vec<&str> {
-        let start = lines
-            .iter()
-            .position(|line| !line.trim().is_empty())
-            .unwrap_or(lines.len());
-        Self::without_trailing_blanks(lines[start..].to_vec())
-    }
-
-    fn without_trailing_blanks(lines: Vec<&str>) -> Vec<&str> {
-        let end = lines
-            .iter()
-            .rposition(|line| !line.trim().is_empty())
-            .map_or(0, |last| last + 1);
-        lines[..end].to_vec()
+        BlankLines::without_trailing(&BlankLines::without_leading(&kept))
     }
 }
 

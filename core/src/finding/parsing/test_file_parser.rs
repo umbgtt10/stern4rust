@@ -43,26 +43,6 @@ impl TestFileParser {
         )
     }
 
-    fn item(file: &SourceFile, item: &Item, floor: usize) -> TestFileItem {
-        let span = item.span();
-        let first_line = file.block_start(span.start().line, floor);
-        TestFileItem::new(
-            Self::section(item),
-            Self::name(file, item, span.start().line),
-            first_line,
-            span.end().line,
-        )
-    }
-
-    fn section(item: &Item) -> Section {
-        match item {
-            Item::Use(_) => Section::Imports,
-            Item::Const(_) | Item::Static(_) => Section::Constants,
-            Item::Fn(function) if Self::is_test(&function.attrs) => Section::Tests,
-            _ => Section::Helpers,
-        }
-    }
-
     // `#[test]`, `#[tokio::test]` and any other harness spelled the same way.
     // Matching the last path segment rather than the whole path is what keeps
     // this from having to enumerate test frameworks.
@@ -75,6 +55,17 @@ impl TestFileParser {
         })
     }
 
+    fn item(file: &SourceFile, item: &Item, floor: usize) -> TestFileItem {
+        let span = item.span();
+        let first_line = file.block_start(span.start().line, floor);
+        TestFileItem::new(
+            Self::section(item),
+            Self::name(file, item, span.start().line),
+            first_line,
+            span.end().line,
+        )
+    }
+
     fn name(file: &SourceFile, item: &Item, start_line: usize) -> String {
         // An impl block belongs to the type it implements, so it sorts under
         // that name and sits beside the struct rather than drifting to the end
@@ -83,6 +74,15 @@ impl TestFileParser {
             return ItemNaming::implemented_type(&inner.self_ty);
         }
         ItemNaming::identifier(item).unwrap_or_else(|| ItemNaming::source_line(file, start_line))
+    }
+
+    fn section(item: &Item) -> Section {
+        match item {
+            Item::Use(_) => Section::Imports,
+            Item::Const(_) | Item::Static(_) => Section::Constants,
+            Item::Fn(function) if Self::is_test(&function.attrs) => Section::Tests,
+            _ => Section::Helpers,
+        }
     }
 
     // An import sorts and reports as it was written, which is how rustfmt orders

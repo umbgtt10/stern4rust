@@ -31,127 +31,6 @@ impl TestsLayoutRule {
         Self
     }
 
-    fn in_tests(files: &[SourceFile]) -> Vec<&SourceFile> {
-        files
-            .iter()
-            .filter(|file| file.relative_path().starts_with(Self::ROOT))
-            .collect()
-    }
-
-    fn missing_door(&self, present: &[&SourceFile]) -> Vec<Offence> {
-        if present
-            .iter()
-            .any(|file| file.relative_path() == "tests/all_tests.rs")
-        {
-            return Vec::new();
-        }
-        vec![
-            Offence::new(
-                "tests/all_tests.rs",
-                1,
-                self.name(),
-                "a tests folder is present but has no all_tests.rs, so nothing in it \
-             is compiled"
-                    .to_string(),
-                "create tests/all_tests.rs with the header and one `pub mod` line per \
-                 file in tests/"
-                    .to_string(),
-            )
-            .with_subject("tests/all_tests.rs"),
-        ]
-    }
-
-    // A second one below the top is not a door; it is a file with a misleading
-    // name that no `pub mod` will ever point at.
-    fn stray_doors(&self, present: &[&SourceFile]) -> Vec<Offence> {
-        present
-            .iter()
-            .filter(|file| {
-                file.relative_path().ends_with("/all_tests.rs")
-                    && file.relative_path() != "tests/all_tests.rs"
-            })
-            .map(|file| {
-                Offence::new(
-                    file.relative_path(),
-                    1,
-                    self.name(),
-                    "only tests/all_tests.rs is a registry; this one is never \
-                     reached"
-                        .to_string(),
-                    "rename it to mod.rs, or delete it and declare its contents from \
-                     tests/all_tests.rs"
-                        .to_string(),
-                )
-                .with_subject(file.relative_path())
-            })
-            .collect()
-    }
-
-    fn missing_mod_files(&self, present: &[&SourceFile]) -> Vec<Offence> {
-        let existing: BTreeSet<&str> = present.iter().map(|file| file.relative_path()).collect();
-        Self::subfolders(present)
-            .into_iter()
-            .map(|folder| format!("{folder}/mod.rs"))
-            .filter(|expected| !existing.contains(expected.as_str()))
-            .map(|expected| {
-                Offence::new(
-                    &expected,
-                    1,
-                    self.name(),
-                    "a tests subfolder has no mod.rs, so nothing in it is compiled".to_string(),
-                    format!(
-                        "create {expected} with the header and one `pub mod` line per \
-                         file in that folder"
-                    ),
-                )
-                .with_subject(&expected)
-            })
-            .collect()
-    }
-
-    // Every folder on the way down, not only the ones holding a file. An
-    // intermediate folder is a folder too, and a missing mod.rs there hides
-    // everything beneath it just as completely.
-    fn subfolders(present: &[&SourceFile]) -> BTreeSet<String> {
-        let mut folders = BTreeSet::new();
-        for file in present {
-            let mut parts: Vec<&str> = file.relative_path().split('/').collect();
-            parts.pop();
-            for depth in 2..=parts.len() {
-                folders.insert(parts[..depth].join("/"));
-            }
-        }
-        folders
-    }
-
-    fn registry_contents(&self, present: &[&SourceFile]) -> Vec<Offence> {
-        present
-            .iter()
-            .filter(|file| Self::is_registry(file))
-            .flat_map(|file| self.declarations_only(file))
-            .collect()
-    }
-
-    fn unchecked(&self, file: &SourceFile) -> Offence {
-        Offence::new(
-            file.relative_path(),
-            1,
-            self.name(),
-            format!(
-                "{} could not be parsed, so its contents were not checked",
-                file.relative_path()
-            ),
-            "correct the syntax error readable-source reports, so this registry can be checked"
-                .to_string(),
-        )
-        .with_subject(file.relative_path())
-    }
-
-    fn is_registry(file: &SourceFile) -> bool {
-        let path = file.relative_path();
-        path == "tests/all_tests.rs" || path.ends_with("/mod.rs")
-    }
-
     // Each stray reported at its own line, named. "Something in this file is not
     // a declaration" is true of the whole file and actionable nowhere in it.
     // A registry that does not parse is reported as unchecked rather than
@@ -185,6 +64,127 @@ impl TestsLayoutRule {
                 .with_subject(&stray.label)
             })
             .collect()
+    }
+
+    fn in_tests(files: &[SourceFile]) -> Vec<&SourceFile> {
+        files
+            .iter()
+            .filter(|file| file.relative_path().starts_with(Self::ROOT))
+            .collect()
+    }
+
+    fn is_registry(file: &SourceFile) -> bool {
+        let path = file.relative_path();
+        path == "tests/all_tests.rs" || path.ends_with("/mod.rs")
+    }
+
+    fn missing_door(&self, present: &[&SourceFile]) -> Vec<Offence> {
+        if present
+            .iter()
+            .any(|file| file.relative_path() == "tests/all_tests.rs")
+        {
+            return Vec::new();
+        }
+        vec![
+            Offence::new(
+                "tests/all_tests.rs",
+                1,
+                self.name(),
+                "a tests folder is present but has no all_tests.rs, so nothing in it \
+             is compiled"
+                    .to_string(),
+                "create tests/all_tests.rs with the header and one `pub mod` line per \
+                 file in tests/"
+                    .to_string(),
+            )
+            .with_subject("tests/all_tests.rs"),
+        ]
+    }
+
+    fn missing_mod_files(&self, present: &[&SourceFile]) -> Vec<Offence> {
+        let existing: BTreeSet<&str> = present.iter().map(|file| file.relative_path()).collect();
+        Self::subfolders(present)
+            .into_iter()
+            .map(|folder| format!("{folder}/mod.rs"))
+            .filter(|expected| !existing.contains(expected.as_str()))
+            .map(|expected| {
+                Offence::new(
+                    &expected,
+                    1,
+                    self.name(),
+                    "a tests subfolder has no mod.rs, so nothing in it is compiled".to_string(),
+                    format!(
+                        "create {expected} with the header and one `pub mod` line per \
+                         file in that folder"
+                    ),
+                )
+                .with_subject(&expected)
+            })
+            .collect()
+    }
+
+    fn registry_contents(&self, present: &[&SourceFile]) -> Vec<Offence> {
+        present
+            .iter()
+            .filter(|file| Self::is_registry(file))
+            .flat_map(|file| self.declarations_only(file))
+            .collect()
+    }
+
+    // A second one below the top is not a door; it is a file with a misleading
+    // name that no `pub mod` will ever point at.
+    fn stray_doors(&self, present: &[&SourceFile]) -> Vec<Offence> {
+        present
+            .iter()
+            .filter(|file| {
+                file.relative_path().ends_with("/all_tests.rs")
+                    && file.relative_path() != "tests/all_tests.rs"
+            })
+            .map(|file| {
+                Offence::new(
+                    file.relative_path(),
+                    1,
+                    self.name(),
+                    "only tests/all_tests.rs is a registry; this one is never \
+                     reached"
+                        .to_string(),
+                    "rename it to mod.rs, or delete it and declare its contents from \
+                     tests/all_tests.rs"
+                        .to_string(),
+                )
+                .with_subject(file.relative_path())
+            })
+            .collect()
+    }
+
+    // Every folder on the way down, not only the ones holding a file. An
+    // intermediate folder is a folder too, and a missing mod.rs there hides
+    // everything beneath it just as completely.
+    fn subfolders(present: &[&SourceFile]) -> BTreeSet<String> {
+        let mut folders = BTreeSet::new();
+        for file in present {
+            let mut parts: Vec<&str> = file.relative_path().split('/').collect();
+            parts.pop();
+            for depth in 2..=parts.len() {
+                folders.insert(parts[..depth].join("/"));
+            }
+        }
+        folders
+    }
+
+    fn unchecked(&self, file: &SourceFile) -> Offence {
+        Offence::new(
+            file.relative_path(),
+            1,
+            self.name(),
+            format!(
+                "{} could not be parsed, so its contents were not checked",
+                file.relative_path()
+            ),
+            "correct the syntax error readable-source reports, so this registry can be checked"
+                .to_string(),
+        )
+        .with_subject(file.relative_path())
     }
 }
 

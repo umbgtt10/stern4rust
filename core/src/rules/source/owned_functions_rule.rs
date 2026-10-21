@@ -58,11 +58,22 @@ impl OwnedFunctionsRule {
             && !Self::EXEMPT_FILES.contains(&Self::file_name(file))
     }
 
-    fn is_entry_file(file: &SourceFile) -> bool {
-        Self::file_name(file) == Self::ENTRY_FILE
-            || Self::ENTRY_ROOTS
-                .iter()
-                .any(|root| file.relative_path().starts_with(root))
+    fn correction(
+        function: &FreeFunction,
+        subject: &str,
+        ownable: bool,
+        impls: &ImplBlocks,
+    ) -> String {
+        let name = &function.name;
+        if !ownable {
+            return format!("move `{name}` into a file of its own");
+        }
+        if impls.names(name) || function.names(subject) {
+            return format!("move `{name}` into `impl {subject}` as an associated function");
+        }
+        format!(
+            "move `{name}` into a file of its own, or into `impl {subject}` if it belongs there"
+        )
     }
 
     fn file_name(file: &SourceFile) -> &str {
@@ -70,6 +81,21 @@ impl OwnedFunctionsRule {
             .file_name()
             .and_then(|name| name.to_str())
             .unwrap_or_default()
+    }
+
+    fn is_entry_file(file: &SourceFile) -> bool {
+        Self::file_name(file) == Self::ENTRY_FILE
+            || Self::ENTRY_ROOTS
+                .iter()
+                .any(|root| file.relative_path().starts_with(root))
+    }
+
+    fn named(stem: &FileStem, names: &[String]) -> Option<String> {
+        names
+            .iter()
+            .find(|name| stem.names(name))
+            .or_else(|| names.first())
+            .cloned()
     }
 
     // The subject, and whether it can take a function: a type can, through an
@@ -90,32 +116,6 @@ impl OwnedFunctionsRule {
             .or_else(|| Self::named(&stem, &declared))
             .map(|name| (name, true))
             .or_else(|| traits.first().map(|found| (found.name.clone(), false)))
-    }
-
-    fn named(stem: &FileStem, names: &[String]) -> Option<String> {
-        names
-            .iter()
-            .find(|name| stem.names(name))
-            .or_else(|| names.first())
-            .cloned()
-    }
-
-    fn correction(
-        function: &FreeFunction,
-        subject: &str,
-        ownable: bool,
-        impls: &ImplBlocks,
-    ) -> String {
-        let name = &function.name;
-        if !ownable {
-            return format!("move `{name}` into a file of its own");
-        }
-        if impls.names(name) || function.names(subject) {
-            return format!("move `{name}` into `impl {subject}` as an associated function");
-        }
-        format!(
-            "move `{name}` into a file of its own, or into `impl {subject}` if it belongs there"
-        )
     }
 }
 

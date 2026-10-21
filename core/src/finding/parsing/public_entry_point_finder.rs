@@ -41,6 +41,21 @@ impl PublicEntryPointFinder {
         )
     }
 
+    // What a call names: the function and its arity, the receiver not counted,
+    // which is how a call site is matched to it.
+    pub fn of_signature(signature: &Signature) -> PublicEntryPoint {
+        let arity = signature
+            .inputs
+            .iter()
+            .filter(|input| !matches!(input, FnArg::Receiver(_)))
+            .count();
+        PublicEntryPoint::new(&signature.ident.to_string(), arity)
+    }
+
+    fn is_public(visibility: &Visibility) -> bool {
+        matches!(visibility, Visibility::Public(_))
+    }
+
     fn of_item(item: &Item) -> Vec<PublicEntryPoint> {
         match item {
             Item::Fn(function) if Self::is_public(&function.vis) => {
@@ -63,20 +78,5 @@ impl PublicEntryPointFinder {
                 .unwrap_or_default(),
             _ => Vec::new(),
         }
-    }
-
-    // What a call names: the function and its arity, the receiver not counted,
-    // which is how a call site is matched to it.
-    pub fn of_signature(signature: &Signature) -> PublicEntryPoint {
-        let arity = signature
-            .inputs
-            .iter()
-            .filter(|input| !matches!(input, FnArg::Receiver(_)))
-            .count();
-        PublicEntryPoint::new(&signature.ident.to_string(), arity)
-    }
-
-    fn is_public(visibility: &Visibility) -> bool {
-        matches!(visibility, Visibility::Public(_))
     }
 }

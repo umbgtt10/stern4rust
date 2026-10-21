@@ -56,6 +56,8 @@ use std::path::PathBuf;
 pub struct Runner;
 
 impl Runner {
+    pub const BASELINE_NAME: &'static str = "stern4rust-baseline.json";
+
     pub fn run(args: Args) -> Result<RunOutcome> {
         let (outcome, report) = Self::run_reporting(args)?;
         println!("{report}");
@@ -229,29 +231,21 @@ impl Runner {
         Ok((RunOutcome::of(offences.len()), report))
     }
 
-    // A misspelled rule name is an error rather than a switch that quietly
-    // matches nothing, and asking for the header rule without a header file is
-    // an error rather than an empty run. Both would otherwise look exactly like
-    // a run that worked.
-    fn validate_selection(config: &Config) -> Result<()> {
-        let known = RuleRegistry::known_names();
-        let unknown = config.selection.unknown_in(&known);
-        if !unknown.is_empty() {
-            return Err(anyhow::anyhow!(
-                "unknown rule name(s): {} -- the rules are: {}",
-                unknown.join(", "),
-                known.join(", ")
-            ));
-        }
-        if config.selection.selects_explicitly(HeaderRule::NAME)
-            && config.expected_header.is_empty()
-        {
-            return Err(anyhow::anyhow!(
-                "--rule {} needs --header-file, otherwise the run would apply no rules at all",
-                HeaderRule::NAME
-            ));
-        }
-        Ok(())
+    fn baseline_shown(config: &Config) -> Option<String> {
+        config
+            .baseline
+            .as_ref()
+            .map(|path| path.to_string_lossy().replace('\\', "/"))
+    }
+
+    // A baseline that was asked for and is not there is an error rather than an
+    // empty one. A gate whose baseline path has a typo would otherwise report
+    // every existing offence and look like a regression.
+    fn baselined(config: &Config, offences: Vec<Offence>) -> Result<BaselineOutcome> {
+        let Some(path) = &config.baseline else {
+            return Ok(BaselineOutcome::new(offences, 0, 0));
+        };
+        Ok(Baseline::load(path)?.apply(offences))
     }
 
     // The command line wins over the file, every time and per setting. A
@@ -325,50 +319,12 @@ impl Runner {
         })
     }
 
-    // Every rule the registry can hold, not the subset this run selected: the
-    // reader asking what a rule wants has not chosen one yet.
-    //
-    // Two rules stay out of a registry until something configures them -- the
-    // header rule until it is told what the header says, and
-    // spdx-matches-manifest until a manifest declares a licence. Both are
-    // handed a stand-in that nothing ever reads, because a listing missing a
-    // rule reads as a tool that does not have it. The first draft supplied only
-    // the header and quietly listed twenty.
-    fn rule_listing(args: &Args) -> String {
-        let registry = RuleRegistry::from_config(&Config {
-            expected_header: vec![String::new()],
-            manifest_license: Some(String::new()),
-            ..Config::default()
-        });
-        RuleListing::new(&registry.explanations()).render(args.format)
-    }
-
     // When writing, the default path is the destination whether or not it
     // exists yet. When reading, only an existing file counts -- otherwise every
     // run without a baseline would fail trying to load one.
     fn discovered_baseline(directory: &Path, writing: bool) -> Option<PathBuf> {
         let path = directory.join(Self::BASELINE_NAME);
         (writing || path.exists()).then_some(path)
-    }
-
-    // A section states its whole list rather than adding to the root's, which is
-    // the argument already made for the command line against the file, one level
-    // down: a reader who wants to know what a package skips reads one list.
-    fn section_or_root<'a>(
-        section: Option<&'a Vec<String>>,
-        root: Option<&'a Vec<String>>,
-    ) -> Option<&'a Vec<String>> {
-        match section {
-            Some(values) if !values.is_empty() => Some(values),
-            _ => root,
-        }
-    }
-
-    fn preferred(from_args: Vec<String>, from_file: Option<&Vec<String>>) -> Vec<String> {
-        if !from_args.is_empty() {
-            return from_args;
-        }
-        from_file.cloned().unwrap_or_default()
     }
 
     // The config lives beside the manifest it configures, so a workspace and a
@@ -381,7 +337,50 @@ impl Runner {
             .unwrap_or_else(|| PathBuf::from("."))
     }
 
-    pub const BASELINE_NAME: &'static str = "stern4rust-baseline.json";
+    // One package's exclusions say nothing on their own: a pattern matching
+    // nothing in package A and forty files in package B has done its job, and
+    // reporting it as dead for A would be a wrong answer rather than a missing
+    // one. So the counts are summed across roots before anybody looks at them.
+    fn merged(per_root: Vec<Vec<(String, usize)>>) -> ExclusionOutcome {
+        let mut totals: Vec<(String, usize)> = Vec::new();
+        for counts in per_root {
+            for (pattern, count) in counts {
+                match totals.iter_mut().find(|(known, _)| *known == pattern) {
+                    Some(entry) => entry.1 += count,
+                    None => totals.push((pattern, count)),
+                }
+            }
+        }
+        ExclusionOutcome::new(Vec::new(), totals)
+    }
+
+    fn owned(names: &[&str]) -> Vec<String> {
+        names.iter().map(|name| (*name).to_string()).collect()
+    }
+
+    fn preferred(from_args: Vec<String>, from_file: Option<&Vec<String>>) -> Vec<String> {
+        if !from_args.is_empty() {
+            return from_args;
+        }
+        from_file.cloned().unwrap_or_default()
+    }
+
+    // Recording is not judging. The run exits clean because nothing was
+    // assessed -- the offences were written down, which is what was asked for.
+    fn record(config: &Config, offences: Vec<Offence>) -> Result<RunOutcome> {
+        let path = config
+            .baseline
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("--write-baseline needs a path to write to"))?;
+        let baseline = Baseline::of(&offences);
+        baseline.save(path)?;
+        println!(
+            "stern4rust wrote {} offence(s) to {}",
+            baseline.len(),
+            path.display()
+        );
+        Ok(RunOutcome::Clean)
+    }
 
     // Rewrites what can be rewritten and hands back the files as they now are,
     // so the checks that follow judge the repaired tree. Whatever is still
@@ -414,50 +413,6 @@ impl Runner {
             }
         }
         Ok((repaired, count))
-    }
-
-    // Recording is not judging. The run exits clean because nothing was
-    // assessed -- the offences were written down, which is what was asked for.
-    fn record(config: &Config, offences: Vec<Offence>) -> Result<RunOutcome> {
-        let path = config
-            .baseline
-            .as_ref()
-            .ok_or_else(|| anyhow::anyhow!("--write-baseline needs a path to write to"))?;
-        let baseline = Baseline::of(&offences);
-        baseline.save(path)?;
-        println!(
-            "stern4rust wrote {} offence(s) to {}",
-            baseline.len(),
-            path.display()
-        );
-        Ok(RunOutcome::Clean)
-    }
-
-    // A baseline that was asked for and is not there is an error rather than an
-    // empty one. A gate whose baseline path has a typo would otherwise report
-    // every existing offence and look like a regression.
-    fn baselined(config: &Config, offences: Vec<Offence>) -> Result<BaselineOutcome> {
-        let Some(path) = &config.baseline else {
-            return Ok(BaselineOutcome::new(offences, 0, 0));
-        };
-        Ok(Baseline::load(path)?.apply(offences))
-    }
-
-    // One package's exclusions say nothing on their own: a pattern matching
-    // nothing in package A and forty files in package B has done its job, and
-    // reporting it as dead for A would be a wrong answer rather than a missing
-    // one. So the counts are summed across roots before anybody looks at them.
-    fn merged(per_root: Vec<Vec<(String, usize)>>) -> ExclusionOutcome {
-        let mut totals: Vec<(String, usize)> = Vec::new();
-        for counts in per_root {
-            for (pattern, count) in counts {
-                match totals.iter_mut().find(|(known, _)| *known == pattern) {
-                    Some(entry) => entry.1 += count,
-                    None => totals.push((pattern, count)),
-                }
-            }
-        }
-        ExclusionOutcome::new(Vec::new(), totals)
     }
 
     fn report(
@@ -508,11 +463,35 @@ impl Runner {
         }
     }
 
-    fn baseline_shown(config: &Config) -> Option<String> {
-        config
-            .baseline
-            .as_ref()
-            .map(|path| path.to_string_lossy().replace('\\', "/"))
+    // Every rule the registry can hold, not the subset this run selected: the
+    // reader asking what a rule wants has not chosen one yet.
+    //
+    // Two rules stay out of a registry until something configures them -- the
+    // header rule until it is told what the header says, and
+    // spdx-matches-manifest until a manifest declares a licence. Both are
+    // handed a stand-in that nothing ever reads, because a listing missing a
+    // rule reads as a tool that does not have it. The first draft supplied only
+    // the header and quietly listed twenty.
+    fn rule_listing(args: &Args) -> String {
+        let registry = RuleRegistry::from_config(&Config {
+            expected_header: vec![String::new()],
+            manifest_license: Some(String::new()),
+            ..Config::default()
+        });
+        RuleListing::new(&registry.explanations()).render(args.format)
+    }
+
+    // A section states its whole list rather than adding to the root's, which is
+    // the argument already made for the command line against the file, one level
+    // down: a reader who wants to know what a package skips reads one list.
+    fn section_or_root<'a>(
+        section: Option<&'a Vec<String>>,
+        root: Option<&'a Vec<String>>,
+    ) -> Option<&'a Vec<String>> {
+        match section {
+            Some(values) if !values.is_empty() => Some(values),
+            _ => root,
+        }
     }
 
     fn shown(config: &Config) -> Option<String> {
@@ -522,7 +501,28 @@ impl Runner {
             .map(|path| path.to_string_lossy().replace('\\', "/"))
     }
 
-    fn owned(names: &[&str]) -> Vec<String> {
-        names.iter().map(|name| (*name).to_string()).collect()
+    // A misspelled rule name is an error rather than a switch that quietly
+    // matches nothing, and asking for the header rule without a header file is
+    // an error rather than an empty run. Both would otherwise look exactly like
+    // a run that worked.
+    fn validate_selection(config: &Config) -> Result<()> {
+        let known = RuleRegistry::known_names();
+        let unknown = config.selection.unknown_in(&known);
+        if !unknown.is_empty() {
+            return Err(anyhow::anyhow!(
+                "unknown rule name(s): {} -- the rules are: {}",
+                unknown.join(", "),
+                known.join(", ")
+            ));
+        }
+        if config.selection.selects_explicitly(HeaderRule::NAME)
+            && config.expected_header.is_empty()
+        {
+            return Err(anyhow::anyhow!(
+                "--rule {} needs --header-file, otherwise the run would apply no rules at all",
+                HeaderRule::NAME
+            ));
+        }
+        Ok(())
     }
 }

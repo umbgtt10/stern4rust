@@ -32,24 +32,6 @@ impl SourceFile {
         }
     }
 
-    pub fn relative_path(&self) -> &str {
-        &self.relative_path
-    }
-
-    pub fn lines(&self) -> &[String] {
-        &self.lines
-    }
-
-    // Rejoined from the normalised lines rather than kept alongside them, so a
-    // parser and a line-counting rule can never disagree about what the file
-    // says.
-    pub fn contents(&self) -> String {
-        self.lines.join(
-            "
-",
-        )
-    }
-
     // The first line of the block an item starting at `start` heads. A comment
     // introducing an item belongs to it, so the block reaches up over the
     // comment lines directly above -- but never past `floor`, the line after the
@@ -63,6 +45,22 @@ impl SourceFile {
         first
     }
 
+    // Rejoined from the normalised lines rather than kept alongside them, so a
+    // parser and a line-counting rule can never disagree about what the file
+    // says.
+    pub fn contents(&self) -> String {
+        self.lines.join(
+            "
+",
+        )
+    }
+
+    // An empty file splits into one empty line, which is not the same as having
+    // a line of content.
+    pub fn is_empty(&self) -> bool {
+        self.lines.iter().all(|line| line.trim().is_empty())
+    }
+
     // Whether this file sits under `root` and is not named one of `except`: the
     // registries a rule about content leaves to module-registry, at any depth.
     pub fn is_under(&self, root: &str, except: &[&str]) -> bool {
@@ -74,10 +72,12 @@ impl SourceFile {
                 .is_some_and(|name| except.contains(&name))
     }
 
-    // An empty file splits into one empty line, which is not the same as having
-    // a line of content.
-    pub fn is_empty(&self) -> bool {
-        self.lines.iter().all(|line| line.trim().is_empty())
+    pub fn lines(&self) -> &[String] {
+        &self.lines
+    }
+
+    pub fn relative_path(&self) -> &str {
+        &self.relative_path
     }
 
     fn is_comment(&self, line: usize) -> bool {

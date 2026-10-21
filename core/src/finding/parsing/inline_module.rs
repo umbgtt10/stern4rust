@@ -17,12 +17,6 @@ use syn::ItemMod;
 pub struct InlineModule;
 
 impl InlineModule {
-    // None for `mod a;`: its items live in another file, which the walker
-    // reaches when it reads that file.
-    pub fn items(module: &ItemMod) -> Option<&[Item]> {
-        module.content.as_ref().map(|(_, items)| items.as_slice())
-    }
-
     // Every item, an inline module and then what it holds, in source order. A
     // walker after one kind of item filters this rather than writing the
     // descent again: ImplBlocks and PureTraitsRule each carried it.
@@ -37,5 +31,11 @@ impl InlineModule {
                 once(item).chain(nested)
             })
             .collect()
+    }
+
+    // None for `mod a;`: its items live in another file, which the walker
+    // reaches when it reads that file.
+    pub fn items(module: &ItemMod) -> Option<&[Item]> {
+        module.content.as_ref().map(|(_, items)| items.as_slice())
     }
 }

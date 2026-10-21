@@ -50,11 +50,37 @@ impl JsonPrinter {
         }
     }
 
-    // How many files --fix repaired. Stated alongside what is left, because a
-    // fixer reporting only its successes would be the same silence this tool
-    // refuses everywhere else.
-    pub fn with_fixed(self, fixed: usize) -> Self {
-        Self { fixed, ..self }
+    pub fn print(&self, offences: &[Offence]) {
+        println!("{}", self.render(offences));
+    }
+
+    pub fn render(&self, offences: &[Offence]) -> String {
+        let broken: BTreeSet<&str> = offences.iter().map(|offence| offence.rule).collect();
+        let shown = self.threshold.kept(offences);
+        let document = json!({
+            "baseline": self.baseline,
+            "files_fixed": self.fixed,
+            "baselined": self.suppressed,
+            "baseline_stale_entries": self.stale,
+            "config_file": self.config_file,
+            "files_scanned": self.files_scanned,
+            "files_excluded": self.excluded_total(),
+            "exclusions": self.exclusions.iter().map(|(pattern, count)| json!({
+                "pattern": pattern,
+                "files_excluded": count,
+            })).collect::<Vec<_>>(),
+            "offences_found": offences.len(),
+            "offences_reported": shown.len(),
+            "offences_omitted": self.threshold.omitted(offences),
+            "offence_threshold": self.threshold.limit(),
+            "rules_broken": broken.len(),
+            "rules_applied": self.applied,
+            "rules_skipped": self.skipped,
+            "rules_unconfigured": self.unconfigured,
+            "packages": self.package_documents(),
+            "offences": shown,
+        });
+        to_string_pretty(&document).unwrap_or_default()
     }
 
     pub fn with_baseline(self, baseline: Option<String>, suppressed: usize, stale: usize) -> Self {
@@ -79,6 +105,13 @@ impl JsonPrinter {
     // working one.
     pub fn with_exclusions(self, exclusions: Vec<(String, usize)>) -> Self {
         Self { exclusions, ..self }
+    }
+
+    // How many files --fix repaired. Stated alongside what is left, because a
+    // fixer reporting only its successes would be the same silence this tool
+    // refuses everywhere else.
+    pub fn with_fixed(self, fixed: usize) -> Self {
+        Self { fixed, ..self }
     }
 
     // A consumer that could not tell an all-rules run from a one-rule run would
@@ -119,35 +152,6 @@ impl JsonPrinter {
         self.exclusions.iter().map(|(_, count)| count).sum()
     }
 
-    pub fn render(&self, offences: &[Offence]) -> String {
-        let broken: BTreeSet<&str> = offences.iter().map(|offence| offence.rule).collect();
-        let shown = self.threshold.kept(offences);
-        let document = json!({
-            "baseline": self.baseline,
-            "files_fixed": self.fixed,
-            "baselined": self.suppressed,
-            "baseline_stale_entries": self.stale,
-            "config_file": self.config_file,
-            "files_scanned": self.files_scanned,
-            "files_excluded": self.excluded_total(),
-            "exclusions": self.exclusions.iter().map(|(pattern, count)| json!({
-                "pattern": pattern,
-                "files_excluded": count,
-            })).collect::<Vec<_>>(),
-            "offences_found": offences.len(),
-            "offences_reported": shown.len(),
-            "offences_omitted": self.threshold.omitted(offences),
-            "offence_threshold": self.threshold.limit(),
-            "rules_broken": broken.len(),
-            "rules_applied": self.applied,
-            "rules_skipped": self.skipped,
-            "rules_unconfigured": self.unconfigured,
-            "packages": self.package_documents(),
-            "offences": shown,
-        });
-        to_string_pretty(&document).unwrap_or_default()
-    }
-
     fn package_documents(&self) -> Vec<Value> {
         self.rosters
             .iter()
@@ -167,10 +171,6 @@ impl JsonPrinter {
                 })
             })
             .collect()
-    }
-
-    pub fn print(&self, offences: &[Offence]) {
-        println!("{}", self.render(offences));
     }
 
     // The same content the text listing carries, as a document. The two must not

@@ -50,6 +50,12 @@ impl OrderedImportsRule {
         file.relative_path().starts_with(Self::SOURCE_ROOT)
     }
 
+    // Consecutive lines, so a blank line or a comment between two imports ends
+    // the block and the pair is never compared.
+    fn follows(previous: &ItemUse, import: &ItemUse) -> bool {
+        import.span().start().line == previous.span().end().line + 1
+    }
+
     fn imports(items: &[Item]) -> Vec<&ItemUse> {
         items
             .iter()
@@ -58,6 +64,17 @@ impl OrderedImportsRule {
                 _ => None,
             })
             .collect()
+    }
+
+    fn offence(&self, file: &SourceFile, previous: &str, import: &str, line: usize) -> Offence {
+        Offence::new(
+            file.relative_path(),
+            line,
+            self.name(),
+            format!("`{import}` is out of alphabetic order; it follows `{previous}`"),
+            format!("move `{import}` above `{previous}`"),
+        )
+        .with_subject(import)
     }
 
     // The text as written, taken from the line rather than rebuilt from the
@@ -83,23 +100,6 @@ impl OrderedImportsRule {
             .get(import.use_token.span().start().line - 1)
             .map(|line| line.trim().to_string())
             .unwrap_or_default()
-    }
-
-    // Consecutive lines, so a blank line or a comment between two imports ends
-    // the block and the pair is never compared.
-    fn follows(previous: &ItemUse, import: &ItemUse) -> bool {
-        import.span().start().line == previous.span().end().line + 1
-    }
-
-    fn offence(&self, file: &SourceFile, previous: &str, import: &str, line: usize) -> Offence {
-        Offence::new(
-            file.relative_path(),
-            line,
-            self.name(),
-            format!("`{import}` is out of alphabetic order; it follows `{previous}`"),
-            format!("move `{import}` above `{previous}`"),
-        )
-        .with_subject(import)
     }
 }
 

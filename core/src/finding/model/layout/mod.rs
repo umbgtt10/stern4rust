@@ -4,6 +4,9 @@
 
 pub mod constant_layout;
 pub mod fix_refusal;
+pub mod impl_layout;
+pub mod impl_member;
+pub mod member_kind;
 pub mod misplaced_constant;
 pub mod section;
 pub mod test_file_item;

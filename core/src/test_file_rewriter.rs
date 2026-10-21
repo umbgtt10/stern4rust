@@ -34,19 +34,11 @@ impl TestFileRewriter {
         Section::Helpers,
         Section::Tests,
     ];
-
     pub const REGISTRIES: [&'static str; 2] = ["all_tests.rs", "mod.rs"];
     pub const TESTS_ROOT: &'static str = "tests/";
 
     pub fn new() -> Self {
         Self
-    }
-
-    // The same scope test-file-structure applies, asked of the file rather than
-    // of the rule: a rule answers questions about a file, and asking it to also
-    // authorise edits would give it a second job.
-    fn governs(file: &SourceFile) -> bool {
-        file.is_under(Self::TESTS_ROOT, &Self::REGISTRIES)
     }
 
     // Chunks are joined rather than appended with separators, so the file ends
@@ -77,6 +69,49 @@ impl TestFileRewriter {
             out.push_str(&tail);
         }
         out
+    }
+
+    fn block(file: &SourceFile, item: &TestFileItem) -> String {
+        file.lines()
+            .iter()
+            .skip(item.first_line - 1)
+            .take(item.last_line + 1 - item.first_line)
+            .cloned()
+            .collect::<Vec<String>>()
+            .join("\n")
+    }
+
+    // The same scope test-file-structure applies, asked of the file rather than
+    // of the rule: a rule answers questions about a file, and asking it to also
+    // authorise edits would give it a second job.
+    fn governs(file: &SourceFile) -> bool {
+        file.is_under(Self::TESTS_ROOT, &Self::REGISTRIES)
+    }
+
+    // Imports keep the order they were written in; everything else is sorted.
+    //
+    // Not an oversight. rustfmt owns import order and disagrees with a plain
+    // alphabet on two shapes -- `self`/`super`/`crate`, and a pair diverging at
+    // a segment of differing case -- which is why test-file-structure stands
+    // down on exactly those pairs. A fixer that sorted imports anyway would
+    // write an order `cargo fmt` undoes on the next run, which is the
+    // unsatisfiable loop that stand-down exists to prevent. The first version
+    // of this did precisely that to `use serde_json::Value` sitting beside
+    // `use serde_json::from_str`.
+    //
+    // They are still *moved*, as a block, into the imports section. Grouping
+    // them is safe; ordering them is rustfmt's business.
+    fn grouped(items: &[TestFileItem]) -> BTreeMap<Section, Vec<&TestFileItem>> {
+        let mut grouped: BTreeMap<Section, Vec<&TestFileItem>> = BTreeMap::new();
+        for item in items {
+            grouped.entry(item.section).or_default().push(item);
+        }
+        for (section, members) in grouped.iter_mut() {
+            if *section != Section::Imports {
+                members.sort_by_key(|item| item.sort_key());
+            }
+        }
+        grouped
     }
 
     // Everything above the first item: the header and any file-level commentary,
@@ -115,42 +150,6 @@ impl TestFileRewriter {
             return String::new();
         };
         rest[..=end].join("\n") + "\n"
-    }
-
-    fn block(file: &SourceFile, item: &TestFileItem) -> String {
-        file.lines()
-            .iter()
-            .skip(item.first_line - 1)
-            .take(item.last_line + 1 - item.first_line)
-            .cloned()
-            .collect::<Vec<String>>()
-            .join("\n")
-    }
-
-    // Imports keep the order they were written in; everything else is sorted.
-    //
-    // Not an oversight. rustfmt owns import order and disagrees with a plain
-    // alphabet on two shapes -- `self`/`super`/`crate`, and a pair diverging at
-    // a segment of differing case -- which is why test-file-structure stands
-    // down on exactly those pairs. A fixer that sorted imports anyway would
-    // write an order `cargo fmt` undoes on the next run, which is the
-    // unsatisfiable loop that stand-down exists to prevent. The first version
-    // of this did precisely that to `use serde_json::Value` sitting beside
-    // `use serde_json::from_str`.
-    //
-    // They are still *moved*, as a block, into the imports section. Grouping
-    // them is safe; ordering them is rustfmt's business.
-    fn grouped(items: &[TestFileItem]) -> BTreeMap<Section, Vec<&TestFileItem>> {
-        let mut grouped: BTreeMap<Section, Vec<&TestFileItem>> = BTreeMap::new();
-        for item in items {
-            grouped.entry(item.section).or_default().push(item);
-        }
-        for (section, members) in grouped.iter_mut() {
-            if *section != Section::Imports {
-                members.sort_by_key(|item| item.sort_key());
-            }
-        }
-        grouped
     }
 }
 

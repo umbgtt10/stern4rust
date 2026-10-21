@@ -44,64 +44,6 @@ impl ReportPrinter {
         }
     }
 
-    // How many files --fix repaired. Stated alongside what is left, because a
-    // fixer reporting only its successes would be the same silence this tool
-    // refuses everywhere else.
-    pub fn with_fixed(self, fixed: usize) -> Self {
-        Self { fixed, ..self }
-    }
-
-    // A run that reported nothing while a baseline hid four hundred findings
-    // would be the most comfortable lie this tool could tell, so the count is
-    // in the summary of every run that used one -- including when it is the
-    // whole story and the report itself is empty.
-    pub fn with_baseline(self, baseline: Option<String>, suppressed: usize, stale: usize) -> Self {
-        Self {
-            baseline,
-            suppressed,
-            stale,
-            ..self
-        }
-    }
-
-    // A run configured by a file the reader never typed on the command line
-    // must say so, or the switches in force are invisible.
-    pub fn with_config_file(self, config_file: Option<String>) -> Self {
-        Self {
-            config_file,
-            ..self
-        }
-    }
-
-    pub fn with_exclusions(self, exclusions: Vec<(String, usize)>) -> Self {
-        Self { exclusions, ..self }
-    }
-
-    // One roster per package walked. Stated once where they agree, which is
-    // every single-package run and every workspace answering to one rule set,
-    // and separated only where they genuinely differ.
-    pub fn with_package_rosters(self, rosters: Vec<PackageRoster>) -> Self {
-        Self { rosters, ..self }
-    }
-
-    pub fn with_rules(
-        self,
-        applied: Vec<String>,
-        skipped: Vec<String>,
-        unconfigured: Vec<(String, String)>,
-    ) -> Self {
-        Self {
-            applied,
-            skipped,
-            unconfigured,
-            ..self
-        }
-    }
-
-    pub fn with_threshold(self, threshold: OffenceThreshold) -> Self {
-        Self { threshold, ..self }
-    }
-
     pub fn print(&self, offences: &[Offence]) {
         println!("{}", self.render(offences));
     }
@@ -142,75 +84,78 @@ impl ReportPrinter {
         report
     }
 
-    // "All rules are satisfied" is only true when all of them ran. Saying it
-    // after --skip turned two off, or after the header rule was dropped for
-    // want of a header file, would be the tool telling the comfortable lie it
-    // exists to catch.
-    fn clean_verdict(&self) -> &'static str {
-        if self.everything_ran() {
-            "All rules are satisfied."
-        } else {
-            "All applied rules are satisfied."
+    // A run that reported nothing while a baseline hid four hundred findings
+    // would be the most comfortable lie this tool could tell, so the count is
+    // in the summary of every run that used one -- including when it is the
+    // whole story and the report itself is empty.
+    pub fn with_baseline(self, baseline: Option<String>, suppressed: usize, stale: usize) -> Self {
+        Self {
+            baseline,
+            suppressed,
+            stale,
+            ..self
         }
     }
 
-    fn everything_ran(&self) -> bool {
-        self.skipped.is_empty() && self.unconfigured.is_empty()
+    // A run configured by a file the reader never typed on the command line
+    // must say so, or the switches in force are invisible.
+    pub fn with_config_file(self, config_file: Option<String>) -> Self {
+        Self {
+            config_file,
+            ..self
+        }
     }
 
-    // Named, not counted. A count answers "how many", which is only useful to a
-    // reader who already knows how many there are.
-    fn roster(&self) -> String {
-        if !self.rosters.is_empty() {
-            return self.package_rosters();
-        }
-        if self.applied.is_empty() {
-            return String::new();
-        }
-        let mut roster = format!("  applied: {}\n", self.applied.join(", "));
-        if !self.everything_ran() {
-            roster.push_str(&format!("  not applied: {}\n", self.absences().join(", ")));
-        }
-        roster.push('\n');
-        roster
+    pub fn with_exclusions(self, exclusions: Vec<(String, usize)>) -> Self {
+        Self { exclusions, ..self }
     }
 
-    // Said once where every package says the same, and a block each where they
-    // do not. A workspace answering to one rule set reads exactly as a single
-    // package does, which is what keeps this from costing every existing reader
-    // something for a case they do not have.
-    fn package_rosters(&self) -> String {
-        let first = &self.rosters[0];
-        if self.rosters.iter().all(|other| first.agrees_with(other)) {
-            return Self::lines_for(None, first);
+    // How many files --fix repaired. Stated alongside what is left, because a
+    // fixer reporting only its successes would be the same silence this tool
+    // refuses everywhere else.
+    pub fn with_fixed(self, fixed: usize) -> Self {
+        Self { fixed, ..self }
+    }
+
+    // One roster per package walked. Stated once where they agree, which is
+    // every single-package run and every workspace answering to one rule set,
+    // and separated only where they genuinely differ.
+    pub fn with_package_rosters(self, rosters: Vec<PackageRoster>) -> Self {
+        Self { rosters, ..self }
+    }
+
+    pub fn with_rules(
+        self,
+        applied: Vec<String>,
+        skipped: Vec<String>,
+        unconfigured: Vec<(String, String)>,
+    ) -> Self {
+        Self {
+            applied,
+            skipped,
+            unconfigured,
+            ..self
         }
-        self.rosters
+    }
+
+    pub fn with_threshold(self, threshold: OffenceThreshold) -> Self {
+        Self { threshold, ..self }
+    }
+
+    // Skipped and unconfigured are both "did not run" and are not the same
+    // thing. One is a choice the reader made; the other is a flag they did not
+    // pass, and saying which is the difference between a note and an
+    // instruction.
+    fn absences(&self) -> Vec<String> {
+        self.skipped
             .iter()
-            .map(|roster| Self::lines_for(Some(&roster.package), roster))
+            .map(|name| format!("{name} (skipped)"))
+            .chain(
+                self.unconfigured
+                    .iter()
+                    .map(|(name, requirement)| format!("{name} ({requirement})")),
+            )
             .collect()
-    }
-
-    fn lines_for(package: Option<&str>, roster: &PackageRoster) -> String {
-        let mut rendered = String::new();
-        if let Some(name) = package {
-            rendered.push_str(&format!("  {name}:\n"));
-        }
-        rendered.push_str(&format!("  applied: {}\n", roster.applied.join(", ")));
-        let absences = roster.absences();
-        if !absences.is_empty() {
-            rendered.push_str(&format!("  not applied: {}\n", absences.join(", ")));
-        }
-        rendered.push('\n');
-        rendered
-    }
-
-    // What --fix repaired, stated beside what it could not. A fixer reporting
-    // only its successes would leave the reader believing the file is done.
-    fn fixed_line(&self) -> String {
-        if self.fixed == 0 {
-            return String::new();
-        }
-        format!("  fixed: {} file(s) rewritten\n\n", self.fixed)
     }
 
     // Named with its count, because a run that reported nothing while a
@@ -235,6 +180,18 @@ impl ReportPrinter {
         line
     }
 
+    // "All rules are satisfied" is only true when all of them ran. Saying it
+    // after --skip turned two off, or after the header rule was dropped for
+    // want of a header file, would be the tool telling the comfortable lie it
+    // exists to catch.
+    fn clean_verdict(&self) -> &'static str {
+        if self.everything_ran() {
+            "All rules are satisfied."
+        } else {
+            "All applied rules are satisfied."
+        }
+    }
+
     // A run configured by a file the reader never typed must say which file.
     // Every switch in force would otherwise be invisible, and a report that
     // applied one rule because of a line in a .toml would look exactly like one
@@ -244,6 +201,23 @@ impl ReportPrinter {
             Some(path) => format!("  config: {path}\n\n"),
             None => String::new(),
         }
+    }
+
+    // On its own line beneath the offence rather than in a fifth column. The
+    // description column is already the widest thing in the report, and a
+    // correction is a sentence rather than a field -- side by side, neither
+    // would be readable.
+    fn correction_row(offence: &Offence, widths: &ColumnWidths) -> String {
+        let indent = widths.file + widths.line + widths.rule + 6;
+        format!("{}fix: {}\n", " ".repeat(indent), offence.correction)
+    }
+
+    fn everything_ran(&self) -> bool {
+        self.skipped.is_empty() && self.unconfigured.is_empty()
+    }
+
+    fn excluded_total(&self) -> usize {
+        self.exclusions.iter().map(|(_, count)| count).sum()
     }
 
     // Every pattern with the number of files it removed, including zero. A
@@ -271,43 +245,13 @@ impl ReportPrinter {
         roster
     }
 
-    fn unmatched(&self) -> Vec<&str> {
-        self.exclusions
-            .iter()
-            .filter(|(_, count)| *count == 0)
-            .map(|(pattern, _)| pattern.as_str())
-            .collect()
-    }
-
-    // Skipped and unconfigured are both "did not run" and are not the same
-    // thing. One is a choice the reader made; the other is a flag they did not
-    // pass, and saying which is the difference between a note and an
-    // instruction.
-    fn absences(&self) -> Vec<String> {
-        self.skipped
-            .iter()
-            .map(|name| format!("{name} (skipped)"))
-            .chain(
-                self.unconfigured
-                    .iter()
-                    .map(|(name, requirement)| format!("{name} ({requirement})")),
-            )
-            .collect()
-    }
-
-    // Named alongside the flag that raises it. A cap nobody was told about reads
-    // as "that was all of them", which is the one thing this report must never
-    // say when it is not true.
-    fn omission(&self, offences: &[Offence]) -> String {
-        let omitted = self.threshold.omitted(offences);
-        if omitted == 0 {
+    // What --fix repaired, stated beside what it could not. A fixer reporting
+    // only its successes would leave the reader believing the file is done.
+    fn fixed_line(&self) -> String {
+        if self.fixed == 0 {
             return String::new();
         }
-        format!(
-            "... and {omitted} more offences not shown. Raise --offence-threshold \
-             (currently {}, use 0 for all) to see them.\n\n",
-            self.threshold.limit()
-        )
+        format!("  fixed: {} file(s) rewritten\n\n", self.fixed)
     }
 
     fn heading(widths: &ColumnWidths) -> String {
@@ -326,6 +270,67 @@ impl ReportPrinter {
         )
     }
 
+    fn lines_for(package: Option<&str>, roster: &PackageRoster) -> String {
+        let mut rendered = String::new();
+        if let Some(name) = package {
+            rendered.push_str(&format!("  {name}:\n"));
+        }
+        rendered.push_str(&format!("  applied: {}\n", roster.applied.join(", ")));
+        let absences = roster.absences();
+        if !absences.is_empty() {
+            rendered.push_str(&format!("  not applied: {}\n", absences.join(", ")));
+        }
+        rendered.push('\n');
+        rendered
+    }
+
+    // Named alongside the flag that raises it. A cap nobody was told about reads
+    // as "that was all of them", which is the one thing this report must never
+    // say when it is not true.
+    fn omission(&self, offences: &[Offence]) -> String {
+        let omitted = self.threshold.omitted(offences);
+        if omitted == 0 {
+            return String::new();
+        }
+        format!(
+            "... and {omitted} more offences not shown. Raise --offence-threshold \
+             (currently {}, use 0 for all) to see them.\n\n",
+            self.threshold.limit()
+        )
+    }
+
+    // Said once where every package says the same, and a block each where they
+    // do not. A workspace answering to one rule set reads exactly as a single
+    // package does, which is what keeps this from costing every existing reader
+    // something for a case they do not have.
+    fn package_rosters(&self) -> String {
+        let first = &self.rosters[0];
+        if self.rosters.iter().all(|other| first.agrees_with(other)) {
+            return Self::lines_for(None, first);
+        }
+        self.rosters
+            .iter()
+            .map(|roster| Self::lines_for(Some(&roster.package), roster))
+            .collect()
+    }
+
+    // Named, not counted. A count answers "how many", which is only useful to a
+    // reader who already knows how many there are.
+    fn roster(&self) -> String {
+        if !self.rosters.is_empty() {
+            return self.package_rosters();
+        }
+        if self.applied.is_empty() {
+            return String::new();
+        }
+        let mut roster = format!("  applied: {}\n", self.applied.join(", "));
+        if !self.everything_ran() {
+            roster.push_str(&format!("  not applied: {}\n", self.absences().join(", ")));
+        }
+        roster.push('\n');
+        roster
+    }
+
     fn row(offence: &Offence, widths: &ColumnWidths) -> String {
         format!(
             "{:<file$}  {:>line$}  {:<rule$}  {}\n",
@@ -337,19 +342,6 @@ impl ReportPrinter {
             line = widths.line,
             rule = widths.rule
         )
-    }
-
-    // On its own line beneath the offence rather than in a fifth column. The
-    // description column is already the widest thing in the report, and a
-    // correction is a sentence rather than a field -- side by side, neither
-    // would be readable.
-    fn correction_row(offence: &Offence, widths: &ColumnWidths) -> String {
-        let indent = widths.file + widths.line + widths.rule + 6;
-        format!("{}fix: {}\n", " ".repeat(indent), offence.correction)
-    }
-
-    fn excluded_total(&self) -> usize {
-        self.exclusions.iter().map(|(_, count)| count).sum()
     }
 
     fn summary(&self, offences: &[Offence]) -> String {
@@ -367,5 +359,13 @@ impl ReportPrinter {
             self.skipped.len(),
             self.unconfigured.len()
         )
+    }
+
+    fn unmatched(&self) -> Vec<&str> {
+        self.exclusions
+            .iter()
+            .filter(|(_, count)| *count == 0)
+            .map(|(pattern, _)| pattern.as_str())
+            .collect()
     }
 }

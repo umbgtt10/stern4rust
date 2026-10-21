@@ -34,9 +34,20 @@ impl RegistryParser {
         )
     }
 
-    fn stray(file: &SourceFile, item: &Item) -> RegistryItem {
-        let line = item.span().start().line;
-        RegistryItem::new(line, &Self::label(file, item, line))
+    fn kind(item: &Item) -> Option<&'static str> {
+        match item {
+            Item::Const(_) => Some("constant"),
+            Item::Enum(_) => Some("enum"),
+            Item::Fn(_) => Some("function"),
+            Item::Impl(_) => Some("impl block"),
+            Item::Mod(_) => Some("inline module"),
+            Item::Static(_) => Some("static"),
+            Item::Struct(_) => Some("struct"),
+            Item::Trait(_) => Some("trait"),
+            Item::Type(_) => Some("type alias"),
+            Item::Use(_) => Some("import"),
+            _ => None,
+        }
     }
 
     // Named by identifier wherever there is one, because "remove the constant
@@ -55,19 +66,8 @@ impl RegistryParser {
         format!("the {kind} `{subject}`")
     }
 
-    fn kind(item: &Item) -> Option<&'static str> {
-        match item {
-            Item::Const(_) => Some("constant"),
-            Item::Enum(_) => Some("enum"),
-            Item::Fn(_) => Some("function"),
-            Item::Impl(_) => Some("impl block"),
-            Item::Mod(_) => Some("inline module"),
-            Item::Static(_) => Some("static"),
-            Item::Struct(_) => Some("struct"),
-            Item::Trait(_) => Some("trait"),
-            Item::Type(_) => Some("type alias"),
-            Item::Use(_) => Some("import"),
-            _ => None,
-        }
+    fn stray(file: &SourceFile, item: &Item) -> RegistryItem {
+        let line = item.span().start().line;
+        RegistryItem::new(line, &Self::label(file, item, line))
     }
 }

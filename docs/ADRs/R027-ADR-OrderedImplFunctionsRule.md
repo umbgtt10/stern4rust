@@ -1,6 +1,6 @@
 # R027-ADR-OrderedImplFunctionsRule
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-10-20
 
 ## Context
@@ -76,18 +76,24 @@ then `pub` functions, then every other function.**
   their function goes.
 - **It touches only the block it is fixing.** Nothing outside the impl's braces
   is rewritten; the file is otherwise byte-for-byte what it was. Blank lines
-  between functions become exactly one, and constants and types are followed by
-  one.
+  between functions become exactly one, consecutive constants and types none,
+  and the group they make is followed by one.
 - **It loses nothing.** A block it cannot reorder without dropping or orphaning
-  content is declined, reported unchanged, and named in the fix summary as
-  declined rather than fixed:
+  content is declined and reported unchanged, its offence's correction ending
+  *"by hand: `--fix` leaves alone"* and the reason -- the summary counts what was
+  fixed, and the offence is where a block is already named, as for
+  [R031](R031-ADR-LeadingConstantsRule.md):
   - a comment standing free between functions, separated from the next one by a
     blank line -- a section heading with no item to travel with;
   - a macro invocation among the items, whose expansion the tool cannot see;
-  - two items on one line.
+  - two items on one line, or an item on a line with one of the block's braces.
 
   Trailing comments after the last item stay at the end of the block, as for
-  R002's fixer.
+  R002's fixer, and a comment before the first item stays first.
+
+Each fixer is a `SourceRewriter` naming the rule it repairs, and a file two of
+them repair -- its constants and its impls -- is handed to the second as the
+first left it.
 
 `rustfmt` does not reorder impl items (its `reorder_impl_items` is unstable and
 off), so the fixed order is never undone by the formatter run in front of this
@@ -140,6 +146,39 @@ between functions, and none holds a macro invocation among its items. Without
 `--fix` the rule would ask for 734 blocks reordered by hand, which is the trade
 this ADR refuses.
 
+**Re-run with this tool's finders**, the built rule against the sixteen
+repositories on 2026-10-21: **729 blocks out of order**, against the census's 734,
+and **not one declined** -- the census's two free-standing comments are not among
+them.
+
+| repository | out of order |
+|---|---:|
+| an analysis workspace | 207 |
+| `etheram-ibft` | 119 |
+| `etheram-embassy` | 84 |
+| `etheram-ibft-embassy` | 57 |
+| `stern4rust` | 53 |
+| `etheram-raft` | 49 |
+| `etheram-tools` | 41 |
+| `dry4rust` | 29 |
+| `etheram-raft-embassy` | 20 |
+| `grip4rust` | 16 |
+| `crap4rust` | 13 |
+| `iceberg4rust` | 12 |
+| `braintax4rust` | 11, its fixture crates included |
+| `slotgate`, `twin4rust` | 8 each |
+| `etheram-core` | 2 |
+
+**This repository's 53 were reordered by `--fix`** in the change that built it,
+which is the rule's first adoption. **On a copy of each of the other fifteen**,
+`--fix` repaired all 676. On every copy the multiset of non-blank lines in each
+file it touched was unchanged -- only their order and the blank lines between
+them moved -- every repaired tree checked clean, `cargo fmt --check` passed, and
+`cargo check --workspace --all-targets` passed on the three that build on the
+host without the rest of their tree: `etheram-raft`, `etheram-tools` and
+`etheram-ibft`. The diffs were read as well as counted: a function's comment
+moves with it, and a constant written among the functions rises above them.
+
 ## Rejected alternatives
 
 **Narrative order** -- callers above callees, the step-down rule. It is what most
@@ -190,21 +229,38 @@ of the fixing commit is where that is caught.
 
 ## Enforcement
 
-To be written test-first when the rule is built:
+`tests/rules/source/ordered_impl_functions_rule_tests.rs` -- sixteen tests: a
+block in order left alone; a block out of order reported at the impl, naming
+the first member misplaced and the one it belongs before, as in `Bookkeepers`;
+constructors out of parameter order, a constant after a function and a private
+function before a `pub` one, each reported; `cfg`-gated twins left alone; one
+offence per block; the correction offering `--fix`, or saying why it declines;
+trait impls, `tests/` and an unparseable file left alone; `check_workspace`,
+`is_configured`, the name and the requirement.
 
-- **The check:** each group's order, constructor detection through `Result`,
-  `Option` and tuples, a private constructor, constructor ties, `pub` variants,
-  constants and types ahead of functions, `cfg`-gated twins, trait impls left
-  alone, `tests/` exempt, one offence per block naming the first misplaced
-  function, the unparseable file, `check_workspace`, `is_configured`, the name
-  and the requirement.
-- **The fixer:** a block reordered with its attributes, doc comments and attached
-  comments; blank lines normalised; the bytes outside the impl unchanged; a
-  free-standing comment, a macro invocation and two items on one line each
-  declining the block; trailing comments kept; a fixed file re-checked clean; a
-  file with no offence left untouched.
-- `tests/rule_registry_tests.rs` updated, and stage 2 run against this crate after
-  its own `--fix`.
+`tests/finding/parsing/impl_layout_parser_tests.rs` (fourteen) pins the reading:
+an impl's type, line and braces; constructors through `Result`, `Option` and a
+tuple, a private one, and a method returning `Self` not one; constants and types
+as heads and every `pub` variant as `pub`; a constructor's parameters; a raw
+identifier without its `r#`; a member's lines over its attributes, doc and
+comment; trait impls and an unparseable file left out; and the refusals -- a
+macro among the members, two on one line, a free comment between them, and not
+a comment after the last. `tests/finding/model/layout/{member_kind,impl_member,
+impl_layout}_tests.rs` pin the order itself: kinds, constructors by parameters
+then name, names byte by byte, heads as written, and the first member misplaced.
+
+`tests/ordered_impl_functions_rewriter_tests.rs` (eleven) pins the fixer: a
+member carried with its attributes, doc and comment; one blank line between
+functions and none between constants; the lines outside the block unchanged; a
+comment after the last member kept last; one block fixed beside one declined; a
+repaired file the rule finds clean; and `None` for a file in order, each refusal
+and a test file. `tests/rewriter_registry_tests.rs` has the registry reorder an
+impl, and `tests/blank_lines_tests.rs` the helper both fixers share.
+
+`tests/rule_registry_tests.rs`' four rule-name lists include
+`ordered-impl-functions`, and `tests/runner_tests.rs`' `--rules` listing holds
+thirty. Stage 2 runs this tool, built from the checkout, against this crate
+after its own `--fix`, with every rule applied and zero offences.
 
 ## Related
 

@@ -56,13 +56,6 @@ impl NamedSubjectRule {
             && !Self::EXEMPT_FILES.contains(&Self::file_name(path))
     }
 
-    fn file_name(path: &str) -> &str {
-        Path::new(path)
-            .file_name()
-            .and_then(|name| name.to_str())
-            .unwrap_or_default()
-    }
-
     // The candidates in the order the offence names them, and what they are.
     fn candidates(items: &[Item]) -> (Vec<DeclaredItem>, &'static str) {
         let implemented: Vec<DeclaredItem> = ImplementedTypeFinder::among(items)
@@ -77,6 +70,13 @@ impl NamedSubjectRule {
             .chain(DeclaredItemFinder::types(items))
             .collect();
         (declared, Self::DECLARED)
+    }
+
+    fn file_name(path: &str) -> &str {
+        Path::new(path)
+            .file_name()
+            .and_then(|name| name.to_str())
+            .unwrap_or_default()
     }
 
     fn offence(

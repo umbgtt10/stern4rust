@@ -3,8 +3,10 @@
 // SPDX-License-Identifier: MIT
 
 pub mod adoption;
+pub mod blank_lines_tests;
 pub mod finding;
 pub mod leading_constants_rewriter_tests;
+pub mod ordered_impl_functions_rewriter_tests;
 pub mod reporting;
 pub mod rewriter_registry_tests;
 pub mod rule_registry_tests;

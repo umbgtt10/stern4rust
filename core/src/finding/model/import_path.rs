@@ -85,30 +85,20 @@ impl ImportPath {
             .is_some_and(|(left, right)| !Self::share_a_case_shape(left, right))
     }
 
-    // Two segments compare the same way under both comparators only when they
-    // are of the same shape, and an initial capital is not enough to say so.
-    // `WAL_V2_MAGIC` and `WalRecord` both open with one and the editions still
-    // disagree: measured, 2021 puts `WalRecord` first and 2024 `WAL_V2_MAGIC`,
-    // the same split already recorded for `Value` against `from_str`. Reading
-    // only the first character called that pair same-case and demanded the
-    // alphabet, which is a file `cargo fmt` rewrites on every run -- found in
-    // `etheram-ibft`, where it cost sixteen offences no edit could clear and
-    // both import rules had to be stood down to keep stage 1 green.
-    //
-    // Shape is the initial and whether the segment is all capitals, because
-    // those are the two axes the disagreement runs along. Segments sharing both
-    // -- `ALPHA_TWO` against `ZETA_ONE`, `Alpha` against `Zeta`, `alpha`
-    // against `zeta` -- were measured to sort identically under 2021, 2024 and
-    // a plain sort, so those are still judged.
-    fn share_a_case_shape(left: &str, right: &str) -> bool {
-        Self::is_uppercase(left) == Self::is_uppercase(right)
-            && Self::is_all_capitals(left) == Self::is_all_capitals(right)
+    // The first segment, not a prefix: a crate genuinely named `crateful` sorts
+    // alphabetically like anything else.
+    fn first_segment(import: &str) -> &str {
+        Self::segments(import).first().copied().unwrap_or_default()
     }
 
     // Capitals and no lowercase. Digits and underscores decide nothing, so `V2`
     // reads as capitals and `v2` does not.
     fn is_all_capitals(segment: &str) -> bool {
         segment.chars().any(char::is_uppercase) && !segment.chars().any(char::is_lowercase)
+    }
+
+    fn is_uppercase(segment: &str) -> bool {
+        segment.chars().next().is_some_and(char::is_uppercase)
     }
 
     // One path continues the other: `alloc::vec` beside `alloc::vec::Vec`.
@@ -130,16 +120,6 @@ impl ImportPath {
         left.len() != right.len() && left[..shared] == right[..shared]
     }
 
-    // The first segment, not a prefix: a crate genuinely named `crateful` sorts
-    // alphabetically like anything else.
-    fn first_segment(import: &str) -> &str {
-        Self::segments(import).first().copied().unwrap_or_default()
-    }
-
-    fn is_uppercase(segment: &str) -> bool {
-        segment.chars().next().is_some_and(char::is_uppercase)
-    }
-
     fn segments(import: &str) -> Vec<&str> {
         import
             .trim()
@@ -151,5 +131,25 @@ impl ImportPath {
             .split("::")
             .map(str::trim)
             .collect()
+    }
+
+    // Two segments compare the same way under both comparators only when they
+    // are of the same shape, and an initial capital is not enough to say so.
+    // `WAL_V2_MAGIC` and `WalRecord` both open with one and the editions still
+    // disagree: measured, 2021 puts `WalRecord` first and 2024 `WAL_V2_MAGIC`,
+    // the same split already recorded for `Value` against `from_str`. Reading
+    // only the first character called that pair same-case and demanded the
+    // alphabet, which is a file `cargo fmt` rewrites on every run -- found in
+    // `etheram-ibft`, where it cost sixteen offences no edit could clear and
+    // both import rules had to be stood down to keep stage 1 green.
+    //
+    // Shape is the initial and whether the segment is all capitals, because
+    // those are the two axes the disagreement runs along. Segments sharing both
+    // -- `ALPHA_TWO` against `ZETA_ONE`, `Alpha` against `Zeta`, `alpha`
+    // against `zeta` -- were measured to sort identically under 2021, 2024 and
+    // a plain sort, so those are still judged.
+    fn share_a_case_shape(left: &str, right: &str) -> bool {
+        Self::is_uppercase(left) == Self::is_uppercase(right)
+            && Self::is_all_capitals(left) == Self::is_all_capitals(right)
     }
 }

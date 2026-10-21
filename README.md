@@ -16,7 +16,7 @@ already own correctness. These are the things a reviewer would otherwise have to
 say by hand, every time, forever — and the ones that quietly stop being true
 across a codebase the moment nobody is checking.
 
-> **Status: twenty-nine rules.** The set below is what is implemented and
+> **Status: thirty rules.** The set below is what is implemented and
 > gated. `stern4rust` runs against its own tree on every build, so a rule that
 > would fail this repository cannot be merged into it.
 
@@ -95,7 +95,7 @@ cargo stern4rust --format json
 | `--rules` | list every rule with what it wants, a scrap of source that breaks it and the same scrap put right, then exit without scanning. Honours `--format` |
 | `--rule <NAME>` | apply only these rules; repeatable. Omit to apply every rule |
 | `--skip <NAME>` | do not apply these rules; repeatable. Subtracted from whatever `--rule` selected |
-| `--fix` | repair what can be repaired mechanically, then report what is left. `test-file-structure` and `leading-constants` are fixable today |
+| `--fix` | repair what can be repaired mechanically, then report what is left. `test-file-structure`, `leading-constants` and `ordered-impl-functions` are fixable today |
 | `--baseline <PATH>` | offences recorded here are not reported and do not fail the run; the suppressed count is always in the summary |
 | `--write-baseline` | record the current offences and exit clean, instead of judging against them |
 | `--exclude <GLOB>` | keep these paths out of the run; repeatable, matched against the package-relative path. Every pattern is named in the report with how many files it removed, including zero |
@@ -182,8 +182,11 @@ cargo stern4rust --fix
 ```
 
 Repairs `test-file-structure` offences — item order, section order, blank lines
-— and `leading-constants` offences, moving a source file's misplaced constants
-up to its imports, and then reports everything it could not repair, unchanged. The report after
+— `leading-constants` offences, moving a source file's misplaced constants up
+to its imports, and `ordered-impl-functions` offences, reordering an inherent
+impl block's members; then it reports everything it could not repair,
+unchanged. When two fixers apply to one file, each works on what the one before
+left. The report after
 `--fix` is exactly the report you would get without it, minus what was fixed.
 
 ```text
@@ -542,6 +545,26 @@ method, *make it `pub` and give it a test* where one does, and where the type's
 impl is spread over files, `implemented-in-one-file` -- the restriction being what
 the spread needs. Trait impls carry no visibility of their own; `tests/` is
 exempt. [R025](docs/ADRs/R025-ADR-PublicOrPrivateRule.md)
+
+### `ordered-impl-functions`
+
+An inherent impl block lists its functions in a fixed order: constructors,
+fewest parameters first, then its `pub` functions, then the rest, each
+alphabetical, with its constants and types ahead of them all. A constructor is a
+function with no receiver whose return type names `Self` or the impl's type,
+directly or wrapped -- `Result<Self, E>`, `Option<Self>`, `(Self, Vec<Outcome>)`
+-- whatever its visibility. One offence per block, at the impl, naming the first
+member out of place and the one it belongs before.
+
+In a repository written mostly by agents the author changes every session, so
+narrative order drifts and every placement is a judgement; a fixed order is the
+same in every session and keeps a new function's diff to the lines it adds.
+Order within an impl means nothing to the compiler, so `--fix` repairs it: whole
+members, with their attributes, doc comments and the comment directly above
+them, one blank line apart. It declines a block with a macro invocation among
+its items, two members on one line, or a comment standing free between two
+functions. Trait impls keep the trait's order and are left alone; `tests/` is
+exempt. [R027](docs/ADRs/R027-ADR-OrderedImplFunctionsRule.md)
 
 ### `declared-by-name`
 

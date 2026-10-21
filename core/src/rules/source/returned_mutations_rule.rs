@@ -52,18 +52,6 @@ impl ReturnedMutationsRule {
         Self
     }
 
-    // Every offending parameter is reported, because turning each one into a
-    // return value is a separate edit.
-    fn offences(file: &SourceFile, signature: &Signature) -> Vec<Offence> {
-        let function = signature.ident.to_string();
-        signature
-            .inputs
-            .iter()
-            .filter_map(Self::mutable_parameter)
-            .map(|parameter| Self::offence(file, &function, parameter))
-            .collect()
-    }
-
     // The receiver carries no type here, so `&mut self` falls out as a matter of
     // shape rather than a special case.
     fn mutable_parameter(argument: &FnArg) -> Option<(String, usize)> {
@@ -77,13 +65,6 @@ impl ReturnedMutationsRule {
             Self::parameter_name(&typed.pat),
             typed.pat.span().start().line,
         ))
-    }
-
-    fn parameter_name(pattern: &Pat) -> String {
-        match pattern {
-            Pat::Ident(binding) => binding.ident.to_string(),
-            _ => "_".to_string(),
-        }
     }
 
     fn offence(file: &SourceFile, function: &str, parameter: (String, usize)) -> Offence {
@@ -100,6 +81,25 @@ impl ReturnedMutationsRule {
             format!("return the new value instead of writing it through `&mut {name}`"),
         )
         .with_subject(&subject)
+    }
+
+    // Every offending parameter is reported, because turning each one into a
+    // return value is a separate edit.
+    fn offences(file: &SourceFile, signature: &Signature) -> Vec<Offence> {
+        let function = signature.ident.to_string();
+        signature
+            .inputs
+            .iter()
+            .filter_map(Self::mutable_parameter)
+            .map(|parameter| Self::offence(file, &function, parameter))
+            .collect()
+    }
+
+    fn parameter_name(pattern: &Pat) -> String {
+        match pattern {
+            Pat::Ident(binding) => binding.ident.to_string(),
+            _ => "_".to_string(),
+        }
     }
 }
 

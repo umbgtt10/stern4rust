@@ -37,12 +37,6 @@ impl PackageRoster {
         }
     }
 
-    pub fn agrees_with(&self, other: &Self) -> bool {
-        self.applied == other.applied
-            && self.skipped == other.skipped
-            && self.unconfigured == other.unconfigured
-    }
-
     // Why a rule is missing, not merely that it is. A rule nobody asked for and
     // a rule that could not run are different facts, and a reader who cannot
     // tell them apart has no idea which one to act on.
@@ -56,5 +50,11 @@ impl PackageRoster {
                     .map(|(name, requirement)| format!("{name} ({requirement})")),
             )
             .collect()
+    }
+
+    pub fn agrees_with(&self, other: &Self) -> bool {
+        self.applied == other.applied
+            && self.skipped == other.skipped
+            && self.unconfigured == other.unconfigured
     }
 }

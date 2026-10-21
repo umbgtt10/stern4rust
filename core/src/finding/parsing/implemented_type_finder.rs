@@ -23,12 +23,6 @@ use crate::source_file::SourceFile;
 pub struct ImplementedTypeFinder;
 
 impl ImplementedTypeFinder {
-    // None means the file does not parse. readable-source reports that.
-    pub fn find(file: &SourceFile) -> Option<Vec<ImplementedType>> {
-        let syntax = parse_file(&file.contents()).ok()?;
-        Some(Self::among(&syntax.items))
-    }
-
     // For a caller that has parsed the file already and asks more of it than
     // this.
     //
@@ -44,5 +38,11 @@ impl ImplementedTypeFinder {
             .filter(|candidate| implemented.targets().contains(&candidate.name))
             .map(|declared| ImplementedType::new(&declared.name, declared.line))
             .collect()
+    }
+
+    // None means the file does not parse. readable-source reports that.
+    pub fn find(file: &SourceFile) -> Option<Vec<ImplementedType>> {
+        let syntax = parse_file(&file.contents()).ok()?;
+        Some(Self::among(&syntax.items))
     }
 }

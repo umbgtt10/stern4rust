@@ -65,21 +65,6 @@ impl DeclaredByNameRule {
             .collect()
     }
 
-    // Only the bare `#[path = "..."]`. A `cfg_attr` wrapping one is a
-    // `Meta::List` named `cfg_attr`, so it never matches here.
-    fn target_of(attrs: &[Attribute]) -> Option<String> {
-        attrs.iter().find_map(|attr| match &attr.meta {
-            Meta::NameValue(pair) if pair.path.is_ident(Self::ATTRIBUTE) => match &pair.value {
-                Expr::Lit(literal) => match &literal.lit {
-                    Lit::Str(text) => Some(text.value()),
-                    _ => None,
-                },
-                _ => None,
-            },
-            _ => None,
-        })
-    }
-
     // The correction names both files, because the fix is a move and a deletion
     // rather than an edit to the declaration.
     fn offence(&self, file: &SourceFile, module: &ItemMod, target: &str) -> Offence {
@@ -99,6 +84,21 @@ impl DeclaredByNameRule {
         )
         .with_subject(&name)
         .with_expected(&expected)
+    }
+
+    // Only the bare `#[path = "..."]`. A `cfg_attr` wrapping one is a
+    // `Meta::List` named `cfg_attr`, so it never matches here.
+    fn target_of(attrs: &[Attribute]) -> Option<String> {
+        attrs.iter().find_map(|attr| match &attr.meta {
+            Meta::NameValue(pair) if pair.path.is_ident(Self::ATTRIBUTE) => match &pair.value {
+                Expr::Lit(literal) => match &literal.lit {
+                    Lit::Str(text) => Some(text.value()),
+                    _ => None,
+                },
+                _ => None,
+            },
+            _ => None,
+        })
     }
 }
 

@@ -45,15 +45,6 @@ impl PureTraitsRule {
         Self
     }
 
-    // Descends into inline modules: a body does not stop being a body for
-    // sitting one level down.
-    fn declarations(items: &[Item]) -> Vec<&ItemTrait> {
-        InlineModule::flatten(items)
-            .into_iter()
-            .filter_map(Self::as_trait)
-            .collect()
-    }
-
     fn as_trait(item: &Item) -> Option<&ItemTrait> {
         match item {
             Item::Trait(declaration) => Some(declaration),
@@ -73,6 +64,15 @@ impl PureTraitsRule {
                 _ => None,
             })
             .map(|method| Self::offence(file, &declared_by, method))
+            .collect()
+    }
+
+    // Descends into inline modules: a body does not stop being a body for
+    // sitting one level down.
+    fn declarations(items: &[Item]) -> Vec<&ItemTrait> {
+        InlineModule::flatten(items)
+            .into_iter()
+            .filter_map(Self::as_trait)
             .collect()
     }
 

@@ -61,6 +61,30 @@ impl ArrangeActAssertRule {
         file.is_under(Self::TESTS_ROOT, &Self::REGISTRIES)
     }
 
+    // Comment lines above a marker are folded into it, the same way
+    // `TestFileParser` folds them into the item they document. Without that, a
+    // marker that explains itself over two lines reads as a spacing offence --
+    // and the explanation is the thing worth keeping.
+    fn is_blank_above(file: &SourceFile, line: usize) -> bool {
+        let lines = file.lines();
+        (1..line)
+            .rev()
+            .map(|above| lines[above - 1].trim())
+            .find(|text| !text.starts_with("//"))
+            .is_none_or(str::is_empty)
+    }
+
+    // Arrange, then one or more Act/Assert pairs. An odd length with Arrange
+    // first and clean pairs after is the whole grammar.
+    fn is_legal(phases: &[MarkerPhase]) -> bool {
+        if phases.len() < 3 || phases.len() % 2 == 0 || phases[0] != MarkerPhase::Arrange {
+            return false;
+        }
+        phases[1..]
+            .chunks(2)
+            .all(|pair| pair == [MarkerPhase::Act, MarkerPhase::Assert])
+    }
+
     fn is_test(attrs: &[Attribute]) -> bool {
         attrs.iter().any(|attr| {
             attr.path()
@@ -99,17 +123,6 @@ impl ArrangeActAssertRule {
             .collect()
     }
 
-    // Arrange, then one or more Act/Assert pairs. An odd length with Arrange
-    // first and clean pairs after is the whole grammar.
-    fn is_legal(phases: &[MarkerPhase]) -> bool {
-        if phases.len() < 3 || phases.len() % 2 == 0 || phases[0] != MarkerPhase::Arrange {
-            return false;
-        }
-        phases[1..]
-            .chunks(2)
-            .all(|pair| pair == [MarkerPhase::Act, MarkerPhase::Assert])
-    }
-
     fn named(phases: &[MarkerPhase]) -> String {
         if phases.is_empty() {
             return "no AAA markers".to_string();
@@ -123,6 +136,18 @@ impl ArrangeActAssertRule {
             })
             .collect::<Vec<&str>>()
             .join(", ")
+    }
+
+    fn offences_of(&self, file: &SourceFile, function: &ItemFn) -> Vec<Offence> {
+        let markers = Self::markers_of(file, function);
+        let phases: Vec<MarkerPhase> = markers
+            .iter()
+            .flat_map(|marker| marker.phases.clone())
+            .collect();
+        if !Self::is_legal(&phases) {
+            return vec![self.sequence_offence(file, function, &Self::named(&phases))];
+        }
+        self.spacing_offences(file, function, &markers)
     }
 
     fn sequence_offence(&self, file: &SourceFile, function: &ItemFn, found: &str) -> Offence {
@@ -169,31 +194,6 @@ impl ArrangeActAssertRule {
                 .with_subject(&name)
             })
             .collect()
-    }
-
-    // Comment lines above a marker are folded into it, the same way
-    // `TestFileParser` folds them into the item they document. Without that, a
-    // marker that explains itself over two lines reads as a spacing offence --
-    // and the explanation is the thing worth keeping.
-    fn is_blank_above(file: &SourceFile, line: usize) -> bool {
-        let lines = file.lines();
-        (1..line)
-            .rev()
-            .map(|above| lines[above - 1].trim())
-            .find(|text| !text.starts_with("//"))
-            .is_none_or(str::is_empty)
-    }
-
-    fn offences_of(&self, file: &SourceFile, function: &ItemFn) -> Vec<Offence> {
-        let markers = Self::markers_of(file, function);
-        let phases: Vec<MarkerPhase> = markers
-            .iter()
-            .flat_map(|marker| marker.phases.clone())
-            .collect();
-        if !Self::is_legal(&phases) {
-            return vec![self.sequence_offence(file, function, &Self::named(&phases))];
-        }
-        self.spacing_offences(file, function, &markers)
     }
 }
 

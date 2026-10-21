@@ -25,11 +25,12 @@ does so at scale and in silence.
 left**, unchanged, exactly as a run without `--fix` would. The checks run against
 the repaired tree, so the report is the truth after fixing rather than before.
 
-Two rules are fixable: `test-file-structure` -- item order within a section,
-section order, and blank lines -- and `leading-constants`
+Three rules are fixable: `test-file-structure` -- item order within a section,
+section order, and blank lines -- `leading-constants`
 ([R031](R031-ADR-LeadingConstantsRule.md)), whose fixer moves a source file's
-misplaced constants up to its imports and declines a file it cannot move as
-lines. Everything else is reported and not touched.
+misplaced constants up to its imports, and `ordered-impl-functions`
+([R027](R027-ADR-OrderedImplFunctionsRule.md)), whose fixer reorders an inherent
+impl block's members; each declines what it cannot move as lines. Everything else is reported and not touched.
 
 Three constraints, each of which exists because the first version violated it.
 

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::leading_constants_rewriter::LeadingConstantsRewriter;
+use crate::ordered_impl_functions_rewriter::OrderedImplFunctionsRewriter;
 use crate::source_file::SourceFile;
 use crate::source_rewriter::SourceRewriter;
 use crate::test_file_rewriter::TestFileRewriter;
@@ -16,15 +17,16 @@ pub struct RewriterRegistry {
 }
 
 impl RewriterRegistry {
-    pub fn new(rewriters: Vec<Box<dyn SourceRewriter>>) -> Self {
-        Self { rewriters }
-    }
-
     pub fn all() -> Self {
         Self::new(vec![
             Box::new(TestFileRewriter::new()),
             Box::new(LeadingConstantsRewriter::new()),
+            Box::new(OrderedImplFunctionsRewriter::new()),
         ])
+    }
+
+    pub fn new(rewriters: Vec<Box<dyn SourceRewriter>>) -> Self {
+        Self { rewriters }
     }
 
     // None when no fixer the package applies changes the file.

@@ -62,6 +62,12 @@ impl FreeFunctionFinder {
         finder.found
     }
 
+    fn is_required_free(&self, function: &ItemFn) -> bool {
+        function.sig.abi.is_some()
+            || (self.entry_file && function.sig.ident == "main")
+            || function.attrs.iter().any(Self::requires_free)
+    }
+
     fn is_test_only(attributes: &[Attribute]) -> bool {
         attributes.iter().any(|attribute| {
             attribute.path().is_ident("cfg")
@@ -71,10 +77,11 @@ impl FreeFunctionFinder {
         })
     }
 
-    fn is_required_free(&self, function: &ItemFn) -> bool {
-        function.sig.abi.is_some()
-            || (self.entry_file && function.sig.ident == "main")
-            || function.attrs.iter().any(Self::requires_free)
+    fn last_segment(path: &Path) -> String {
+        path.segments
+            .last()
+            .map(|segment| segment.ident.to_string())
+            .unwrap_or_default()
     }
 
     fn requires_free(attribute: &Attribute) -> bool {
@@ -88,13 +95,6 @@ impl FreeFunctionFinder {
             named
         };
         Self::REQUIRED_FREE.contains(&effective.as_str())
-    }
-
-    fn last_segment(path: &Path) -> String {
-        path.segments
-            .last()
-            .map(|segment| segment.ident.to_string())
-            .unwrap_or_default()
     }
 }
 

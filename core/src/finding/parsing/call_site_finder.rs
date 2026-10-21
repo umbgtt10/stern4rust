@@ -47,6 +47,18 @@ impl CallSiteFinder {
         Some(finder.found)
     }
 
+    fn arity_of(tokens: TokenStream) -> usize {
+        let mut arguments = 0;
+        let mut any = false;
+        for tree in tokens {
+            match &tree {
+                TokenTree::Punct(punct) if punct.as_char() == ',' => arguments += 1,
+                _ => any = true,
+            }
+        }
+        if any { arguments + 1 } else { 0 }
+    }
+
     fn take_tokens(&mut self, tokens: TokenStream) {
         let trees: Vec<TokenTree> = tokens.into_iter().collect();
         for (index, tree) in trees.iter().enumerate() {
@@ -62,18 +74,6 @@ impl CallSiteFinder {
                 self.take_tokens(group.stream());
             }
         }
-    }
-
-    fn arity_of(tokens: TokenStream) -> usize {
-        let mut arguments = 0;
-        let mut any = false;
-        for tree in tokens {
-            match &tree {
-                TokenTree::Punct(punct) if punct.as_char() == ',' => arguments += 1,
-                _ => any = true,
-            }
-        }
-        if any { arguments + 1 } else { 0 }
     }
 }
 

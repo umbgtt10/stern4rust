@@ -47,6 +47,13 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
   left alone; `tests/` is exempt. Clean on this repository and on four others in
   the family; 124 offences across the other eleven. On by default.
   [R025](ADRs/R025-ADR-PublicOrPrivateRule.md)
+- **`ordered-impl-functions`** -- an inherent impl lists constructors, fewest
+  parameters first, then `pub` functions, then the rest, each alphabetical,
+  constants and types ahead: one offence per block out of order, naming the
+  first member misplaced. Trait impls are left alone; `tests/` is exempt. Every
+  repository in the family had blocks out of order -- 729 across sixteen, 53 of
+  them this repository's, which `--fix` reordered -- and the fixer declines none.
+  On by default. [R027](ADRs/R027-ADR-OrderedImplFunctionsRule.md)
 
 ### Autofix
 
@@ -55,6 +62,11 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
   group, in packages that apply the rule. It declines a file with a
   `macro_rules!`, a constant or leader sharing a line with another item, and an
   opening comment running into the first item; those offences stay and say why.
+- `--fix` repairs `ordered-impl-functions` offences: whole members moved with
+  their attributes, doc comments and attached comment, only the lines between a
+  block's braces changing. It declines a block with a macro among its items, two
+  members on one line, or a comment standing free between two functions.
+- Two fixers of one file compose: each runs on what the one before left.
 - `--fix` reorders a test file only where the package applies
   `test-file-structure`: a package that skips it, or a run selecting other
   rules, has its test files left as they are.

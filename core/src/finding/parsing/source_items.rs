@@ -20,15 +20,6 @@ use crate::source_file::SourceFile;
 pub struct SourceItems;
 
 impl SourceItems {
-    pub fn under(root: &str, file: &SourceFile) -> Vec<Item> {
-        if !file.relative_path().starts_with(root) {
-            return Vec::new();
-        }
-        parse_file(&file.contents())
-            .map(|syntax| syntax.items)
-            .unwrap_or_default()
-    }
-
     pub fn offences<T, F, J>(root: &str, file: &SourceFile, find: F, judge: J) -> Vec<Offence>
     where
         F: for<'i> Fn(&'i [Item]) -> Vec<&'i T>,
@@ -39,5 +30,14 @@ impl SourceItems {
             .into_iter()
             .flat_map(|found| judge(file, found))
             .collect()
+    }
+
+    pub fn under(root: &str, file: &SourceFile) -> Vec<Item> {
+        if !file.relative_path().starts_with(root) {
+            return Vec::new();
+        }
+        parse_file(&file.contents())
+            .map(|syntax| syntax.items)
+            .unwrap_or_default()
     }
 }

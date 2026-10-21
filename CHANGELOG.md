@@ -6,14 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-Five rules added, all on by default, so they move what this tool reports about
+Six rules added, all on by default, so they move what this tool reports about
 your code once it is released. A function returning a mutable reference, one
 returning a tuple that repeats an element type, a module-level constant declared
-after another item, a type implemented in more than one file, and a method that
-is neither `pub` nor private become offences; to adopt one later, add its name --
-`immutable-returns`, `distinct-tuple-elements`, `leading-constants`,
-`implemented-in-one-file` or `public-or-private` -- to `skip` in your
-`stern4rust.toml` once you install a version that knows it. The third is fixable: `--fix` moves the constants.
+after another item, a type implemented in more than one file, a method that is
+neither `pub` nor private, and an impl block out of order become offences; to
+adopt one later, add its name -- `immutable-returns`, `distinct-tuple-elements`,
+`leading-constants`, `implemented-in-one-file`, `public-or-private` or
+`ordered-impl-functions` -- to `skip` in your `stern4rust.toml` once you install
+a version that knows it. Two are fixable: `--fix` moves the constants and
+reorders the impls. The third is fixable: `--fix` moves the constants.
 And `--fix` now repairs only what the run applies: test files are left alone
 where `test-file-structure` is skipped or not selected.
 
@@ -87,6 +89,26 @@ where `test-file-structure` is skipped or not selected.
   The rule is clean on this repository and on four others in the family, and
   reports 124 offences across the other eleven: 80 called from another file, 38
   in the four spread types, 6 that can simply be private.
+- **`ordered-impl-functions`: an inherent impl lists constructors, then `pub`
+  functions, then the rest.** Constructors -- no receiver, a return type naming
+  `Self` or the impl's type, directly or wrapped -- come first, fewest parameters
+  first; then every `pub fn`; then every other function; each group
+  alphabetical, byte by byte, with constants and types ahead and `cfg`-gated
+  twins kept adjacent. One offence per block, at the impl, naming the first
+  member out of place. Trait impls are left alone; `tests/` is exempt.
+  [R027](docs/ADRs/R027-ADR-OrderedImplFunctionsRule.md)
+
+  `--fix` repairs it: whole members move, each with its attributes, doc comments
+  and the comment directly above it, and only the lines between a block's
+  braces change. It declines a block with a macro invocation among its items,
+  two members on one line, or a comment standing free between two functions;
+  those keep their offence, which says why.
+
+  Every repository in the family had blocks out of order: 729 across sixteen,
+  this one's 53 included, which `--fix` reordered in the change that built it.
+  On a copy of each of the other fifteen, `--fix` repaired all 676, kept every
+  file's lines -- only their order and the blank lines between them change --
+  re-checked clean, and left `cargo fmt` nothing to do.
 
 ### Changed
 - The type walk `returned-mutations` carried privately is now
@@ -112,6 +134,9 @@ where `test-file-structure` is skipped or not selected.
   `MutableReferenceSearch`, `RepeatedTupleFinder`, `TypeWalk` -- moved to
   `finding::parsing::signatures`, to leave `finding/parsing/` room under
   `directory-file-count`. What they find is unchanged.
+- `FixRefusal` gains `FreeComment` and `MacroInvocation`, and its `SharedLine`
+  reads for any item, not only a constant. Where moved lines meet the lines that
+  stay, both fixers drop the blank lines through `BlankLines`.
 - The layout models -- `Section`, `TestFileItem`, `ConstantLayout`,
   `MisplacedConstant`, `FixRefusal` -- moved to `finding::model::layout`, to leave
   `finding/model/` room under `directory-file-count`.

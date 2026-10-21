@@ -44,21 +44,6 @@ impl HeaderRule {
         )
     }
 
-    fn expected_text(&self) -> String {
-        self.expected.join("\n")
-    }
-
-    fn missing_entirely(&self, file: &SourceFile) -> Offence {
-        Offence::new(
-            file.relative_path(),
-            1,
-            self.name(),
-            "file is empty, so it carries no header".to_string(),
-            self.correction(),
-        )
-        .with_expected(&self.expected_text())
-    }
-
     fn ends_early(&self, file: &SourceFile) -> Offence {
         Offence::new(
             file.relative_path(),
@@ -74,6 +59,10 @@ impl HeaderRule {
         .with_expected(&self.expected_text())
     }
 
+    fn expected_text(&self) -> String {
+        self.expected.join("\n")
+    }
+
     fn line_differs(&self, file: &SourceFile, index: usize) -> Offence {
         Offence::new(
             file.relative_path(),
@@ -84,6 +73,17 @@ impl HeaderRule {
                 self.expected[index],
                 file.lines()[index]
             ),
+            self.correction(),
+        )
+        .with_expected(&self.expected_text())
+    }
+
+    fn missing_entirely(&self, file: &SourceFile) -> Offence {
+        Offence::new(
+            file.relative_path(),
+            1,
+            self.name(),
+            "file is empty, so it carries no header".to_string(),
             self.correction(),
         )
         .with_expected(&self.expected_text())

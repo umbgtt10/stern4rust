@@ -9,7 +9,7 @@ without answering it.
 
 Each rule also carries an **explanation** — what it wants, a scrap of source
 that breaks it and the same scrap put right — and that field is required too.
-`cargo stern4rust --rules` prints all twenty-nine, in text or with
+`cargo stern4rust --rules` prints all thirty, in text or with
 `--format json`, without scanning anything. See
 [ADR-RulesExplainThemselves](ADRs/ADR-RulesExplainThemselves.md).
 
@@ -41,6 +41,7 @@ that breaks it and the same scrap put right — and that field is required too.
 | `leading-constants` | [R031](ADRs/R031-ADR-LeadingConstantsRule.md) | no |
 | `implemented-in-one-file` | [R026](ADRs/R026-ADR-ImplementedInOneFileRule.md) | no |
 | `public-or-private` | [R025](ADRs/R025-ADR-PublicOrPrivateRule.md) | no |
+| `ordered-impl-functions` | [R027](ADRs/R027-ADR-OrderedImplFunctionsRule.md) | no |
 | `test-naming` | [R012](ADRs/R012-ADR-TestNamingRule.md) | no |
 | `tested-public-api` | [R013](ADRs/R013-ADR-TestedPublicApiRule.md) | no |
 | `header` | [R001](ADRs/R001-ADR-HeaderRule.md) | `--header-file` |
@@ -782,6 +783,50 @@ call sites, matched on name and arity -- the receiver not counted -- as
 **Does not catch:** restricted visibility anywhere else -- free functions, fields,
 types, constants, modules; a `pub fn` that should have been private, which
 `tested-public-api` and review judge; and methods a macro generates.
+
+## `ordered-impl-functions`
+
+An inherent impl block lists its functions in a fixed order. **Constructors
+first, fewest parameters first; then every `pub fn`; then every other function
+-- each group alphabetical, constants and types ahead of them all.**
+
+- **A constructor** is a function with no receiver whose return type names
+  `Self` or the impl's type, directly or wrapped: `Self`, `Result<Self, E>`,
+  `Option<Store>`, `(Self, Vec<Outcome>)`. Its visibility does not matter.
+  Constructors with as many parameters as each other are alphabetical.
+- **A `pub fn`** is any function written `pub`, `const`, `async` and `unsafe`
+  alike. Everything else is the rest: private functions, and restricted ones
+  where `public-or-private` is not adopted.
+- **Alphabetical** is byte by byte, a raw identifier without its `r#`. Two
+  functions of one name -- `cfg`-gated twins -- stay adjacent, as written.
+- **Associated constants and types** come before every function, in the order
+  written.
+
+Where a function sat was decided by whoever wrote it; in a repository written
+mostly by agents the author changes every session, so narrative order drifts.
+A fixed order is the same in every session, takes the decision out of every
+change, and keeps a new function's diff to the lines it adds.
+
+| offence | correction |
+|---|---|
+| `` `impl Bookkeepers` is out of order: `catch_up` belongs before `cluster` `` | `` list constructors first, fewest parameters first, then its `pub` functions, then the rest, each alphabetical, its constants and types ahead -- or run `--fix` `` |
+
+One offence per block, at the impl: a single insertion can displace every
+function after it. Trait impls keep the trait's order and are left alone, and
+`tests/` is exempt.
+
+`--fix` reorders every block out of order, moving whole members -- each with its
+attributes, doc comments and the comment directly above it -- and changing only
+the lines between the block's braces: members one blank line apart, constants
+and types none, a comment before the first member kept first and one after the
+last kept last. It declines a block, which keeps its offence, ending *"by hand:
+`--fix` leaves alone"* and the reason, when it holds a macro invocation among
+its items, two members on one line or on a brace's line, or a comment standing
+free between two functions. `rustfmt` does not reorder impl items, so the order
+is never undone by the formatter.
+
+**Does not catch:** trait impls; whether a long impl should be split; and
+functions a macro generates.
 
 ## `declared-by-name`
 

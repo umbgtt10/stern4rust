@@ -9,6 +9,7 @@ pub mod free_function_finder;
 pub mod gated_modules;
 pub mod identifiers;
 pub mod impl_blocks;
+pub mod impl_layout_parser;
 pub mod implemented_type_finder;
 pub mod inline_module;
 pub mod item_naming;

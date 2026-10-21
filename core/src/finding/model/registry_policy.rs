@@ -26,17 +26,17 @@ pub struct RegistryPolicy {
 impl RegistryPolicy {
     pub const ALLOC: &'static str = "alloc";
 
-    pub fn tests() -> Self {
-        Self {
-            requires_pub: false,
-            allows_extern_alloc: false,
-        }
-    }
-
     pub fn source() -> Self {
         Self {
             requires_pub: true,
             allows_extern_alloc: true,
+        }
+    }
+
+    pub fn tests() -> Self {
+        Self {
+            requires_pub: false,
+            allows_extern_alloc: false,
         }
     }
 

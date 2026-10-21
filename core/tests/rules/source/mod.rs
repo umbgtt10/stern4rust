@@ -10,6 +10,7 @@ pub mod implemented_in_one_file_rule_tests;
 pub mod imported_paths_rule_tests;
 pub mod leading_constants_rule_tests;
 pub mod named_subject_rule_tests;
+pub mod ordered_impl_functions_rule_tests;
 pub mod ordered_imports_rule_tests;
 pub mod owned_functions_rule_tests;
 pub mod public_or_private_rule_tests;

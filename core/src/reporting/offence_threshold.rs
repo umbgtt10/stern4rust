@@ -28,10 +28,6 @@ impl OffenceThreshold {
         Self { limit }
     }
 
-    pub fn limit(self) -> usize {
-        self.limit
-    }
-
     // Zero is the escape hatch for "show me everything", not a way to silence
     // the report. A limit of nothing would be a tool that finds problems and
     // then refuses to say which.
@@ -47,6 +43,10 @@ impl OffenceThreshold {
             return offences;
         }
         &offences[..self.limit.min(offences.len())]
+    }
+
+    pub fn limit(self) -> usize {
+        self.limit
     }
 
     pub fn omitted(self, offences: &[Offence]) -> usize {

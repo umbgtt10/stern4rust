@@ -44,6 +44,15 @@ impl TestedPublicApiRule {
         Self
     }
 
+    fn called_in(files: &[SourceFile]) -> BTreeSet<PublicEntryPoint> {
+        files
+            .iter()
+            .filter(|file| file.relative_path().starts_with(Self::TESTS_ROOT))
+            .filter_map(CallSiteFinder::find)
+            .flatten()
+            .collect()
+    }
+
     fn declared_in(files: &[SourceFile]) -> Vec<(String, PublicEntryPoint)> {
         files
             .iter()
@@ -54,15 +63,6 @@ impl TestedPublicApiRule {
                     .into_iter()
                     .map(|entry| (file.relative_path().to_string(), entry))
             })
-            .collect()
-    }
-
-    fn called_in(files: &[SourceFile]) -> BTreeSet<PublicEntryPoint> {
-        files
-            .iter()
-            .filter(|file| file.relative_path().starts_with(Self::TESTS_ROOT))
-            .filter_map(CallSiteFinder::find)
-            .flatten()
             .collect()
     }
 

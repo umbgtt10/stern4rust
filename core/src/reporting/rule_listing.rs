@@ -38,23 +38,19 @@ impl<'a> RuleListing<'a> {
         }
     }
 
-    // One section per rule, in registry order, so the listing reads in the same
-    // order as the roster a report prints.
-    fn text(&self) -> String {
-        let mut out = String::from(
-            "stern4rust rules
-",
+    // Indented so a multi-line example stays one block rather than running into
+    // the next label.
+    fn block(label: &str, body: &str) -> String {
+        let mut out = format!(
+            "
+  {label}:
+"
         );
-        for entry in self.explanations {
+        for line in body.lines() {
             out.push_str(&format!(
-                "
-{}
-  {}
-",
-                entry.name, entry.summary
+                "      {line}
+"
             ));
-            out.push_str(&Self::block("breaks", entry.breaks));
-            out.push_str(&Self::block("instead", entry.instead));
         }
         out
     }
@@ -76,19 +72,23 @@ impl<'a> RuleListing<'a> {
             .unwrap_or_else(|_| String::from("{\"rules\":[]}"))
     }
 
-    // Indented so a multi-line example stays one block rather than running into
-    // the next label.
-    fn block(label: &str, body: &str) -> String {
-        let mut out = format!(
-            "
-  {label}:
-"
+    // One section per rule, in registry order, so the listing reads in the same
+    // order as the roster a report prints.
+    fn text(&self) -> String {
+        let mut out = String::from(
+            "stern4rust rules
+",
         );
-        for line in body.lines() {
+        for entry in self.explanations {
             out.push_str(&format!(
-                "      {line}
-"
+                "
+{}
+  {}
+",
+                entry.name, entry.summary
             ));
+            out.push_str(&Self::block("breaks", entry.breaks));
+            out.push_str(&Self::block("instead", entry.instead));
         }
         out
     }

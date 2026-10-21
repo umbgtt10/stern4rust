@@ -28,18 +28,6 @@ pub struct ManifestResolver;
 impl ManifestResolver {
     pub const MANIFEST: &'static str = "Cargo.toml";
 
-    // Every package in the workspace, whether this run walks it or not. What a
-    // `[package.<name>]` section is checked against: a section for a member this
-    // run is not scanning is ordinary, one for a member that does not exist is a
-    // typo.
-    pub fn workspace_package_names(config: &Config) -> Result<Vec<String>> {
-        Ok(Self::metadata(config)?
-            .packages
-            .iter()
-            .map(|package| package.name.to_string())
-            .collect())
-    }
-
     // Every package the run will walk, each carrying what its own manifest says
     // about it.
     //
@@ -62,6 +50,13 @@ impl ManifestResolver {
                 )
             })
             .collect())
+    }
+
+    pub fn relative_to(root: &Path, path: &Path) -> String {
+        path.strip_prefix(root)
+            .unwrap_or(path)
+            .to_string_lossy()
+            .replace('\\', "/")
     }
 
     // Every dependency each member manifest declares, as written. None when the
@@ -90,12 +85,29 @@ impl ManifestResolver {
         )
     }
 
-    fn is_workspace(manifest: &Path) -> bool {
-        Self::parsed(manifest).is_some_and(|table| table.contains_key("workspace"))
+    // Every package in the workspace, whether this run walks it or not. What a
+    // `[package.<name>]` section is checked against: a section for a member this
+    // run is not scanning is ordinary, one for a member that does not exist is a
+    // typo.
+    pub fn workspace_package_names(config: &Config) -> Result<Vec<String>> {
+        Ok(Self::metadata(config)?
+            .packages
+            .iter()
+            .map(|package| package.name.to_string())
+            .collect())
     }
 
-    fn parsed(manifest: &Path) -> Option<Table> {
-        read_to_string(manifest).ok()?.parse::<Table>().ok()
+    // The directory every manifest path in `workspace_dependencies` is stated
+    // relative to.
+    //
+    // Not derivable from `--manifest-path`, which may name a member: cargo
+    // still reports the workspace above it, so a caller that assumed otherwise
+    // would compare a member-relative path against a workspace-relative one and
+    // match nothing.
+    pub fn workspace_root(config: &Config) -> Option<PathBuf> {
+        Self::metadata(config)
+            .ok()
+            .map(|metadata| metadata.workspace_root.as_std_path().to_path_buf())
     }
 
     fn declared_in(manifest: &Path, shown: &str) -> Vec<ManifestDependency> {
@@ -130,17 +142,14 @@ impl ManifestResolver {
             .unwrap_or_default()
     }
 
-    // The directory every manifest path in `workspace_dependencies` is stated
-    // relative to.
-    //
-    // Not derivable from `--manifest-path`, which may name a member: cargo
-    // still reports the workspace above it, so a caller that assumed otherwise
-    // would compare a member-relative path against a workspace-relative one and
-    // match nothing.
-    pub fn workspace_root(config: &Config) -> Option<PathBuf> {
-        Self::metadata(config)
-            .ok()
-            .map(|metadata| metadata.workspace_root.as_std_path().to_path_buf())
+    fn is_workspace(manifest: &Path) -> bool {
+        Self::parsed(manifest).is_some_and(|table| table.contains_key("workspace"))
+    }
+
+    fn manifest_dir(manifest_path: &Path) -> PathBuf {
+        manifest_path
+            .parent()
+            .map_or_else(|| manifest_path.to_path_buf(), Path::to_path_buf)
     }
 
     fn metadata(config: &Config) -> Result<Metadata> {
@@ -150,6 +159,10 @@ impl ManifestResolver {
             command.manifest_path(manifest_path);
         }
         Ok(command.exec()?)
+    }
+
+    fn parsed(manifest: &Path) -> Option<Table> {
+        read_to_string(manifest).ok()?.parse::<Table>().ok()
     }
 
     fn selected<'a>(metadata: &'a Metadata, config: &Config) -> Result<Vec<&'a Package>> {
@@ -167,18 +180,5 @@ impl ManifestResolver {
                     .ok_or_else(|| anyhow!("package `{name}` is not in this workspace"))
             })
             .collect()
-    }
-
-    pub fn relative_to(root: &Path, path: &Path) -> String {
-        path.strip_prefix(root)
-            .unwrap_or(path)
-            .to_string_lossy()
-            .replace('\\', "/")
-    }
-
-    fn manifest_dir(manifest_path: &Path) -> PathBuf {
-        manifest_path
-            .parent()
-            .map_or_else(|| manifest_path.to_path_buf(), Path::to_path_buf)
     }
 }

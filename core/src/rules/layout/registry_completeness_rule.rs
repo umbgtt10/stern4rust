@@ -34,26 +34,6 @@ impl RegistryCompletenessRule {
         Self
     }
 
-    fn undeclared_in(
-        &self,
-        tree: &PackageTree,
-        files: &[SourceFile],
-        directory: &Path,
-    ) -> Vec<Offence> {
-        let registries = tree.registries_in(directory);
-        let Some(primary) = registries.first() else {
-            return Vec::new();
-        };
-        let Some(declared) = Self::declared_by(files, &registries) else {
-            return Vec::new();
-        };
-        tree.expected_modules_in(directory)
-            .into_iter()
-            .filter(|name| !declared.contains(name))
-            .map(|name| self.offence(primary, &name))
-            .collect()
-    }
-
     // None when any registry of the directory cannot be read or parsed. Treating
     // an unreadable registry as declaring nothing would report every file beside
     // it as an orphan -- a page of wrong answers caused by one real one, which
@@ -87,6 +67,26 @@ impl RegistryCompletenessRule {
             format!("add `pub mod {name};` to {registry}"),
         )
         .with_subject(name)
+    }
+
+    fn undeclared_in(
+        &self,
+        tree: &PackageTree,
+        files: &[SourceFile],
+        directory: &Path,
+    ) -> Vec<Offence> {
+        let registries = tree.registries_in(directory);
+        let Some(primary) = registries.first() else {
+            return Vec::new();
+        };
+        let Some(declared) = Self::declared_by(files, &registries) else {
+            return Vec::new();
+        };
+        tree.expected_modules_in(directory)
+            .into_iter()
+            .filter(|name| !declared.contains(name))
+            .map(|name| self.offence(primary, &name))
+            .collect()
     }
 }
 

@@ -29,9 +29,35 @@ impl TestFileStructureRule {
         Self
     }
 
+    fn alphabetic_order(&self, previous: &TestFileItem, item: &TestFileItem) -> Option<Offence> {
+        if previous.section != item.section || item.sort_key() >= previous.sort_key() {
+            return None;
+        }
+        if Self::ordered_by_rustfmt(previous, item) {
+            return None;
+        }
+        Some(self.offence(
+            item,
+            format!(
+                "{} is out of alphabetic order; it follows {}",
+                item.name, previous.name
+            ),
+            format!("move `{}` above `{}`", item.name, previous.name),
+        ))
+    }
+
     // Source files have a different shape and are not this rule's business.
     fn applies_to(file: &SourceFile) -> bool {
         file.relative_path().starts_with("tests/") && !Self::is_registry(file)
+    }
+
+    fn blank_lines_between(file: &SourceFile, after: usize, before: usize) -> usize {
+        file.lines()
+            .iter()
+            .skip(after)
+            .take(before.saturating_sub(after).saturating_sub(1))
+            .filter(|line| line.trim().is_empty())
+            .count()
     }
 
     // all_tests.rs and mod.rs are registries, not test files. They hold nothing
@@ -43,6 +69,18 @@ impl TestFileStructureRule {
             file.relative_path().rsplit('/').next(),
             Some("all_tests.rs") | Some("mod.rs")
         )
+    }
+
+    fn offence(&self, item: &TestFileItem, description: String, correction: String) -> Offence {
+        Offence::new("", item.first_line, self.name(), description, correction)
+            .with_subject(&item.name)
+    }
+
+    // A pair whose order rustfmt decides is not this rule's to judge. Demanding
+    // the alphabet there would make the file unsatisfiable rather than merely
+    // wrong: the formatter runs first and writes the other order back.
+    fn ordered_by_rustfmt(previous: &TestFileItem, item: &TestFileItem) -> bool {
+        item.section == Section::Imports && ImportPath::decides_order(&previous.name, &item.name)
     }
 
     fn section_order(&self, previous: &TestFileItem, item: &TestFileItem) -> Option<Offence> {
@@ -63,30 +101,6 @@ impl TestFileStructureRule {
                 previous.section.label()
             ),
         ))
-    }
-
-    fn alphabetic_order(&self, previous: &TestFileItem, item: &TestFileItem) -> Option<Offence> {
-        if previous.section != item.section || item.sort_key() >= previous.sort_key() {
-            return None;
-        }
-        if Self::ordered_by_rustfmt(previous, item) {
-            return None;
-        }
-        Some(self.offence(
-            item,
-            format!(
-                "{} is out of alphabetic order; it follows {}",
-                item.name, previous.name
-            ),
-            format!("move `{}` above `{}`", item.name, previous.name),
-        ))
-    }
-
-    // A pair whose order rustfmt decides is not this rule's to judge. Demanding
-    // the alphabet there would make the file unsatisfiable rather than merely
-    // wrong: the formatter runs first and writes the other order back.
-    fn ordered_by_rustfmt(previous: &TestFileItem, item: &TestFileItem) -> bool {
-        item.section == Section::Imports && ImportPath::decides_order(&previous.name, &item.name)
     }
 
     fn spacing(
@@ -114,20 +128,6 @@ impl TestFileStructureRule {
                 previous.name, item.name
             ),
         ))
-    }
-
-    fn blank_lines_between(file: &SourceFile, after: usize, before: usize) -> usize {
-        file.lines()
-            .iter()
-            .skip(after)
-            .take(before.saturating_sub(after).saturating_sub(1))
-            .filter(|line| line.trim().is_empty())
-            .count()
-    }
-
-    fn offence(&self, item: &TestFileItem, description: String, correction: String) -> Offence {
-        Offence::new("", item.first_line, self.name(), description, correction)
-            .with_subject(&item.name)
     }
 }
 

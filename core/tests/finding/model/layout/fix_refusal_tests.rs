@@ -19,6 +19,24 @@ fn reason_of_a_file_with_a_macro_rules_names_its_textual_order() {
 }
 
 #[test]
+fn reason_of_a_free_comment_names_the_comment() {
+    // Arrange & Act
+    let reason = FixRefusal::FreeComment.reason();
+
+    // Assert
+    assert!(reason.contains("comment"), "got {reason:?}");
+}
+
+#[test]
+fn reason_of_a_macro_invocation_names_its_expansion() {
+    // Arrange & Act
+    let reason = FixRefusal::MacroInvocation.reason();
+
+    // Assert
+    assert!(reason.contains("expansion"), "got {reason:?}");
+}
+
+#[test]
 fn reason_of_a_shared_line_names_the_line() {
     // Arrange & Act
     let reason = FixRefusal::SharedLine.reason();

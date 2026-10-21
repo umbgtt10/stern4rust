@@ -20,12 +20,12 @@ use crate::finding::parsing::inline_module::InlineModule;
 pub struct DeclaredItemFinder;
 
 impl DeclaredItemFinder {
-    pub fn types(items: &[Item]) -> Vec<DeclaredItem> {
-        Self::collect(items, Self::type_name)
-    }
-
     pub fn traits(items: &[Item]) -> Vec<DeclaredItem> {
         Self::collect(items, Self::trait_name)
+    }
+
+    pub fn types(items: &[Item]) -> Vec<DeclaredItem> {
+        Self::collect(items, Self::type_name)
     }
 
     fn collect(items: &[Item], name_of: fn(&Item) -> Option<String>) -> Vec<DeclaredItem> {
@@ -43,17 +43,17 @@ impl DeclaredItemFinder {
             .collect()
     }
 
-    fn type_name(item: &Item) -> Option<String> {
+    fn trait_name(item: &Item) -> Option<String> {
         match item {
-            Item::Struct(inner) => Some(inner.ident.to_string()),
-            Item::Enum(inner) => Some(inner.ident.to_string()),
+            Item::Trait(inner) => Some(inner.ident.to_string()),
             _ => None,
         }
     }
 
-    fn trait_name(item: &Item) -> Option<String> {
+    fn type_name(item: &Item) -> Option<String> {
         match item {
-            Item::Trait(inner) => Some(inner.ident.to_string()),
+            Item::Struct(inner) => Some(inner.ident.to_string()),
+            Item::Enum(inner) => Some(inner.ident.to_string()),
             _ => None,
         }
     }

@@ -18,12 +18,6 @@ use anyhow::Result;
 pub struct HeaderSource;
 
 impl HeaderSource {
-    pub fn read(path: &Path) -> Result<Vec<String>> {
-        let contents = fs::read_to_string(path)
-            .with_context(|| format!("failed to read header file {}", path.display()))?;
-        Ok(Self::parse(&contents))
-    }
-
     pub fn parse(contents: &str) -> Vec<String> {
         let contents = contents.strip_prefix('\u{feff}').unwrap_or(contents);
         let mut lines: Vec<String> = contents
@@ -34,5 +28,11 @@ impl HeaderSource {
             lines.pop();
         }
         lines
+    }
+
+    pub fn read(path: &Path) -> Result<Vec<String>> {
+        let contents = fs::read_to_string(path)
+            .with_context(|| format!("failed to read header file {}", path.display()))?;
+        Ok(Self::parse(&contents))
     }
 }
