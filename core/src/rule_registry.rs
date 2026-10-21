@@ -20,6 +20,7 @@ use crate::rules::source::distinct_tuple_elements_rule::DistinctTupleElementsRul
 use crate::rules::source::header_rule::HeaderRule;
 use crate::rules::source::immutable_returns_rule::ImmutableReturnsRule;
 use crate::rules::source::imported_paths_rule::ImportedPathsRule;
+use crate::rules::source::leading_constants_rule::LeadingConstantsRule;
 use crate::rules::source::named_subject_rule::NamedSubjectRule;
 use crate::rules::source::ordered_imports_rule::OrderedImportsRule;
 use crate::rules::source::owned_functions_rule::OwnedFunctionsRule;
@@ -73,6 +74,7 @@ impl RuleRegistry {
             Box::new(DistinctTupleElementsRule::new()),
             Box::new(ImmutableReturnsRule::new()),
             Box::new(ImportedPathsRule::new()),
+            Box::new(LeadingConstantsRule::new()),
             Box::new(ModuleRegistryRule::new()),
             Box::new(NamedSubjectRule::new()),
             Box::new(OrderedImportsRule::new()),

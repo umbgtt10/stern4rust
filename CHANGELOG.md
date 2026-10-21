@@ -6,11 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-Two rules added, both on by default, so they move what this tool reports about
-your code once it is released. A function returning a mutable reference, and one
-returning a tuple that repeats an element type, become offences; to adopt either
-later, add `skip = ["immutable-returns"]` or `skip = ["distinct-tuple-elements"]`
-to your `stern4rust.toml` once you install a version that knows the name.
+Three rules added, all on by default, so they move what this tool reports about
+your code once it is released. A function returning a mutable reference, one
+returning a tuple that repeats an element type, and a module-level constant
+declared after another item become offences; to adopt one later, add
+`skip = ["immutable-returns"]`, `skip = ["distinct-tuple-elements"]` or
+`skip = ["leading-constants"]` to your `stern4rust.toml` once you install a
+version that knows the name. The third is fixable: `--fix` moves the constants.
 
 ### Added
 - **`immutable-returns`: a function does not hand out a mutable reference.** Any
@@ -38,6 +40,25 @@ to your `stern4rust.toml` once you install a version that knows the name.
 
   The rule is clean on this repository and on seven others in the family, and
   reports 81 offences across the other eight.
+- **`leading-constants`: a source file reads header, imports, constants, then
+  everything else.** A module-level `const` or `static` in `src/` declared after
+  any item that is neither an import nor a constant -- a struct, an impl, a
+  function, a type alias, an inline module, a macro -- is reported once per file,
+  at the first one, naming the item it follows. Imports and `mod` declarations
+  are not judged, inline modules are not descended into, and registries and
+  `tests/` are exempt.
+  [R031](docs/ADRs/R031-ADR-LeadingConstantsRule.md)
+
+  `--fix` repairs it, in packages that apply the rule: each misplaced constant,
+  with its attributes and the comment directly above it, moves to the end of the
+  constants group, straight after the imports when there is none, and nothing
+  else moves. It declines a file with a `macro_rules!`, a constant or the leading
+  item sharing a line with another item, and a file whose opening comment runs
+  into its first item; those keep their offence, whose correction says why.
+
+  The rule is clean on this repository and on six others in the family, and
+  reports 134 offences across the other nine; `--fix` repairs all 134, and each
+  repaired tree checks clean and is unchanged by `cargo fmt`.
 
 ### Changed
 - The type walk `returned-mutations` carried privately is now
@@ -51,6 +72,13 @@ to your `stern4rust.toml` once you install a version that knows the name.
   `UnconfiguredRule`s rather than `(&str, &str)` pairs: the two places this
   repository broke `distinct-tuple-elements`. The report's order and content are
   unchanged.
+- How far a block reaches up over the comments above it, which `TestFileParser`
+  carried privately, is `SourceFile::block_start`, shared with the constants'
+  parser; the type an impl block is for is `ItemNaming::implemented_type`; and
+  whether a file sits under a root and outside its registries, which the
+  test-file rewriter and three test rules each carried a copy of, is
+  `SourceFile::is_under`, asked by the new rule and fixer too. dry4rust's
+  baseline drops the group the four copies made. No offence or repair changed.
 
 ## [0.17.0] - 2026-10-19
 

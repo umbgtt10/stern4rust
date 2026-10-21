@@ -3,17 +3,6 @@
   "entries": [
     {
       "kind": "exact",
-      "fingerprint": "0041ea6e8e763b97",
-      "members": 4,
-      "names": [
-        "TestFileRewriter::governs",
-        "TestFileNamePostfixRule::applies_to",
-        "TestNamingRule::applies_to",
-        "ArrangeActAssertRule::applies_to"
-      ]
-    },
-    {
-      "kind": "exact",
       "fingerprint": "047e51a7d73f9d86",
       "members": 2,
       "names": [

@@ -7,6 +7,7 @@ pub mod distinct_tuple_elements_rule_tests;
 pub mod header_rule_tests;
 pub mod immutable_returns_rule_tests;
 pub mod imported_paths_rule_tests;
+pub mod leading_constants_rule_tests;
 pub mod named_subject_rule_tests;
 pub mod ordered_imports_rule_tests;
 pub mod owned_functions_rule_tests;

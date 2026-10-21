@@ -16,7 +16,7 @@ already own correctness. These are the things a reviewer would otherwise have to
 say by hand, every time, forever — and the ones that quietly stop being true
 across a codebase the moment nobody is checking.
 
-> **Status: twenty-six rules.** The set below is what is implemented and
+> **Status: twenty-seven rules.** The set below is what is implemented and
 > gated. `stern4rust` runs against its own tree on every build, so a rule that
 > would fail this repository cannot be merged into it.
 
@@ -95,7 +95,7 @@ cargo stern4rust --format json
 | `--rules` | list every rule with what it wants, a scrap of source that breaks it and the same scrap put right, then exit without scanning. Honours `--format` |
 | `--rule <NAME>` | apply only these rules; repeatable. Omit to apply every rule |
 | `--skip <NAME>` | do not apply these rules; repeatable. Subtracted from whatever `--rule` selected |
-| `--fix` | repair what can be repaired mechanically, then report what is left. Only `test-file-structure` is fixable today |
+| `--fix` | repair what can be repaired mechanically, then report what is left. `test-file-structure` and `leading-constants` are fixable today |
 | `--baseline <PATH>` | offences recorded here are not reported and do not fail the run; the suppressed count is always in the summary |
 | `--write-baseline` | record the current offences and exit clean, instead of judging against them |
 | `--exclude <GLOB>` | keep these paths out of the run; repeatable, matched against the package-relative path. Every pattern is named in the report with how many files it removed, including zero |
@@ -182,7 +182,8 @@ cargo stern4rust --fix
 ```
 
 Repairs `test-file-structure` offences — item order, section order, blank lines
-— and then reports everything it could not repair, unchanged. The report after
+— and `leading-constants` offences, moving a source file's misplaced constants
+up to its imports, and then reports everything it could not repair, unchanged. The report after
 `--fix` is exactly the report you would get without it, minus what was fixed.
 
 ```text
@@ -193,8 +194,9 @@ summary: files_scanned=103 files_excluded=0 offences=4 baselined=0 fixed=12 ...
 
 It works from `syn` spans and never reads the text, so a string literal
 containing something that looks like Rust is moved like any other line. It only
-touches files `test-file-structure` governs, it never reorders imports — that is
-rustfmt's — and it changes your working tree, so read the diff.
+touches files a rule it repairs governs — constants only in a package that
+applies `leading-constants` — it never reorders imports — that is rustfmt's —
+and it changes your working tree, so read the diff.
 
 ## Adopting it on a codebase that has never run it
 
@@ -487,6 +489,26 @@ Types are compared as written, lifetimes ignored and nothing resolved:
 that names a meaning is the cure. Tuples of distinct types, a returned
 callback's parameter list and trait impls are left alone. `tests/` is exempt.
 [R029](docs/ADRs/R029-ADR-DistinctTupleElementsRule.md)
+
+### `leading-constants`
+
+A source file reads header, imports, constants, then everything else. A
+module-level `const` or `static` declared after any other item -- a struct, an
+enum, a trait, an impl, a function, a type alias, an inline module, a macro --
+is reported once per file, at the first one, naming the item it follows.
+
+Module-level items are order-independent in Rust, so where a constant sits is
+pure layout: a file's numbers belong at its top, where a reader looks for them,
+not beside their first reader. Imports and `mod` declarations are not judged
+here, an inline module's contents are not looked at, and registries and
+`tests/` are exempt.
+
+`--fix` moves every misplaced constant, with its attributes and the comment
+directly above it, to the end of the constants group -- straight after the
+imports when there is none -- and touches nothing else. It declines a file with
+a `macro_rules!`, a constant sharing a line with another item, and a file whose
+opening comment runs into its first item; their offences stay, and say why.
+[R031](docs/ADRs/R031-ADR-LeadingConstantsRule.md)
 
 ### `declared-by-name`
 

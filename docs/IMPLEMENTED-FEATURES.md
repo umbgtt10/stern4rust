@@ -23,6 +23,22 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
   repository after two fixes here and on seven other repositories in the
   family; 81 offences across the other eight. On by default.
   [R029](ADRs/R029-ADR-DistinctTupleElementsRule.md)
+- **`leading-constants`** -- a source file reads header, imports, constants,
+  then everything else: a module-level `const` or `static` in `src/` declared
+  after any item that is neither an import nor a constant is reported once per
+  file, naming the item it follows. Imports and `mod` declarations are not
+  judged, inline modules are not descended into, registries and `tests/` are
+  exempt. Clean on this repository and on six others in the family; 134
+  offences across the other nine, every one of them fixable. On by default.
+  [R031](ADRs/R031-ADR-LeadingConstantsRule.md)
+
+### Autofix
+
+- `--fix` repairs `leading-constants` offences too, moving each misplaced
+  constant with its attributes and attached comment to the end of the constants
+  group, in packages that apply the rule. It declines a file with a
+  `macro_rules!`, a constant or leader sharing a line with another item, and an
+  opening comment running into the first item; those offences stay and say why.
 
 ## Version 0.17.0
 

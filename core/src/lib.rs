@@ -22,6 +22,7 @@
 
 pub mod adoption;
 pub mod finding;
+pub mod leading_constants_rewriter;
 pub mod reporting;
 pub mod rule;
 pub mod rule_registry;

@@ -61,16 +61,11 @@ impl TestFileRewriter {
         (rewritten != file.contents()).then_some(rewritten)
     }
 
-    // The same scope test-file-structure applies, and deliberately a copy of
-    // its shape rather than a call into it: a rule answers questions about a
-    // file, and asking it to also authorise edits would give it a second job.
+    // The same scope test-file-structure applies, asked of the file rather than
+    // of the rule: a rule answers questions about a file, and asking it to also
+    // authorise edits would give it a second job.
     fn governs(file: &SourceFile) -> bool {
-        let path = file.relative_path();
-        path.starts_with(Self::TESTS_ROOT)
-            && !path
-                .rsplit('/')
-                .next()
-                .is_some_and(|name| Self::REGISTRIES.contains(&name))
+        file.is_under(Self::TESTS_ROOT, &Self::REGISTRIES)
     }
 
     // Chunks are joined rather than appended with separators, so the file ends

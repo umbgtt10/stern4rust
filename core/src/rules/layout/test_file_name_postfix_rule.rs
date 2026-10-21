@@ -47,12 +47,7 @@ impl TestFileNamePostfixRule {
     }
 
     fn applies_to(file: &SourceFile) -> bool {
-        let path = file.relative_path();
-        path.starts_with(Self::TESTS_ROOT)
-            && !path
-                .rsplit('/')
-                .next()
-                .is_some_and(|name| Self::REGISTRIES.contains(&name))
+        file.is_under(Self::TESTS_ROOT, &Self::REGISTRIES)
     }
 
     // Descends into inline modules: a test does not stop being a test for

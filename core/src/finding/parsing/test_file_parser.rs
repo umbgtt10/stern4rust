@@ -11,7 +11,6 @@ use crate::finding::model::test_file_item::TestFileItem;
 use crate::finding::parsing::item_naming::ItemNaming;
 use crate::source_file::SourceFile;
 use syn::Attribute;
-use syn::Type;
 
 // Turns a test file into the list of items the structure rule reasons about.
 //
@@ -46,7 +45,7 @@ impl TestFileParser {
 
     fn item(file: &SourceFile, item: &Item, floor: usize) -> TestFileItem {
         let span = item.span();
-        let first_line = Self::with_leading_comments(file, span.start().line, floor);
+        let first_line = file.block_start(span.start().line, floor);
         TestFileItem::new(
             Self::section(item),
             Self::name(file, item, span.start().line),
@@ -81,36 +80,11 @@ impl TestFileParser {
         // that name and sits beside the struct rather than drifting to the end
         // of the section. That is this parser's own answer; the rest is shared.
         if let Item::Impl(inner) = item {
-            return Self::type_name(&inner.self_ty);
+            return ItemNaming::implemented_type(&inner.self_ty);
         }
         ItemNaming::identifier(item).unwrap_or_else(|| ItemNaming::source_line(file, start_line))
     }
 
-    fn type_name(ty: &Type) -> String {
-        match ty {
-            Type::Path(path) => path
-                .path
-                .segments
-                .last()
-                .map_or_else(String::new, |segment| segment.ident.to_string()),
-            _ => String::new(),
-        }
-    }
-
     // An import sorts and reports as it was written, which is how rustfmt orders
     // them and how a reader would look for one.
-
-    fn with_leading_comments(file: &SourceFile, start_line: usize, floor: usize) -> usize {
-        let mut first = start_line;
-        while first > floor && Self::is_comment(file, first - 1) {
-            first -= 1;
-        }
-        first
-    }
-
-    fn is_comment(file: &SourceFile, line: usize) -> bool {
-        file.lines()
-            .get(line.saturating_sub(1))
-            .is_some_and(|text| text.trim_start().starts_with("//"))
-    }
 }

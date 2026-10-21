@@ -10,6 +10,46 @@
 
 use stern4rust::source_file::SourceFile;
 
+// A blank line is where a block begins: the comment above it introduces
+// something else, or nothing.
+#[test]
+fn block_start_of_an_item_below_a_blank_line_is_its_own_line() {
+    // Arrange
+    let file = SourceFile::new("src/a.rs", "// about the file\n\nconst A: u8 = 1;\n");
+
+    // Act
+    let first = file.block_start(3, 1);
+
+    // Assert
+    assert_eq!(first, 3);
+}
+
+#[test]
+fn block_start_of_an_item_below_comment_lines_is_the_first_comment_line() {
+    // Arrange
+    let file = SourceFile::new("src/a.rs", "// one\n// two\nconst A: u8 = 1;\n");
+
+    // Act
+    let first = file.block_start(3, 1);
+
+    // Assert
+    assert_eq!(first, 1);
+}
+
+// The item above owns its own lines, and a string literal's continuation can
+// start with `//`.
+#[test]
+fn block_start_stops_at_the_floor() {
+    // Arrange
+    let file = SourceFile::new("src/a.rs", "// one\n// two\nconst A: u8 = 1;\n");
+
+    // Act
+    let first = file.block_start(3, 2);
+
+    // Assert
+    assert_eq!(first, 2);
+}
+
 // A file of blank lines carries no header either, and treating it as content
 // would report a confusing mismatch against whitespace.
 #[test]
@@ -37,6 +77,44 @@ fn is_empty_of_a_file_with_one_line_of_content_returns_false() {
 
     // Assert
     assert!(!file.is_empty());
+}
+
+#[test]
+fn is_under_a_file_below_the_root_returns_true() {
+    // Arrange
+    let file = SourceFile::new("src/inner/widget.rs", "");
+
+    // Act
+    let under = file.is_under("src/", &["lib.rs", "mod.rs"]);
+
+    // Assert
+    assert!(under);
+}
+
+#[test]
+fn is_under_a_file_elsewhere_returns_false() {
+    // Arrange
+    let file = SourceFile::new("tests/widget_tests.rs", "");
+
+    // Act
+    let under = file.is_under("src/", &["lib.rs", "mod.rs"]);
+
+    // Assert
+    assert!(!under);
+}
+
+// A registry is an index of its directory, which rules about content leave to
+// module-registry, however deep it sits.
+#[test]
+fn is_under_a_registry_below_the_root_returns_false() {
+    // Arrange
+    let file = SourceFile::new("src/inner/mod.rs", "");
+
+    // Act
+    let under = file.is_under("src/", &["lib.rs", "mod.rs"]);
+
+    // Assert
+    assert!(!under);
 }
 
 // The mark is only a mark at the very start; the same bytes further in are

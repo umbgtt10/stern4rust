@@ -70,11 +70,11 @@ the tool runs against its own tree on every build with zero offences.
 
 ## What is left
 
-The rule set is at twenty-six, with six more proposed (R025-R027, R030-R032),
+The rule set is at twenty-seven, with five more proposed (R025-R027, R030, R032),
 each sized by a census before it is built -- the original candidate list
 shipped in full, `returned-mutations` turned the family's written `&mut`
 standard into a gate, `immutable-returns` closed its mirror, `distinct-tuple-elements` names what position alone
-told apart, `named-subject` holds a file to the name of what it
+told apart, `leading-constants` puts a file's numbers at its top, `named-subject` holds a file to the name of what it
 holds, and `owned-functions` keeps everything in it the subject's -- the library surface is decided, and every remaining gap is
 a limit with no structural answer -- collected in
 [OPEN_POINTS.md](OPEN_POINTS.md).

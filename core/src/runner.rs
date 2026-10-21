@@ -7,6 +7,7 @@ use crate::adoption::baseline_outcome::BaselineOutcome;
 use crate::adoption::exclusion_outcome::ExclusionOutcome;
 use crate::adoption::exclusion_set::ExclusionSet;
 use crate::finding::model::manifest_dependency::ManifestDependency;
+use crate::leading_constants_rewriter::LeadingConstantsRewriter;
 use crate::reporting::json_printer::JsonPrinter;
 use crate::reporting::offence::Offence;
 use crate::reporting::offence_threshold::OffenceThreshold;
@@ -18,6 +19,7 @@ use crate::reporting::run_outcome::RunOutcome;
 use crate::reporting::scan_totals::ScanTotals;
 use crate::rule_registry::RuleRegistry;
 use crate::rules::source::header_rule::HeaderRule;
+use crate::rules::source::leading_constants_rule::LeadingConstantsRule;
 use crate::settings::args::Args;
 use crate::settings::config::Config;
 use crate::settings::config_file::ConfigFile;
@@ -175,7 +177,7 @@ impl Runner {
                 }
             }
             if config.fix {
-                let (rewritten, count) = Self::repair(root, files)?;
+                let (rewritten, count) = Self::repair(root, files, &registry)?;
                 files = rewritten;
                 fixed += count;
             }
@@ -388,11 +390,25 @@ impl Runner {
     // wrong is reported exactly as it would have been without --fix -- a fixer
     // that quietly swallowed what it could not fix would be worse than no fixer
     // at all.
-    fn repair(root: &Path, files: Vec<SourceFile>) -> Result<(Vec<SourceFile>, usize)> {
+    //
+    // A file's constants are moved only where the package applies
+    // leading-constants: a rule the package skips governs nothing in it, and a
+    // fixer must never edit a file no rule governs.
+    fn repair(
+        root: &Path,
+        files: Vec<SourceFile>,
+        registry: &RuleRegistry,
+    ) -> Result<(Vec<SourceFile>, usize)> {
+        let constants = registry.names().contains(&LeadingConstantsRule::NAME);
         let mut repaired = Vec::with_capacity(files.len());
         let mut count = 0;
         for file in files {
-            match TestFileRewriter::rewrite(&file) {
+            let rewritten = TestFileRewriter::rewrite(&file).or_else(|| {
+                constants
+                    .then(|| LeadingConstantsRewriter::rewrite(&file))
+                    .flatten()
+            });
+            match rewritten {
                 Some(contents) => {
                     let path = root.join(file.relative_path());
                     write_file(&path, &contents)

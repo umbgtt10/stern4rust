@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use syn::Item;
+use syn::Type;
 
 use crate::source_file::SourceFile;
 
@@ -37,6 +38,20 @@ impl ItemNaming {
             Item::Type(inner) => Some(inner.ident.to_string()),
             Item::Union(inner) => Some(inner.ident.to_string()),
             _ => None,
+        }
+    }
+
+    // The type an impl block implements, by the last segment of its path and
+    // without its arguments, so `impl<T> crate::store::Store<T>` is `Store`.
+    // Empty for a type that is not a path, which no reader could look up by name.
+    pub fn implemented_type(ty: &Type) -> String {
+        match ty {
+            Type::Path(path) => path
+                .path
+                .segments
+                .last()
+                .map_or_else(String::new, |segment| segment.ident.to_string()),
+            _ => String::new(),
         }
     }
 

@@ -25,8 +25,11 @@ does so at scale and in silence.
 left**, unchanged, exactly as a run without `--fix` would. The checks run against
 the repaired tree, so the report is the truth after fixing rather than before.
 
-Only `test-file-structure` is fixable today: item order within a section,
-section order, and blank lines. Everything else is reported and not touched.
+Two rules are fixable: `test-file-structure` -- item order within a section,
+section order, and blank lines -- and `leading-constants`
+([R031](R031-ADR-LeadingConstantsRule.md)), whose fixer moves a source file's
+misplaced constants up to its imports and declines a file it cannot move as
+lines. Everything else is reported and not touched.
 
 Three constraints, each of which exists because the first version violated it.
 

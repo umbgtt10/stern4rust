@@ -573,7 +573,7 @@ fn run_reporting_with_rules_in_json_carries_the_same_rules_as_the_text() {
     // Assert
     let parsed: Value = from_str(&report).expect("valid json");
     let rules = parsed["rules"].as_array().expect("a rules array");
-    assert_eq!(rules.len(), 26);
+    assert_eq!(rules.len(), 27);
     assert!(rules.iter().all(|entry| {
         !entry["name"].as_str().unwrap_or_default().is_empty()
             && !entry["breaks"].as_str().unwrap_or_default().is_empty()
@@ -926,6 +926,55 @@ fn run_with_an_unusable_exclude_pattern_is_an_error() {
 
     // Assert
     assert!(outcome.is_err());
+}
+
+// A fixer must never edit a file no rule governs, and a rule a package skips
+// governs nothing in it.
+#[test]
+fn run_with_fix_leaves_a_package_that_skips_leading_constants_untouched() {
+    // Arrange
+    let path = config_directory("fix_skipped", "skip = [\"leading-constants\"]\n");
+    let misplaced = "pub struct Widget;\n\nconst LIMIT: u8 = 3;\n";
+    fs::write(path.join("src/widget.rs"), misplaced).expect("write the module");
+
+    // Act
+    Runner::run(args_from(&[
+        "cargo-stern4rust",
+        "--manifest-path",
+        &path.join("Cargo.toml").to_string_lossy(),
+        "--fix",
+    ]))
+    .expect("the run itself should succeed");
+
+    // Assert
+    let after = fs::read_to_string(path.join("src/widget.rs")).expect("read the module");
+    assert_eq!(after, misplaced);
+}
+
+#[test]
+fn run_with_fix_moves_a_misplaced_constant_and_counts_the_file() {
+    // Arrange
+    let path = config_directory("fix_constants", "rules = [\"leading-constants\"]\n");
+    fs::write(
+        path.join("src/widget.rs"),
+        "pub struct Widget;\n\nconst LIMIT: u8 = 3;\n",
+    )
+    .expect("write the module");
+
+    // Act
+    let (outcome, report) = Runner::run_reporting(args_from(&[
+        "cargo-stern4rust",
+        "--manifest-path",
+        &path.join("Cargo.toml").to_string_lossy(),
+        "--fix",
+    ]))
+    .expect("the run itself should succeed");
+
+    // Assert
+    let after = fs::read_to_string(path.join("src/widget.rs")).expect("read the module");
+    assert_eq!(after, "const LIMIT: u8 = 3;\n\npub struct Widget;\n");
+    assert_eq!(outcome, RunOutcome::Clean);
+    assert!(report.contains("fixed=1"), "got {report}");
 }
 
 #[test]

@@ -2,12 +2,15 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+pub mod constant_layout_tests;
 pub mod declared_item_tests;
 pub mod file_stem_tests;
+pub mod fix_refusal_tests;
 pub mod free_function_tests;
 pub mod implemented_type_tests;
 pub mod import_path_tests;
 pub mod manifest_dependency_tests;
+pub mod misplaced_constant_tests;
 pub mod package_tree_tests;
 pub mod public_entry_point_tests;
 pub mod qualified_call_tests;

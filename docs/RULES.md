@@ -9,7 +9,7 @@ without answering it.
 
 Each rule also carries an **explanation** — what it wants, a scrap of source
 that breaks it and the same scrap put right — and that field is required too.
-`cargo stern4rust --rules` prints all twenty-six, in text or with
+`cargo stern4rust --rules` prints all twenty-seven, in text or with
 `--format json`, without scanning anything. See
 [ADR-RulesExplainThemselves](ADRs/ADR-RulesExplainThemselves.md).
 
@@ -38,6 +38,7 @@ that breaks it and the same scrap put right — and that field is required too.
 | `returned-mutations` | [R022](ADRs/R022-ADR-ReturnedMutationsRule.md) | no |
 | `immutable-returns` | [R028](ADRs/R028-ADR-ImmutableReturnsRule.md) | no |
 | `distinct-tuple-elements` | [R029](ADRs/R029-ADR-DistinctTupleElementsRule.md) | no |
+| `leading-constants` | [R031](ADRs/R031-ADR-LeadingConstantsRule.md) | no |
 | `test-naming` | [R012](ADRs/R012-ADR-TestNamingRule.md) | no |
 | `tested-public-api` | [R013](ADRs/R013-ADR-TestedPublicApiRule.md) | no |
 | `header` | [R001](ADRs/R001-ADR-HeaderRule.md) | `--header-file` |
@@ -661,6 +662,49 @@ declaration.
 `impl Iterator<Item = (u64, u64)>`; parameter lists with two arguments of one
 type, which have the same problem on the way in; two types that convert into each
 other silently; and anything a macro generates.
+
+## `leading-constants`
+
+A source file reads header, imports, constants, then everything else. **No
+module-level `const` or `static` in `src/` may be declared after an item that is
+neither an import nor a constant.**
+
+A test file already reads in one order; a source file had none for its
+constants, and the common shape parked one beside its first reader, so a file's
+numbers could not be found without reading all of it. Module-level items are
+order-independent in Rust -- a constant can be read before its declaration -- so
+where one sits is pure layout, and a placement a tool can enforce and repair.
+
+The first item that is neither an import nor a constant leads the rest of the
+file: a struct, enum, trait, impl, function, type alias, union, macro or inline
+module. Imports, `extern crate` and `mod` declarations are not judged here --
+their order is `ordered-imports`' and rustfmt's -- and an inline module is one
+item, whose contents are not looked at. The constants group is every constant
+before the leader, in the order written; sorting it is not asked. One offence
+per file, at the first constant out of place.
+
+| offence | correction |
+|---|---|
+| `` `LIMIT` is declared after `Widget`; constants come straight after the imports `` | `` move it, and every constant below `Widget`, straight after the imports, or run `--fix` `` |
+
+`--fix` moves every misplaced constant -- whole line ranges from `syn` spans,
+with its attributes and the comment directly above it -- to the end of the
+constants group, or straight after the imports when there is none; every other
+line keeps its place and its bytes, and the blank lines around the group and
+where a constant left become one. It declines three kinds of file, and their
+offence says so, ending *"by hand: `--fix` leaves alone"* and the reason:
+
+- a file with a `macro_rules!`, whose textual order decides what a later item
+  can call;
+- a constant, or the leader, sharing a line with another item, which cannot be
+  moved as lines;
+- a file whose opening comment runs into its leader with nothing above it, where
+  the header cannot be told from the leader's own comment.
+
+Registries (`lib.rs`, `mod.rs`) and `tests/` are exempt.
+
+**Does not catch:** associated constants, which belong to their impl; constants
+inside an inline module or a function body; and anything a macro generates.
 
 ## `declared-by-name`
 

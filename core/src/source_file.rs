@@ -50,9 +50,39 @@ impl SourceFile {
         )
     }
 
+    // The first line of the block an item starting at `start` heads. A comment
+    // introducing an item belongs to it, so the block reaches up over the
+    // comment lines directly above -- but never past `floor`, the line after the
+    // item above, whose own lines can look like comments: a string literal's
+    // continuation lines may start with `//`.
+    pub fn block_start(&self, start: usize, floor: usize) -> usize {
+        let mut first = start;
+        while first > floor && self.is_comment(first - 1) {
+            first -= 1;
+        }
+        first
+    }
+
+    // Whether this file sits under `root` and is not named one of `except`: the
+    // registries a rule about content leaves to module-registry, at any depth.
+    pub fn is_under(&self, root: &str, except: &[&str]) -> bool {
+        self.relative_path.starts_with(root)
+            && !self
+                .relative_path
+                .rsplit('/')
+                .next()
+                .is_some_and(|name| except.contains(&name))
+    }
+
     // An empty file splits into one empty line, which is not the same as having
     // a line of content.
     pub fn is_empty(&self) -> bool {
         self.lines.iter().all(|line| line.trim().is_empty())
+    }
+
+    fn is_comment(&self, line: usize) -> bool {
+        self.lines
+            .get(line.saturating_sub(1))
+            .is_some_and(|text| text.trim_start().starts_with("//"))
     }
 }

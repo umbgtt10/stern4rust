@@ -13,6 +13,7 @@
 use stern4rust::finding::parsing::item_naming::ItemNaming;
 use stern4rust::source_file::SourceFile;
 use syn::Item;
+use syn::Type;
 use syn::parse_file;
 
 fn first_item(source: &str) -> Item {
@@ -22,6 +23,13 @@ fn first_item(source: &str) -> Item {
         .into_iter()
         .next()
         .expect("one item")
+}
+
+fn self_type(source: &str) -> Type {
+    match first_item(source) {
+        Item::Impl(inner) => *inner.self_ty,
+        _ => panic!("expected an impl block"),
+    }
 }
 
 #[test]
@@ -96,6 +104,43 @@ fn identifier_of_an_import_is_none() {
 
     // Assert
     assert!(identifier.is_none());
+}
+
+#[test]
+fn implemented_type_of_a_generic_type_is_its_name_without_arguments() {
+    // Arrange
+    let ty = self_type("impl<T> Store<T> {}");
+
+    // Act
+    let name = ItemNaming::implemented_type(&ty);
+
+    // Assert
+    assert_eq!(name, "Store");
+}
+
+#[test]
+fn implemented_type_of_a_path_is_its_last_segment() {
+    // Arrange
+    let ty = self_type("impl crate::store::Store {}");
+
+    // Act
+    let name = ItemNaming::implemented_type(&ty);
+
+    // Assert
+    assert_eq!(name, "Store");
+}
+
+// Not a name a reader could look for, so none is made up.
+#[test]
+fn implemented_type_of_a_reference_is_empty() {
+    // Arrange
+    let ty = self_type("impl Shape for &Widget {}");
+
+    // Act
+    let name = ItemNaming::implemented_type(&ty);
+
+    // Assert
+    assert!(name.is_empty());
 }
 
 #[test]
