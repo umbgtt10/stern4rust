@@ -70,7 +70,7 @@ the tool runs against its own tree on every build with zero offences.
 
 ## What is left
 
-The rule set is at thirty-one, with one more proposed (R032),
+The rule set is at thirty-one, with three more proposed (R032-R034),
 each sized by a census before it is built -- the original candidate list
 shipped in full, `returned-mutations` turned the family's written `&mut`
 standard into a gate, `immutable-returns` closed its mirror, `distinct-tuple-elements` names what position alone
