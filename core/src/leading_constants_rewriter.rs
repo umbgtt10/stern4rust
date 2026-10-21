@@ -4,7 +4,9 @@
 
 use crate::finding::model::layout::constant_layout::ConstantLayout;
 use crate::finding::parsing::constant_layout_parser::ConstantLayoutParser;
+use crate::rules::source::leading_constants_rule::LeadingConstantsRule;
 use crate::source_file::SourceFile;
+use crate::source_rewriter::SourceRewriter;
 
 // A source file's misplaced constants moved to the end of its constants group,
 // straight after the imports when there is none.
@@ -24,17 +26,8 @@ impl LeadingConstantsRewriter {
     pub const REGISTRIES: [&'static str; 2] = ["lib.rs", "mod.rs"];
     pub const SOURCE_ROOT: &'static str = "src/";
 
-    // None when the file is not this rewriter's to touch, does not parse, has
-    // nothing out of place, or is one the fixer declines.
-    pub fn rewrite(file: &SourceFile) -> Option<String> {
-        if !Self::governs(file) {
-            return None;
-        }
-        let layout = ConstantLayoutParser::parse(file)?;
-        if layout.refusal.is_some() {
-            return None;
-        }
-        Some(Self::assemble(file, &layout))
+    pub fn new() -> Self {
+        Self
     }
 
     // The scope leading-constants applies, asked of the file rather than of the
@@ -109,5 +102,30 @@ impl LeadingConstantsRewriter {
             .rposition(|line| !line.trim().is_empty())
             .map_or(0, |last| last + 1);
         lines[..end].to_vec()
+    }
+}
+
+impl Default for LeadingConstantsRewriter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl SourceRewriter for LeadingConstantsRewriter {
+    fn rule(&self) -> &'static str {
+        LeadingConstantsRule::NAME
+    }
+
+    // None when the file is not this rewriter's to touch, does not parse, has
+    // nothing out of place, or is one the fixer declines.
+    fn rewrite(&self, file: &SourceFile) -> Option<String> {
+        if !Self::governs(file) {
+            return None;
+        }
+        let layout = ConstantLayoutParser::parse(file)?;
+        if layout.refusal.is_some() {
+            return None;
+        }
+        Some(Self::assemble(file, &layout))
     }
 }

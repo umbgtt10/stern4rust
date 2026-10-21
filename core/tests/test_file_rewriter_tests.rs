@@ -10,10 +10,11 @@
 // something that looks like Rust travels along like any other line.
 
 use stern4rust::source_file::SourceFile;
+use stern4rust::source_rewriter::SourceRewriter;
 use stern4rust::test_file_rewriter::TestFileRewriter;
 
 fn rewrite(contents: &str) -> Option<String> {
-    TestFileRewriter::rewrite(&SourceFile::new("tests/a_tests.rs", contents))
+    TestFileRewriter::new().rewrite(&SourceFile::new("tests/a_tests.rs", contents))
 }
 
 #[test]
@@ -139,7 +140,7 @@ fn rewrite_of_a_source_file_is_none() {
     let contents = "use std::fmt;\n\nuse crate::thing::Thing;\n\npub struct A;\n";
 
     // Act
-    let rewritten = TestFileRewriter::rewrite(&SourceFile::new("src/a.rs", contents));
+    let rewritten = TestFileRewriter::new().rewrite(&SourceFile::new("src/a.rs", contents));
 
     // Assert
     assert!(rewritten.is_none(), "got {rewritten:?}");
@@ -151,7 +152,8 @@ fn rewrite_of_a_tests_registry_is_none() {
     let contents = "pub mod beta_tests;\npub mod alpha_tests;\n";
 
     // Act
-    let rewritten = TestFileRewriter::rewrite(&SourceFile::new("tests/all_tests.rs", contents));
+    let rewritten =
+        TestFileRewriter::new().rewrite(&SourceFile::new("tests/all_tests.rs", contents));
 
     // Assert
     assert!(rewritten.is_none(), "got {rewritten:?}");
@@ -199,4 +201,13 @@ fn rewrite_sorts_tests_case_insensitively() {
 
     // Assert
     assert!(rewritten.find("fn Alpha").unwrap() < rewritten.find("fn beta").unwrap());
+}
+
+#[test]
+fn rule_is_the_one_whose_offences_it_repairs() {
+    // Arrange & Act
+    let rule = TestFileRewriter::new().rule();
+
+    // Assert
+    assert_eq!(rule, "test-file-structure");
 }

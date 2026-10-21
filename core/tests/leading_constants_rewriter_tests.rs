@@ -12,13 +12,14 @@ use stern4rust::leading_constants_rewriter::LeadingConstantsRewriter;
 use stern4rust::rule::Rule;
 use stern4rust::rules::source::leading_constants_rule::LeadingConstantsRule;
 use stern4rust::source_file::SourceFile;
+use stern4rust::source_rewriter::SourceRewriter;
 
 const HEADER: &str = "// Copyright 2025 Umberto Gotti <umberto.gotti@umbertogotti.dev>\n\
                       // Licensed under the MIT License\n\
                       // SPDX-License-Identifier: MIT\n";
 
 fn rewrite(contents: &str) -> Option<String> {
-    LeadingConstantsRewriter::rewrite(&SourceFile::new("src/widget.rs", contents))
+    LeadingConstantsRewriter::new().rewrite(&SourceFile::new("src/widget.rs", contents))
 }
 
 #[test]
@@ -208,7 +209,7 @@ fn rewrite_of_a_module_registry_is_none() {
     );
 
     // Act
-    let rewritten = LeadingConstantsRewriter::rewrite(&file);
+    let rewritten = LeadingConstantsRewriter::new().rewrite(&file);
 
     // Assert
     assert!(rewritten.is_none());
@@ -223,8 +224,17 @@ fn rewrite_of_a_test_file_is_none() {
     );
 
     // Act
-    let rewritten = LeadingConstantsRewriter::rewrite(&file);
+    let rewritten = LeadingConstantsRewriter::new().rewrite(&file);
 
     // Assert
     assert!(rewritten.is_none());
+}
+
+#[test]
+fn rule_is_the_one_whose_offences_it_repairs() {
+    // Arrange & Act
+    let rule = LeadingConstantsRewriter::new().rule();
+
+    // Assert
+    assert_eq!(rule, "leading-constants");
 }

@@ -119,6 +119,11 @@ where `test-file-structure` is skipped or not selected.
   shared by `implemented-in-one-file` and `public-or-private`; how a call names a
   function, `PublicEntryPointFinder::of_signature`, is public for the same
   reason.
+- `--fix` runs its fixers through a `SourceRewriter` trait: each names the rule
+  it repairs, and `RewriterRegistry` runs, for each file, those whose rule the
+  package applies, each handed what the one before left -- so two fixers of one
+  source file compose. `TestFileRewriter` and `LeadingConstantsRewriter`
+  implement it, with `rewrite` a method rather than an associated function.
 - **`--fix` reorders a test file only where the package applies
   `test-file-structure`.** A package that skips the rule, or a run that selects
   other rules with `--rule`, has its test files left as they are; before, the

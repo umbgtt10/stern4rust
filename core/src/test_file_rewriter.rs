@@ -5,7 +5,9 @@
 use crate::finding::model::layout::section::Section;
 use crate::finding::model::layout::test_file_item::TestFileItem;
 use crate::finding::parsing::test_file_parser::TestFileParser;
+use crate::rules::testing::test_file_structure_rule::TestFileStructureRule;
 use crate::source_file::SourceFile;
+use crate::source_rewriter::SourceRewriter;
 use std::collections::BTreeMap;
 
 // A test file put back into the order the structure rule asks for.
@@ -36,29 +38,8 @@ impl TestFileRewriter {
     pub const REGISTRIES: [&'static str; 2] = ["all_tests.rs", "mod.rs"];
     pub const TESTS_ROOT: &'static str = "tests/";
 
-    // None when the file is not this rewriter's to touch, does not parse, holds
-    // no items, or is already correct.
-    //
-    // The scope check is first and is the important one. It mirrors
-    // test-file-structure exactly, because a fixer must never edit a file no
-    // rule governs -- the first version of this did, and reordered the imports
-    // of thirty `src/` files into one alphabetical block, destroying a grouping
-    // convention that no rule checks and so no rule would have restored. It
-    // produced a green run and a tree nobody had reviewed.
-    //
-    // "Already correct" is None rather than an unchanged string so a caller
-    // cannot rewrite a file it did not need to touch, which would show up as a
-    // spurious diff in somebody's review.
-    pub fn rewrite(file: &SourceFile) -> Option<String> {
-        if !Self::governs(file) {
-            return None;
-        }
-        let items = TestFileParser::parse(file)?;
-        if items.is_empty() {
-            return None;
-        }
-        let rewritten = Self::assemble(file, &items);
-        (rewritten != file.contents()).then_some(rewritten)
+    pub fn new() -> Self {
+        Self
     }
 
     // The same scope test-file-structure applies, asked of the file rather than
@@ -170,5 +151,42 @@ impl TestFileRewriter {
             }
         }
         grouped
+    }
+}
+
+impl Default for TestFileRewriter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl SourceRewriter for TestFileRewriter {
+    fn rule(&self) -> &'static str {
+        TestFileStructureRule::NAME
+    }
+
+    // None when the file is not this rewriter's to touch, does not parse, holds
+    // no items, or is already correct.
+    //
+    // The scope check is first and is the important one. It mirrors
+    // test-file-structure exactly, because a fixer must never edit a file no
+    // rule governs -- the first version of this did, and reordered the imports
+    // of thirty `src/` files into one alphabetical block, destroying a grouping
+    // convention that no rule checks and so no rule would have restored. It
+    // produced a green run and a tree nobody had reviewed.
+    //
+    // "Already correct" is None rather than an unchanged string so a caller
+    // cannot rewrite a file it did not need to touch, which would show up as a
+    // spurious diff in somebody's review.
+    fn rewrite(&self, file: &SourceFile) -> Option<String> {
+        if !Self::governs(file) {
+            return None;
+        }
+        let items = TestFileParser::parse(file)?;
+        if items.is_empty() {
+            return None;
+        }
+        let rewritten = Self::assemble(file, &items);
+        (rewritten != file.contents()).then_some(rewritten)
     }
 }

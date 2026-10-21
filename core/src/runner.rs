@@ -7,7 +7,6 @@ use crate::adoption::baseline_outcome::BaselineOutcome;
 use crate::adoption::exclusion_outcome::ExclusionOutcome;
 use crate::adoption::exclusion_set::ExclusionSet;
 use crate::finding::model::manifest_dependency::ManifestDependency;
-use crate::leading_constants_rewriter::LeadingConstantsRewriter;
 use crate::reporting::json_printer::JsonPrinter;
 use crate::reporting::offence::Offence;
 use crate::reporting::offence_threshold::OffenceThreshold;
@@ -17,10 +16,9 @@ use crate::reporting::report_printer::ReportPrinter;
 use crate::reporting::rule_listing::RuleListing;
 use crate::reporting::run_outcome::RunOutcome;
 use crate::reporting::scan_totals::ScanTotals;
+use crate::rewriter_registry::RewriterRegistry;
 use crate::rule_registry::RuleRegistry;
 use crate::rules::source::header_rule::HeaderRule;
-use crate::rules::source::leading_constants_rule::LeadingConstantsRule;
-use crate::rules::testing::test_file_structure_rule::TestFileStructureRule;
 use crate::settings::args::Args;
 use crate::settings::config::Config;
 use crate::settings::config_file::ConfigFile;
@@ -33,7 +31,6 @@ use crate::settings::scanned_package::ScannedPackage;
 use crate::source_file::SourceFile;
 use crate::source_reader::SourceReader;
 use crate::source_walker::SourceWalker;
-use crate::test_file_rewriter::TestFileRewriter;
 use anyhow::Context;
 use anyhow::Result;
 use std::collections::HashSet;
@@ -400,21 +397,12 @@ impl Runner {
         files: Vec<SourceFile>,
         registry: &RuleRegistry,
     ) -> Result<(Vec<SourceFile>, usize)> {
-        let names = registry.names();
-        let tests = names.contains(&TestFileStructureRule::NAME);
-        let constants = names.contains(&LeadingConstantsRule::NAME);
+        let applied = registry.names();
+        let rewriters = RewriterRegistry::all();
         let mut repaired = Vec::with_capacity(files.len());
         let mut count = 0;
         for file in files {
-            let rewritten = tests
-                .then(|| TestFileRewriter::rewrite(&file))
-                .flatten()
-                .or_else(|| {
-                    constants
-                        .then(|| LeadingConstantsRewriter::rewrite(&file))
-                        .flatten()
-                });
-            match rewritten {
+            match rewriters.rewrite(&file, &applied) {
                 Some(contents) => {
                     let path = root.join(file.relative_path());
                     write_file(&path, &contents)

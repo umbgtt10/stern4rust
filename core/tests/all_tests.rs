@@ -6,6 +6,7 @@ pub mod adoption;
 pub mod finding;
 pub mod leading_constants_rewriter_tests;
 pub mod reporting;
+pub mod rewriter_registry_tests;
 pub mod rule_registry_tests;
 pub mod rules;
 pub mod runner_tests;

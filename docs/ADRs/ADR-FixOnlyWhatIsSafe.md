@@ -41,7 +41,10 @@ reformatting a codebase it was only asked to inspect. The rewriter now mirrors
 `test-file-structure`'s scope exactly and refuses everything else. And a rule
 the package skips, or the run did not select, governs nothing: each fixer runs
 only where its own rule is applied. The test-file rewriter ran on every `--fix`
-until the constants fixer, built to ask that, showed it did not.
+until the constants fixer, built to ask that, showed it did not. Each fixer is
+now a `SourceRewriter` naming its rule, and `RewriterRegistry` runs only those
+the package applies, each on what the one before left, so the question is asked
+once, for every fixer, rather than by each.
 
 **A fixer must not write an order the formatter will undo.** The second version
 sorted imports, and reordered `use serde_json::Value` above
