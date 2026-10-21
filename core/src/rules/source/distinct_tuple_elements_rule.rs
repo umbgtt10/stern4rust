@@ -2,7 +2,6 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use syn::ReturnType;
 use syn::Signature;
 
 use crate::finding::model::repeated_tuple::RepeatedTuple;
@@ -59,16 +58,6 @@ impl DistinctTupleElementsRule {
         )
         .with_subject(&function)
     }
-
-    fn offences(file: &SourceFile, signature: &Signature) -> Vec<Offence> {
-        let ReturnType::Type(_, output) = &signature.output else {
-            return Vec::new();
-        };
-        RepeatedTupleFinder::first_in(output)
-            .map(|found| Self::offence(file, signature, found))
-            .into_iter()
-            .collect()
-    }
 }
 
 impl Default for DistinctTupleElementsRule {
@@ -83,11 +72,12 @@ impl Rule for DistinctTupleElementsRule {
     }
 
     fn check(&self, file: &SourceFile) -> Vec<Offence> {
-        SourceItems::offences(
+        SourceItems::in_returns(
             Self::SOURCE_ROOT,
             file,
             AuthoredSignatures::of,
-            Self::offences,
+            RepeatedTupleFinder::first_in,
+            Self::offence,
         )
     }
 

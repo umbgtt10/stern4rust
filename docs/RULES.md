@@ -9,7 +9,7 @@ without answering it.
 
 Each rule also carries an **explanation** — what it wants, a scrap of source
 that breaks it and the same scrap put right — and that field is required too.
-`cargo stern4rust --rules` prints all thirty, in text or with
+`cargo stern4rust --rules` prints all thirty-one, in text or with
 `--format json`, without scanning anything. See
 [ADR-RulesExplainThemselves](ADRs/ADR-RulesExplainThemselves.md).
 
@@ -42,6 +42,7 @@ that breaks it and the same scrap put right — and that field is required too.
 | `implemented-in-one-file` | [R026](ADRs/R026-ADR-ImplementedInOneFileRule.md) | no |
 | `public-or-private` | [R025](ADRs/R025-ADR-PublicOrPrivateRule.md) | no |
 | `ordered-impl-functions` | [R027](ADRs/R027-ADR-OrderedImplFunctionsRule.md) | no |
+| `typed-errors` | [R030](ADRs/R030-ADR-TypedErrorsRule.md) | no |
 | `test-naming` | [R012](ADRs/R012-ADR-TestNamingRule.md) | no |
 | `tested-public-api` | [R013](ADRs/R013-ADR-TestedPublicApiRule.md) | no |
 | `header` | [R001](ADRs/R001-ADR-HeaderRule.md) | `--header-file` |
@@ -827,6 +828,44 @@ is never undone by the formatter.
 
 **Does not catch:** trait impls; whether a long impl should be split; and
 functions a macro generates.
+
+## `typed-errors`
+
+A library's public functions fail with an error type of their own. **No public
+function of a library target may return a `Result` whose error is a `String`, a
+`&str` or a boxed `dyn ...Error`.**
+
+`Result<T, String>` makes a failure a sentence. A caller can print it and do
+nothing else, telling one failure from another means comparing text, and a test
+pinning a failure path pins its wording, so a reworded message breaks a test
+that was right. An error type of the crate's own -- an enum, a variant per way
+to fail -- lets a test match the failure it means and a caller handle one and
+pass the rest.
+
+- **Public** is a `pub fn`, a `pub` method of an inherent impl, and every method
+  of a `pub` trait, reported at the trait's declaration. Trait impls are the
+  trait's.
+- **The library target** is `src/lib.rs` and every file its module declarations
+  reach, as `name.rs` or `name/mod.rs`. A binary's files -- `src/main.rs`,
+  `src/bin/`, and the modules only they declare -- end on a terminal and are
+  left alone, and so is a package with no `src/lib.rs`.
+- **The error** is found wherever the `Result` sits in the return type -- in an
+  `Option`, in a `Vec` -- as a path ending in `Result` with two type arguments.
+  An alias with one, `io::Result<T>`, names its error elsewhere.
+- **A library only in form** -- a system-test harness, an `xtask` with a
+  `lib.rs` -- skips the rule in `stern4rust.toml`: `[package.<name>] skip =
+  ["typed-errors"]`.
+
+| offence | correction |
+|---|---|
+| `` `read` fails with a `String` `` | `give the crate an error enum its callers and tests can match` |
+
+`tests/` is exempt.
+
+**Does not catch:** an error type with one variant holding a `String`, a string
+in a costume; `anyhow::Error`, or an alias such as `anyhow::Result<T>` hiding
+the error type; `Option` where a failure has more than one cause; and panics,
+which `clippy`'s `unwrap_used`, `expect_used` and `panic` lints are for.
 
 ## `declared-by-name`
 

@@ -9,6 +9,7 @@
 
 use stern4rust::finding::parsing::signatures::authored_signatures::AuthoredSignatures;
 use syn::Item;
+use syn::Type;
 use syn::parse_file;
 
 fn items(source: &str) -> Vec<Item> {
@@ -95,4 +96,64 @@ fn of_items_without_functions_returns_nothing() {
 
     // Assert
     assert!(signatures.is_empty());
+}
+
+#[test]
+fn output_of_a_function_returning_a_type_is_that_type() {
+    // Arrange
+    let parsed = items("pub fn read() -> Result<u8, String> {\n    Ok(0)\n}\n");
+    let signature = AuthoredSignatures::of(&parsed)[0];
+
+    // Act
+    let output = AuthoredSignatures::output(signature);
+
+    // Assert
+    assert!(output.is_some_and(|ty| matches!(ty, Type::Path(_))));
+}
+
+#[test]
+fn output_of_a_function_returning_nothing_is_none() {
+    // Arrange
+    let parsed = items("pub fn run() {}\n");
+    let signature = AuthoredSignatures::of(&parsed)[0];
+
+    // Act
+    let output = AuthoredSignatures::output(signature);
+
+    // Assert
+    assert!(output.is_none());
+}
+
+#[test]
+fn public_descends_into_inline_modules_and_leaves_trait_impls_out() {
+    // Arrange
+    let parsed = items(
+        "mod detail {\n    pub fn inner() {}\n}\n\nimpl Display for Widget {\n    fn fmt(&self) {}\n}\n",
+    );
+
+    // Act
+    let signatures = AuthoredSignatures::public(&parsed);
+
+    // Assert
+    let names: Vec<String> = signatures.iter().map(|sig| sig.ident.to_string()).collect();
+    assert_eq!(names, ["inner"]);
+}
+
+// What a caller outside the crate can reach: a pub function, a pub method of an
+// inherent impl, and every method of a pub trait.
+#[test]
+fn public_keeps_pub_functions_pub_methods_and_pub_traits_methods() {
+    // Arrange
+    let parsed = items(
+        "pub fn run() {}\n\nfn helper() {}\n\npub trait Store {\n    fn read(&self);\n}\n\ntrait Hidden {\n    \
+         fn secret(&self);\n}\n\nimpl Widget {\n    pub fn draw(&self) {}\n\n    pub(crate) fn shade(&self) {}\n\n    \
+         fn hue(&self) {}\n}\n",
+    );
+
+    // Act
+    let signatures = AuthoredSignatures::public(&parsed);
+
+    // Assert
+    let names: Vec<String> = signatures.iter().map(|sig| sig.ident.to_string()).collect();
+    assert_eq!(names, ["run", "read", "draw"]);
 }

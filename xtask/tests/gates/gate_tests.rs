@@ -4,12 +4,13 @@
 
 use std::cell::RefCell;
 use xtask::gates::gate::Gate;
+use xtask::gates::gate_failure::GateFailure;
 
 // A gate that records whether it ran, so Stage2's ordering and its
 // stop-at-the-first-failure behaviour can be observed without a real tool.
 pub struct FakeGate {
     label: String,
-    outcome: Result<(), String>,
+    outcome: Result<(), GateFailure>,
     ran: RefCell<bool>,
 }
 
@@ -25,7 +26,7 @@ impl FakeGate {
     pub fn failing(label: &str, reason: &str) -> Self {
         Self {
             label: String::from(label),
-            outcome: Err(String::from(reason)),
+            outcome: Err(GateFailure::Found(String::from(reason))),
             ran: RefCell::new(false),
         }
     }
@@ -40,7 +41,7 @@ impl Gate for FakeGate {
         self.label.clone()
     }
 
-    fn run(&self) -> Result<(), String> {
+    fn run(&self) -> Result<(), GateFailure> {
         *self.ran.borrow_mut() = true;
         self.outcome.clone()
     }
@@ -68,7 +69,10 @@ fn run_on_a_failing_gate_returns_its_reason() {
     let result = gate.run();
 
     // Assert
-    assert_eq!(result, Err(String::from("because")));
+    assert_eq!(
+        result.map_err(|failure| failure.to_string()),
+        Err(String::from("because"))
+    );
 }
 
 #[test]

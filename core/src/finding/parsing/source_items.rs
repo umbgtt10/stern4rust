@@ -3,8 +3,11 @@
 // SPDX-License-Identifier: MIT
 
 use syn::Item;
+use syn::Signature;
+use syn::Type;
 use syn::parse_file;
 
+use crate::finding::parsing::signatures::authored_signatures::AuthoredSignatures;
 use crate::reporting::offence::Offence;
 use crate::source_file::SourceFile;
 
@@ -20,6 +23,25 @@ use crate::source_file::SourceFile;
 pub struct SourceItems;
 
 impl SourceItems {
+    // What a rule judging return types finds: each signature `signatures` picks
+    // whose return type `find` answers for, said by `report`. The rules differ
+    // only in those three; the walk, the guard and the return type are the same.
+    pub fn in_returns<T>(
+        root: &str,
+        file: &SourceFile,
+        signatures: for<'i> fn(&'i [Item]) -> Vec<&'i Signature>,
+        find: fn(&Type) -> Option<T>,
+        report: fn(&SourceFile, &Signature, T) -> Offence,
+    ) -> Vec<Offence> {
+        Self::offences(root, file, signatures, |file, signature| {
+            AuthoredSignatures::output(signature)
+                .and_then(find)
+                .map(|found| report(file, signature, found))
+                .into_iter()
+                .collect()
+        })
+    }
+
     pub fn offences<T, F, J>(root: &str, file: &SourceFile, find: F, judge: J) -> Vec<Offence>
     where
         F: for<'i> Fn(&'i [Item]) -> Vec<&'i T>,

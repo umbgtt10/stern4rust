@@ -6,15 +6,29 @@
 // rule finds in them. The rules that judge `src/` alone each opened with the
 // same guard and parse and closed with the same find-then-judge.
 
+use stern4rust::finding::parsing::signatures::authored_signatures::AuthoredSignatures;
 use stern4rust::finding::parsing::source_items::SourceItems;
 use stern4rust::reporting::offence::Offence;
 use stern4rust::source_file::SourceFile;
 use syn::Item;
+use syn::Signature;
+use syn::Type;
 
 const ROOT: &str = "src/";
 
 fn every_item(items: &[Item]) -> Vec<&Item> {
     items.iter().collect()
+}
+
+fn named_return(ty: &Type) -> Option<String> {
+    match ty {
+        Type::Path(path) => path
+            .path
+            .segments
+            .last()
+            .map(|segment| segment.ident.to_string()),
+        _ => None,
+    }
 }
 
 fn one_offence(_file: &SourceFile, _item: &Item) -> Vec<Offence> {
@@ -25,6 +39,38 @@ fn one_offence(_file: &SourceFile, _item: &Item) -> Vec<Offence> {
         String::from("found"),
         String::from("none"),
     )]
+}
+
+fn returning(file: &SourceFile, signature: &Signature, found: String) -> Offence {
+    Offence::new(
+        file.relative_path(),
+        1,
+        "probe",
+        format!("{} returns {found}", signature.ident),
+        String::from("none"),
+    )
+}
+
+// A rule judging return types hands in which signatures, what to look for in a
+// return type, and how to say what it found; the rest is the same for each.
+#[test]
+fn in_returns_reports_each_signature_whose_return_type_holds_what_is_looked_for() {
+    // Arrange
+    let file = SourceFile::new(
+        "src/store.rs",
+        "pub fn read() -> Shelf {\n    Shelf\n}\n\npub fn count() -> (u8, u8) {\n    (0, 0)\n}\n\npub fn run() {}\n",
+    );
+
+    // Act
+    let offences =
+        SourceItems::in_returns(ROOT, &file, AuthoredSignatures::of, named_return, returning);
+
+    // Assert
+    let descriptions: Vec<&str> = offences
+        .iter()
+        .map(|offence| offence.description.as_str())
+        .collect();
+    assert_eq!(descriptions, ["read returns Shelf"]);
 }
 
 #[test]

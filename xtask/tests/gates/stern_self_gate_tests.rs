@@ -93,7 +93,10 @@ fn run_with_exit_code_one_reports_a_failure_to_run() {
     let result = gate(&runner).run();
 
     // Assert
-    assert_eq!(result, Err(String::from("could not run, exit code 1")));
+    assert_eq!(
+        result.map_err(|failure| failure.to_string()),
+        Err(String::from("could not run, exit code 1"))
+    );
 }
 
 #[test]
@@ -105,7 +108,10 @@ fn run_with_exit_code_two_reports_a_broken_rule() {
     let result = gate(&runner).run();
 
     // Assert
-    assert_eq!(result, Err(String::from("a house coding rule was broken")));
+    assert_eq!(
+        result.map_err(|failure| failure.to_string()),
+        Err(String::from("a house coding rule was broken"))
+    );
 }
 
 // None means the process was signalled rather than exiting. That is a failure
@@ -120,7 +126,7 @@ fn run_with_no_exit_code_reports_a_failure_to_run() {
 
     // Assert
     assert_eq!(
-        result,
+        result.map_err(|failure| failure.to_string()),
         Err(String::from("could not run, terminated by signal"))
     );
 }

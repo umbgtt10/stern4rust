@@ -19,6 +19,17 @@ use crate::source_file::SourceFile;
 pub struct ModuleDeclarationFinder;
 
 impl ModuleDeclarationFinder {
+    pub const ROOTS: [&'static str; 3] = ["lib.rs", "main.rs", "mod.rs"];
+
+    // Where the modules a file declares live: beside a registry, and below a
+    // file of any other name, as `platform.rs` declares `platform/qemu.rs`.
+    pub fn directory_of(path: &str) -> String {
+        match path.rsplit_once('/') {
+            Some((directory, name)) if Self::ROOTS.contains(&name) => format!("{directory}/"),
+            _ => format!("{}/", path.trim_end_matches(".rs")),
+        }
+    }
+
     // None means the file does not parse. readable-source reports that, and
     // guessing at the declarations of a file nobody can parse would be worse
     // than saying nothing.

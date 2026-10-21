@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::gates::gate::Gate;
+use crate::gates::gate_failure::GateFailure;
 use crate::process::command_runner::CommandRunner;
 
 const BINARY: &str = "cargo-dry4rust";
@@ -36,11 +37,9 @@ impl Gate for DryGate<'_> {
         String::from("Duplication")
     }
 
-    fn run(&self) -> Result<(), String> {
+    fn run(&self) -> Result<(), GateFailure> {
         if !self.runner.is_available(BINARY) {
-            return Err(format!(
-                "{BINARY} is not installed -- run: cargo install {BINARY}"
-            ));
+            return Err(GateFailure::NotInstalled(String::from(BINARY)));
         }
 
         // Zero ceilings against the baseline: what the baseline records was here
@@ -65,10 +64,11 @@ impl Gate for DryGate<'_> {
         // baseline it refused, which means it measured nothing.
         match self.runner.run_streaming("cargo", &args)? {
             Some(0) => Ok(()),
-            Some(CEILING_EXCEEDED) => {
-                Err(format!("duplication was added beyond {}", self.baseline))
-            }
-            code => Err(format!("exit code {code:?}")),
+            Some(CEILING_EXCEEDED) => Err(GateFailure::Found(format!(
+                "duplication was added beyond {}",
+                self.baseline
+            ))),
+            code => Err(GateFailure::Exited(code)),
         }
     }
 }

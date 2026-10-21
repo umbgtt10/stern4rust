@@ -4,6 +4,7 @@
 
 use crate::crap::crap_report_parser::CrapReportParser;
 use crate::gates::gate::Gate;
+use crate::gates::gate_failure::GateFailure;
 use crate::process::command_runner::CommandRunner;
 
 const BINARY: &str = "cargo-crap4rust";
@@ -52,11 +53,9 @@ impl Gate for CrapGate<'_> {
         String::from("CRAP")
     }
 
-    fn run(&self) -> Result<(), String> {
+    fn run(&self) -> Result<(), GateFailure> {
         if !self.runner.is_available(BINARY) {
-            return Err(format!(
-                "{BINARY} is not installed -- run: cargo install {BINARY}"
-            ));
+            return Err(GateFailure::NotInstalled(String::from(BINARY)));
         }
 
         let mut args = vec![
@@ -83,14 +82,15 @@ impl Gate for CrapGate<'_> {
         // cannot separate "found something" from "failed to run". The parsed
         // report decides; the exit code and output only colour a parse
         // failure, which is the case where the tool genuinely did not report.
-        let report = self.parser.parse(&outcome.stdout).map_err(|parse_error| {
-            format!(
-                "{parse_error} (exit code {:?})\nstderr: {}\nstdout tail:\n{}",
-                outcome.exit_code,
-                outcome.stderr,
-                Self::tail(&outcome.stdout),
-            )
-        })?;
+        let report =
+            self.parser
+                .parse(&outcome.stdout)
+                .map_err(|failure| GateFailure::Unreported {
+                    failure,
+                    exit_code: outcome.exit_code,
+                    stderr: outcome.stderr.clone(),
+                    stdout_tail: Self::tail(&outcome.stdout),
+                })?;
 
         println!("{}", report.summary());
 
@@ -102,9 +102,9 @@ impl Gate for CrapGate<'_> {
             println!("  {}", offender.describe());
         }
 
-        Err(format!(
+        Err(GateFailure::Found(format!(
             "{} crappy functions detected",
             report.crappy_functions
-        ))
+        )))
     }
 }

@@ -3,4 +3,5 @@
 // SPDX-License-Identifier: MIT
 
 pub mod gated_modules_tests;
+pub mod library_target_tests;
 pub mod module_declaration_finder_tests;

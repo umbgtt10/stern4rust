@@ -5,4 +5,6 @@
 pub mod authored_signatures_tests;
 pub mod mutable_reference_search_tests;
 pub mod repeated_tuple_finder_tests;
+pub mod stringly_error_finder_tests;
+pub mod type_text_tests;
 pub mod type_walk_tests;

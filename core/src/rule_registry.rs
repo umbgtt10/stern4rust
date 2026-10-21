@@ -32,6 +32,7 @@ use crate::rules::source::readable_source_rule::ReadableSourceRule;
 use crate::rules::source::returned_mutations_rule::ReturnedMutationsRule;
 use crate::rules::source::single_implemented_type_rule::SingleImplementedTypeRule;
 use crate::rules::source::test_free_source_rule::TestFreeSourceRule;
+use crate::rules::source::typed_errors_rule::TypedErrorsRule;
 use crate::rules::testing::arrange_act_assert_rule::ArrangeActAssertRule;
 use crate::rules::testing::test_file_structure_rule::TestFileStructureRule;
 use crate::rules::testing::test_naming_rule::TestNamingRule;
@@ -188,6 +189,7 @@ impl RuleRegistry {
             Box::new(TestNamingRule::new()),
             Box::new(TestedPublicApiRule::new()),
             Box::new(TestsLayoutRule::new()),
+            Box::new(TypedErrorsRule::new()),
             Box::new(WorkspaceDependenciesRule::new(
                 config.workspace_dependencies.clone(),
             )),

@@ -6,13 +6,18 @@ use syn::ImplItem;
 use syn::Item;
 use syn::ItemImpl;
 use syn::ItemTrait;
+use syn::ReturnType;
 use syn::Signature;
 use syn::TraitItem;
+use syn::Type;
+use syn::Visibility;
 
 use crate::finding::parsing::inline_module::InlineModule;
 
 // The signatures a file's author can change: free functions, inherent methods
-// and trait declarations, inline modules included.
+// and trait declarations, inline modules included -- every one, or the public
+// ones a caller outside the crate can reach: a `pub fn`, a `pub` method of an
+// inherent impl, and every method of a `pub` trait.
 //
 // A trait impl is left out. Its signatures are the trait's decision -- `Display::fmt`
 // takes `&mut Formatter` because `Display` says so -- and a rule judging a
@@ -22,10 +27,27 @@ pub struct AuthoredSignatures;
 
 impl AuthoredSignatures {
     pub fn of(items: &[Item]) -> Vec<&Signature> {
-        items.iter().flat_map(Self::in_item).collect()
+        Self::walk(items, Self::any)
     }
 
-    fn in_impl(block: &ItemImpl) -> Vec<&Signature> {
+    // The type a function returns, None for `()` left unwritten -- what the
+    // rules that judge a return type look at.
+    pub fn output(signature: &Signature) -> Option<&Type> {
+        match &signature.output {
+            ReturnType::Type(_, output) => Some(output),
+            ReturnType::Default => None,
+        }
+    }
+
+    pub fn public(items: &[Item]) -> Vec<&Signature> {
+        Self::walk(items, Self::is_public)
+    }
+
+    fn any(_visibility: &Visibility) -> bool {
+        true
+    }
+
+    fn in_impl(block: &ItemImpl, keep: fn(&Visibility) -> bool) -> Vec<&Signature> {
         if block.trait_.is_some() {
             return Vec::new();
         }
@@ -33,19 +55,19 @@ impl AuthoredSignatures {
             .items
             .iter()
             .filter_map(|item| match item {
-                ImplItem::Fn(method) => Some(&method.sig),
+                ImplItem::Fn(method) if keep(&method.vis) => Some(&method.sig),
                 _ => None,
             })
             .collect()
     }
 
-    fn in_item(item: &Item) -> Vec<&Signature> {
+    fn in_item(item: &Item, keep: fn(&Visibility) -> bool) -> Vec<&Signature> {
         match item {
-            Item::Fn(function) => vec![&function.sig],
-            Item::Impl(block) => Self::in_impl(block),
-            Item::Trait(declaration) => Self::in_trait(declaration),
+            Item::Fn(function) if keep(&function.vis) => vec![&function.sig],
+            Item::Impl(block) => Self::in_impl(block, keep),
+            Item::Trait(declaration) if keep(&declaration.vis) => Self::in_trait(declaration),
             Item::Mod(module) => InlineModule::items(module)
-                .map(Self::of)
+                .map(|inner| Self::walk(inner, keep))
                 .unwrap_or_default(),
             _ => Vec::new(),
         }
@@ -59,6 +81,17 @@ impl AuthoredSignatures {
                 TraitItem::Fn(method) => Some(&method.sig),
                 _ => None,
             })
+            .collect()
+    }
+
+    fn is_public(visibility: &Visibility) -> bool {
+        matches!(visibility, Visibility::Public(_))
+    }
+
+    fn walk(items: &[Item], keep: fn(&Visibility) -> bool) -> Vec<&Signature> {
+        items
+            .iter()
+            .flat_map(|item| Self::in_item(item, keep))
             .collect()
     }
 }

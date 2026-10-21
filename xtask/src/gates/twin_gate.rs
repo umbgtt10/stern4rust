@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::gates::gate::Gate;
+use crate::gates::gate_failure::GateFailure;
 use crate::process::command_runner::CommandRunner;
 
 const BINARY: &str = "cargo-twin4rust";
@@ -32,11 +33,9 @@ impl Gate for TwinGate<'_> {
         String::from("Mirrored tests")
     }
 
-    fn run(&self) -> Result<(), String> {
+    fn run(&self) -> Result<(), GateFailure> {
         if !self.runner.is_available(BINARY) {
-            return Err(format!(
-                "{BINARY} is not installed -- run: cargo install {BINARY}"
-            ));
+            return Err(GateFailure::NotInstalled(String::from(BINARY)));
         }
 
         let mut args = vec![
@@ -51,7 +50,9 @@ impl Gate for TwinGate<'_> {
 
         match self.runner.run_streaming("cargo", &args)? {
             Some(0) => Ok(()),
-            _ => Err(String::from("source files without a mirrored test")),
+            _ => Err(GateFailure::Found(String::from(
+                "source files without a mirrored test",
+            ))),
         }
     }
 }

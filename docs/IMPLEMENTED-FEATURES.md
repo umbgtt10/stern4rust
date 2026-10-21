@@ -54,6 +54,15 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
   repository in the family had blocks out of order -- 729 across sixteen, 53 of
   them this repository's, which `--fix` reordered -- and the fixer declines none.
   On by default. [R027](ADRs/R027-ADR-OrderedImplFunctionsRule.md)
+- **`typed-errors`** -- a library's public functions fail with an error type of
+  their own: a public function of the library target -- the files `src/lib.rs`
+  reaches -- returning a `Result` that fails with a `String`, a `&str` or a
+  boxed `dyn ...Error` is reported at its name, a `pub` trait's methods at the
+  trait. A binary's files, trait impls and `tests/` are left alone; a harness
+  or an `xtask` skips it by configuration. 250 offences across the sixteen
+  repositories, five of them in every `xtask` the family shares, this
+  repository's included, which take typed errors here. On by default.
+  [R030](ADRs/R030-ADR-TypedErrorsRule.md)
 
 ### Autofix
 

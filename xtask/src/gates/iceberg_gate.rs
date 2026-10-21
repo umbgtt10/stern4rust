@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::gates::gate::Gate;
+use crate::gates::gate_failure::GateFailure;
 use crate::process::command_runner::CommandRunner;
 
 const BINARY: &str = "cargo-iceberg4rust";
@@ -36,11 +37,9 @@ impl Gate for IcebergGate<'_> {
         String::from("File risk")
     }
 
-    fn run(&self) -> Result<(), String> {
+    fn run(&self) -> Result<(), GateFailure> {
         if !self.runner.is_available(BINARY) {
-            return Err(format!(
-                "{BINARY} is not installed -- run: cargo install {BINARY}"
-            ));
+            return Err(GateFailure::NotInstalled(String::from(BINARY)));
         }
 
         // The ceiling travels as a string so it reaches the CLI unchanged. Formatting
@@ -65,11 +64,11 @@ impl Gate for IcebergGate<'_> {
         // could not run at all.
         match self.runner.run_streaming("cargo", &args)? {
             Some(0) => Ok(()),
-            Some(OFFENDERS_FOUND) => Err(format!(
+            Some(OFFENDERS_FOUND) => Err(GateFailure::Found(format!(
                 "a file is at or above the ceiling of {}",
                 self.threshold
-            )),
-            code => Err(format!("exit code {code:?}")),
+            ))),
+            code => Err(GateFailure::Exited(code)),
         }
     }
 }

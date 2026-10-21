@@ -101,7 +101,10 @@ fn run_with_a_crappy_report_names_how_many_were_found() {
     let result = gate(&runner, &parser).run();
 
     // Assert
-    assert_eq!(result, Err(String::from("1 crappy functions detected")));
+    assert_eq!(
+        result.map_err(|failure| failure.to_string()),
+        Err(String::from("1 crappy functions detected"))
+    );
 }
 
 // A tool that fails late can emit thousands of lines before it gives up, and
@@ -123,7 +126,9 @@ fn run_with_a_long_unparseable_output_keeps_the_last_thirty_lines_in_order() {
     let result = gate(&runner, &parser).run();
 
     // Assert
-    let error = result.expect_err("output carrying no report must fail");
+    let error = result
+        .expect_err("output carrying no report must fail")
+        .to_string();
     assert!(error.contains("line 171\nline 172"));
     assert!(error.ends_with("line 200"));
     assert!(!error.contains("line 170"));
@@ -141,7 +146,7 @@ fn run_with_no_report_in_the_output_also_reports_the_exit_code() {
     let result = gate(&runner, &parser).run();
 
     // Assert
-    assert!(result.is_err_and(|error| error.contains("101")));
+    assert!(result.is_err_and(|error| error.to_string().contains("101")));
 }
 
 // The failure that made two CI runs unreadable: no report at all, because
@@ -159,7 +164,7 @@ fn run_with_no_report_in_the_output_surfaces_the_tools_own_message() {
 
     // Assert
     assert!(
-        result.is_err_and(|error| error.contains("cargo llvm-cov failed")),
+        result.is_err_and(|error| error.to_string().contains("cargo llvm-cov failed")),
         "the tool's own stdout must reach the operator, not just an exit code"
     );
 }
@@ -174,5 +179,5 @@ fn run_with_the_tool_missing_returns_an_install_hint() {
     let result = gate(&runner, &parser).run();
 
     // Assert
-    assert!(result.is_err_and(|error| error.contains("cargo install cargo-crap4rust")));
+    assert!(result.is_err_and(|error| error.to_string().contains("cargo install cargo-crap4rust")));
 }

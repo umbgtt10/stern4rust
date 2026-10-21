@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::gates::gate::Gate;
+use crate::gates::gate_failure::GateFailure;
 use crate::process::command_runner::CommandRunner;
 
 pub struct SternSelfGate<'a> {
@@ -33,7 +34,7 @@ impl Gate for SternSelfGate<'_> {
         String::from("Own rules")
     }
 
-    fn run(&self) -> Result<(), String> {
+    fn run(&self) -> Result<(), GateFailure> {
         // Built from source rather than run from whatever is installed. The
         // gate has to judge the tree it is standing in, not the last version
         // that happened to be published -- which for this repository is the
@@ -62,9 +63,11 @@ impl Gate for SternSelfGate<'_> {
         // a clean codebase.
         match self.runner.run_streaming("cargo", &args)? {
             Some(0) => Ok(()),
-            Some(2) => Err(String::from("a house coding rule was broken")),
-            Some(code) => Err(format!("could not run, exit code {code}")),
-            None => Err(String::from("could not run, terminated by signal")),
+            Some(2) => Err(GateFailure::Found(String::from(
+                "a house coding rule was broken",
+            ))),
+            Some(code) => Err(GateFailure::CouldNotRun(Some(code))),
+            None => Err(GateFailure::CouldNotRun(None)),
         }
     }
 }

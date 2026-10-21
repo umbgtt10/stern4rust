@@ -5,6 +5,7 @@
 use std::cell::RefCell;
 use xtask::process::command_outcome::CommandOutcome;
 use xtask::process::command_runner::CommandRunner;
+use xtask::process::launch_failure::LaunchFailure;
 
 // The seam every gate is constructed against. Lives here, beside the trait it
 // implements, so the gate tests share one fake rather than each growing their
@@ -57,12 +58,16 @@ impl CommandRunner for FakeCommandRunner {
         self.available
     }
 
-    fn run_streaming(&self, _program: &str, args: &[String]) -> Result<Option<i32>, String> {
+    fn run_streaming(&self, _program: &str, args: &[String]) -> Result<Option<i32>, LaunchFailure> {
         self.calls.borrow_mut().push(args.to_vec());
         Ok(self.streaming_code)
     }
 
-    fn run_capturing(&self, _program: &str, args: &[String]) -> Result<CommandOutcome, String> {
+    fn run_capturing(
+        &self,
+        _program: &str,
+        args: &[String],
+    ) -> Result<CommandOutcome, LaunchFailure> {
         self.calls.borrow_mut().push(args.to_vec());
         Ok(CommandOutcome::new(
             self.streaming_code,

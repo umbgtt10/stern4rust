@@ -2,11 +2,11 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use quote::ToTokens;
 use syn::Type;
 use syn::TypeTuple;
 
 use crate::finding::model::repeated_tuple::RepeatedTuple;
+use crate::finding::parsing::signatures::type_text::TypeText;
 use crate::finding::parsing::signatures::type_walk::TypeWalk;
 
 // The first tuple in a type that holds two elements of one type, wherever it
@@ -28,12 +28,8 @@ impl RepeatedTupleFinder {
         own.or_else(|| TypeWalk::children(ty).into_iter().find_map(Self::first_in))
     }
 
-    fn is_word(character: char) -> bool {
-        character.is_alphanumeric() || character == '_'
-    }
-
     fn repeated(tuple: &TypeTuple) -> Option<RepeatedTuple> {
-        let elements: Vec<String> = tuple.elems.iter().map(Self::text).collect();
+        let elements: Vec<String> = tuple.elems.iter().map(TypeText::of).collect();
         let element = elements
             .iter()
             .enumerate()
@@ -43,37 +39,5 @@ impl RepeatedTupleFinder {
             format!("({})", elements.join(", ")),
             element,
         ))
-    }
-
-    fn text(ty: &Type) -> String {
-        Self::tightened(&Self::without_lifetimes(&ty.to_token_stream().to_string()))
-    }
-
-    // Tokens rejoined the way the type is written: a space only between two words
-    // and after a separator, so `& mut Vec < u8 >` reads `&mut Vec<u8>`.
-    fn tightened(text: &str) -> String {
-        text.split_whitespace().fold(String::new(), |joined, word| {
-            let after = joined.chars().last();
-            let spaced = after.is_some_and(|last| last == ',' || last == ';')
-                || (after.is_some_and(Self::is_word) && word.starts_with(Self::is_word));
-            if spaced {
-                format!("{joined} {word}")
-            } else {
-                format!("{joined}{word}")
-            }
-        })
-    }
-
-    fn without_lifetimes(text: &str) -> String {
-        let mut kept = String::new();
-        let mut characters = text.chars().peekable();
-        while let Some(character) = characters.next() {
-            if character == '\'' {
-                while characters.next_if(|next| Self::is_word(*next)).is_some() {}
-                continue;
-            }
-            kept.push(character);
-        }
-        kept
     }
 }

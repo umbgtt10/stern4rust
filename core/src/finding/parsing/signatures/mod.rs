@@ -5,4 +5,6 @@
 pub mod authored_signatures;
 pub mod mutable_reference_search;
 pub mod repeated_tuple_finder;
+pub mod stringly_error_finder;
+pub mod type_text;
 pub mod type_walk;

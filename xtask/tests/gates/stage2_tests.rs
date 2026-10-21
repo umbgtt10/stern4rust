@@ -16,7 +16,10 @@ fn run_reports_the_failing_gates_label_and_reason() {
     let result = Stage2::new(gates).run();
 
     // Assert
-    assert_eq!(result, Err(String::from("House rules (a rule was broken)")));
+    assert_eq!(
+        result.map_err(|failure| failure.to_string()),
+        Err(String::from("House rules (a rule was broken)"))
+    );
 }
 
 // stern4rust runs first precisely so the later gates never measure a layout it

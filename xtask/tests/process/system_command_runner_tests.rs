@@ -39,7 +39,7 @@ fn run_capturing_a_program_that_does_not_exist_returns_a_launch_error() {
 
     // Assert
     assert!(
-        result.is_err_and(|error| error.starts_with("failed to launch")),
+        result.is_err_and(|error| error.to_string().starts_with("failed to launch")),
         "a missing program is a launch failure, not an exit code"
     );
 }

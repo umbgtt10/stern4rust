@@ -6,6 +6,7 @@ use syn::Attribute;
 use syn::Item;
 use syn::parse_file;
 
+use crate::finding::parsing::modules::module_declaration_finder::ModuleDeclarationFinder;
 use crate::source_file::SourceFile;
 
 // The files of a package a `#[cfg]` selects: a module whose `mod name;`
@@ -24,8 +25,6 @@ pub struct GatedModules {
 }
 
 impl GatedModules {
-    pub const ROOTS: [&'static str; 3] = ["lib.rs", "main.rs", "mod.rs"];
-
     pub fn of(files: &[SourceFile]) -> Self {
         Self {
             stems: files.iter().flat_map(Self::stems_in).collect(),
@@ -43,15 +42,6 @@ impl GatedModules {
         attrs.iter().any(|attr| attr.path().is_ident("cfg"))
     }
 
-    // Where the modules a file declares live: beside a registry, and below a
-    // file of any other name, as `platform.rs` declares `platform/qemu.rs`.
-    fn module_directory(path: &str) -> String {
-        match path.rsplit_once('/') {
-            Some((directory, name)) if Self::ROOTS.contains(&name) => format!("{directory}/"),
-            _ => format!("{}/", path.trim_end_matches(".rs")),
-        }
-    }
-
     fn own_stem(path: &str) -> String {
         path.strip_suffix("/mod.rs")
             .or_else(|| path.strip_suffix(".rs"))
@@ -64,7 +54,7 @@ impl GatedModules {
             return Vec::new();
         };
         let path = file.relative_path();
-        let directory = Self::module_directory(path);
+        let directory = ModuleDeclarationFinder::directory_of(path);
         let mut stems: Vec<String> = syntax
             .items
             .iter()

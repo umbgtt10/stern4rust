@@ -17,6 +17,27 @@ fn found(contents: &str) -> Vec<String> {
 }
 
 #[test]
+fn directory_of_a_named_file_is_the_folder_beneath_it() {
+    // Arrange & Act
+    let directory = ModuleDeclarationFinder::directory_of("src/platform.rs");
+
+    // Assert
+    assert_eq!(directory, "src/platform/");
+}
+
+#[test]
+fn directory_of_a_registry_is_its_own_folder() {
+    // Arrange & Act
+    let directories: Vec<String> = ["src/lib.rs", "src/main.rs", "src/store/mod.rs"]
+        .into_iter()
+        .map(ModuleDeclarationFinder::directory_of)
+        .collect();
+
+    // Assert
+    assert_eq!(directories, ["src/", "src/", "src/store/"]);
+}
+
+#[test]
 fn find_of_a_file_that_does_not_parse_returns_nothing() {
     // Arrange & Act
     let found = ModuleDeclarationFinder::find(&SourceFile::new("src/lib.rs", "pub mod ( broken\n"));

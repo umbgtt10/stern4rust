@@ -19,3 +19,4 @@ pub mod readable_source_rule;
 pub mod returned_mutations_rule;
 pub mod single_implemented_type_rule;
 pub mod test_free_source_rule;
+pub mod typed_errors_rule;

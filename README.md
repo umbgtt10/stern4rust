@@ -16,7 +16,7 @@ already own correctness. These are the things a reviewer would otherwise have to
 say by hand, every time, forever — and the ones that quietly stop being true
 across a codebase the moment nobody is checking.
 
-> **Status: thirty rules.** The set below is what is implemented and
+> **Status: thirty-one rules.** The set below is what is implemented and
 > gated. `stern4rust` runs against its own tree on every build, so a rule that
 > would fail this repository cannot be merged into it.
 
@@ -565,6 +565,22 @@ them, one blank line apart. It declines a block with a macro invocation among
 its items, two members on one line, or a comment standing free between two
 functions. Trait impls keep the trait's order and are left alone; `tests/` is
 exempt. [R027](docs/ADRs/R027-ADR-OrderedImplFunctionsRule.md)
+
+### `typed-errors`
+
+A library's public functions fail with an error type of their own. A public
+function of the library target -- a `pub fn`, a `pub` method, a method of a `pub`
+trait, reported at the trait -- whose return type holds a `Result` failing with
+a `String`, a `&str` or a boxed `dyn ...Error` is reported at its name.
+
+`Result<T, String>` makes a failure a sentence: a caller can print it and do
+nothing else, and a test pinning a failure path pins its wording. An error type
+of the crate's own lets a test match the failure it means. The library target is
+`src/lib.rs` and every file its module declarations reach; a binary's files --
+`src/main.rs`, `src/bin/`, what only they declare -- end on a terminal and are
+left alone, and a package that is a library only in form, a harness or an
+`xtask`, can skip the rule in `stern4rust.toml`. Trait impls are left alone;
+`tests/` is exempt. [R030](docs/ADRs/R030-ADR-TypedErrorsRule.md)
 
 ### `declared-by-name`
 

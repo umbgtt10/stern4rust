@@ -4,6 +4,7 @@
 
 use crate::process::command_outcome::CommandOutcome;
 use crate::process::command_runner::CommandRunner;
+use crate::process::launch_failure::LaunchFailure;
 use std::env::consts::EXE_SUFFIX;
 use std::env::split_paths;
 use std::env::var_os;
@@ -37,19 +38,29 @@ impl CommandRunner for SystemCommandRunner {
         Self::locate(binary_name).is_some()
     }
 
-    fn run_streaming(&self, program: &str, args: &[String]) -> Result<Option<i32>, String> {
+    fn run_streaming(&self, program: &str, args: &[String]) -> Result<Option<i32>, LaunchFailure> {
         Command::new(program)
             .args(args)
             .status()
             .map(|status| status.code())
-            .map_err(|error| format!("failed to launch {program}: {error}"))
+            .map_err(|error| LaunchFailure {
+                program: program.to_string(),
+                reason: error.to_string(),
+            })
     }
 
-    fn run_capturing(&self, program: &str, args: &[String]) -> Result<CommandOutcome, String> {
+    fn run_capturing(
+        &self,
+        program: &str,
+        args: &[String],
+    ) -> Result<CommandOutcome, LaunchFailure> {
         let output = Command::new(program)
             .args(args)
             .output()
-            .map_err(|error| format!("failed to launch {program}: {error}"))?;
+            .map_err(|error| LaunchFailure {
+                program: program.to_string(),
+                reason: error.to_string(),
+            })?;
 
         Ok(CommandOutcome::new(
             output.status.code(),

@@ -6,15 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-Six rules added, all on by default, so they move what this tool reports about
+Seven rules added, all on by default, so they move what this tool reports about
 your code once it is released. A function returning a mutable reference, one
 returning a tuple that repeats an element type, a module-level constant declared
 after another item, a type implemented in more than one file, a method that is
-neither `pub` nor private, and an impl block out of order become offences; to
-adopt one later, add its name -- `immutable-returns`, `distinct-tuple-elements`,
-`leading-constants`, `implemented-in-one-file`, `public-or-private` or
-`ordered-impl-functions` -- to `skip` in your `stern4rust.toml` once you install
-a version that knows it. Two are fixable: `--fix` moves the constants and
+neither `pub` nor private, an impl block out of order, and a library function
+failing with a string become offences; to adopt one later, add its name --
+`immutable-returns`, `distinct-tuple-elements`, `leading-constants`,
+`implemented-in-one-file`, `public-or-private`, `ordered-impl-functions` or
+`typed-errors` -- to `skip` in your `stern4rust.toml` once you install a version
+that knows it. Two are fixable: `--fix` moves the constants and
 reorders the impls. The third is fixable: `--fix` moves the constants.
 And `--fix` now repairs only what the run applies: test files are left alone
 where `test-file-structure` is skipped or not selected.
@@ -109,6 +110,20 @@ where `test-file-structure` is skipped or not selected.
   On a copy of each of the other fifteen, `--fix` repaired all 676, kept every
   file's lines -- only their order and the blank lines between them change --
   re-checked clean, and left `cargo fmt` nothing to do.
+- **`typed-errors`: a library's public functions fail with an error type of
+  their own.** A public function of the library target -- a `pub fn`, a `pub`
+  method, every method of a `pub` trait, reported at the trait -- whose return
+  type holds a `Result` failing with a `String`, a `&str` or a boxed
+  `dyn ...Error` is reported at its name. The library target is `src/lib.rs` and
+  every file its module declarations reach; a binary's files are left alone, and
+  a harness or an `xtask` skips the rule in `stern4rust.toml`. Trait impls are
+  left alone; `tests/` is exempt. [R030](docs/ADRs/R030-ADR-TypedErrorsRule.md)
+
+  The rule reports 250 offences across the sixteen repositories of the family,
+  five in every `xtask` it shares -- the gate trait, the stage, the command
+  runner's two and the CRAP report parser. This repository's five take typed
+  errors: `GateFailure`, `StageFailure`, `LaunchFailure` and `ReportFailure`,
+  each saying itself exactly as the run reported before.
 
 ### Changed
 - The type walk `returned-mutations` carried privately is now
@@ -134,6 +149,13 @@ where `test-file-structure` is skipped or not selected.
   `MutableReferenceSearch`, `RepeatedTupleFinder`, `TypeWalk` -- moved to
   `finding::parsing::signatures`, to leave `finding/parsing/` room under
   `directory-file-count`. What they find is unchanged.
+- The module-tree finders -- `GatedModules`, `ModuleDeclarationFinder` -- moved
+  to `finding::parsing::modules`, beside the new `LibraryTarget`, and the module
+  directory a file declares into is `ModuleDeclarationFinder::directory_of`.
+- How a type is written for a reader is `TypeText`, shared by
+  `distinct-tuple-elements` and `typed-errors`, and spaces a `+`.
+  `AuthoredSignatures` gains `public` and `output`, and a rule judging return
+  types hands `SourceItems::in_returns` what to look for and how to say it.
 - `FixRefusal` gains `FreeComment` and `MacroInvocation`, and its `SharedLine`
   reads for any item, not only a constant. Where moved lines meet the lines that
   stay, both fixers drop the blank lines through `BlankLines`.
