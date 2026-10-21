@@ -6,7 +6,7 @@
 // carries one, everything inside it, and a file opening with `#![cfg(...)]` --
 // how a crate builds a different file for each platform.
 
-use stern4rust::finding::parsing::gated_modules::GatedModules;
+use stern4rust::finding::parsing::modules::gated_modules::GatedModules;
 use stern4rust::source_file::SourceFile;
 use syn::Attribute;
 use syn::ItemStruct;

@@ -123,7 +123,7 @@ registry, and the tests-tree shape the gap was first noticed in.
 `tests/finding/model/package_tree_tests.rs` — 9 tests on the directory model, including that
 `lib.rs` outranks `main.rs`.
 
-`tests/finding/parsing/module_declaration_finder_tests.rs` — 6 tests on what counts as a
+`tests/finding/parsing/modules/module_declaration_finder_tests.rs` — 6 tests on what counts as a
 declaration.
 
 ## Related

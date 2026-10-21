@@ -6,7 +6,7 @@ use std::collections::BTreeSet;
 use std::path::Path;
 
 use crate::finding::model::package_tree::PackageTree;
-use crate::finding::parsing::module_declaration_finder::ModuleDeclarationFinder;
+use crate::finding::parsing::modules::module_declaration_finder::ModuleDeclarationFinder;
 use crate::reporting::offence::Offence;
 use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;

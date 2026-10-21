@@ -9,7 +9,7 @@
 // just as well, and being compiled is the whole concern. An inline
 // `mod name { ... }` declares no file, so it cannot be what reaches one.
 
-use stern4rust::finding::parsing::module_declaration_finder::ModuleDeclarationFinder;
+use stern4rust::finding::parsing::modules::module_declaration_finder::ModuleDeclarationFinder;
 use stern4rust::source_file::SourceFile;
 
 fn found(contents: &str) -> Vec<String> {

@@ -164,7 +164,7 @@ reads: what is counted -- an impl inside an inline module, not a trait impl, not
 `-> impl Trait`, not a file outside `src/` or one that does not parse -- which
 files declare and implement a type, the ones outside its declarations, where an
 offence is anchored, and a split by platform from gated modules, from gated impls
-and not from one gated file. `tests/finding/parsing/gated_modules_tests.rs` (ten)
+and not from one gated file. `tests/finding/parsing/modules/gated_modules_tests.rs` (ten)
 pins which files a `#[cfg]` selects: by a `mod` declaration in a crate root, a
 nested registry or a named file, everything inside a gated module, a file's own
 `#![cfg]`, and not a module whose name a gated one begins, nor through

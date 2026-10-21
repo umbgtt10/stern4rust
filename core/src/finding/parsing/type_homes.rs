@@ -8,9 +8,9 @@ use syn::Item;
 use syn::parse_file;
 
 use crate::finding::parsing::declared_item_finder::DeclaredItemFinder;
-use crate::finding::parsing::gated_modules::GatedModules;
 use crate::finding::parsing::impl_blocks::ImplBlocks;
 use crate::finding::parsing::item_naming::ItemNaming;
+use crate::finding::parsing::modules::gated_modules::GatedModules;
 use crate::source_file::SourceFile;
 
 // Where each type of a package is declared, and which files hold its inherent
