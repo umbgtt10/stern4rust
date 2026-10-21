@@ -1,6 +1,6 @@
 # R026-ADR-ImplementedInOneFileRule
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-10-20
 
 ## Context
@@ -37,10 +37,19 @@ or more files is an offence.
 - **Trait impls are left alone.** `impl Display for Store` beside the trait or
   in an implementation area is the house pattern for a seam, not a spread type.
 - **One offence per type**, at its declaration, naming every file that holds an
-  inherent impl of it: *"`RecoveryControl` is implemented in 6 files"*.
+  inherent impl of it: *"`RecoveryControl` is implemented in 6 files: ..."*. A
+  type with no declaration in the package -- an alias, a macro's -- is reported
+  at its first impl. Alternatives are reported only when an impl sits in a file
+  declaring none of them: *"`Flash` is declared in 2 files and implemented in 1
+  that declares neither: ..."*.
+- **The crate is the package** the run walks, all of its `src/` read at once.
 - **The correction reads the impls:**
-  - impls in files a `#[cfg]` selects, one per platform: *"put the contract in
-    a trait in `traits/` and give each platform its own implementing type"*;
+  - impls in two or more files a `#[cfg]` selects, one per platform: *"put the
+    contract in a trait in `traits/` and give each platform its own implementing
+    type"*. A file is selected by a `#[cfg]` on its `mod` declaration or one
+    above it -- where the gate sits in practice, on the declaration in the
+    registry, the selected file carrying nothing to say so -- by `#![cfg(...)]`
+    at its top, or by a `#[cfg]` on the impl itself. `cfg_attr` selects nothing;
   - otherwise: *"move every `impl RecoveryControl` into
     `process/recovery_control.rs`, or split `RecoveryControl` into types of their
     own"*. The file offered is the one declaring the type. Which of the two
@@ -76,6 +85,25 @@ each declared. A rule that cannot tell those apart accuses correct code.
 The 38 restricted functions inside the three types are 30% of R025's 125, and
 the ones R025 cannot clear by itself.
 
+**Re-run with this tool's finders**, the built rule against the sixteen
+repositories on 2026-10-21: **four types in three repositories**.
+
+| type | repository | files | correction |
+|---|---|---:|---|
+| `IbftProtocol` | `etheram-ibft` | 13 | the declaring file, or a split |
+| `RecoveryControl` | `etheram-ibft` | 6 | the declaring file, or a split |
+| `PlatformFlashAccess` | `etheram-embassy` | 5 | a trait per platform: four of the files sit behind `#[cfg]` module declarations |
+| `NormalizationContext` | `dry4rust` | 5 | the declaring file, or a split |
+
+The heuristic missed the fourth. `NormalizationContext`'s five files are the
+shape `dry4rust`'s adoption of [R024](R024-ADR-OwnedFunctionsRule.md) left the
+day before: the normaliser's free functions became the context's associated
+functions, each staying in its own file. The alternatives the census found --
+`NodeInfraSlot`, and `Processor` and `Operation` in `grip4rust`'s fixtures -- pass
+here too. `etheram-core`, `etheram-ibft-embassy`, `etheram-raft`,
+`etheram-raft-embassy`, `etheram-tools`, the analysis workspace and the other
+`*4rust` tools, this one among them, have none.
+
 ## Rejected alternatives
 
 **Requiring the impl in the declaring file.** Stricter, and R023's naming would
@@ -99,7 +127,12 @@ offences, different corrections.
 type, this rule keeps a type to one file, and R025 then makes `fn` mean private
 to that type.
 
-**Three types have to move or split.** `PlatformFlashAccess` becomes a trait
+**Four types have to move or split.** In `dry4rust`, `NormalizationContext`'s
+methods share one mutable placeholder map and recurse into each other --
+expressions hold patterns and patterns hold expressions -- so splitting it into
+types would hand the map between them as a `&mut` parameter, which
+[R022](R022-ADR-ReturnedMutationsRule.md) forbids; its fix is the move into the
+declaring file. `PlatformFlashAccess` becomes a trait
 with a type per platform. `RecoveryControl` and `IbftProtocol` are protocol
 types continued across six and thirteen files; moving them back into one file
 would make files of thousands of lines -- `IbftProtocol`'s `consensus.rs` alone
@@ -117,14 +150,30 @@ functions inside them go with it.
 
 ## Enforcement
 
-To be written test-first when the rule is built: a type implemented in one file,
-in two, generic and concrete impls of one type, a path-qualified impl, a trait
-impl elsewhere, a name declared in two files with each impl beside its
-declaration and with one impl astray, `cfg`-selected impls and their correction,
-`-> impl Trait` not read as an impl, `tests/` exempt, the unparseable file,
-`check_workspace`, `is_configured`, the name and the requirement;
-`tests/rule_registry_tests.rs` updated; stage 2 run against this crate, which
-implements every type in one file today.
+`tests/rules/source/implemented_in_one_file_rule_tests.rs` -- fourteen tests: a
+type implemented in one file left alone and in two reported at its declaration;
+every implementing file named, generic, concrete and path-qualified impls as one
+type; the correction offering the declaring file, a trait when the impls are
+split by platform, one file when the type is declared nowhere, and the
+declarations when alternatives have an impl astray; alternatives beside their
+declarations, a trait impl elsewhere and `tests/` left alone; `check` answering
+nothing per file; `is_configured`, the name and the requirement.
+
+`tests/finding/parsing/type_homes_tests.rs` (twenty-one) pins the map the rule
+reads: what is counted -- an impl inside an inline module, not a trait impl, not
+`-> impl Trait`, not a file outside `src/` or one that does not parse -- which
+files declare and implement a type, the ones outside its declarations, where an
+offence is anchored, and a split by platform from gated modules, from gated impls
+and not from one gated file. `tests/finding/parsing/gated_modules_tests.rs` (ten)
+pins which files a `#[cfg]` selects: by a `mod` declaration in a crate root, a
+nested registry or a named file, everything inside a gated module, a file's own
+`#![cfg]`, and not a module whose name a gated one begins, nor through
+`cfg_attr`.
+
+`tests/rule_registry_tests.rs`' four rule-name lists include
+`implemented-in-one-file`, and `tests/runner_tests.rs`' `--rules` listing holds
+twenty-eight. Stage 2 runs this tool, built from the checkout, against this
+crate with every rule applied and zero offences.
 
 ## Related
 

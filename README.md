@@ -16,7 +16,7 @@ already own correctness. These are the things a reviewer would otherwise have to
 say by hand, every time, forever — and the ones that quietly stop being true
 across a codebase the moment nobody is checking.
 
-> **Status: twenty-seven rules.** The set below is what is implemented and
+> **Status: twenty-eight rules.** The set below is what is implemented and
 > gated. `stern4rust` runs against its own tree on every build, so a rule that
 > would fail this repository cannot be merged into it.
 
@@ -510,6 +510,24 @@ imports when there is none -- and touches nothing else. It declines a file with
 a `macro_rules!`, a constant sharing a line with another item, and a file whose
 opening comment runs into its first item; their offences stay, and say why.
 [R031](docs/ADRs/R031-ADR-LeadingConstantsRule.md)
+
+### `implemented-in-one-file`
+
+A type's inherent impl lives in one file. A type with inherent `impl` blocks in
+two or more files of its package is reported once, at its declaration, naming
+every file -- the converse of `single-implemented-type`, which keeps a file to
+one type. Rust accepts an inherent impl in any file of the crate, so a type that
+grew can be continued file after file, and whatever those files share has to be
+`pub(crate)`.
+
+A type is the last segment of the path an impl is for, so `impl<T> Store<T>` and
+`impl crate::store::Store` are one type. A name declared in two or more files is
+read as alternatives, each implemented beside its own declaration. Where the
+impls sit in files a `#[cfg]` selects -- on the file's `mod` declaration, on the
+file, or on the impl -- the correction offers a trait with a type per platform;
+otherwise the declaring file, or a split into types of their own. Trait impls are
+left alone, and `tests/` is exempt.
+[R026](docs/ADRs/R026-ADR-ImplementedInOneFileRule.md)
 
 ### `declared-by-name`
 

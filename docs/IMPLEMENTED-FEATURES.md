@@ -31,6 +31,14 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
   exempt. Clean on this repository and on six others in the family; 134
   offences across the other nine, every one of them fixable. On by default.
   [R031](ADRs/R031-ADR-LeadingConstantsRule.md)
+- **`implemented-in-one-file`** -- a type's inherent impl lives in one file: a
+  type with inherent `impl` blocks in two or more files of its package is
+  reported once, at its declaration, naming every file. Names declared in two
+  files are alternatives, each implemented beside its own declaration; impls a
+  `#[cfg]` selects, by their `mod` declaration, the file or the impl, are
+  offered a trait per platform. Trait impls are left alone; `tests/` is exempt.
+  Clean on this repository and on twelve others in the family; four types in
+  three. On by default. [R026](ADRs/R026-ADR-ImplementedInOneFileRule.md)
 
 ### Autofix
 

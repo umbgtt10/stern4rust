@@ -9,7 +9,7 @@ without answering it.
 
 Each rule also carries an **explanation** — what it wants, a scrap of source
 that breaks it and the same scrap put right — and that field is required too.
-`cargo stern4rust --rules` prints all twenty-seven, in text or with
+`cargo stern4rust --rules` prints all twenty-eight, in text or with
 `--format json`, without scanning anything. See
 [ADR-RulesExplainThemselves](ADRs/ADR-RulesExplainThemselves.md).
 
@@ -39,6 +39,7 @@ that breaks it and the same scrap put right — and that field is required too.
 | `immutable-returns` | [R028](ADRs/R028-ADR-ImmutableReturnsRule.md) | no |
 | `distinct-tuple-elements` | [R029](ADRs/R029-ADR-DistinctTupleElementsRule.md) | no |
 | `leading-constants` | [R031](ADRs/R031-ADR-LeadingConstantsRule.md) | no |
+| `implemented-in-one-file` | [R026](ADRs/R026-ADR-ImplementedInOneFileRule.md) | no |
 | `test-naming` | [R012](ADRs/R012-ADR-TestNamingRule.md) | no |
 | `tested-public-api` | [R013](ADRs/R013-ADR-TestedPublicApiRule.md) | no |
 | `header` | [R001](ADRs/R001-ADR-HeaderRule.md) | `--header-file` |
@@ -705,6 +706,47 @@ Registries (`lib.rs`, `mod.rs`) and `tests/` are exempt.
 
 **Does not catch:** associated constants, which belong to their impl; constants
 inside an inline module or a function body; and anything a macro generates.
+
+## `implemented-in-one-file`
+
+A type's inherent impl lives in one file. **No type may have inherent `impl`
+blocks in two or more files of its package.**
+
+`single-implemented-type` keeps a file to one implemented type and
+`named-subject` names the file after it; nothing kept a type to one file. Rust
+accepts an inherent impl in any file of the crate, so a type that grew could be
+continued file after file, each passing both rules and the whole a subject no
+file names -- and, privacy being per module, everything those files share had to
+be `pub(crate)` or `pub(super)`.
+
+The whole package is read at once. A type is the last segment of the path an
+impl is for, nothing resolved: `impl<T> Store<T>`, `impl Store<u8>` and
+`impl crate::store::Store` are all `Store`. Trait impls are not counted, and
+impls inside inline modules are. One offence per type, at its declaration -- or,
+with none in the package, at its first impl -- naming every file.
+
+A name declared in two or more files is read as alternatives -- platform types a
+`#[cfg]` chooses between, or unrelated types sharing a name -- each implemented
+beside its own declaration, and reported only when an impl sits in a file
+declaring none of them.
+
+| offence | correction |
+|---|---|
+| `` `Store` is implemented in 2 files: `src/store.rs`, `src/store_queries.rs` `` | `` move every `impl Store` into `src/store.rs`, or split `Store` into types of their own `` |
+| `` `Flash` is declared in 2 files and implemented in 1 that declares neither: `src/flash_ops.rs` `` | `` move each `impl Flash` beside the declaration it is for, or give the types that share the name names of their own `` |
+
+Where two or more of the implementing files are ones a `#[cfg]` selects -- on the
+file's `mod` declaration or one above it, as `#![cfg(...)]` at its top, or on the
+impl itself -- the correction is *"put the contract in a trait in `traits/` and
+give each platform its own implementing type"*. With no declaration in the
+package, it is to move the impls into one file.
+
+`tests/` is exempt.
+
+**Does not catch:** a type implemented in one file and declared in another,
+which is allowed; a type reached through an alias, which is a second name; `mod`
+declarations inside an inline module, whose gates are not followed; and impls a
+macro generates.
 
 ## `declared-by-name`
 

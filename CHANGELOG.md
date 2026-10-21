@@ -6,12 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-Three rules added, all on by default, so they move what this tool reports about
+Four rules added, all on by default, so they move what this tool reports about
 your code once it is released. A function returning a mutable reference, one
-returning a tuple that repeats an element type, and a module-level constant
-declared after another item become offences; to adopt one later, add
-`skip = ["immutable-returns"]`, `skip = ["distinct-tuple-elements"]` or
-`skip = ["leading-constants"]` to your `stern4rust.toml` once you install a
+returning a tuple that repeats an element type, a module-level constant declared
+after another item, and a type implemented in more than one file become
+offences; to adopt one later, add `skip = ["immutable-returns"]`,
+`skip = ["distinct-tuple-elements"]`, `skip = ["leading-constants"]` or
+`skip = ["implemented-in-one-file"]` to your `stern4rust.toml` once you install a
 version that knows the name. The third is fixable: `--fix` moves the constants.
 And `--fix` now repairs only what the run applies: test files are left alone
 where `test-file-structure` is skipped or not selected.
@@ -61,6 +62,19 @@ where `test-file-structure` is skipped or not selected.
   The rule is clean on this repository and on six others in the family, and
   reports 134 offences across the other nine; `--fix` repairs all 134, and each
   repaired tree checks clean and is unchanged by `cargo fmt`.
+- **`implemented-in-one-file`: a type's inherent impl lives in one file.** A
+  type with inherent `impl` blocks in two or more files of its package --
+  `impl<T> Store<T>`, `impl Store<u8>` and `impl crate::store::Store` all being
+  `Store` -- is reported once, at its declaration, naming every file, with the
+  correction to move the impls into the declaring file or split the type. A name
+  declared in two or more files is read as alternatives, each implemented beside
+  its own declaration. Where the impls sit in files a `#[cfg]` selects -- by
+  their `mod` declaration, the file's own `#![cfg]`, or the impl -- the correction
+  is a trait with a type per platform. Trait impls are left alone; `tests/` is
+  exempt. [R026](docs/ADRs/R026-ADR-ImplementedInOneFileRule.md)
+
+  The rule is clean on this repository and on twelve others in the family, and
+  reports four types in the other three.
 
 ### Changed
 - The type walk `returned-mutations` carried privately is now
@@ -81,6 +95,11 @@ where `test-file-structure` is skipped or not selected.
   test-file rewriter and three test rules each carried a copy of, is
   `SourceFile::is_under`, asked by the new rule and fixer too. dry4rust's
   baseline drops the group the four copies made. No offence or repair changed.
+- The signature searches `returned-mutations`, `immutable-returns` and
+  `distinct-tuple-elements` share -- `AuthoredSignatures`,
+  `MutableReferenceSearch`, `RepeatedTupleFinder`, `TypeWalk` -- moved to
+  `finding::parsing::signatures`, to leave `finding/parsing/` room under
+  `directory-file-count`. What they find is unchanged.
 - **`--fix` reorders a test file only where the package applies
   `test-file-structure`.** A package that skips the rule, or a run that selects
   other rules with `--rule`, has its test files left as they are; before, the
