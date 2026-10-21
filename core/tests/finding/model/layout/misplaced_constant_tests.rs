@@ -5,7 +5,7 @@
 // A module-level constant declared after an item that is not one: its name, the
 // line naming it, and the whole block that moves with it.
 
-use stern4rust::finding::model::misplaced_constant::MisplacedConstant;
+use stern4rust::finding::model::layout::misplaced_constant::MisplacedConstant;
 
 fn limit() -> MisplacedConstant {
     MisplacedConstant {

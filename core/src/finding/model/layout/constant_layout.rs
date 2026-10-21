@@ -2,8 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::finding::model::fix_refusal::FixRefusal;
-use crate::finding::model::misplaced_constant::MisplacedConstant;
+use crate::finding::model::layout::fix_refusal::FixRefusal;
+use crate::finding::model::layout::misplaced_constant::MisplacedConstant;
 
 // A file's constants declared after its first item that is neither an import nor
 // a constant -- the leader -- and where they would go: before

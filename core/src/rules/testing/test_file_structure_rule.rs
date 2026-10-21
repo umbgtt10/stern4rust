@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: MIT
 
 use crate::finding::model::import_path::ImportPath;
-use crate::finding::model::section::Section;
-use crate::finding::model::test_file_item::TestFileItem;
+use crate::finding::model::layout::section::Section;
+use crate::finding::model::layout::test_file_item::TestFileItem;
 use crate::finding::parsing::test_file_parser::TestFileParser;
 use crate::reporting::offence::Offence;
 use crate::reporting::rule_explanation::RuleExplanation;

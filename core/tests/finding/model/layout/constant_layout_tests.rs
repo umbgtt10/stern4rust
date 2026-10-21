@@ -5,8 +5,8 @@
 // Where a file's misplaced constants are and where they go: after the item that
 // ends the constants group, or before the first item when nothing precedes it.
 
-use stern4rust::finding::model::constant_layout::ConstantLayout;
-use stern4rust::finding::model::misplaced_constant::MisplacedConstant;
+use stern4rust::finding::model::layout::constant_layout::ConstantLayout;
+use stern4rust::finding::model::layout::misplaced_constant::MisplacedConstant;
 
 fn constant(name: &str, first_line: usize, last_line: usize) -> MisplacedConstant {
     MisplacedConstant {

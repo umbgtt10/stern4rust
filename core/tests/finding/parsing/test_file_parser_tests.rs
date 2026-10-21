@@ -11,8 +11,8 @@
 // block has no name of its own, so it has to borrow the name of the type it
 // implements or it sorts as an empty string and drifts to the top.
 
-use stern4rust::finding::model::section::Section;
-use stern4rust::finding::model::test_file_item::TestFileItem;
+use stern4rust::finding::model::layout::section::Section;
+use stern4rust::finding::model::layout::test_file_item::TestFileItem;
 use stern4rust::finding::parsing::test_file_parser::TestFileParser;
 use stern4rust::source_file::SourceFile;
 

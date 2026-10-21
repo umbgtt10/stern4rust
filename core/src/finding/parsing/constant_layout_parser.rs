@@ -8,9 +8,9 @@ use syn::ItemMacro;
 use syn::parse_file;
 use syn::spanned::Spanned;
 
-use crate::finding::model::constant_layout::ConstantLayout;
-use crate::finding::model::fix_refusal::FixRefusal;
-use crate::finding::model::misplaced_constant::MisplacedConstant;
+use crate::finding::model::layout::constant_layout::ConstantLayout;
+use crate::finding::model::layout::fix_refusal::FixRefusal;
+use crate::finding::model::layout::misplaced_constant::MisplacedConstant;
 use crate::finding::parsing::item_naming::ItemNaming;
 use crate::source_file::SourceFile;
 

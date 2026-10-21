@@ -2,8 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::finding::model::section::Section;
-use crate::finding::model::test_file_item::TestFileItem;
+use crate::finding::model::layout::section::Section;
+use crate::finding::model::layout::test_file_item::TestFileItem;
 use crate::finding::parsing::test_file_parser::TestFileParser;
 use crate::source_file::SourceFile;
 use std::collections::BTreeMap;

@@ -7,8 +7,8 @@
 // byte value would put every constant before every helper for reasons that have
 // nothing to do with the alphabet.
 
-use stern4rust::finding::model::section::Section;
-use stern4rust::finding::model::test_file_item::TestFileItem;
+use stern4rust::finding::model::layout::section::Section;
+use stern4rust::finding::model::layout::test_file_item::TestFileItem;
 
 fn item(name: &str) -> TestFileItem {
     TestFileItem::new(Section::Helpers, name.to_string(), 1, 2)

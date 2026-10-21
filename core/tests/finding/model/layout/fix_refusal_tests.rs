@@ -6,7 +6,7 @@
 // somebody about to move them by hand, so it says what the fixer could not be
 // sure of.
 
-use stern4rust::finding::model::fix_refusal::FixRefusal;
+use stern4rust::finding::model::layout::fix_refusal::FixRefusal;
 
 #[test]
 fn reason_of_a_file_with_a_macro_rules_names_its_textual_order() {

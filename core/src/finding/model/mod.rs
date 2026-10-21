@@ -2,23 +2,19 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-pub mod constant_layout;
 pub mod declared_item;
 pub mod file_stem;
-pub mod fix_refusal;
 pub mod free_function;
 pub mod implemented_type;
 pub mod import_path;
+pub mod layout;
 pub mod manifest_dependency;
-pub mod misplaced_constant;
 pub mod package_tree;
 pub mod public_entry_point;
 pub mod qualified_call;
 pub mod registry_item;
 pub mod registry_policy;
 pub mod repeated_tuple;
-pub mod section;
-pub mod test_file_item;
 pub mod test_marker;
 pub mod type_name;
 pub mod unit_test_site;

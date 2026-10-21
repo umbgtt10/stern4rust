@@ -7,7 +7,7 @@
 // declarations are not items here; an inline module is one, and what it holds
 // is not looked at.
 
-use stern4rust::finding::model::fix_refusal::FixRefusal;
+use stern4rust::finding::model::layout::fix_refusal::FixRefusal;
 use stern4rust::finding::parsing::constant_layout_parser::ConstantLayoutParser;
 use stern4rust::source_file::SourceFile;
 

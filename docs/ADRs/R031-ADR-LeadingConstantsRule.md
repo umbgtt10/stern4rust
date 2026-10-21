@@ -171,7 +171,7 @@ file, an unparseable one, each refusal, a registry and a test file.
 `tests/runner_tests.rs` runs `--fix` end to end -- a misplaced constant moved,
 `fixed=1` and a clean run; a package that skips the rule left untouched -- and
 its `--rules` listing holds twenty-seven rules.
-`tests/finding/model/{misplaced_constant,fix_refusal,constant_layout}_tests.rs`
+`tests/finding/model/layout/{misplaced_constant,fix_refusal,constant_layout}_tests.rs`
 pin the model, `tests/source_file_tests.rs` the shared `block_start` and `is_under`,
 `tests/finding/parsing/item_naming_tests.rs` the shared `implemented_type`, and
 `tests/rule_registry_tests.rs`' four rule-name lists include

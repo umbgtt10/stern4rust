@@ -2,8 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::finding::model::constant_layout::ConstantLayout;
-use crate::finding::model::misplaced_constant::MisplacedConstant;
+use crate::finding::model::layout::constant_layout::ConstantLayout;
+use crate::finding::model::layout::misplaced_constant::MisplacedConstant;
 use crate::finding::parsing::constant_layout_parser::ConstantLayoutParser;
 use crate::reporting::offence::Offence;
 use crate::reporting::rule_explanation::RuleExplanation;

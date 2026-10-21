@@ -41,7 +41,7 @@ rather than merged**.
 
 **`// Arrange & Act & Assert` is now part of the standard.** It was not in
 `CLAUDE.md`, and practice had already outrun the standard: nine tests use it
-across the family, including `tests/finding/model/section_tests.rs` in this crate. A
+across the family, including `tests/finding/model/layout/section_tests.rs` in this crate. A
 rule written strictly to the standard as it stood would have failed its own
 repository on the first run. `CLAUDE.md` was amended rather than the nine tests.
 

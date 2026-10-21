@@ -2,7 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::finding::model::section::Section;
+use crate::finding::model::layout::section::Section;
 
 // One top-level item, with the lines it occupies.
 //

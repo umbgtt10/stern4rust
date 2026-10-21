@@ -6,7 +6,7 @@
 // than written out, so what is worth pinning is that the derivation says what
 // the rule needs it to say: imports first, tests last.
 
-use stern4rust::finding::model::section::Section;
+use stern4rust::finding::model::layout::section::Section;
 
 // Helpers and tests are multi-line bodies, where the gap is what marks where
 // one ends and the next begins.

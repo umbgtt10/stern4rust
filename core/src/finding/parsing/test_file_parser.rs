@@ -6,8 +6,8 @@ use syn::Item;
 use syn::parse_file;
 use syn::spanned::Spanned;
 
-use crate::finding::model::section::Section;
-use crate::finding::model::test_file_item::TestFileItem;
+use crate::finding::model::layout::section::Section;
+use crate::finding::model::layout::test_file_item::TestFileItem;
 use crate::finding::parsing::item_naming::ItemNaming;
 use crate::source_file::SourceFile;
 use syn::Attribute;
