@@ -7,8 +7,8 @@ use syn::Pat;
 use syn::Signature;
 use syn::spanned::Spanned;
 
-use crate::finding::parsing::authored_signatures::AuthoredSignatures;
-use crate::finding::parsing::mutable_reference_search::MutableReferenceSearch;
+use crate::finding::parsing::signatures::authored_signatures::AuthoredSignatures;
+use crate::finding::parsing::signatures::mutable_reference_search::MutableReferenceSearch;
 use crate::finding::parsing::source_items::SourceItems;
 use crate::reporting::offence::Offence;
 use crate::reporting::rule_explanation::RuleExplanation;

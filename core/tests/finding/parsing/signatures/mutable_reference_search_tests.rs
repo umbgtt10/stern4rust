@@ -7,7 +7,7 @@
 // return type. A callback's own contract is not descended into, and a search
 // that skips statics passes over `&'static mut` while still looking inside it.
 
-use stern4rust::finding::parsing::mutable_reference_search::MutableReferenceSearch;
+use stern4rust::finding::parsing::signatures::mutable_reference_search::MutableReferenceSearch;
 use syn::Type;
 use syn::parse_str;
 

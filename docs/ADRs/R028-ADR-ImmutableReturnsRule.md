@@ -106,9 +106,9 @@ value; a shared reference, a value, a `&'static mut`, a trait impl and a
 returned `impl FnMut(&mut T)` each left alone; `tests/` exempt; the unparseable
 file; `check_workspace`, `is_configured`, the name and the requirement.
 
-`tests/finding/parsing/mutable_reference_search_tests.rs` (twelve tests) pins
+`tests/finding/parsing/signatures/mutable_reference_search_tests.rs` (twelve tests) pins
 the walk on its own, statics skipped and not, and
-`tests/finding/parsing/authored_signatures_tests.rs` (six) the signatures it is
+`tests/finding/parsing/signatures/authored_signatures_tests.rs` (six) the signatures it is
 applied to. `returned-mutations`' own tests are unchanged and still pass on the
 shared walk.
 

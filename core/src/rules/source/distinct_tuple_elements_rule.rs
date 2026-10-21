@@ -6,8 +6,8 @@ use syn::ReturnType;
 use syn::Signature;
 
 use crate::finding::model::repeated_tuple::RepeatedTuple;
-use crate::finding::parsing::authored_signatures::AuthoredSignatures;
-use crate::finding::parsing::repeated_tuple_finder::RepeatedTupleFinder;
+use crate::finding::parsing::signatures::authored_signatures::AuthoredSignatures;
+use crate::finding::parsing::signatures::repeated_tuple_finder::RepeatedTupleFinder;
 use crate::finding::parsing::source_items::SourceItems;
 use crate::reporting::offence::Offence;
 use crate::reporting::rule_explanation::RuleExplanation;

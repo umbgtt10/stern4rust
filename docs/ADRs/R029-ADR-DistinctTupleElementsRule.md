@@ -129,10 +129,10 @@ types, a returned callback taking two of one type and a trait impl left alone;
 `tests/` exempt; the unparseable file; `check_workspace`, `is_configured`, the
 name and the requirement.
 
-`tests/finding/parsing/repeated_tuple_finder_tests.rs` (nine) pins the search:
+`tests/finding/parsing/signatures/repeated_tuple_finder_tests.rs` (nine) pins the search:
 top level, wrapped, in a `Vec`, the outer tuple first, lifetimes ignored, an
 alias not resolved, `()` and a callback's parameters not tuples.
-`tests/finding/parsing/type_walk_tests.rs` (six) pins the walk both type searches
+`tests/finding/parsing/signatures/type_walk_tests.rs` (six) pins the walk both type searches
 share, and `tests/finding/model/repeated_tuple_tests.rs` the model.
 
 `tests/reporting/offence_order_tests.rs` (three) and

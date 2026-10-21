@@ -7,7 +7,7 @@
 // are not part of it: what a closure receives is the callback's contract.
 
 use quote::ToTokens;
-use stern4rust::finding::parsing::type_walk::TypeWalk;
+use stern4rust::finding::parsing::signatures::type_walk::TypeWalk;
 use syn::Type;
 use syn::parse_str;
 

@@ -6,7 +6,7 @@
 // Types are compared as written, whitespace and lifetimes ignored: `&'a str` and
 // `&'static str` are one type, and an alias that names a meaning is another.
 
-use stern4rust::finding::parsing::repeated_tuple_finder::RepeatedTupleFinder;
+use stern4rust::finding::parsing::signatures::repeated_tuple_finder::RepeatedTupleFinder;
 use syn::Type;
 use syn::parse_str;
 

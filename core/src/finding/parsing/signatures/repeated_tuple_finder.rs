@@ -7,7 +7,7 @@ use syn::Type;
 use syn::TypeTuple;
 
 use crate::finding::model::repeated_tuple::RepeatedTuple;
-use crate::finding::parsing::type_walk::TypeWalk;
+use crate::finding::parsing::signatures::type_walk::TypeWalk;
 
 // The first tuple in a type that holds two elements of one type, wherever it
 // sits: at the top, inside a generic, behind a reference. The outer tuple is found

@@ -7,7 +7,7 @@
 // the trait's, so they are left out -- the rules that judge a signature report it
 // at the declaration instead.
 
-use stern4rust::finding::parsing::authored_signatures::AuthoredSignatures;
+use stern4rust::finding::parsing::signatures::authored_signatures::AuthoredSignatures;
 use syn::Item;
 use syn::parse_file;
 

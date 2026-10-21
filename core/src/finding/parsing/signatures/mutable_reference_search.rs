@@ -5,7 +5,7 @@
 use syn::Type;
 use syn::TypeReference;
 
-use crate::finding::parsing::type_walk::TypeWalk;
+use crate::finding::parsing::signatures::type_walk::TypeWalk;
 
 // Whether a type holds a mutable reference anywhere it structurally can: through
 // references, tuples, arrays, slices and generic arguments.
