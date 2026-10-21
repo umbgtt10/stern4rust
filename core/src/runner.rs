@@ -20,6 +20,7 @@ use crate::reporting::scan_totals::ScanTotals;
 use crate::rule_registry::RuleRegistry;
 use crate::rules::source::header_rule::HeaderRule;
 use crate::rules::source::leading_constants_rule::LeadingConstantsRule;
+use crate::rules::testing::test_file_structure_rule::TestFileStructureRule;
 use crate::settings::args::Args;
 use crate::settings::config::Config;
 use crate::settings::config_file::ConfigFile;
@@ -391,23 +392,28 @@ impl Runner {
     // that quietly swallowed what it could not fix would be worse than no fixer
     // at all.
     //
-    // A file's constants are moved only where the package applies
-    // leading-constants: a rule the package skips governs nothing in it, and a
+    // Each fixer runs only where the package applies the rule it repairs: a
+    // rule the package skips, or a run did not select, governs nothing, and a
     // fixer must never edit a file no rule governs.
     fn repair(
         root: &Path,
         files: Vec<SourceFile>,
         registry: &RuleRegistry,
     ) -> Result<(Vec<SourceFile>, usize)> {
-        let constants = registry.names().contains(&LeadingConstantsRule::NAME);
+        let names = registry.names();
+        let tests = names.contains(&TestFileStructureRule::NAME);
+        let constants = names.contains(&LeadingConstantsRule::NAME);
         let mut repaired = Vec::with_capacity(files.len());
         let mut count = 0;
         for file in files {
-            let rewritten = TestFileRewriter::rewrite(&file).or_else(|| {
-                constants
-                    .then(|| LeadingConstantsRewriter::rewrite(&file))
-                    .flatten()
-            });
+            let rewritten = tests
+                .then(|| TestFileRewriter::rewrite(&file))
+                .flatten()
+                .or_else(|| {
+                    constants
+                        .then(|| LeadingConstantsRewriter::rewrite(&file))
+                        .flatten()
+                });
             match rewritten {
                 Some(contents) => {
                     let path = root.join(file.relative_path());

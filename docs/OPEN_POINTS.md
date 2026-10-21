@@ -174,17 +174,6 @@ What is open is when each removes its skip: the order is the owners' to set. The
 campaign that held `etheram-ibft` and `etheram-ibft-embassy` back closed on
 2026-10-17, so nothing now keeps either from starting.
 
-## `--fix` reorders test files in a package that skips `test-file-structure`
-
-A fixer must never edit a file no rule governs
-([ADR-FixOnlyWhatIsSafe](ADRs/ADR-FixOnlyWhatIsSafe.md)), and a rule a package
-skips governs nothing in it. `leading-constants`' fixer asks the package's
-rules first and moves nothing where the rule is skipped. The test-file rewriter
-predates that question and does not ask it: with `--fix`, a package skipping
-`test-file-structure` -- or a run naming other rules with `--rule` -- still has
-its test files reordered. Found while gating the constants fixer, and left for
-its own change, because closing it changes what an existing `--fix` run does.
-
 ## Imports are sorted but never packed
 
 Nothing asks that two imports from the same module become one statement.

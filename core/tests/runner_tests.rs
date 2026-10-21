@@ -23,6 +23,7 @@ use stern4rust::runner::Runner;
 use stern4rust::settings::args::Args;
 use stern4rust::settings::config_file::ConfigFile;
 
+const MISORDERED_TESTS: &str = "#[test]\nfn zeta() {}\n\n#[test]\nfn alpha() {}\n";
 const THIS_CRATE: &str = "cargo-stern4rust";
 
 fn args_from(parts: &[&str]) -> Args {
@@ -928,6 +929,31 @@ fn run_with_an_unusable_exclude_pattern_is_an_error() {
     assert!(outcome.is_err());
 }
 
+// Naming one rule makes the selection a whitelist, and a fixer is answerable to
+// the selection like the checks are.
+#[test]
+fn run_with_fix_and_another_rule_selected_leaves_the_tests_untouched() {
+    // Arrange
+    let path = probe_package("fix_other_rule");
+    fs::create_dir_all(path.join("tests")).expect("create the tests");
+    fs::write(path.join("tests/widget_tests.rs"), MISORDERED_TESTS).expect("write the tests");
+
+    // Act
+    Runner::run(args_from(&[
+        "cargo-stern4rust",
+        "--manifest-path",
+        &path.join("Cargo.toml").to_string_lossy(),
+        "--rule",
+        "leading-constants",
+        "--fix",
+    ]))
+    .expect("the run itself should succeed");
+
+    // Assert
+    let after = fs::read_to_string(path.join("tests/widget_tests.rs")).expect("read the tests");
+    assert_eq!(after, MISORDERED_TESTS);
+}
+
 // A fixer must never edit a file no rule governs, and a rule a package skips
 // governs nothing in it.
 #[test]
@@ -949,6 +975,27 @@ fn run_with_fix_leaves_a_package_that_skips_leading_constants_untouched() {
     // Assert
     let after = fs::read_to_string(path.join("src/widget.rs")).expect("read the module");
     assert_eq!(after, misplaced);
+}
+
+#[test]
+fn run_with_fix_leaves_the_tests_of_a_package_that_skips_test_file_structure_untouched() {
+    // Arrange
+    let path = config_directory("fix_tests_skipped", "skip = [\"test-file-structure\"]\n");
+    fs::create_dir_all(path.join("tests")).expect("create the tests");
+    fs::write(path.join("tests/widget_tests.rs"), MISORDERED_TESTS).expect("write the tests");
+
+    // Act
+    Runner::run(args_from(&[
+        "cargo-stern4rust",
+        "--manifest-path",
+        &path.join("Cargo.toml").to_string_lossy(),
+        "--fix",
+    ]))
+    .expect("the run itself should succeed");
+
+    // Assert
+    let after = fs::read_to_string(path.join("tests/widget_tests.rs")).expect("read the tests");
+    assert_eq!(after, MISORDERED_TESTS);
 }
 
 #[test]
@@ -975,6 +1022,27 @@ fn run_with_fix_moves_a_misplaced_constant_and_counts_the_file() {
     assert_eq!(after, "const LIMIT: u8 = 3;\n\npub struct Widget;\n");
     assert_eq!(outcome, RunOutcome::Clean);
     assert!(report.contains("fixed=1"), "got {report}");
+}
+
+#[test]
+fn run_with_fix_reorders_the_tests_of_a_package_that_applies_test_file_structure() {
+    // Arrange
+    let path = config_directory("fix_tests_applied", "rules = [\"test-file-structure\"]\n");
+    fs::create_dir_all(path.join("tests")).expect("create the tests");
+    fs::write(path.join("tests/widget_tests.rs"), MISORDERED_TESTS).expect("write the tests");
+
+    // Act
+    Runner::run(args_from(&[
+        "cargo-stern4rust",
+        "--manifest-path",
+        &path.join("Cargo.toml").to_string_lossy(),
+        "--fix",
+    ]))
+    .expect("the run itself should succeed");
+
+    // Assert
+    let after = fs::read_to_string(path.join("tests/widget_tests.rs")).expect("read the tests");
+    assert_eq!(after, "#[test]\nfn alpha() {}\n\n#[test]\nfn zeta() {}\n");
 }
 
 #[test]

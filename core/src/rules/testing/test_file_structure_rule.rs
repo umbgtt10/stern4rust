@@ -23,6 +23,8 @@ use crate::source_file::SourceFile;
 pub struct TestFileStructureRule;
 
 impl TestFileStructureRule {
+    pub const NAME: &'static str = "test-file-structure";
+
     pub fn new() -> Self {
         Self
     }
@@ -137,7 +139,7 @@ impl Default for TestFileStructureRule {
 
 impl Rule for TestFileStructureRule {
     fn name(&self) -> &'static str {
-        "test-file-structure"
+        Self::NAME
     }
 
     // Every offence in the file, not only the first. Unlike a missing header --

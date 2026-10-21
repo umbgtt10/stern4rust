@@ -13,6 +13,8 @@ declared after another item become offences; to adopt one later, add
 `skip = ["immutable-returns"]`, `skip = ["distinct-tuple-elements"]` or
 `skip = ["leading-constants"]` to your `stern4rust.toml` once you install a
 version that knows the name. The third is fixable: `--fix` moves the constants.
+And `--fix` now repairs only what the run applies: test files are left alone
+where `test-file-structure` is skipped or not selected.
 
 ### Added
 - **`immutable-returns`: a function does not hand out a mutable reference.** Any
@@ -79,6 +81,12 @@ version that knows the name. The third is fixable: `--fix` moves the constants.
   test-file rewriter and three test rules each carried a copy of, is
   `SourceFile::is_under`, asked by the new rule and fixer too. dry4rust's
   baseline drops the group the four copies made. No offence or repair changed.
+- **`--fix` reorders a test file only where the package applies
+  `test-file-structure`.** A package that skips the rule, or a run that selects
+  other rules with `--rule`, has its test files left as they are; before, the
+  test-file rewriter ran on every `--fix`, against ADR-FixOnlyWhatIsSafe's first
+  constraint. None of the family's repositories skips the rule or runs `--fix`
+  from a script, so only a hand run with `--rule` sees the difference.
 
 ## [0.17.0] - 2026-10-19
 

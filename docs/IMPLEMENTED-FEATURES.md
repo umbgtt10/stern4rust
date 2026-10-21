@@ -39,6 +39,9 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
   group, in packages that apply the rule. It declines a file with a
   `macro_rules!`, a constant or leader sharing a line with another item, and an
   opening comment running into the first item; those offences stay and say why.
+- `--fix` reorders a test file only where the package applies
+  `test-file-structure`: a package that skips it, or a run selecting other
+  rules, has its test files left as they are.
 
 ## Version 0.17.0
 

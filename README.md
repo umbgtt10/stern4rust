@@ -194,9 +194,10 @@ summary: files_scanned=103 files_excluded=0 offences=4 baselined=0 fixed=12 ...
 
 It works from `syn` spans and never reads the text, so a string literal
 containing something that looks like Rust is moved like any other line. It only
-touches files a rule it repairs governs — constants only in a package that
-applies `leading-constants` — it never reorders imports — that is rustfmt's —
-and it changes your working tree, so read the diff.
+touches files a rule it repairs governs, and only where the run applies that
+rule — a package that skips it, or a `--rule` selection without it, is left
+alone — it never reorders imports — that is rustfmt's — and it changes your
+working tree, so read the diff.
 
 ## Adopting it on a codebase that has never run it
 
