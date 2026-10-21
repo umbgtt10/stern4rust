@@ -39,6 +39,14 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
   offered a trait per platform. Trait impls are left alone; `tests/` is exempt.
   Clean on this repository and on twelve others in the family; four types in
   three. On by default. [R026](ADRs/R026-ADR-ImplementedInOneFileRule.md)
+- **`public-or-private`** -- a function in an inherent impl is `pub` or private:
+  each `pub(crate)`, `pub(super)`, `pub(self)` or `pub(in ...)` method in `src/`
+  is reported at its name, the correction read from the package's call sites --
+  private where no other file calls it, `pub` with a test where one does, and
+  `implemented-in-one-file` where the type's impl is spread. Trait impls are
+  left alone; `tests/` is exempt. Clean on this repository and on four others in
+  the family; 124 offences across the other eleven. On by default.
+  [R025](ADRs/R025-ADR-PublicOrPrivateRule.md)
 
 ### Autofix
 

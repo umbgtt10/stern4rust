@@ -6,11 +6,31 @@
 // bodies use. A free function an impl block calls is that block's helper.
 
 use stern4rust::finding::parsing::impl_blocks::ImplBlocks;
+use stern4rust::finding::parsing::item_naming::ItemNaming;
 use syn::Item;
 use syn::parse_file;
 
 fn items(source: &str) -> Vec<Item> {
     parse_file(source).expect("parses").items
+}
+
+// A trait impl's methods are the trait's; only the type's own impls are its.
+#[test]
+fn inherent_leaves_trait_impls_out_and_descends_into_inline_modules() {
+    // Arrange
+    let items = items(
+        "impl Widget {}\n\nimpl Display for Widget {}\n\nmod detail {\n    impl super::Gadget {}\n}\n",
+    );
+
+    // Act
+    let inherent = ImplBlocks::inherent(&items);
+
+    // Assert
+    let types: Vec<String> = inherent
+        .iter()
+        .map(|block| ItemNaming::implemented_type(&block.self_ty))
+        .collect();
+    assert_eq!(types, vec!["Widget", "Gadget"]);
 }
 
 #[test]

@@ -1,6 +1,6 @@
 # R025-ADR-PublicOrPrivateRule
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-10-20
 
 ## Context
@@ -33,8 +33,8 @@ this tool's own corrections rearrange.
   and modules are not this rule's, below.
 - **One offence per function**, at its name: *"`election` is `pub(crate)` in
   `impl RaftProtocol`; a method is `pub` or private"*.
-- **The correction reads the crate**, matching call sites on name and arity as
-  R013 does:
+- **The correction reads the package**, matching call sites in its `src/` on
+  name and arity, the receiver not counted, as R013 does:
   - called from nowhere outside its own file: *"make it private: `fn`"*;
   - `pub(self)`: the same, since it already means private;
   - called from another file: *"make it `pub` and give it a test, or move the
@@ -97,6 +97,37 @@ What the 125 are, and what each group takes:
   repository, two in `etheram-ibft-embassy`, one in `etheram-tools` -- are
   design work: a tested contract, or callers that own what they need.
 
+**Re-run with this tool's finders**, the built rule against the sixteen
+repositories on 2026-10-21: **124 offences**, against the census's 125 --
+`pub(crate)` 118, `pub(super)` 6 -- sorted by the correction each is given:
+
+| correction | offences |
+|---|---:|
+| `pub` and a test: another file calls it | 80 |
+| `implemented-in-one-file`: its type's impl is spread | 38 |
+| private: nothing outside its file calls it | 6 |
+
+| repository | offences |
+|---|---:|
+| `etheram-embassy` | 42 (8 spread) |
+| `etheram-ibft` | 30 (all spread) |
+| `etheram-raft` | 25 |
+| `etheram-ibft-embassy` | 8 (3 private) |
+| `etheram-raft-embassy` | 6 (3 private) |
+| `crap4rust` | 4 |
+| an analysis workspace | 3 |
+| `grip4rust`, `slotgate` | 2 each |
+| `braintax4rust`, `etheram-tools` | 1 each |
+| `etheram-core`, `dry4rust`, `iceberg4rust`, `stern4rust`, `twin4rust` | **0** |
+
+The 38 spread are the census's -- `RecoveryControl`'s 18, `IbftProtocol`'s 12,
+`PlatformFlashAccess`'s 8 -- and so are the six own-file ones. The tools' nine
+are all called from another file of their own library. Two of `grip4rust`'s,
+`StructRegistry::self_ty_name` and `is_trait_object_type`, were `pub(crate)` free
+functions -- outside this rule's scope -- until that repository's adoption of
+[R024](R024-ADR-OwnedFunctionsRule.md) made them associated functions, keeping
+the visibility.
+
 ## Rejected alternatives
 
 **Allowing `pub(crate)` and banning only the module-tree forms.** It would clear
@@ -133,12 +164,28 @@ spread types with R026, the rest repository by repository.
 
 ## Enforcement
 
-To be written test-first when the rule is built: each restricted form reported
-in an inherent impl, none in a trait impl or trait, the three corrections chosen
-from the crate's call sites, the spread impl naming R026, `tests/` exempt, the
-unparseable file, `check_workspace`, `is_configured`, the name and the
-requirement; `tests/rule_registry_tests.rs` updated; stage 2 run against this
-crate, which has no restricted function today.
+`tests/rules/source/public_or_private_rule_tests.rs` -- fourteen tests: a
+`pub(crate)` method reported at its name, with the description; each restricted
+method reported; the correction private for a method called only in its own
+file and for `pub(self)`, `pub` with a test for one another file calls, a call
+of another arity not counting, and `implemented-in-one-file` for a spread
+type's; `pub` and private methods, `tests/` and an unparseable file left alone;
+`check` answering nothing per file; `is_configured`, the name and the
+requirement.
+
+`tests/finding/parsing/restricted_method_finder_tests.rs` (six) pins what is
+found: each restricted form as written, `pub(in crate::store)` included, its
+call, line and owner; a method in an inline module; nothing for `pub` or
+private methods, a restricted free function, or a trait impl.
+`tests/finding/model/restricted_method_tests.rs` pins `pub(self)` as private
+already. The pieces shared with other rules have tests of their own:
+`ImplBlocks::inherent` in `impl_blocks_tests.rs` and
+`PublicEntryPointFinder::of_signature` in `public_entry_point_finder_tests.rs`.
+
+`tests/rule_registry_tests.rs`' four rule-name lists include
+`public-or-private`, and `tests/runner_tests.rs`' `--rules` listing holds
+twenty-nine. Stage 2 runs this tool, built from the checkout, against this
+crate with every rule applied and zero offences.
 
 ## Related
 

@@ -8,8 +8,11 @@
 // A method implementing a trait carries no visibility of its own and is reached
 // through the trait rather than named, so it is deliberately not counted.
 
+use stern4rust::finding::model::public_entry_point::PublicEntryPoint;
 use stern4rust::finding::parsing::public_entry_point_finder::PublicEntryPointFinder;
 use stern4rust::source_file::SourceFile;
+use syn::Signature;
+use syn::parse_str;
 
 fn find(body: &str) -> Vec<String> {
     PublicEntryPointFinder::find(&SourceFile::new("src/a.rs", body))
@@ -91,4 +94,18 @@ fn find_of_an_inline_module_descends_into_it() {
 
     // Assert
     assert_eq!(found, ["run/0"]);
+}
+
+// What a call names: the function and its arguments, the receiver not among
+// them, so `protocol.election(3)` names `fn election(&self, term: u64)`.
+#[test]
+fn of_signature_counts_the_parameters_besides_the_receiver() {
+    // Arrange
+    let signature: Signature = parse_str("fn election(&mut self, term: u64)").expect("parses");
+
+    // Act
+    let call = PublicEntryPointFinder::of_signature(&signature);
+
+    // Assert
+    assert_eq!(call, PublicEntryPoint::new("election", 1));
 }

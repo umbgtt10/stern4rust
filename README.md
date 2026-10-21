@@ -16,7 +16,7 @@ already own correctness. These are the things a reviewer would otherwise have to
 say by hand, every time, forever — and the ones that quietly stop being true
 across a codebase the moment nobody is checking.
 
-> **Status: twenty-eight rules.** The set below is what is implemented and
+> **Status: twenty-nine rules.** The set below is what is implemented and
 > gated. `stern4rust` runs against its own tree on every build, so a rule that
 > would fail this repository cannot be merged into it.
 
@@ -528,6 +528,20 @@ file, or on the impl -- the correction offers a trait with a type per platform;
 otherwise the declaring file, or a split into types of their own. Trait impls are
 left alone, and `tests/` is exempt.
 [R026](docs/ADRs/R026-ADR-ImplementedInOneFileRule.md)
+
+### `public-or-private`
+
+A function in an inherent impl is `pub` or private. `pub(crate)`, `pub(super)`,
+`pub(self)` and `pub(in ...)` are each reported at the method's name: a third
+state between the gates, not private to the file, not an entry point
+`tested-public-api` counts, and out of reach of a test in `tests/`.
+
+The correction reads the package's call sites, matched on name and arity as
+`tested-public-api` matches them: *make it private* where no other file calls the
+method, *make it `pub` and give it a test* where one does, and where the type's
+impl is spread over files, `implemented-in-one-file` -- the restriction being what
+the spread needs. Trait impls carry no visibility of their own; `tests/` is
+exempt. [R025](docs/ADRs/R025-ADR-PublicOrPrivateRule.md)
 
 ### `declared-by-name`
 

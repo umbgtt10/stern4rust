@@ -5,12 +5,11 @@
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
 use syn::Item;
-use syn::ItemImpl;
 use syn::parse_file;
 
 use crate::finding::parsing::declared_item_finder::DeclaredItemFinder;
 use crate::finding::parsing::gated_modules::GatedModules;
-use crate::finding::parsing::inline_module::InlineModule;
+use crate::finding::parsing::impl_blocks::ImplBlocks;
 use crate::finding::parsing::item_naming::ItemNaming;
 use crate::source_file::SourceFile;
 
@@ -112,16 +111,6 @@ impl TypeHomes {
             .unwrap_or_default()
     }
 
-    fn inherent(items: &[Item]) -> Vec<&ItemImpl> {
-        InlineModule::flatten(items)
-            .into_iter()
-            .filter_map(|item| match item {
-                Item::Impl(block) if block.trait_.is_none() => Some(block),
-                _ => None,
-            })
-            .collect()
-    }
-
     fn is_spread(&self, name: &str) -> bool {
         match self.declaring_files(name).len() {
             0 | 1 => self.implementing_files(name).len() >= 2,
@@ -137,7 +126,7 @@ impl TypeHomes {
                 .entry(path.to_string())
                 .or_insert(declared.line);
         }
-        for block in Self::inherent(items) {
+        for block in ImplBlocks::inherent(items) {
             let name = ItemNaming::implemented_type(&block.self_ty);
             if name.is_empty() {
                 continue;

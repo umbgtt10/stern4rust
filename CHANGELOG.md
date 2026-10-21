@@ -6,14 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-Four rules added, all on by default, so they move what this tool reports about
+Five rules added, all on by default, so they move what this tool reports about
 your code once it is released. A function returning a mutable reference, one
 returning a tuple that repeats an element type, a module-level constant declared
-after another item, and a type implemented in more than one file become
-offences; to adopt one later, add `skip = ["immutable-returns"]`,
-`skip = ["distinct-tuple-elements"]`, `skip = ["leading-constants"]` or
-`skip = ["implemented-in-one-file"]` to your `stern4rust.toml` once you install a
-version that knows the name. The third is fixable: `--fix` moves the constants.
+after another item, a type implemented in more than one file, and a method that
+is neither `pub` nor private become offences; to adopt one later, add its name --
+`immutable-returns`, `distinct-tuple-elements`, `leading-constants`,
+`implemented-in-one-file` or `public-or-private` -- to `skip` in your
+`stern4rust.toml` once you install a version that knows it. The third is fixable: `--fix` moves the constants.
 And `--fix` now repairs only what the run applies: test files are left alone
 where `test-file-structure` is skipped or not selected.
 
@@ -75,6 +75,18 @@ where `test-file-structure` is skipped or not selected.
 
   The rule is clean on this repository and on twelve others in the family, and
   reports four types in the other three.
+- **`public-or-private`: a function in an inherent impl is `pub` or private.**
+  Each `pub(crate)`, `pub(super)`, `pub(self)` or `pub(in ...)` method of an
+  inherent impl in `src/` is reported at its name. The correction reads the
+  package's call sites, matched on name and arity: make it private where no
+  other file calls it, make it `pub` and give it a test where one does, and
+  implement the type in one file where its impl is spread. `pub(self)` is
+  offered private; trait impls are left alone; `tests/` is exempt.
+  [R025](docs/ADRs/R025-ADR-PublicOrPrivateRule.md)
+
+  The rule is clean on this repository and on four others in the family, and
+  reports 124 offences across the other eleven: 80 called from another file, 38
+  in the four spread types, 6 that can simply be private.
 
 ### Changed
 - The type walk `returned-mutations` carried privately is now
@@ -100,6 +112,13 @@ where `test-file-structure` is skipped or not selected.
   `MutableReferenceSearch`, `RepeatedTupleFinder`, `TypeWalk` -- moved to
   `finding::parsing::signatures`, to leave `finding/parsing/` room under
   `directory-file-count`. What they find is unchanged.
+- The layout models -- `Section`, `TestFileItem`, `ConstantLayout`,
+  `MisplacedConstant`, `FixRefusal` -- moved to `finding::model::layout`, to leave
+  `finding/model/` room under `directory-file-count`.
+- The impl blocks a type owns rather than a trait are `ImplBlocks::inherent`,
+  shared by `implemented-in-one-file` and `public-or-private`; how a call names a
+  function, `PublicEntryPointFinder::of_signature`, is public for the same
+  reason.
 - **`--fix` reorders a test file only where the package applies
   `test-file-structure`.** A package that skips the rule, or a run that selects
   other rules with `--rule`, has its test files left as they are; before, the

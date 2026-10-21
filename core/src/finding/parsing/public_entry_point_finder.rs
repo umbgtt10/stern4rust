@@ -65,7 +65,9 @@ impl PublicEntryPointFinder {
         }
     }
 
-    fn of_signature(signature: &Signature) -> PublicEntryPoint {
+    // What a call names: the function and its arity, the receiver not counted,
+    // which is how a call site is matched to it.
+    pub fn of_signature(signature: &Signature) -> PublicEntryPoint {
         let arity = signature
             .inputs
             .iter()

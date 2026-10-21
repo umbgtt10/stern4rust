@@ -70,11 +70,11 @@ the tool runs against its own tree on every build with zero offences.
 
 ## What is left
 
-The rule set is at twenty-eight, with four more proposed (R025, R027, R030, R032),
+The rule set is at twenty-nine, with three more proposed (R027, R030, R032),
 each sized by a census before it is built -- the original candidate list
 shipped in full, `returned-mutations` turned the family's written `&mut`
 standard into a gate, `immutable-returns` closed its mirror, `distinct-tuple-elements` names what position alone
-told apart, `leading-constants` puts a file's numbers at its top, `implemented-in-one-file` keeps a type to one file, `named-subject` holds a file to the name of what it
+told apart, `leading-constants` puts a file's numbers at its top, `implemented-in-one-file` keeps a type to one file, `public-or-private` leaves a method two honest states, `named-subject` holds a file to the name of what it
 holds, and `owned-functions` keeps everything in it the subject's -- the library surface is decided, and every remaining gap is
 a limit with no structural answer -- collected in
 [OPEN_POINTS.md](OPEN_POINTS.md).

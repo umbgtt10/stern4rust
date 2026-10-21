@@ -45,6 +45,15 @@ impl ImplBlocks {
         }
     }
 
+    // The impl blocks a type owns rather than a trait: no trait impl, inline
+    // modules included, in source order.
+    pub fn inherent(items: &[Item]) -> Vec<&ItemImpl> {
+        Self::collect(items)
+            .into_iter()
+            .filter(|block| block.trait_.is_none())
+            .collect()
+    }
+
     pub fn targets(&self) -> &[String] {
         &self.targets
     }

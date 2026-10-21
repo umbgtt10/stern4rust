@@ -9,7 +9,7 @@ without answering it.
 
 Each rule also carries an **explanation** — what it wants, a scrap of source
 that breaks it and the same scrap put right — and that field is required too.
-`cargo stern4rust --rules` prints all twenty-eight, in text or with
+`cargo stern4rust --rules` prints all twenty-nine, in text or with
 `--format json`, without scanning anything. See
 [ADR-RulesExplainThemselves](ADRs/ADR-RulesExplainThemselves.md).
 
@@ -40,6 +40,7 @@ that breaks it and the same scrap put right — and that field is required too.
 | `distinct-tuple-elements` | [R029](ADRs/R029-ADR-DistinctTupleElementsRule.md) | no |
 | `leading-constants` | [R031](ADRs/R031-ADR-LeadingConstantsRule.md) | no |
 | `implemented-in-one-file` | [R026](ADRs/R026-ADR-ImplementedInOneFileRule.md) | no |
+| `public-or-private` | [R025](ADRs/R025-ADR-PublicOrPrivateRule.md) | no |
 | `test-naming` | [R012](ADRs/R012-ADR-TestNamingRule.md) | no |
 | `tested-public-api` | [R013](ADRs/R013-ADR-TestedPublicApiRule.md) | no |
 | `header` | [R001](ADRs/R001-ADR-HeaderRule.md) | `--header-file` |
@@ -747,6 +748,40 @@ package, it is to move the impls into one file.
 which is allowed; a type reached through an alias, which is a second name; `mod`
 declarations inside an inline module, whose gates are not followed; and impls a
 macro generates.
+
+## `public-or-private`
+
+A function in an inherent impl is `pub` or private. **No method of an inherent
+impl in `src/` may be `pub(crate)`, `pub(super)`, `pub(self)` or `pub(in ...)`.**
+
+`fn` is a type's implementation and `pub fn` its contract, which
+`tested-public-api` holds to a test. The restricted forms are a third state that
+falls between the gates: not private to the file, not an entry point
+`tested-public-api` counts, and out of reach of a test in `tests/`, which compiles
+as another crate. They usually exist because something outside the type's file
+needs the method -- most often a type whose impl is spread over files.
+
+Inherent impls only, inline modules included: a trait impl's methods take the
+trait's visibility, and free functions, fields, types and modules are not this
+rule's. One offence per method, at its name. The correction reads the package's
+call sites, matched on name and arity -- the receiver not counted -- as
+`tested-public-api` matches them:
+
+| when | correction |
+|---|---|
+| no other file calls it, or it is `pub(self)` | `` make it private: `fn` `` |
+| another file calls it | `` make it `pub` and give it a test, or move the caller's need behind the type's public contract `` |
+| its type's impl is spread over files | `` implement `RaftProtocol` in one file, as `implemented-in-one-file` asks: the restriction serves its spread over 13 files `` |
+
+| offence |
+|---|
+| `` `election` is `pub(crate)` in `impl RaftProtocol`; a method is `pub` or private `` |
+
+`tests/` is exempt.
+
+**Does not catch:** restricted visibility anywhere else -- free functions, fields,
+types, constants, modules; a `pub fn` that should have been private, which
+`tested-public-api` and review judge; and methods a macro generates.
 
 ## `declared-by-name`
 
