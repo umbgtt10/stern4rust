@@ -293,6 +293,7 @@ fn from_config_with_a_header_registers_the_header_rule_alongside_the_others() {
             "test-naming",
             "tested-public-api",
             "tests-layout",
+            "timeless-tests",
             "typed-errors",
             "workspace-dependencies",
             "header"
@@ -358,6 +359,7 @@ fn from_config_with_a_skip_leaves_that_rule_out() {
             "test-naming",
             "tested-public-api",
             "tests-layout",
+            "timeless-tests",
             "typed-errors",
             "workspace-dependencies"
         ]
@@ -402,6 +404,7 @@ fn from_config_without_a_header_registers_the_rules_that_need_no_configuration()
             "test-naming",
             "tested-public-api",
             "tests-layout",
+            "timeless-tests",
             "typed-errors",
             "workspace-dependencies"
         ]
@@ -447,6 +450,7 @@ fn known_names_lists_every_rule_the_tool_has() {
             "test-naming",
             "tested-public-api",
             "tests-layout",
+            "timeless-tests",
             "typed-errors",
             "workspace-dependencies",
             "header"

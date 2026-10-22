@@ -29,6 +29,20 @@ use proc_macro2::TokenStream;
 pub struct UnitTestFinder;
 
 impl UnitTestFinder {
+    // A predicate rather than the literal text, since `any(test, ...)` gates on
+    // test just as effectively.
+    pub fn is_cfg_test(attr: &Attribute) -> bool {
+        attr.path().is_ident("cfg") && Self::mentions_test(attr)
+    }
+
+    // `#[test]`, `#[tokio::test]` and any other harness spelled the same way.
+    pub fn is_test(attr: &Attribute) -> bool {
+        attr.path()
+            .segments
+            .last()
+            .is_some_and(|segment| segment.ident == "test")
+    }
+
     // None means the file does not parse. readable-source reports that.
     pub fn sites(file: &SourceFile) -> Option<Vec<UnitTestSite>> {
         let syntax = parse_file(&file.contents()).ok()?;
@@ -137,20 +151,6 @@ impl UnitTestFinder {
     // to the tests and another to the shipped build.
     fn is_cfg_attr_test(attr: &Attribute) -> bool {
         attr.path().is_ident("cfg_attr") && Self::mentions_test(attr)
-    }
-
-    // A predicate rather than the literal text, since `any(test, ...)` gates on
-    // test just as effectively.
-    fn is_cfg_test(attr: &Attribute) -> bool {
-        attr.path().is_ident("cfg") && Self::mentions_test(attr)
-    }
-
-    // `#[test]`, `#[tokio::test]` and any other harness spelled the same way.
-    fn is_test(attr: &Attribute) -> bool {
-        attr.path()
-            .segments
-            .last()
-            .is_some_and(|segment| segment.ident == "test")
     }
 
     fn kind(item: &Item) -> Option<&'static str> {

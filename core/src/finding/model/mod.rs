@@ -17,5 +17,7 @@ pub mod registry_policy;
 pub mod repeated_tuple;
 pub mod restricted_method;
 pub mod test_marker;
+pub mod time_call;
+pub mod time_call_kind;
 pub mod type_name;
 pub mod unit_test_site;

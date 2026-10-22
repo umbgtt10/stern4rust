@@ -1,6 +1,6 @@
 # Rules
 
-Twenty-six rules, each independent, each naming itself in the report. This is the
+Thirty-two rules, each independent, each naming itself in the report. This is the
 reference; the reasoning behind each one is in its ADR.
 
 Every offence carries a **correction** as well as a description — what to do,
@@ -9,7 +9,7 @@ without answering it.
 
 Each rule also carries an **explanation** — what it wants, a scrap of source
 that breaks it and the same scrap put right — and that field is required too.
-`cargo stern4rust --rules` prints all thirty-one, in text or with
+`cargo stern4rust --rules` prints all thirty-two, in text or with
 `--format json`, without scanning anything. See
 [ADR-RulesExplainThemselves](ADRs/ADR-RulesExplainThemselves.md).
 
@@ -27,6 +27,7 @@ that breaks it and the same scrap put right — and that field is required too.
 | `test-file-structure` | [R002](ADRs/R002-ADR-TestFileStructureRule.md) | no |
 | `test-free-source` | [R005](ADRs/R005-ADR-TestFreeSourceRule.md) | no |
 | `tests-layout` | [R003](ADRs/R003-ADR-TestsLayoutRule.md) | no |
+| `timeless-tests` | [R033](ADRs/R033-ADR-TimelessTestsRule.md) | no |
 | `module-registry` | [R006](ADRs/R006-ADR-ModuleRegistryRule.md) | no |
 | `ordered-imports` | [R019](ADRs/R019-ADR-OrderedImportsRule.md) | no |
 | `spdx-matches-manifest` | [R020](ADRs/R020-ADR-SpdxMatchesManifestRule.md) | `license` in the manifest |
@@ -1226,6 +1227,51 @@ never compiled cannot fail.**
 **Does not catch:** it verifies a registry *exists*, not that its declarations
 are *complete* — that is `registry-completeness`. `#[cfg(...)]`-gated
 declarations are treated as ordinary ones.
+
+## `timeless-tests`
+
+A test reads no clock and waits on no timer. **No function in test code may
+read a clock, wait on a timer, race one, or draw unseeded randomness.**
+
+A test whose verdict depends on how fast the machine is measures the machine,
+and passes on one and fails on another. Whether a test is deterministic cannot
+be read from syntax -- it can wait on a clock inside the code it calls --, but
+whether the test itself reads one can, and that is the part its author
+controls.
+
+- **Test code** is `tests/`, `benches/`, and in `src/` the `#[cfg(test)]`
+  modules and the functions carrying a test attribute. Every function in it is
+  judged, test or helper.
+- **A clock** is `Instant::now` -- `std`'s, Tokio's, `embassy_time`'s --,
+  `SystemTime::now`, `chrono`'s `Utc::now` and `Local::now`, `time`'s
+  `OffsetDateTime::now_utc` and `now_local`, and an `.elapsed()` or
+  `.duration_since(..)` read off one. **A wait** is `std::thread::sleep`,
+  `tokio::time::sleep` and `sleep_until`, `async_std::task::sleep`,
+  `embassy_time::Timer::after` and `at`. **A race** is `tokio::time::timeout`
+  and `timeout_at`, `embassy_time::with_timeout` and `with_deadline`. **An
+  unseeded draw** is `rand::thread_rng`, `rand::rng`, `rand::random` and
+  `OsRng`.
+- **Names are resolved through the file's `use` items** -- a path, a group, a
+  rename, `self`, a glob --, so a bare `sleep` imported from `tokio::time` is
+  Tokio's, and a function of the file's own called `sleep` is not. A macro's
+  arguments are read where they parse as expressions; a string literal is data.
+- **On Tokio's paused clock**, `#[tokio::test(start_paused = true)]`,
+  `tokio::time` is virtual and let through. `std`'s clock and sleep are not.
+- **One offence per function**, at its name, naming the first call. A
+  `Duration` is a value and never an offence, and neither is a seeded generator.
+- **A harness whose subject is real time** -- real clusters over real sockets,
+  hardware -- skips the rule in `stern4rust.toml`: `[package.<name>] skip =
+  ["timeless-tests"]`.
+
+| offence | correction |
+|---|---|
+| `` `acquire_blocks` waits on a timer with `sleep`; a test's verdict must not depend on how fast the machine is `` | `wait for the event itself -- a channel, a barrier, a rendezvous of the parties --, run on Tokio's paused clock, or inject a clock into the code under test and drive it from the test; name a temp directory after the test, or let a temp-directory crate choose` |
+| `` `shuffles` draws unseeded randomness with `rand::random`; a test's verdict must not depend on a draw it cannot repeat `` | `seed the generator, StdRng::seed_from_u64, so every run draws the same` |
+
+**Does not catch:** time read inside the code a test calls -- that is
+`injected-time`'s question, when it lands; real concurrency, thread scheduling
+and process start-up; other nondeterminism -- `HashMap` order, fixed temp paths
+and ports, the network; time handed to a shell, and time a macro generates.
 
 ## What is not walked
 

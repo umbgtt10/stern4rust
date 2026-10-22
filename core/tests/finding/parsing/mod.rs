@@ -20,5 +20,6 @@ pub mod restricted_method_finder_tests;
 pub mod signatures;
 pub mod source_items_tests;
 pub mod test_file_parser_tests;
+pub mod time;
 pub mod type_homes_tests;
 pub mod unit_test_finder_tests;

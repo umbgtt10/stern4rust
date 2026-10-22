@@ -1,6 +1,6 @@
 # R033-ADR-TimelessTestsRule
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-10-21
 
 ## Context
@@ -36,12 +36,14 @@ timer -- and that is the part a test's author controls.
 `benches/`, and `#[cfg(test)]` modules in `src/` -- a function calling any of
 these is an offence:
 
-- **a clock:** `Instant::now`, `SystemTime::now`, `chrono`'s `Utc::now` and
-  `Local::now`, `time`'s `OffsetDateTime::now_utc` and `now_local`, and the
-  `.elapsed()` and `.duration_since()` read off them;
+- **a clock:** `Instant::now` -- `std`'s, Tokio's and `embassy_time`'s --,
+  `SystemTime::now`, `chrono`'s `Utc::now` and `Local::now`, `time`'s
+  `OffsetDateTime::now_utc` and `now_local`, and the `.elapsed()` and
+  `.duration_since()` read off them;
 - **a wait:** `std::thread::sleep`, `tokio::time::sleep` and `sleep_until`,
   `async_std::task::sleep`, `embassy_time::Timer::after` and `at`;
-- **a race:** `tokio::time::timeout` and `timeout_at`;
+- **a race:** `tokio::time::timeout` and `timeout_at`, `embassy_time`'s
+  `with_timeout` and `with_deadline`;
 - **unseeded randomness:** `rand::thread_rng`, `rand::rng`, `rand::random`,
   `OsRng`.
 
@@ -49,7 +51,9 @@ these is an offence:
   imported from `tokio::time` is Tokio's, and a helper of the test's own called
   `sleep` is not.
 - **String literals are not code.** The analysis tools' tests hand
-  `Instant::now()` to the tool under test as text; that is data.
+  `Instant::now()` to the tool under test as text; that is data. **A macro's
+  arguments are**, where they parse as expressions -- `assert!(start.elapsed()
+  < LIMIT)` is where a stopwatch test reads its clock.
 - **Allowed:** a test on Tokio's paused clock --
   `#[tokio::test(start_paused = true)]` -- may use `tokio::time`'s `sleep`,
   `timeout`, `advance` and `Instant`: its time is virtual, and moves only when
@@ -96,6 +100,18 @@ the analysis tools' fixture strings as calls; stripping literals took
 | `twin4rust` | 0 | 2 | 4 |
 | `etheram-raft` | 1 | 4 | 9, all in harness packages |
 | `etheram-core`, the analysis workspace, `braintax4rust`, `crap4rust`, `dry4rust`, `grip4rust`, `stern4rust` | | | **0** |
+
+**Re-run with this tool's finders on 2026-10-22, the census holds function for
+function:** the same 127 test functions and 44 helpers, in every repository.
+Two differences had to be closed first, both on the tool's side of the
+comparison. `etheram-ibft-embassy`'s `demo/` is a workspace of its own, which a
+run reaches only through its own manifest -- six functions, five tests and a
+helper. And `etheram-embassy`'s ten were `embassy_time::Instant::now`, which the
+heuristic matched by its last two segments and the first catalogue did not
+name; it names it now, beside `embassy_time`'s `with_timeout` and
+`with_deadline`, so `embassy_time` is read on the same terms as Tokio. Of the
+171 functions, **116 read a clock first, 50 wait on a timer and 5 race one**;
+none draws unseeded randomness.
 
 **None runs on Tokio's paused clock.** Read one by one, the shapes above are all
 there: `slotgate`'s `job_runner_tests` asserts a timed-out job returns within ten
@@ -190,15 +206,34 @@ of a pure core, or a deterministic simulation, depends on.
 
 ## Enforcement
 
-To be written test-first when the rule is built: each clock, wait, race and
-generator reported in a test function and in a helper, through a full path and
-through an import; a local function of the same name left alone; a string
-literal left alone; a `Duration` left alone; a paused-clock test allowed
-`tokio::time` and nothing else; a seeded generator left alone; `#[cfg(test)]`
-modules judged and the rest of `src/` not; one offence per function naming the
-first call; the correction; a package skipping it; the unparseable file;
-`check_workspace`, `is_configured`, the name and the requirement;
-`tests/rule_registry_tests.rs` updated.
+`tests/rules/testing/timeless_tests_rule_tests.rs` -- eighteen tests: a
+stopwatch test reported at its name with its description, a bench that sleeps,
+a helper naming a temp directory from the clock, a test in a `#[cfg(test)]`
+module in `src/`, an unseeded draw with its own correction and a wait through an
+import with the other, each correction pinned word for word; a paused-clock test
+let through `tokio::time` and still reported for `std::thread::sleep`; one
+offence for a test with two calls, at the first; a string spelling a clock, a
+`Duration` only configured, production code in `src/` and an unparseable file
+left alone; `check_workspace` answering nothing; the explanation's two examples
+pinned and the first breaking the rule, the second not; `is_configured`, the
+name and the requirement.
+
+`tests/finding/parsing/time/time_call_finder_tests.rs` (thirteen) pins the
+catalogue: a clock through an import, a wait through a full path, an `elapsed`
+reading, `embassy_time`'s clock and its timeout as a race, an unseeded generator
+used as a value; a function of the file's own called `sleep` and a seeded
+generator left alone; the earliest of several calls; the paused clock letting
+`tokio::time` through and not the system's; a call inside a macro's arguments.
+`tests/finding/parsing/time/imported_names_tests.rs` (six) pins name
+resolution -- a crate path as written, a glob, a group, `self`, a rename, an
+import inside a function body. `TimeCall` and `TimeCallKind` have a test each,
+and `UnitTestFinder`'s `is_cfg_test` and `is_test`, now shared with this rule,
+two.
+
+`tests/rule_registry_tests.rs`' four rule-name lists include `timeless-tests`,
+and `tests/runner_tests.rs`' `--rules` listing holds thirty-two. Stage 2 runs
+this tool, built from the checkout, against this crate with every rule applied
+and zero offences.
 
 ## Related
 

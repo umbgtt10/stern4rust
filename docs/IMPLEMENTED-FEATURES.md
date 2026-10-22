@@ -63,6 +63,16 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
   repositories, five of them in every `xtask` the family shares, this
   repository's included, which take typed errors here. On by default.
   [R030](ADRs/R030-ADR-TypedErrorsRule.md)
+- **`timeless-tests`** -- a test reads no clock and waits on no timer: in
+  `tests/`, `benches/` and `src/`'s test modules, a function reading
+  `Instant::now` or its kin, an `elapsed()` off one, sleeping, racing a
+  `timeout` or drawing unseeded randomness is reported once, at its name, naming
+  the first call. Calls are resolved through the file's imports, macro
+  arguments are read, string literals are data, and Tokio's paused clock lets
+  `tokio::time` through. 171 functions across the sixteen repositories, 127
+  tests and 44 helpers -- the heuristic census's own, function for function;
+  this repository has none. On by default.
+  [R033](ADRs/R033-ADR-TimelessTestsRule.md)
 
 ### Autofix
 

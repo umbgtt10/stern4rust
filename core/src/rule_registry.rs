@@ -37,6 +37,7 @@ use crate::rules::testing::arrange_act_assert_rule::ArrangeActAssertRule;
 use crate::rules::testing::test_file_structure_rule::TestFileStructureRule;
 use crate::rules::testing::test_naming_rule::TestNamingRule;
 use crate::rules::testing::tested_public_api_rule::TestedPublicApiRule;
+use crate::rules::testing::timeless_tests_rule::TimelessTestsRule;
 use crate::settings::config::Config;
 use crate::settings::rule_selection::RuleSelection;
 use crate::source_file::SourceFile;
@@ -189,6 +190,7 @@ impl RuleRegistry {
             Box::new(TestNamingRule::new()),
             Box::new(TestedPublicApiRule::new()),
             Box::new(TestsLayoutRule::new()),
+            Box::new(TimelessTestsRule::new()),
             Box::new(TypedErrorsRule::new()),
             Box::new(WorkspaceDependenciesRule::new(
                 config.workspace_dependencies.clone(),

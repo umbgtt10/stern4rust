@@ -20,6 +20,8 @@
 use stern4rust::finding::model::unit_test_site::UnitTestSite;
 use stern4rust::finding::parsing::unit_test_finder::UnitTestFinder;
 use stern4rust::source_file::SourceFile;
+use syn::ItemFn;
+use syn::parse_str;
 
 fn corrections(body: &str) -> Vec<String> {
     sites(body)
@@ -34,6 +36,44 @@ fn labels(body: &str) -> Vec<String> {
 
 fn sites(body: &str) -> Vec<UnitTestSite> {
     UnitTestFinder::sites(&SourceFile::new("src/subject.rs", body)).expect("parses")
+}
+
+#[test]
+fn is_cfg_test_tells_a_test_gate_from_a_feature_named_test() {
+    // Arrange
+    let attribute = |source: &str| {
+        parse_str::<ItemFn>(&format!("{source}\nfn f() {{}}\n"))
+            .expect("parses")
+            .attrs[0]
+            .clone()
+    };
+
+    // Act & Assert
+    assert!(UnitTestFinder::is_cfg_test(&attribute("#[cfg(test)]")));
+    assert!(!UnitTestFinder::is_cfg_test(&attribute(
+        "#[cfg(feature = \"test\")]"
+    )));
+    assert!(!UnitTestFinder::is_cfg_test(&attribute(
+        "#[cfg(not(test))]"
+    )));
+}
+
+#[test]
+fn is_test_reads_any_harness_spelled_test() {
+    // Arrange
+    let attribute = |source: &str| {
+        parse_str::<ItemFn>(&format!("{source}\nfn f() {{}}\n"))
+            .expect("parses")
+            .attrs[0]
+            .clone()
+    };
+
+    // Act & Assert
+    assert!(UnitTestFinder::is_test(&attribute("#[test]")));
+    assert!(UnitTestFinder::is_test(&attribute(
+        "#[tokio::test(start_paused = true)]"
+    )));
+    assert!(!UnitTestFinder::is_test(&attribute("#[inline]")));
 }
 
 // The path a reader is being sent to, mirroring src/<path>.rs onto

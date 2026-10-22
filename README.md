@@ -16,7 +16,7 @@ already own correctness. These are the things a reviewer would otherwise have to
 say by hand, every time, forever — and the ones that quietly stop being true
 across a codebase the moment nobody is checking.
 
-> **Status: thirty-one rules.** The set below is what is implemented and
+> **Status: thirty-two rules.** The set below is what is implemented and
 > gated. `stern4rust` runs against its own tree on every build, so a rule that
 > would fail this repository cannot be merged into it.
 
@@ -768,6 +768,25 @@ A tests folder is reached through exactly one door: `tests/all_tests.rs`, plus a
 are never compiled — they still exist, still look like tests, and nothing runs
 them. The failure is silent by construction, because a test that is never
 compiled cannot fail. [R003](docs/ADRs/R003-ADR-TestsLayoutRule.md)
+
+### `timeless-tests`
+
+A test reads no clock and waits on no timer. In `tests/`, `benches/` and the
+`#[cfg(test)]` modules of `src/`, a function -- test or helper -- calling
+`Instant::now`, `SystemTime::now` or their `chrono` and `time` kin, reading
+`elapsed()` off one, sleeping, racing a `timeout`, or drawing from a generator
+nobody seeded is reported once, at its name, naming the first call. Calls are
+resolved through the file's imports, so a helper of the file's own called
+`sleep` is not Tokio's; a string spelling a clock is data.
+
+A test whose verdict depends on how fast the machine is measures the machine:
+`slotgate`'s four half-second sleeps took 8.7 seconds on a slow Windows runner
+and failed a change that only reordered functions. The way out is to wait for
+the event itself -- a channel, a barrier, a rendezvous --, run on Tokio's paused
+clock (`#[tokio::test(start_paused = true)]`, which lets `tokio::time` through),
+or drive a clock injected into the code under test. A harness whose subject is
+real time skips the rule by name.
+[R033](docs/ADRs/R033-ADR-TimelessTestsRule.md)
 
 ## Output
 
