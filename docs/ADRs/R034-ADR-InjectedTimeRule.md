@@ -1,6 +1,6 @@
 # R034-ADR-InjectedTimeRule
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-10-21
 
 ## Context
@@ -34,8 +34,14 @@ sits:
 
 - **A trait the package declares**, not any trait: `impl Display` reading the
   clock is not a seam a test can swap. The traits are the package's own, read
-  across its files as [R026](R026-ADR-ImplementedInOneFileRule.md)'s
-  `TypeHomes` reads its types.
+  across its `src/` files as [R026](R026-ADR-ImplementedInOneFileRule.md)'s
+  `TypeHomes` reads its types, and an impl is matched by its trait's last
+  segment, so `impl crate::ports::Clock` is `Clock`. A port's own default
+  bodies are left alone too: a test's implementation overrides them.
+- **Production code** is a free function, an inherent method or a foreign
+  trait's method, through inline modules; a test function and anything under
+  `#[cfg(test)]` is test code, and R033's. Randomness, which R033 also lists, is
+  not this rule's -- see below.
 - **Names are resolved through the file's `use` items**, and string literals are
   not code, as in R033.
 - **One offence per function**, at its name, naming the first call: *"`retry`
@@ -59,7 +65,11 @@ sits:
   ```
 
   No new key: a rule nobody turns on protects nothing, and a root skip says in
-  the open what an off-by-default rule would leave unsaid.
+  the open what an off-by-default rule would leave unsaid. As built first, a
+  section's `skip = []` fell back to the root's list -- an absent key and an
+  empty one read alike -- so the example above re-enabled nothing; a section's
+  stated `skip`, empty included, is now its whole list, as
+  [ADR-PerPackageConfiguration](ADR-PerPackageConfiguration.md) says.
 - **Exempt:** `tests/`, which is R033's.
 
 ## Forcing constraints / Evidence
@@ -94,6 +104,36 @@ methods, 103 in free functions.
   on the rig.
 - **The tools are nearly clean:** `grip4rust` measures one duration, and
   `slotgate`'s job runner, the one tool whose subject is time, has five.
+
+**Re-run with this tool on 2026-10-22: 173 functions in 83 files**, counted
+per function as the rule reports them -- 130 reading a clock first, 36 waiting
+on a timer, 7 racing one. The heuristic's 428 calls counted every call, its 26
+in binaries among them, which the rule leaves alone.
+
+| repository | functions | files | clock | wait | race |
+|---|---:|---:|---:|---:|---:|
+| `etheram-tools` | 42 | 21 | 32 | 7 | 3 |
+| `etheram-ibft` | 39 | 10 | 28 | 11 | 0 |
+| `etheram-ibft-embassy`, three workspaces | 40 | 21 | 32 | 8 | 0 |
+| `etheram-embassy` | 20 | 15 | 13 | 7 | 0 |
+| `etheram-raft-embassy` | 17 | 6 | 16 | 1 | 0 |
+| `etheram-raft` | 13 | 8 | 7 | 2 | 4 |
+| `slotgate` | 2 | 2 | 2 | 0 | 0 |
+| `etheram-core`, the analysis workspace, `braintax4rust`, `crap4rust`, `dry4rust`, `grip4rust`, `iceberg4rust`, `stern4rust`, `twin4rust` | **0** | | | | |
+
+- **The cores comply, measured.** Every one of `etheram-ibft`'s 39 and
+  `etheram-raft`'s 13 is in its `system-tests` package, which a runtime
+  workspace's root skip covers; `node` and every other member have none.
+- **Two of the heuristic's findings were not time.** `grip4rust`'s "one
+  duration" is a file's modification time turned into seconds,
+  `mtime.duration_since(UNIX_EPOCH)`, which reads no clock -- R033's catalogue
+  had counted `duration_since` as a reading, and no longer does. And
+  `slotgate`'s `JobRunner::new` was charged with racing a timer for building
+  `Self { timeout, .. }`: a bare name not called is a value, and both rules now
+  read it as one.
+- **`slotgate` has two**, the job runner's `run` -- its stopwatch, its
+  `timeout` race -- and the job order's `seed_from_clock`, which seeds a shuffle
+  from the system clock.
 
 ## Rejected alternatives
 
@@ -137,15 +177,32 @@ they hold; the tools fix their six or skip it where time is the subject.
 
 ## Enforcement
 
-To be written test-first when the rule is built: each of R033's calls reported in
-an inherent method and in a free function, through a full path and through an
-import; the same call in an implementation of a trait the package declares left
-alone, and in an implementation of a foreign trait reported; `src/main.rs`,
-`src/bin/` and the modules only they declare left alone; `#[cfg(test)]` modules
-and `tests/` left alone; a string literal left alone; one offence per function
-naming the first call; the correction; a root skip with a package re-enabling
-it; the unparseable file; `check_workspace`, `is_configured`, the name and the
-requirement; `tests/rule_registry_tests.rs` updated.
+`tests/rules/source/injected_time_rule_tests.rs` -- sixteen tests: a free
+function reading the clock reported at its name, its description and
+correction pinned word for word; a race in an inherent method; a foreign
+trait's impl reported; one offence for a function with two calls, at the
+first, and the clock named where randomness comes first; the adapter of a port
+the package declares, a binary's files -- `src/main.rs`, a module only it
+declares, `src/bin/` --, a package without a library, test code in `src/` and
+`tests/`, unseeded randomness, a string spelling a clock and an unparseable file
+left alone; `check` answering nothing per file; the explanation breaking the
+rule and its mend not; `is_configured`, the name and the requirement.
+
+`tests/finding/parsing/time/production_functions_tests.rs` (six) pins what is
+judged: free functions and inherent methods, a foreign trait's methods, an
+inline module's functions; and not a test, a `#[cfg(test)]` module, an impl of
+a port -- written bare or as a path -- or a port's default bodies.
+`TimeCallFinder::calls_in` has a test of its own, beside the catalogue R033
+shares.
+
+`tests/runner_tests.rs`' `run_reporting_over_a_workspace_skipping_injected_time_judges_the_member_that_takes_it_back`
+builds the adoption above -- the root skipping the rule, one member stating
+`skip = []` -- and finds that member's clock read and not the other's.
+`tests/settings/config_file_tests.rs` pins a section's stated empty `skip`
+apart from one saying nothing. The four rule-name lists in
+`tests/rule_registry_tests.rs` include `injected-time`, and the `--rules`
+listing holds thirty-four. Stage 2 runs this tool, built from the checkout,
+against this crate with every rule applied and zero offences.
 
 ## Related
 

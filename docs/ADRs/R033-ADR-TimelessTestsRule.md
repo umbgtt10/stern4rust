@@ -38,8 +38,13 @@ these is an offence:
 
 - **a clock:** `Instant::now` -- `std`'s, Tokio's and `embassy_time`'s --,
   `SystemTime::now`, `chrono`'s `Utc::now` and `Local::now`, `time`'s
-  `OffsetDateTime::now_utc` and `now_local`, and the `.elapsed()` and
-  `.duration_since()` read off them;
+  `OffsetDateTime::now_utc` and `now_local`, and the `.elapsed()` read off
+  them, which reads `now` inside -- not `.duration_since(earlier)`, arithmetic
+  between two instants that reads no clock, and which a clock passed in hands
+  out as freely as the system's (as built first, the rule counted it; no
+  function of the census was reported for it, and it went before
+  [R034](R034-ADR-InjectedTimeRule.md) would have charged it to code that takes
+  its instants from a port);
 - **a wait:** `std::thread::sleep`, `tokio::time::sleep` and `sleep_until`,
   `async_std::task::sleep`, `embassy_time::Timer::after` and `at`;
 - **a race:** `tokio::time::timeout` and `timeout_at`, `embassy_time`'s
@@ -49,7 +54,11 @@ these is an offence:
 
 - **Names are resolved through the file's `use` items**, so a bare `sleep(...)`
   imported from `tokio::time` is Tokio's, and a helper of the test's own called
-  `sleep` is not.
+  `sleep` is not. A bare name that is not called is a value -- a binding, a
+  field written in shorthand -- and reads no time, whatever is imported under
+  it; a generator, `OsRng`, is the one value that does. (Found by
+  [R034](R034-ADR-InjectedTimeRule.md)'s census: `slotgate`'s
+  `Self { timeout, .. }` read as Tokio's `timeout`.)
 - **String literals are not code.** The analysis tools' tests hand
   `Instant::now()` to the tool under test as text; that is data. **A macro's
   arguments are**, where they parse as expressions -- `assert!(start.elapsed()
@@ -218,11 +227,13 @@ left alone; `check_workspace` answering nothing; the explanation's two examples
 pinned and the first breaking the rule, the second not; `is_configured`, the
 name and the requirement.
 
-`tests/finding/parsing/time/time_call_finder_tests.rs` (thirteen) pins the
+`tests/finding/parsing/time/time_call_finder_tests.rs` (eighteen) pins the
 catalogue: a clock through an import, a wait through a full path, an `elapsed`
 reading, `embassy_time`'s clock and its timeout as a race, an unseeded generator
-used as a value; a function of the file's own called `sleep` and a seeded
-generator left alone; the earliest of several calls; the paused clock letting
+used as a value, a clock handed over as a function; a function of the file's
+own called `sleep`, a binding and a shorthand field named after an imported
+timer, a duration between two instants and a seeded generator left alone; the
+earliest of several calls, and every call in order; the paused clock letting
 `tokio::time` through and not the system's; a call inside a macro's arguments.
 `tests/finding/parsing/time/imported_names_tests.rs` (six) pins name
 resolution -- a crate path as written, a glob, a group, `self`, a rename, an

@@ -4,6 +4,7 @@
 
 use syn::Block;
 use syn::Expr;
+use syn::ExprCall;
 use syn::ExprMethodCall;
 use syn::ExprPath;
 use syn::Macro;
@@ -19,8 +20,8 @@ use crate::finding::model::time_call_kind::TimeCallKind;
 use crate::finding::parsing::time::imported_names::ImportedNames;
 
 // The first call in a body through which it depends on time: a clock read -- `Instant::now` and its kin, or an
-// `elapsed` or `duration_since` read off one --, a sleep, a timeout raced, or a generator nobody seeded. A path is
-// matched once resolved through the file's imports, so a function of the file's own that happens to be called
+// `elapsed` read off one, which reads `now` inside --, a sleep, a timeout raced, or a generator nobody seeded. A path
+// is matched once resolved through the file's imports, so a function of the file's own that happens to be called
 // `sleep` is not one; a string spelling a call is not code. On Tokio's paused clock, `tokio::time` is virtual and let
 // through, and the readings off its `Instant` with it; the system's clock is not. A macro's arguments are read where
 // they parse as expressions -- `assert!`, `format!` and their kin --, since that is where a test puts its stopwatch.
@@ -57,7 +58,7 @@ impl<'a> TimeCallFinder<'a> {
         "rand::rngs::OsRng",
         "rand_core::OsRng",
     ];
-    const READINGS: [(&'static str, usize); 2] = [("elapsed", 0), ("duration_since", 1)];
+    const READING: &'static str = "elapsed";
     const WAITS: [&'static str; 6] = [
         "std::thread::sleep",
         "tokio::time::sleep",
@@ -75,11 +76,16 @@ impl<'a> TimeCallFinder<'a> {
         }
     }
 
-    pub fn first_in(mut self, body: &Block) -> Option<TimeCall> {
+    // Every call, in the order written: a rule that leaves one kind alone picks among them.
+    pub fn calls_in(mut self, body: &Block) -> Vec<TimeCall> {
         self.visit_block(body);
-        self.calls
-            .into_iter()
-            .min_by_key(|call| (call.line, call.column))
+        let mut calls = self.calls;
+        calls.sort_by_key(|call| (call.line, call.column));
+        calls
+    }
+
+    pub fn first_in(self, body: &Block) -> Option<TimeCall> {
+        self.calls_in(body).into_iter().next()
     }
 
     fn kind_of(&self, full: &str) -> Option<TimeCallKind> {
@@ -95,10 +101,11 @@ impl<'a> TimeCallFinder<'a> {
         .into_iter()
         .find_map(|(catalogue, kind)| catalogue.contains(&full).then_some(kind))
     }
-}
 
-impl<'ast> Visit<'ast> for TimeCallFinder<'_> {
-    fn visit_expr_path(&mut self, node: &'ast ExprPath) {
+    // A bare name that is not called is a value -- a binding, or a field written
+    // in shorthand -- and reads no time, whatever the file imports under that
+    // name; a generator is the one value that does.
+    fn record(&mut self, node: &ExprPath, called: bool) {
         let written: Vec<String> = node
             .path
             .segments
@@ -109,7 +116,8 @@ impl<'ast> Visit<'ast> for TimeCallFinder<'_> {
             .names
             .resolve(&written)
             .iter()
-            .find_map(|full| self.kind_of(full));
+            .find_map(|full| self.kind_of(full))
+            .filter(|kind| called || written.len() > 1 || *kind == TimeCallKind::Random);
         if let Some(kind) = found {
             let start = node.span().start();
             self.calls.push(TimeCall::new(
@@ -119,6 +127,25 @@ impl<'ast> Visit<'ast> for TimeCallFinder<'_> {
                 start.column,
             ));
         }
+    }
+}
+
+impl<'ast> Visit<'ast> for TimeCallFinder<'_> {
+    fn visit_expr_call(&mut self, node: &'ast ExprCall) {
+        match node.func.as_ref() {
+            Expr::Path(callee) => {
+                self.record(callee, true);
+                visit_expr_path(self, callee);
+            }
+            callee => self.visit_expr(callee),
+        }
+        for argument in &node.args {
+            self.visit_expr(argument);
+        }
+    }
+
+    fn visit_expr_path(&mut self, node: &'ast ExprPath) {
+        self.record(node, false);
         visit_expr_path(self, node);
     }
 
@@ -132,16 +159,11 @@ impl<'ast> Visit<'ast> for TimeCallFinder<'_> {
     }
 
     fn visit_expr_method_call(&mut self, node: &'ast ExprMethodCall) {
-        let reading = (node.method.to_string(), node.args.len());
-        if !self.paused
-            && Self::READINGS
-                .iter()
-                .any(|(method, arity)| reading.0 == *method && reading.1 == *arity)
-        {
+        if !self.paused && node.method == Self::READING && node.args.is_empty() {
             let start = node.method.span().start();
             self.calls.push(TimeCall::new(
                 TimeCallKind::Clock,
-                &reading.0,
+                Self::READING,
                 start.line,
                 start.column,
             ));

@@ -28,8 +28,12 @@ pub struct PackageConfig {
     pub max_subfolders_per_directory: Option<usize>,
     #[serde(default)]
     pub rules: Vec<String>,
+    // None where the section says nothing, which inherits the root's list. A
+    // stated list is the package's whole list, an empty one included -- which is
+    // how a package takes back a rule its root skips; with a bare Vec the two
+    // read alike and `skip = []` fell back to the root's.
     #[serde(default)]
-    pub skip: Vec<String>,
+    pub skip: Option<Vec<String>>,
     #[serde(default)]
     pub exclude: Vec<String>,
 }

@@ -28,6 +28,35 @@ fn first(source: &str, paused: bool) -> Option<(TimeCallKind, String, usize)> {
 }
 
 #[test]
+fn calls_in_lists_every_call_in_the_order_written() {
+    // Arrange
+    let syntax = parse_file(
+        "use std::time::Instant;\nfn t() {\n    let seed = rand::random::<u8>();\n    let start = Instant::now();\n}\n",
+    )
+    .expect("parses");
+    let names = ImportedNames::of(&syntax.items);
+    let Item::Fn(function) = &syntax.items[1] else {
+        panic!("a function");
+    };
+
+    // Act
+    let calls = TimeCallFinder::new(&names, false).calls_in(&function.block);
+
+    // Assert
+    let found: Vec<(TimeCallKind, &str)> = calls
+        .iter()
+        .map(|call| (call.kind, call.written.as_str()))
+        .collect();
+    assert_eq!(
+        found,
+        vec![
+            (TimeCallKind::Random, "rand::random"),
+            (TimeCallKind::Clock, "Instant::now"),
+        ]
+    );
+}
+
+#[test]
 fn first_in_a_body_without_time_is_none() {
     // Arrange & Act
     let found = first(
@@ -37,6 +66,21 @@ fn first_in_a_body_without_time_is_none() {
 
     // Assert
     assert_eq!(found, None);
+}
+
+#[test]
+fn first_in_finds_a_clock_handed_over_as_a_function() {
+    // Arrange & Act
+    let found = first(
+        "use std::time::Instant;\nfn t(cached: Option<Instant>) -> Instant {\n    cached.unwrap_or_else(Instant::now)\n}\n",
+        false,
+    );
+
+    // Assert
+    assert_eq!(
+        found,
+        Some((TimeCallKind::Clock, String::from("Instant::now"), 3))
+    );
 }
 
 #[test]
@@ -127,6 +171,42 @@ fn first_in_finds_an_unseeded_generator_as_a_value() {
         found,
         Some((TimeCallKind::Random, String::from("OsRng"), 3))
     );
+}
+
+#[test]
+fn first_in_leaves_a_binding_named_after_an_imported_timer_alone() {
+    // Arrange & Act
+    let found = first(
+        "use tokio::time::sleep;\nfn t(sleep: Duration) {\n    pause(sleep);\n}\n",
+        false,
+    );
+
+    // Assert
+    assert_eq!(found, None);
+}
+
+#[test]
+fn first_in_leaves_a_duration_between_two_instants_alone() {
+    // Arrange & Act
+    let found = first(
+        "fn t(started: Instant, finished: Instant) {\n    let taken = finished.duration_since(started);\n}\n",
+        false,
+    );
+
+    // Assert
+    assert_eq!(found, None);
+}
+
+#[test]
+fn first_in_leaves_a_field_named_after_an_imported_timer_alone() {
+    // Arrange & Act
+    let found = first(
+        "use tokio::time::timeout;\nfn t(timeout: Duration) -> Runner {\n    Runner { timeout }\n}\n",
+        false,
+    );
+
+    // Assert
+    assert_eq!(found, None);
 }
 
 #[test]

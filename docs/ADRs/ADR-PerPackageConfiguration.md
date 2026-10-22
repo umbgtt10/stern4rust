@@ -81,6 +81,14 @@ The same sentence holds one level down. A package that says `skip = [...]` state
 its whole skip list, and a reader who wants to know what a package skips reads one
 list rather than assembling it from two.
 
+An empty list is a list stated. `skip = []` is a package skipping nothing, and is
+how a package takes back a rule its root skips -- the way
+[R034](R034-ADR-InjectedTimeRule.md) is adopted, skipped at a runtime
+workspace's root and taken back by the core it holds. A section without the key
+says nothing, and inherits the root's. (Until R034, `skip` was read into a bare
+list, an absent key and an empty one alike, and `skip = []` fell back to the
+root's.)
+
 ### Two tiers of key, separated by what they are about
 
 | root only | per package |

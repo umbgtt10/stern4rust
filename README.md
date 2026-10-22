@@ -16,7 +16,7 @@ already own correctness. These are the things a reviewer would otherwise have to
 say by hand, every time, forever — and the ones that quietly stop being true
 across a codebase the moment nobody is checking.
 
-> **Status: thirty-three rules.** The set below is what is implemented and
+> **Status: thirty-four rules.** The set below is what is implemented and
 > gated. `stern4rust` runs against its own tree on every build, so a rule that
 > would fail this repository cannot be merged into it.
 
@@ -803,6 +803,29 @@ clock (`#[tokio::test(start_paused = true)]`, which lets `tokio::time` through),
 or drive a clock injected into the code under test. A harness whose subject is
 real time skips the rule by name.
 [R033](docs/ADRs/R033-ADR-TimelessTestsRule.md)
+
+### `injected-time`
+
+Time reaches production code through a port. In a library's `src/`, a function
+reading a clock, waiting on a timer or racing one -- the calls `timeless-tests`
+lists -- is reported once, at its name, unless it implements a trait the package
+declares: the adapter a test replaces with a clock it drives. `impl Display`
+reading the clock is behind no seam, and is reported. A binary's files are the
+composition root, where the real clock is chosen, and are left alone.
+
+It is what makes `timeless-tests` satisfiable for code with a timeout, and what
+keeps a protocol core time-free. A workspace whose libraries are runtime --
+firmware, transport, hardware -- skips it at its root and lets the core it holds
+take it back:
+
+```toml
+skip = ["injected-time"]
+
+[package.node]
+skip = []
+```
+
+[R034](docs/ADRs/R034-ADR-InjectedTimeRule.md)
 
 ## Output
 

@@ -6,18 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-Nine rules added, all on by default, so they move what this tool reports about
+Ten rules added, all on by default, so they move what this tool reports about
 your code once it is released. A function returning a mutable reference, one
 returning a tuple that repeats an element type, a module-level constant declared
 after another item, a public one without a constants file and readers to share
 it, a type implemented in more than one file, a method that is neither `pub`
 nor private, an impl block out of order, a library function failing with a
-string, and a test reading a clock or waiting on a timer become offences; to
-adopt one later, add its name -- `immutable-returns`,
-`distinct-tuple-elements`, `leading-constants`, `shared-constants`,
-`implemented-in-one-file`, `public-or-private`, `ordered-impl-functions`,
-`typed-errors` or `timeless-tests` -- to `skip` in your `stern4rust.toml` once
-you install a version that knows it. Two are fixable: `--fix` moves the constants and
+string, a test reading a clock or waiting on a timer, and library code doing
+either outside a port become offences; to adopt one later, add its name --
+`immutable-returns`, `distinct-tuple-elements`, `leading-constants`,
+`shared-constants`, `implemented-in-one-file`, `public-or-private`,
+`ordered-impl-functions`, `typed-errors`, `timeless-tests` or `injected-time`
+-- to `skip` in your `stern4rust.toml` once you install a version that knows
+it. Two are fixable: `--fix` moves the constants and
 reorders the impls.
 And `--fix` now repairs only what the run applies: test files are left alone
 where `test-file-structure` is skipped or not selected.
@@ -141,6 +142,20 @@ where `test-file-structure` is skipped or not selected.
   19 constants nobody else reads, 61 one other file reads, 28 their own file and
   one other share, 70 shared from beside other items, 50 of restricted
   visibility. This repository has none.
+- **`injected-time`: time reaches production code through a port.** In the
+  library target, a function reading a clock, waiting on a timer or racing one
+  -- `timeless-tests`' calls, randomness aside -- is reported once, at its name,
+  naming the first call, unless it implements a trait the package declares, the
+  adapter a test replaces. A foreign trait's impl is reported; a binary's
+  files, test code and a port's own default bodies are left alone. Meant to
+  guard a core: a runtime workspace skips it at its root and the time-free
+  package takes it back with `skip = []`.
+  [R034](docs/ADRs/R034-ADR-InjectedTimeRule.md)
+
+  The rule reports 173 functions across the sixteen repositories of the family:
+  130 reading a clock first, 36 waiting on a timer, 7 racing one -- every one in
+  the protocol repositories in their `system-tests`, the rest runtime. This
+  repository has none.
 - **`timeless-tests`: a test reads no clock and waits on no timer.** In
   `tests/`, `benches/` and the `#[cfg(test)]` modules of `src/`, a function --
   test or helper -- reading `Instant::now`, `SystemTime::now` or their `chrono`,
@@ -158,6 +173,9 @@ where `test-file-structure` is skipped or not selected.
 ### Changed
 - `UnitTestFinder::is_cfg_test` and `is_test` are public, so `timeless-tests`
   reads a test module and a test function as `test-free-source` does.
+- A package section's `skip = []` is that package's whole skip list, empty, and
+  no longer falls back to the root's: a stated empty list and an absent key had
+  read alike. It is how a package takes back a rule its root skips.
 - The type walk `returned-mutations` carried privately is now
   `MutableReferenceSearch`, shared with `immutable-returns`, which can pass over
   `&'static mut`; the signatures it collected -- free functions, inherent methods,

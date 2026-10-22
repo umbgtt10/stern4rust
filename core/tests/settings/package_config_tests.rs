@@ -32,7 +32,7 @@ fn default_selects_and_skips_nothing() {
 
     // Assert
     assert!(config.rules.is_empty());
-    assert!(config.skip.is_empty());
+    assert_eq!(config.skip, None);
     assert!(config.exclude.is_empty());
 }
 

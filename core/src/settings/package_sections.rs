@@ -63,7 +63,7 @@ impl PackageSections {
             .sections
             .iter()
             .filter(|(name, _)| scanned.contains(&name.as_str()))
-            .flat_map(|(_, section)| section.skip.iter().cloned())
+            .flat_map(|(_, section)| section.skip.iter().flatten().cloned())
             .collect();
         skipped.sort();
         skipped.dedup();

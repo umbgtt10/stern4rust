@@ -31,7 +31,7 @@ fn skipping(entries: &[(&str, &[&str])]) -> PackageSections {
                 (
                     (*name).to_string(),
                     PackageConfig {
-                        skip: skip.iter().map(|rule| (*rule).to_string()).collect(),
+                        skip: Some(skip.iter().map(|rule| (*rule).to_string()).collect()),
                         ..PackageConfig::default()
                     },
                 )

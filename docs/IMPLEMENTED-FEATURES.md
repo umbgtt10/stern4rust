@@ -82,6 +82,16 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
   tests and 44 helpers -- the heuristic census's own, function for function;
   this repository has none. On by default.
   [R033](ADRs/R033-ADR-TimelessTestsRule.md)
+- **`injected-time`** -- time reaches production code through a port: in the
+  library target, a function reading a clock, waiting on a timer or racing one
+  is reported once, at its name, naming the first call, unless it implements a
+  trait the package declares. A binary's files, test code, randomness and a
+  port's default bodies are left alone. A runtime workspace skips it at its root
+  and a core takes it back with `[package.<name>] skip = []`, which now replaces
+  the root's list rather than falling back to it. 173 functions across the
+  sixteen repositories, every protocol-repository one in `system-tests`; this
+  repository has none. On by default.
+  [R034](ADRs/R034-ADR-InjectedTimeRule.md)
 
 ### Autofix
 

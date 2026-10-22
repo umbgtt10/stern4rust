@@ -143,8 +143,6 @@ fn load_of_a_section_naming_an_unknown_key_is_an_error() {
     assert!(result.is_err());
 }
 
-// Every key a section may carry, so that adding one to the struct without
-// meaning to is caught here rather than in a repository.
 #[test]
 fn load_of_a_section_reads_every_key_a_package_may_set() {
     // Arrange
@@ -169,11 +167,34 @@ max-subfolders-per-directory = 8
     // Assert
     let node = &file.packages["node"];
     assert_eq!(node.rules, vec!["header"]);
-    assert_eq!(node.skip, vec!["paired-test-file"]);
+    assert_eq!(node.skip, Some(vec![String::from("paired-test-file")]));
     assert_eq!(node.exclude, vec!["vendor/**"]);
     assert_eq!(node.max_files_per_directory, Some(30));
     assert_eq!(node.max_subfolders_per_directory, Some(8));
     assert!(node.header_file.is_some());
+}
+
+// Every key a section may carry, so that adding one to the struct without
+// meaning to is caught here rather than in a repository.
+// A stated list is the package's whole list, an empty one included: that is
+// how a package takes back a rule its root skips.
+#[test]
+fn load_of_a_section_stating_an_empty_skip_list_keeps_it_apart_from_saying_nothing() {
+    // Arrange
+    let path = directory(
+        "empty_skip",
+        Some(
+            "skip = [\"injected-time\"]\n\n[package.node]\nskip = []\n\n[package.types]\n\
+             rules = [\"header\"]\n",
+        ),
+    );
+
+    // Act
+    let loaded = ConfigFile::load(&path).expect("loads").expect("present");
+
+    // Assert
+    assert_eq!(loaded.packages["node"].skip, Some(Vec::new()));
+    assert_eq!(loaded.packages["types"].skip, None);
 }
 
 // Every key is optional, so a repository can set one thing without restating
@@ -243,7 +264,10 @@ exclude = ["**/generated/**"]
 
     // Assert
     assert_eq!(file.packages.len(), 2);
-    assert_eq!(file.packages["validation"].skip, vec!["paired-test-file"]);
+    assert_eq!(
+        file.packages["validation"].skip,
+        Some(vec![String::from("paired-test-file")])
+    );
     assert_eq!(
         file.packages["system-tests"].exclude,
         vec!["**/generated/**"]

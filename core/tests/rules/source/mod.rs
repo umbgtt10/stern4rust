@@ -8,6 +8,7 @@ pub mod header_rule_tests;
 pub mod immutable_returns_rule_tests;
 pub mod implemented_in_one_file_rule_tests;
 pub mod imported_paths_rule_tests;
+pub mod injected_time_rule_tests;
 pub mod leading_constants_rule_tests;
 pub mod named_subject_rule_tests;
 pub mod ordered_impl_functions_rule_tests;

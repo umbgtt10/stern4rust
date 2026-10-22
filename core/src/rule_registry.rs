@@ -21,6 +21,7 @@ use crate::rules::source::header_rule::HeaderRule;
 use crate::rules::source::immutable_returns_rule::ImmutableReturnsRule;
 use crate::rules::source::implemented_in_one_file_rule::ImplementedInOneFileRule;
 use crate::rules::source::imported_paths_rule::ImportedPathsRule;
+use crate::rules::source::injected_time_rule::InjectedTimeRule;
 use crate::rules::source::leading_constants_rule::LeadingConstantsRule;
 use crate::rules::source::named_subject_rule::NamedSubjectRule;
 use crate::rules::source::ordered_impl_functions_rule::OrderedImplFunctionsRule;
@@ -170,6 +171,7 @@ impl RuleRegistry {
             Box::new(ImmutableReturnsRule::new()),
             Box::new(ImplementedInOneFileRule::new()),
             Box::new(ImportedPathsRule::new()),
+            Box::new(InjectedTimeRule::new()),
             Box::new(LeadingConstantsRule::new()),
             Box::new(ModuleRegistryRule::new()),
             Box::new(NamedSubjectRule::new()),

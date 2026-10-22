@@ -8,6 +8,7 @@ pub mod header_rule;
 pub mod immutable_returns_rule;
 pub mod implemented_in_one_file_rule;
 pub mod imported_paths_rule;
+pub mod injected_time_rule;
 pub mod leading_constants_rule;
 pub mod named_subject_rule;
 pub mod ordered_impl_functions_rule;

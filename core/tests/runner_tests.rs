@@ -113,6 +113,40 @@ fn probe_reading_workspace(name: &str) -> PathBuf {
     root
 }
 
+// Two members reading the clock, the root skipping injected-time and `alpha`
+// stating its own list -- the way a runtime workspace guards the one core it
+// holds.
+fn probe_timed_workspace(name: &str) -> PathBuf {
+    let root = env::temp_dir().join(format!("stern4rust_timed_{name}"));
+    let _ = fs::remove_dir_all(&root);
+    for member in ["alpha", "beta"] {
+        fs::create_dir_all(root.join(member).join("src")).expect("create the member");
+        fs::write(
+            root.join(member).join("Cargo.toml"),
+            format!("[package]\nname = \"{member}\"\nversion = \"0.1.0\"\nedition = \"2021\"\n"),
+        )
+        .expect("write the member manifest");
+        fs::write(root.join(member).join("src/lib.rs"), "pub mod retry;\n")
+            .expect("write the registry");
+        fs::write(
+            root.join(member).join("src/retry.rs"),
+            "pub fn expired(deadline: std::time::Instant) -> bool {\n    std::time::Instant::now() > deadline\n}\n",
+        )
+        .expect("write the module");
+    }
+    fs::write(
+        root.join("Cargo.toml"),
+        "[workspace]\nresolver = \"2\"\nmembers = [\"alpha\", \"beta\"]\n",
+    )
+    .expect("write the workspace manifest");
+    fs::write(
+        root.join(ConfigFile::NAME),
+        "skip = [\"injected-time\"]\n\n[package.alpha]\nskip = []\n",
+    )
+    .expect("write the config");
+    root
+}
+
 // Two members whose files have the same package-relative names, each carrying
 // the same offence. `src/widget.rs` in `alpha` and `src/widget.rs` in `beta`
 // are two different files that render as one string, which is the whole of the
@@ -563,6 +597,36 @@ fn run_reporting_over_a_workspace_counts_a_sibling_crates_readers() {
     }
 }
 
+// A runtime workspace skips injected-time at its root, and the core it holds
+// takes it back by stating its own list.
+#[test]
+fn run_reporting_over_a_workspace_skipping_injected_time_judges_the_member_that_takes_it_back() {
+    // Arrange
+    let root = probe_timed_workspace("guarded");
+    let manifest = root.join("Cargo.toml");
+
+    // Act
+    let (_, report) = Runner::run_reporting(args_from(&[
+        "cargo-stern4rust",
+        "--manifest-path",
+        &manifest.to_string_lossy(),
+        "--format",
+        "json",
+    ]))
+    .expect("the run itself should succeed");
+
+    // Assert
+    let document: Value = from_str(&report).expect("valid json");
+    let timed: Vec<&Value> = document["offences"]
+        .as_array()
+        .expect("an offences array")
+        .iter()
+        .filter(|offence| offence["rule"] == "injected-time")
+        .collect();
+    assert_eq!(timed.len(), 1, "{report}");
+    assert_eq!(timed[0]["subject"], "expired", "{report}");
+}
+
 // One member declares it, so the report says so once -- not once per member.
 //
 // `workspace-dependencies` reads every manifest in the workspace, and the
@@ -661,7 +725,7 @@ fn run_reporting_with_rules_in_json_carries_the_same_rules_as_the_text() {
     // Assert
     let parsed: Value = from_str(&report).expect("valid json");
     let rules = parsed["rules"].as_array().expect("a rules array");
-    assert_eq!(rules.len(), 33);
+    assert_eq!(rules.len(), 34);
     assert!(rules.iter().all(|entry| {
         !entry["name"].as_str().unwrap_or_default().is_empty()
             && !entry["breaks"].as_str().unwrap_or_default().is_empty()

@@ -340,7 +340,9 @@ impl Runner {
                 ),
                 Self::preferred(
                     args.skipped_rules.clone(),
-                    Self::section_or_root(section.map(|s| &s.skip), found.map(|file| &file.skip)),
+                    section
+                        .and_then(|s| s.skip.as_ref())
+                        .or(found.map(|file| &file.skip)),
                 ),
             ),
         })

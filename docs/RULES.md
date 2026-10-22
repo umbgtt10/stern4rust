@@ -1,6 +1,6 @@
 # Rules
 
-Thirty-three rules, each independent, each naming itself in the report. This is the
+Thirty-four rules, each independent, each naming itself in the report. This is the
 reference; the reasoning behind each one is in its ADR.
 
 Every offence carries a **correction** as well as a description — what to do,
@@ -9,7 +9,7 @@ without answering it.
 
 Each rule also carries an **explanation** — what it wants, a scrap of source
 that breaks it and the same scrap put right — and that field is required too.
-`cargo stern4rust --rules` prints all thirty-three, in text or with
+`cargo stern4rust --rules` prints all thirty-four, in text or with
 `--format json`, without scanning anything. See
 [ADR-RulesExplainThemselves](ADRs/ADR-RulesExplainThemselves.md).
 
@@ -21,6 +21,7 @@ that breaks it and the same scrap put right — and that field is required too.
 | `directory-file-count` | [R010](ADRs/R010-ADR-DirectoryFileCountRule.md) | optional, default 20 |
 | `directory-subfolder-count` | [R011](ADRs/R011-ADR-DirectorySubfolderCountRule.md) | optional, default 5 |
 | `imported-paths` | [R008](ADRs/R008-ADR-ImportedPathsRule.md) | no |
+| `injected-time` | [R034](ADRs/R034-ADR-InjectedTimeRule.md) | no |
 | `registry-completeness` | [R009](ADRs/R009-ADR-RegistryCompletenessRule.md) | no |
 | `paired-test-file` | [R016](ADRs/R016-ADR-PairedTestFileRule.md) | no |
 | `test-file-name-postfix` | [R015](ADRs/R015-ADR-TestFileNamePostfixRule.md) | no |
@@ -1286,8 +1287,9 @@ controls.
   judged, test or helper.
 - **A clock** is `Instant::now` -- `std`'s, Tokio's, `embassy_time`'s --,
   `SystemTime::now`, `chrono`'s `Utc::now` and `Local::now`, `time`'s
-  `OffsetDateTime::now_utc` and `now_local`, and an `.elapsed()` or
-  `.duration_since(..)` read off one. **A wait** is `std::thread::sleep`,
+  `OffsetDateTime::now_utc` and `now_local`, and an `.elapsed()` read off one,
+  which reads `now` inside; `.duration_since(earlier)` is arithmetic between two
+  instants and reads none. **A wait** is `std::thread::sleep`,
   `tokio::time::sleep` and `sleep_until`, `async_std::task::sleep`,
   `embassy_time::Timer::after` and `at`. **A race** is `tokio::time::timeout`
   and `timeout_at`, `embassy_time::with_timeout` and `with_deadline`. **An
@@ -1311,9 +1313,47 @@ controls.
 | `` `shuffles` draws unseeded randomness with `rand::random`; a test's verdict must not depend on a draw it cannot repeat `` | `seed the generator, StdRng::seed_from_u64, so every run draws the same` |
 
 **Does not catch:** time read inside the code a test calls -- that is
-`injected-time`'s question, when it lands; real concurrency, thread scheduling
+`injected-time`'s question; real concurrency, thread scheduling
 and process start-up; other nondeterminism -- `HashMap` order, fixed temp paths
 and ports, the network; time handed to a shell, and time a macro generates.
+
+## `injected-time`
+
+Time reaches production code through a port. **In the library target, no
+function may read a clock, wait on a timer or race one, unless it implements a
+trait the package declares.**
+
+A test may not wait on real time (`timeless-tests`), so code with a timeout is
+testable only through a clock it was handed -- and a protocol core that reads
+none is what a deterministic simulation or a model checker needs. Nothing kept
+either from being lost to the next change reaching for `Instant::now()`.
+
+- **The calls** are `timeless-tests`' clocks, waits and races, resolved through
+  the file's imports. Randomness is left alone: it is another input, and another
+  port.
+- **Production code** is the library target -- `src/lib.rs` and what its module
+  declarations reach -- outside test functions and `#[cfg(test)]`: free
+  functions, inherent methods, a foreign trait's methods, through inline
+  modules.
+- **A trait the package declares** is any trait in its `src/`, matched by an
+  impl's last segment. Its impls are the adapters a test replaces, and its own
+  default bodies a test's implementation overrides; both are left alone. A
+  foreign trait is no seam: `impl Display` reading the clock is reported.
+- **A binary's files** -- `src/main.rs`, `src/bin/`, the modules only they
+  declare -- are the composition root, where the real clock is chosen, and are
+  left alone, as is a package without a library.
+- **Adopted as a guard on a core.** A runtime workspace skips it at its root,
+  and the packages meant to be time-free take it back with a section stating
+  their own list, `[package.node] skip = []`.
+
+| offence | correction |
+|---|---|
+| `` `expired` reads the clock with `Instant::now`; take time through a port the package declares, so a test can drive it `` | `declare a trait for the clock or timer it needs, implement it with the real one in an adapter and inject it -- or, for a timer that only marks a deadline, take the deadline in as an event the caller feeds` |
+
+`tests/` is exempt; it is `timeless-tests`'.
+
+**Does not catch:** time inside a dependency, which reads the clock or times out
+on its own; time a macro generates; randomness, by decision.
 
 ## What is not walked
 
