@@ -3,5 +3,6 @@
 // SPDX-License-Identifier: MIT
 
 pub mod imported_names_tests;
+pub mod port_traits_tests;
 pub mod production_functions_tests;
 pub mod time_call_finder_tests;

@@ -2,8 +2,6 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::collections::BTreeSet;
-
 use syn::Attribute;
 use syn::Block;
 use syn::Ident;
@@ -12,17 +10,18 @@ use syn::Item;
 use syn::ItemImpl;
 
 use crate::finding::parsing::inline_module::InlineModule;
+use crate::finding::parsing::time::port_traits::PortTraits;
 use crate::finding::parsing::unit_test_finder::UnitTestFinder;
 
 // The functions of a source file that are production code and not a port's adapter: free functions, inherent
-// methods and the methods of a foreign trait's impl, through inline modules. Left out: a test, anything under
-// `#[cfg(test)]`, the methods of an impl of a trait the package declares -- the adapter a test replaces --, and a
-// trait's own default bodies, which a test's implementation overrides. A port is matched by its last segment,
-// so `impl crate::ports::Clock` is `Clock`.
+// methods and the methods of a standard trait's impl, through inline modules. Left out: a test, anything under
+// `#[cfg(test)]`, the methods of an impl of a port -- a trait the package or a dependency declares, the adapter
+// a test replaces (`PortTraits` says which) --, and a trait's own default bodies, which a test's implementation
+// overrides.
 pub struct ProductionFunctions;
 
 impl ProductionFunctions {
-    pub fn of<'a>(items: &'a [Item], ports: &BTreeSet<String>) -> Vec<(&'a Ident, &'a Block)> {
+    pub fn of<'a>(items: &'a [Item], ports: &PortTraits) -> Vec<(&'a Ident, &'a Block)> {
         items
             .iter()
             .flat_map(|item| match item {
@@ -38,7 +37,7 @@ impl ProductionFunctions {
             .collect()
     }
 
-    fn in_impl<'a>(block: &'a ItemImpl, ports: &BTreeSet<String>) -> Vec<(&'a Ident, &'a Block)> {
+    fn in_impl<'a>(block: &'a ItemImpl, ports: &PortTraits) -> Vec<(&'a Ident, &'a Block)> {
         if Self::is_port(block, ports) || Self::is_test(&block.attrs) {
             return Vec::new();
         }
@@ -54,12 +53,11 @@ impl ProductionFunctions {
             .collect()
     }
 
-    fn is_port(block: &ItemImpl, ports: &BTreeSet<String>) -> bool {
+    fn is_port(block: &ItemImpl, ports: &PortTraits) -> bool {
         block
             .trait_
             .as_ref()
-            .and_then(|(_, path, _)| path.segments.last())
-            .is_some_and(|segment| ports.contains(&segment.ident.to_string()))
+            .is_some_and(|(_, path, _)| ports.is_port(path))
     }
 
     fn is_test(attrs: &[Attribute]) -> bool {

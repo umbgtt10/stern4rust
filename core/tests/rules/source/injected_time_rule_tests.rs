@@ -220,6 +220,25 @@ fn check_workspace_of_a_string_spelling_a_clock_reports_nothing() {
     assert!(offences.is_empty(), "{offences:?}");
 }
 
+// A family's core crate declares the ports; a runtime package implements them,
+// and its adapter is where the real clock is read.
+#[test]
+fn check_workspace_of_an_adapter_of_a_dependencys_port_reports_nothing() {
+    // Arrange & Act
+    let offences = check(&[
+        ("src/lib.rs", "pub mod desktop_timer;\n"),
+        (
+            "src/desktop_timer.rs",
+            "use etheram_core::timer_output::TimerOutput;\nuse std::time::Instant;\n\npub struct DesktopTimer;\n\n\
+             impl TimerOutput for DesktopTimer {\n    fn schedule(&self) {\n        let deadline = Instant::now();\n    \
+             }\n}\n",
+        ),
+    ]);
+
+    // Assert
+    assert!(offences.is_empty(), "{offences:?}");
+}
+
 #[test]
 fn check_workspace_of_an_unparseable_file_reports_nothing() {
     // Arrange & Act

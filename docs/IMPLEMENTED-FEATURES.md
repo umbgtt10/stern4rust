@@ -85,10 +85,11 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 - **`injected-time`** -- time reaches production code through a port: in the
   library target, a function reading a clock, waiting on a timer or racing one
   is reported once, at its name, naming the first call, unless it implements a
-  trait the package declares. A binary's files, test code, randomness and a
+  port -- a trait the package or a dependency declares, not the standard
+  library's. A binary's files, test code, randomness and a
   port's default bodies are left alone. A runtime workspace skips it at its root
   and a core takes it back with `[package.<name>] skip = []`, which now replaces
-  the root's list rather than falling back to it. 173 functions across the
+  the root's list rather than falling back to it. 168 functions across the
   sixteen repositories, every protocol-repository one in `system-tests`; this
   repository has none. On by default.
   [R034](ADRs/R034-ADR-InjectedTimeRule.md)

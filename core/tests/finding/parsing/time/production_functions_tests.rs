@@ -9,13 +9,16 @@
 // bodies, which a test's implementation overrides.
 
 use std::collections::BTreeSet;
+use stern4rust::finding::parsing::time::imported_names::ImportedNames;
+use stern4rust::finding::parsing::time::port_traits::PortTraits;
 use stern4rust::finding::parsing::time::production_functions::ProductionFunctions;
 use syn::parse_file;
 
 fn names(source: &str, ports: &[&str]) -> Vec<String> {
     let syntax = parse_file(source).expect("parses");
-    let ports: BTreeSet<String> = ports.iter().map(|port| (*port).to_string()).collect();
-    ProductionFunctions::of(&syntax.items, &ports)
+    let declared: BTreeSet<String> = ports.iter().map(|port| (*port).to_string()).collect();
+    let names = ImportedNames::of(&syntax.items);
+    ProductionFunctions::of(&syntax.items, &PortTraits::new(&declared, &names))
         .iter()
         .map(|(name, _)| name.to_string())
         .collect()
@@ -58,10 +61,23 @@ fn of_a_trait_declaration_leaves_its_default_bodies_out() {
 }
 
 #[test]
+fn of_an_impl_of_a_dependencys_port_leaves_its_methods_out() {
+    // Arrange & Act
+    let found = names(
+        "use etheram_core::timer_output::TimerOutput;\n\nimpl TimerOutput for DesktopTimer {\n    \
+         fn schedule(&self) {}\n}\n",
+        &[],
+    );
+
+    // Assert
+    assert!(found.is_empty(), "{found:?}");
+}
+
+#[test]
 fn of_an_impl_of_a_foreign_trait_lists_its_methods() {
     // Arrange & Act
     let found = names(
-        "impl Display for Elapsed {\n    fn fmt(&self, f: &mut Formatter) -> Result {\n        Ok(())\n    }\n}\n",
+        "use std::fmt::Display;\n\nimpl Display for Elapsed {\n    fn fmt(&self, f: &mut Formatter) -> Result {\n        Ok(())\n    }\n}\n",
         &["Clock"],
     );
 

@@ -145,15 +145,16 @@ where `test-file-structure` is skipped or not selected.
 - **`injected-time`: time reaches production code through a port.** In the
   library target, a function reading a clock, waiting on a timer or racing one
   -- `timeless-tests`' calls, randomness aside -- is reported once, at its name,
-  naming the first call, unless it implements a trait the package declares, the
-  adapter a test replaces. A foreign trait's impl is reported; a binary's
+  naming the first call, unless it implements a port -- a trait the package or
+  a dependency declares, the adapter a test replaces. A standard trait's impl
+  is reported; a binary's
   files, test code and a port's own default bodies are left alone. Meant to
   guard a core: a runtime workspace skips it at its root and the time-free
   package takes it back with `skip = []`.
   [R034](docs/ADRs/R034-ADR-InjectedTimeRule.md)
 
-  The rule reports 173 functions across the sixteen repositories of the family:
-  130 reading a clock first, 36 waiting on a timer, 7 racing one -- every one in
+  The rule reports 168 functions across the sixteen repositories of the family:
+  125 reading a clock first, 36 waiting on a timer, 7 racing one -- every one in
   the protocol repositories in their `system-tests`, the rest runtime. This
   repository has none.
 - **`timeless-tests`: a test reads no clock and waits on no timer.** In

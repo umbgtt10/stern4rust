@@ -27,18 +27,24 @@ reaches for `Instant::now()` because it is the shortest way to a timeout.
 the calls [R033](R033-ADR-TimelessTestsRule.md) lists -- is an offence unless it
 sits:
 
-- **in an implementation of a trait the package declares** -- the adapter a
-  test replaces with one it drives -- or
+- **in an implementation of a port** -- a trait the package declares, or one a
+  dependency declares; the adapter a test replaces with one it drives -- or
 - **in a binary** -- `src/main.rs`, `src/bin/`, and the modules only they
   declare -- the composition root, where the real clock is chosen.
 
-- **A trait the package declares**, not any trait: `impl Display` reading the
-  clock is not a seam a test can swap. The traits are the package's own, read
-  across its `src/` files as [R026](R026-ADR-ImplementedInOneFileRule.md)'s
-  `TypeHomes` reads its types, and an impl is matched by its trait's last
-  segment, so `impl crate::ports::Clock` is `Clock`. A port's own default
-  bodies are left alone too: a test's implementation overrides them.
-- **Production code** is a free function, an inherent method or a foreign
+- **A port**, not any trait: `impl Display` reading the clock is not a seam a
+  test can swap. A port is a trait the package declares -- read across its
+  `src/` files as [R026](R026-ADR-ImplementedInOneFileRule.md)'s `TypeHomes`
+  reads its types, and matched by an impl's last segment, so
+  `impl crate::ports::Clock` is `Clock` -- or a trait from a dependency, its
+  origin read through the file's imports: a family's core crate declares the
+  ports its runtimes implement, as `etheram-core` declares `TimerOutput`. The
+  standard library's traits are not ports -- `std`, `core`, `alloc`, and a bare
+  name nobody imported that the prelude holds, as `Iterator` or `Drop`. An
+  origin the rule cannot tell counts as a port, so it stays quiet rather than
+  accuse an adapter. A port's own default bodies are left alone too: a test's
+  implementation overrides them.
+- **Production code** is a free function, an inherent method or a standard
   trait's method, through inline modules; a test function and anything under
   `#[cfg(test)]` is test code, and R033's. Randomness, which R033 also lists, is
   not this rule's -- see below.
@@ -147,7 +153,20 @@ adapter beside the port it declares. A core that takes time through a port stays
 deterministic under any test that injects one. Rejected for the port.
 
 **Any trait impl.** `impl Display for Elapsed` reading the clock is behind a
-trait and behind no seam. Rejected for traits the package declares.
+trait and behind no seam. Rejected for ports.
+
+**Only the traits the package declares**, as first built. It accused the
+adapters the architecture asks for: `etheram-raft`'s `system-tests` implements
+`etheram-core`'s `TimerOutput` with a desktop timer, and `schedule` reading
+`Instant::now()` there is exactly where the real clock belongs -- the port is
+upstream, so the package declares nothing. Rejected on 2026-10-22, for ports a
+dependency declares as well. The re-run frees three functions: that `schedule`,
+`etheram-embassy`'s host time driver -- `now` in its `embassy_time_driver::Driver`
+impl, the port embassy's executor takes time through -- and `etheram-tools`'
+`ClusterLensApp::update`, an `eframe::App` callback. The last is the price: a
+framework's trait counts as a port too, and a GUI frame reading the clock goes
+unreported. With `slotgate`'s two since moved behind ports of its own, 168
+functions remain.
 
 **Paths as the boundary** -- `infra/`, `adapters/`, `runtime/`. A convention of
 one family; this tool's corrections rearrange paths, and the configuration
@@ -177,21 +196,27 @@ they hold; the tools fix their six or skip it where time is the subject.
 
 ## Enforcement
 
-`tests/rules/source/injected_time_rule_tests.rs` -- sixteen tests: a free
+`tests/rules/source/injected_time_rule_tests.rs` -- seventeen tests: a free
 function reading the clock reported at its name, its description and
-correction pinned word for word; a race in an inherent method; a foreign
+correction pinned word for word; a race in an inherent method; a standard
 trait's impl reported; one offence for a function with two calls, at the
 first, and the clock named where randomness comes first; the adapter of a port
-the package declares, a binary's files -- `src/main.rs`, a module only it
+the package declares, the adapter of a port a dependency declares, a binary's
+files -- `src/main.rs`, a module only it
 declares, `src/bin/` --, a package without a library, test code in `src/` and
 `tests/`, unseeded randomness, a string spelling a clock and an unparseable file
 left alone; `check` answering nothing per file; the explanation breaking the
 rule and its mend not; `is_configured`, the name and the requirement.
 
-`tests/finding/parsing/time/production_functions_tests.rs` (six) pins what is
-judged: free functions and inherent methods, a foreign trait's methods, an
+`tests/finding/parsing/time/production_functions_tests.rs` (seven) pins what is
+judged: free functions and inherent methods, a standard trait's methods, an
 inline module's functions; and not a test, a `#[cfg(test)]` module, an impl of
-a port -- written bare or as a path -- or a port's default bodies.
+a port -- the package's, written bare or as a path, or a dependency's -- or a
+port's default bodies. `tests/finding/parsing/time/port_traits_tests.rs`
+(seven) pins what a port is: a dependency's trait by its full path and through
+an import, a trait the package declares; and not a prelude trait, a standard
+one through an import or a module, or a `crate::` path to a trait the package
+does not declare.
 `TimeCallFinder::calls_in` has a test of its own, beside the catalogue R033
 shares.
 

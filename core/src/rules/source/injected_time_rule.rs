@@ -13,6 +13,7 @@ use crate::finding::model::time_call_kind::TimeCallKind;
 use crate::finding::parsing::declared_item_finder::DeclaredItemFinder;
 use crate::finding::parsing::modules::library_target::LibraryTarget;
 use crate::finding::parsing::time::imported_names::ImportedNames;
+use crate::finding::parsing::time::port_traits::PortTraits;
 use crate::finding::parsing::time::production_functions::ProductionFunctions;
 use crate::finding::parsing::time::time_call_finder::TimeCallFinder;
 use crate::reporting::offence::Offence;
@@ -26,9 +27,11 @@ use crate::source_file::SourceFile;
 // timeout testable only through a clock it was handed. So in the library target
 // a function reading a clock, waiting on a timer or racing one -- the calls
 // timeless-tests lists, through the file's imports -- is reported once, at its
-// name, naming the first call, unless it implements a trait the package
-// declares: the adapter a test replaces. Any trait is not enough; `impl Display`
-// reading the clock is behind no seam.
+// name, naming the first call, unless it implements a port: a trait the package
+// declares, or one a dependency does -- a family's core crate declares the ports
+// its runtimes implement. That is the adapter a test replaces. The standard
+// library's traits are not enough; `impl Display` reading the clock is behind no
+// seam.
 //
 // A binary's files -- `src/main.rs`, `src/bin/`, the modules only they declare --
 // are the composition root, where the real clock is chosen, and are left alone,
@@ -50,9 +53,9 @@ impl InjectedTimeRule {
         Self
     }
 
-    fn in_file(file: &SourceFile, syntax: &File, ports: &BTreeSet<String>) -> Vec<Offence> {
+    fn in_file(file: &SourceFile, syntax: &File, declared: &BTreeSet<String>) -> Vec<Offence> {
         let names = ImportedNames::of(&syntax.items);
-        ProductionFunctions::of(&syntax.items, ports)
+        ProductionFunctions::of(&syntax.items, &PortTraits::new(declared, &names))
             .into_iter()
             .filter_map(|(function, body)| {
                 TimeCallFinder::new(&names, false)
@@ -107,7 +110,7 @@ impl Rule for InjectedTimeRule {
                     .map(|syntax| (file, syntax))
             })
             .collect();
-        let ports: BTreeSet<String> = parsed
+        let declared: BTreeSet<String> = parsed
             .iter()
             .flat_map(|(_, syntax)| DeclaredItemFinder::traits(&syntax.items))
             .map(|declared| declared.name)
@@ -116,7 +119,7 @@ impl Rule for InjectedTimeRule {
         parsed
             .iter()
             .filter(|(file, _)| library.contains(file.relative_path()))
-            .flat_map(|(file, syntax)| Self::in_file(file, syntax, &ports))
+            .flat_map(|(file, syntax)| Self::in_file(file, syntax, &declared))
             .collect()
     }
 

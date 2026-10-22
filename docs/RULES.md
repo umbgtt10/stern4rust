@@ -1321,7 +1321,7 @@ and ports, the network; time handed to a shell, and time a macro generates.
 
 Time reaches production code through a port. **In the library target, no
 function may read a clock, wait on a timer or race one, unless it implements a
-trait the package declares.**
+port: a trait the package or a dependency declares.**
 
 A test may not wait on real time (`timeless-tests`), so code with a timeout is
 testable only through a clock it was handed -- and a protocol core that reads
@@ -1333,12 +1333,16 @@ either from being lost to the next change reaching for `Instant::now()`.
   port.
 - **Production code** is the library target -- `src/lib.rs` and what its module
   declarations reach -- outside test functions and `#[cfg(test)]`: free
-  functions, inherent methods, a foreign trait's methods, through inline
+  functions, inherent methods, a standard trait's methods, through inline
   modules.
-- **A trait the package declares** is any trait in its `src/`, matched by an
-  impl's last segment. Its impls are the adapters a test replaces, and its own
-  default bodies a test's implementation overrides; both are left alone. A
-  foreign trait is no seam: `impl Display` reading the clock is reported.
+- **A port** is a trait the package declares in its `src/`, matched by an
+  impl's last segment, or a dependency's, its origin read through the file's
+  imports -- a family's core crate declares the ports its runtimes implement.
+  Its impls are the adapters a test replaces, and its own default bodies a
+  test's implementation overrides; both are left alone. The standard library's
+  traits are no seam: `impl Display` reading the clock is reported, and so is a
+  bare prelude name such as `Iterator`. An origin the rule cannot tell counts
+  as a port.
 - **A binary's files** -- `src/main.rs`, `src/bin/`, the modules only they
   declare -- are the composition root, where the real clock is chosen, and are
   left alone, as is a package without a library.
