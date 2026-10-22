@@ -7,6 +7,8 @@ use crate::adoption::baseline_outcome::BaselineOutcome;
 use crate::adoption::exclusion_outcome::ExclusionOutcome;
 use crate::adoption::exclusion_set::ExclusionSet;
 use crate::finding::model::manifest_dependency::ManifestDependency;
+use crate::finding::model::name_readers::NameReaders;
+use crate::finding::parsing::read_names::ReadNames;
 use crate::reporting::json_printer::JsonPrinter;
 use crate::reporting::offence::Offence;
 use crate::reporting::offence_threshold::OffenceThreshold;
@@ -31,6 +33,7 @@ use crate::settings::scanned_package::ScannedPackage;
 use crate::source_file::SourceFile;
 use crate::source_reader::SourceReader;
 use crate::source_walker::SourceWalker;
+use crate::workspace_sources::WorkspaceSources;
 use anyhow::Context;
 use anyhow::Result;
 use std::collections::HashSet;
@@ -121,6 +124,25 @@ impl Runner {
         // Read once: every manifest path in `workspace_dependencies` is stated
         // relative to it.
         let workspace_root = ManifestResolver::workspace_root(&config).unwrap_or_default();
+        // Every member, not only those this run walks: a constant one member
+        // declares and only another reads is shared all the same, and a run
+        // scoped to the first must still see the second.
+        let members = ManifestResolver::packages(&Config {
+            packages: Vec::new(),
+            ..config.clone()
+        })?
+        .into_iter()
+        .map(|member| {
+            Ok((
+                member.root,
+                ExclusionSet::new(&Self::config_from(&args, sections.of(&member.name))?.excludes)?,
+            ))
+        })
+        .collect::<Result<Vec<_>>>()?;
+        let readers = NameReaders::new(ReadNames::index(&WorkspaceSources::read(
+            &workspace_root,
+            &members,
+        )));
 
         for package in &packages {
             // Everything the manifest decides is decided here, by the package
@@ -147,6 +169,10 @@ impl Runner {
                         &package.root.join(ManifestResolver::MANIFEST),
                     ),
                 ),
+                name_readers: readers.in_package(&ManifestResolver::relative_to(
+                    &workspace_root,
+                    &package.root,
+                )),
                 ..Self::config_from(&args, sections.of(&package.name))?
             };
             let registry = RuleRegistry::from_config(&package_config);
@@ -278,6 +304,7 @@ impl Runner {
             // line has nothing to say about it.
             manifest_license: None,
             workspace_dependencies: None,
+            name_readers: NameReaders::default(),
             // Discovered beside the manifest when nobody named one, the same
             // way stern4rust.toml is. Implicit suppression would be
             // unacceptable if it were invisible; every report that used a

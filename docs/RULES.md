@@ -1,6 +1,6 @@
 # Rules
 
-Thirty-two rules, each independent, each naming itself in the report. This is the
+Thirty-three rules, each independent, each naming itself in the report. This is the
 reference; the reasoning behind each one is in its ADR.
 
 Every offence carries a **correction** as well as a description — what to do,
@@ -9,7 +9,7 @@ without answering it.
 
 Each rule also carries an **explanation** — what it wants, a scrap of source
 that breaks it and the same scrap put right — and that field is required too.
-`cargo stern4rust --rules` prints all thirty-two, in text or with
+`cargo stern4rust --rules` prints all thirty-three, in text or with
 `--format json`, without scanning anything. See
 [ADR-RulesExplainThemselves](ADRs/ADR-RulesExplainThemselves.md).
 
@@ -40,6 +40,7 @@ that breaks it and the same scrap put right — and that field is required too.
 | `immutable-returns` | [R028](ADRs/R028-ADR-ImmutableReturnsRule.md) | no |
 | `distinct-tuple-elements` | [R029](ADRs/R029-ADR-DistinctTupleElementsRule.md) | no |
 | `leading-constants` | [R031](ADRs/R031-ADR-LeadingConstantsRule.md) | no |
+| `shared-constants` | [R032](ADRs/R032-ADR-SharedConstantsRule.md) | no |
 | `implemented-in-one-file` | [R026](ADRs/R026-ADR-ImplementedInOneFileRule.md) | no |
 | `public-or-private` | [R025](ADRs/R025-ADR-PublicOrPrivateRule.md) | no |
 | `ordered-impl-functions` | [R027](ADRs/R027-ADR-OrderedImplFunctionsRule.md) | no |
@@ -710,6 +711,47 @@ Registries (`lib.rs`, `mod.rs`) and `tests/` are exempt.
 
 **Does not catch:** associated constants, which belong to their impl; constants
 inside an inline module or a function body; and anything a macro generates.
+
+## `shared-constants`
+
+A module-level constant is private, or public and shared from a constants file.
+**A module-level `const` in `src/` is private, or `pub` in a constants file and
+read by two or more other files of the workspace.**
+
+A constant has two honest states, as a method does under `public-or-private`.
+It is one file's, private and read where it is declared; or it is a fact
+several files share, and then its home is none of its readers but a file of
+constants a reader finds by name.
+
+- **A constants file** holds imports, constants, statics and type aliases, and
+  nothing else -- no struct, enum, trait, impl, function or macro. Its name is
+  not prescribed; the correction suggests `<topic>_constants.rs`.
+- **Read by** is a name match across every member of the workspace, `tests/`
+  included: a path, an import, a pattern, a macro's tokens. A declaration is not
+  a read. A run scoped to one member still counts the others' readers.
+- **Restricted visibility** -- `pub(crate)`, `pub(super)`, `pub(in ...)` -- is an
+  offence on its own.
+- **Statics** are runtime state, living with their owner, and **associated
+  constants** are their type's: both are left alone. An inline module is not
+  descended into.
+- **A library whose constants other repositories read** cannot be judged from
+  inside one; it skips the rule in `stern4rust.toml`: `[package.<name>] skip =
+  ["shared-constants"]`.
+
+| offence | correction |
+|---|---|
+| `` `LIMIT` is public, and no other file reads it `` | `make it private, or delete it if nothing reads it` |
+| `` `LIMIT` is public, and only `node/src/pool.rs` reads it `` | `move it into node/src/pool.rs and make it private` |
+| `` `LIMIT` is read here and by `node/tests/pool_tests.rs`, from a file that is not a constants file `` | `move it into a constants file ..., or make it private if node/tests/pool_tests.rs can do without it` |
+| `` `LIMIT` is read by 2 other files, from a file that is not a constants file `` | `move it into a constants file -- imports, constants, statics and type aliases only --, such as <topic>_constants.rs` |
+| `` `LIMIT` is `pub(crate)`; a constant is private, or public and shared `` | `make it private, or pub and shared from a constants file` |
+
+Registries (`lib.rs`, `mod.rs`) and `tests/` are exempt.
+
+**Does not catch:** same-named constants in different modules, which a name
+match conflates -- a reader of one counts for the other; a constant read through
+a glob import alone, or built by a macro; statics and associated constants, by
+decision.
 
 ## `implemented-in-one-file`
 

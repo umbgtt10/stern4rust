@@ -72,6 +72,47 @@ edition = \"2021\"
     path
 }
 
+// Two members, the second reading the first's constants: `LIMIT` from two of
+// its files, `PAGE` from one. Whether a constant is shared is a question about
+// the workspace, so it is asked here, where a run reads one.
+fn probe_reading_workspace(name: &str) -> PathBuf {
+    let root = env::temp_dir().join(format!("stern4rust_reading_{name}"));
+    let _ = fs::remove_dir_all(&root);
+    let files = [
+        ("alpha/src/lib.rs", "pub mod limits;\n"),
+        (
+            "alpha/src/limits.rs",
+            "pub const LIMIT: u32 = 3;\npub const PAGE: u32 = 8;\n",
+        ),
+        ("beta/src/lib.rs", "pub mod pool;\npub mod wire;\n"),
+        (
+            "beta/src/pool.rs",
+            "use alpha::limits::LIMIT;\nuse alpha::limits::PAGE;\n\npub fn size() -> u32 {\n    LIMIT + PAGE\n}\n",
+        ),
+        (
+            "beta/src/wire.rs",
+            "use alpha::limits::LIMIT;\n\npub fn frame() -> u32 {\n    LIMIT\n}\n",
+        ),
+    ];
+    for member in ["alpha", "beta"] {
+        fs::create_dir_all(root.join(member).join("src")).expect("create the member");
+        fs::write(
+            root.join(member).join("Cargo.toml"),
+            format!("[package]\nname = \"{member}\"\nversion = \"0.1.0\"\nedition = \"2021\"\n"),
+        )
+        .expect("write the member manifest");
+    }
+    for (path, contents) in files {
+        fs::write(root.join(path), contents).expect("write the source");
+    }
+    fs::write(
+        root.join("Cargo.toml"),
+        "[workspace]\nresolver = \"2\"\nmembers = [\"alpha\", \"beta\"]\n",
+    )
+    .expect("write the workspace manifest");
+    root
+}
+
 // Two members whose files have the same package-relative names, each carrying
 // the same offence. `src/widget.rs` in `alpha` and `src/widget.rs` in `beta`
 // are two different files that render as one string, which is the whole of the
@@ -476,6 +517,52 @@ fn run_reporting_over_a_larger_workspace_states_the_same_manifest_finding_once()
     assert_eq!(document["offences_found"], 1, "{report}");
 }
 
+// A constant only a sibling crate reads is shared all the same, and a run
+// scoped to one member still counts the readers in the others.
+#[test]
+fn run_reporting_over_a_workspace_counts_a_sibling_crates_readers() {
+    // Arrange
+    let root = probe_reading_workspace("sibling");
+    let manifest = root.join("Cargo.toml");
+
+    // Act
+    let reports: Vec<String> = [None, Some("alpha")]
+        .into_iter()
+        .map(|package| {
+            let mut parts = vec![
+                "cargo-stern4rust",
+                "--manifest-path",
+                manifest.to_str().expect("a utf-8 path"),
+                "--format",
+                "json",
+                "--rule",
+                "shared-constants",
+            ];
+            parts.extend(
+                package
+                    .map(|name| ["--package", name])
+                    .into_iter()
+                    .flatten(),
+            );
+            Runner::run_reporting(args_from(&parts))
+                .expect("the run itself should succeed")
+                .1
+        })
+        .collect();
+
+    // Assert
+    for report in reports {
+        let document: Value = from_str(&report).expect("valid json");
+        let offences = document["offences"].as_array().expect("an offences array");
+        assert_eq!(offences.len(), 1, "{report}");
+        assert_eq!(offences[0]["file"], "src/limits.rs", "{report}");
+        assert_eq!(
+            offences[0]["description"], "`PAGE` is public, and only `beta/src/pool.rs` reads it",
+            "{report}"
+        );
+    }
+}
+
 // One member declares it, so the report says so once -- not once per member.
 //
 // `workspace-dependencies` reads every manifest in the workspace, and the
@@ -574,7 +661,7 @@ fn run_reporting_with_rules_in_json_carries_the_same_rules_as_the_text() {
     // Assert
     let parsed: Value = from_str(&report).expect("valid json");
     let rules = parsed["rules"].as_array().expect("a rules array");
-    assert_eq!(rules.len(), 32);
+    assert_eq!(rules.len(), 33);
     assert!(rules.iter().all(|entry| {
         !entry["name"].as_str().unwrap_or_default().is_empty()
             && !entry["breaks"].as_str().unwrap_or_default().is_empty()

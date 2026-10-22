@@ -30,6 +30,7 @@ use crate::rules::source::public_or_private_rule::PublicOrPrivateRule;
 use crate::rules::source::pure_traits_rule::PureTraitsRule;
 use crate::rules::source::readable_source_rule::ReadableSourceRule;
 use crate::rules::source::returned_mutations_rule::ReturnedMutationsRule;
+use crate::rules::source::shared_constants_rule::SharedConstantsRule;
 use crate::rules::source::single_implemented_type_rule::SingleImplementedTypeRule;
 use crate::rules::source::test_free_source_rule::TestFreeSourceRule;
 use crate::rules::source::typed_errors_rule::TypedErrorsRule;
@@ -180,6 +181,7 @@ impl RuleRegistry {
             Box::new(PureTraitsRule::new()),
             Box::new(RegistryCompletenessRule::new()),
             Box::new(ReturnedMutationsRule::new()),
+            Box::new(SharedConstantsRule::new(config.name_readers.clone())),
             Box::new(SingleImplementedTypeRule::new()),
             Box::new(SpdxMatchesManifestRule::new(
                 config.manifest_license.clone(),

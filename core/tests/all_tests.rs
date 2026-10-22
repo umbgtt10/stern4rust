@@ -17,3 +17,4 @@ pub mod source_file_tests;
 pub mod source_reader_tests;
 pub mod source_walker_tests;
 pub mod test_file_rewriter_tests;
+pub mod workspace_sources_tests;

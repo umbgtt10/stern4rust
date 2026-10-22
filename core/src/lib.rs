@@ -37,3 +37,4 @@ pub mod source_reader;
 pub mod source_rewriter;
 pub mod source_walker;
 pub mod test_file_rewriter;
+pub mod workspace_sources;

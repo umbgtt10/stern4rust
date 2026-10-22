@@ -1,6 +1,6 @@
 # R032-ADR-SharedConstantsRule
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-10-20
 
 ## Context
@@ -54,11 +54,23 @@ Read as:
   |---|---|
   | `pub`, read by no other file | *"make it private"*, or delete it |
   | `pub`, read by one other file | *"move it into `<file>` and make it private"* |
+  | `pub`, read by one other file and its own, beside other items | *"move it into a constants file"*, or private if the other can do without it |
   | `pub`, shared, beside other items | *"move it into a constants file"* |
   | restricted visibility | *"make it private, or `pub` and shared"* |
 
+  A file's declaration is not a read: the names a file reads are the ones in
+  its paths, imports, patterns and macro tokens. So the third row is a constant
+  its own file uses and one other file does too -- two files sharing a fact,
+  whose home is a constants file, and not the other file, which the second row
+  would have offered: moved there, the declaring file would have to read it
+  back. The census found 28 of them, among them `dry4rust`'s baseline-file name,
+  which a test reads.
+- **Module-level** is a file's own top-level items. An inline module is not
+  descended into, as [R031](R031-ADR-LeadingConstantsRule.md) does not.
+
 - **Adoption is by baseline** ([ADR-Baselines](ADR-Baselines.md)).
-- **Exempt:** `tests/`, registries.
+- **Exempt:** `tests/`, and the registries `lib.rs` and `mod.rs`, as
+  [R031](R031-ADR-LeadingConstantsRule.md) exempts them.
 
 ## Forcing constraints / Evidence
 
@@ -98,6 +110,30 @@ The 19 constants read nowhere in their repository are dead code or a public API
 for another repository; which, the census cannot tell, and the per-package skip
 is for the second.
 
+**Re-run with this tool on 2026-10-22: 228 offences**, every difference from
+the 255 accounted for. 27 of `etheram-embassy`'s and `crap4rust`'s one were
+associated constants -- `impl Verdict { pub const STARTED_MARKER ... }` --,
+which the decision leaves alone and the census, matching indented lines, had
+counted. Two of the analysis workspace's three went with the code it retired
+since. And `etheram-ibft-embassy`'s fourteen are seventeen counted per
+workspace: thirteen in its root workspace, one in `demo/` and three in
+`tools/cluster-console/`, each a workspace of its own whose readers are its
+own -- the three are constants only one file of the console reads.
+
+| repository | offences | none | one | here and one | beside | restricted |
+|---|---:|---:|---:|---:|---:|---:|
+| `etheram-embassy` | 100 | 14 | 21 | 2 | 17 | 46 |
+| `etheram-ibft` | 91 | 3 | 27 | 19 | 42 | 0 |
+| `etheram-ibft-embassy`, three workspaces | 17 | 0 | 8 | 3 | 2 | 4 |
+| `etheram-raft-embassy` | 10 | 2 | 1 | 2 | 5 | 0 |
+| `grip4rust` | 5 | 0 | 4 | 0 | 1 | 0 |
+| `etheram-tools`, `dry4rust` | 2 each | 0 | 0 | 1 each | 1 each | 0 |
+| the analysis workspace | 1 | 0 | 0 | 0 | 1 | 0 |
+| `etheram-core`, `etheram-raft`, `braintax4rust`, `crap4rust`, `iceberg4rust`, `slotgate`, `stern4rust`, `twin4rust` | **0** | | | | | |
+
+A run reads every member's files once more to build the index; the largest
+workspace, `etheram-ibft`'s, takes 0.8 seconds with it.
+
 ## Rejected alternatives
 
 **Allowing `pub` constants anywhere** and judging only the restricted forms. It
@@ -131,14 +167,35 @@ protocol tags being where the shared constants are; the rest is small.
 
 ## Enforcement
 
-To be written test-first when the rule is built: a private constant left alone;
-a `pub` constant read by none, one and two other files, in a constants file and
-beside other items, each with its correction; references from `tests/` counted;
-a sibling crate's reference counted; restricted visibility; statics and
-associated constants left alone; a package skipping the rule; registries and
-`tests/` exempt; the unparseable file; `check_workspace`, `is_configured`, the
-name and the requirement; `tests/rule_registry_tests.rs` updated. This crate has
-no offence today.
+`tests/rules/source/shared_constants_rule_tests.rs` -- eighteen tests: a `pub`
+constant read by no other file, by one, by its own file and one other, and by
+two beside a type, each reported at its name with its description and
+correction pinned word for word; `pub(crate)` and `pub(in crate::node)` reported
+as written; two unread constants reported each; a private constant, a shared
+one in a constants file -- imports, constants, a static, a type alias --, one
+read only from `tests/` and a sibling crate, a static, an associated constant,
+an inline module, a registry, a test file and an unparseable file left alone;
+`check_workspace` answering nothing; the explanation breaking the rule and its
+mend not; `is_configured`, the name and the requirement.
+
+`tests/finding/parsing/read_names_tests.rs` (seven) pins what reading is -- an
+import, a rename, a path inside a type and an expression, a `match` arm, a
+macro's tokens -- and that a declaration is not, nor a file that does not
+parse; and the index naming each reader by its path.
+`tests/finding/model/name_readers_tests.rs` (four) pins the answer from inside a
+package: the asking file left out of `others`, the readers named
+workspace-relative, and `reads` telling whether the asking file reads a name.
+`tests/workspace_sources_tests.rs` (two) pins the files the index is built from:
+every member's, named from the workspace root, each through its own exclusions.
+
+`tests/runner_tests.rs`' `run_reporting_over_a_workspace_counts_a_sibling_crates_readers`
+builds a two-member workspace whose second member reads the first's constants,
+and runs the tool over it whole and scoped to the first: both find the one
+constant a single file of the sibling reads, and not the one two files read.
+The four rule-name lists in `tests/rule_registry_tests.rs` include
+`shared-constants`, and the `--rules` listing holds thirty-three. Stage 2 runs
+this tool, built from the checkout, against this crate with every rule applied
+and zero offences.
 
 ## Related
 

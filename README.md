@@ -16,7 +16,7 @@ already own correctness. These are the things a reviewer would otherwise have to
 say by hand, every time, forever — and the ones that quietly stop being true
 across a codebase the moment nobody is checking.
 
-> **Status: thirty-two rules.** The set below is what is implemented and
+> **Status: thirty-three rules.** The set below is what is implemented and
 > gated. `stern4rust` runs against its own tree on every build, so a rule that
 > would fail this repository cannot be merged into it.
 
@@ -513,6 +513,22 @@ imports when there is none -- and touches nothing else. It declines a file with
 a `macro_rules!`, a constant sharing a line with another item, and a file whose
 opening comment runs into its first item; their offences stay, and say why.
 [R031](docs/ADRs/R031-ADR-LeadingConstantsRule.md)
+
+### `shared-constants`
+
+A module-level constant is private, or public and shared from a constants file.
+A `pub const` in `src/` is reported when no other file reads it, when exactly
+one does -- which could hold it privately --, and when two or more do but it
+sits beside a type or a function rather than in a file of imports, constants,
+statics and type aliases. `pub(crate)` and its kin are reported on their own:
+private, or public and shared.
+
+Readers are counted by name across the whole workspace, `tests/` and sibling
+crates included, so a constant only another member reads is shared all the
+same; a run scoped to one member still counts the others. Statics are state and
+stay with their owner, associated constants are their type's, and registries
+and `tests/` are exempt. A library whose constants other repositories read
+skips the rule by name. [R032](docs/ADRs/R032-ADR-SharedConstantsRule.md)
 
 ### `implemented-in-one-file`
 

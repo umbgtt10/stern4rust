@@ -15,6 +15,7 @@ pub mod item_naming_tests;
 pub mod modules;
 pub mod public_entry_point_finder_tests;
 pub mod qualified_call_finder_tests;
+pub mod read_names_tests;
 pub mod registry_parser_tests;
 pub mod restricted_method_finder_tests;
 pub mod signatures;

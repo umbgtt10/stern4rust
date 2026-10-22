@@ -15,6 +15,7 @@ pub mod item_naming;
 pub mod modules;
 pub mod public_entry_point_finder;
 pub mod qualified_call_finder;
+pub mod read_names;
 pub mod registry_parser;
 pub mod restricted_method_finder;
 pub mod signatures;

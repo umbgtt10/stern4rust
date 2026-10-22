@@ -9,6 +9,7 @@ pub mod implemented_type;
 pub mod import_path;
 pub mod layout;
 pub mod manifest_dependency;
+pub mod name_readers;
 pub mod package_tree;
 pub mod public_entry_point;
 pub mod qualified_call;

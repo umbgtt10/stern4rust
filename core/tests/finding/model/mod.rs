@@ -9,6 +9,7 @@ pub mod implemented_type_tests;
 pub mod import_path_tests;
 pub mod layout;
 pub mod manifest_dependency_tests;
+pub mod name_readers_tests;
 pub mod package_tree_tests;
 pub mod public_entry_point_tests;
 pub mod qualified_call_tests;

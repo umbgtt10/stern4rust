@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::finding::model::manifest_dependency::ManifestDependency;
+use crate::finding::model::name_readers::NameReaders;
 use crate::reporting::offence_threshold::OffenceThreshold;
 use crate::reporting::output_format::OutputFormat;
 use crate::settings::rule_selection::RuleSelection;
@@ -28,6 +29,7 @@ pub struct Config {
     pub manifest_path: Option<PathBuf>,
     pub max_files_per_directory: Option<usize>,
     pub max_subfolders_per_directory: Option<usize>,
+    pub name_readers: NameReaders,
     pub packages: Vec<String>,
     pub excludes: Vec<String>,
     pub expected_header: Vec<String>,

@@ -17,6 +17,7 @@ pub mod public_or_private_rule;
 pub mod pure_traits_rule;
 pub mod readable_source_rule;
 pub mod returned_mutations_rule;
+pub mod shared_constants_rule;
 pub mod single_implemented_type_rule;
 pub mod test_free_source_rule;
 pub mod typed_errors_rule;

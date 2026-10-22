@@ -6,17 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-Eight rules added, all on by default, so they move what this tool reports about
+Nine rules added, all on by default, so they move what this tool reports about
 your code once it is released. A function returning a mutable reference, one
 returning a tuple that repeats an element type, a module-level constant declared
-after another item, a type implemented in more than one file, a method that is
-neither `pub` nor private, an impl block out of order, a library function
-failing with a string, and a test reading a clock or waiting on a timer become
-offences; to adopt one later, add its name -- `immutable-returns`,
-`distinct-tuple-elements`, `leading-constants`, `implemented-in-one-file`,
-`public-or-private`, `ordered-impl-functions`, `typed-errors` or
-`timeless-tests` -- to `skip` in your `stern4rust.toml` once you install a
-version that knows it. Two are fixable: `--fix` moves the constants and
+after another item, a public one without a constants file and readers to share
+it, a type implemented in more than one file, a method that is neither `pub`
+nor private, an impl block out of order, a library function failing with a
+string, and a test reading a clock or waiting on a timer become offences; to
+adopt one later, add its name -- `immutable-returns`,
+`distinct-tuple-elements`, `leading-constants`, `shared-constants`,
+`implemented-in-one-file`, `public-or-private`, `ordered-impl-functions`,
+`typed-errors` or `timeless-tests` -- to `skip` in your `stern4rust.toml` once
+you install a version that knows it. Two are fixable: `--fix` moves the constants and
 reorders the impls.
 And `--fix` now repairs only what the run applies: test files are left alone
 where `test-file-structure` is skipped or not selected.
@@ -125,6 +126,21 @@ where `test-file-structure` is skipped or not selected.
   runner's two and the CRAP report parser. This repository's five take typed
   errors: `GateFailure`, `StageFailure`, `LaunchFailure` and `ReportFailure`,
   each saying itself exactly as the run reported before.
+- **`shared-constants`: a module-level constant is private, or public and
+  shared from a constants file.** A `pub const` in `src/` is reported when no
+  other file reads it, when one does, and when two or more do but it sits beside
+  a type or a function rather than in a file of imports, constants, statics and
+  type aliases; `pub(crate)` and its kin are reported on their own. Readers are
+  counted by name across every member of the workspace, `tests/` included, from
+  an index the runner builds once and hands every package, so a run scoped to
+  one member still sees the others. Statics, associated constants, registries
+  and `tests/` are left alone, and a library read from other repositories skips
+  it by name. [R032](docs/ADRs/R032-ADR-SharedConstantsRule.md)
+
+  The rule reports 228 offences across the sixteen repositories of the family:
+  19 constants nobody else reads, 61 one other file reads, 28 their own file and
+  one other share, 70 shared from beside other items, 50 of restricted
+  visibility. This repository has none.
 - **`timeless-tests`: a test reads no clock and waits on no timer.** In
   `tests/`, `benches/` and the `#[cfg(test)]` modules of `src/`, a function --
   test or helper -- reading `Instant::now`, `SystemTime::now` or their `chrono`,

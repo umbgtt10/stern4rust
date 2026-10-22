@@ -17,6 +17,7 @@ pub mod public_or_private_rule_tests;
 pub mod pure_traits_rule_tests;
 pub mod readable_source_rule_tests;
 pub mod returned_mutations_rule_tests;
+pub mod shared_constants_rule_tests;
 pub mod single_implemented_type_rule_tests;
 pub mod test_free_source_rule_tests;
 pub mod typed_errors_rule_tests;

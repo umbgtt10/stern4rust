@@ -63,6 +63,15 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
   repositories, five of them in every `xtask` the family shares, this
   repository's included, which take typed errors here. On by default.
   [R030](ADRs/R030-ADR-TypedErrorsRule.md)
+- **`shared-constants`** -- a module-level constant is private, or public and
+  shared from a constants file: a `pub const` in `src/` read by no other file,
+  by one, or by two or more from beside a type or a function is reported, with
+  the correction its case calls for, and restricted visibility on its own.
+  Readers are counted by name across every member of the workspace, `tests/`
+  included, from an index the runner builds once. Statics, associated constants,
+  registries and `tests/` are left alone. 228 offences across the sixteen
+  repositories; this repository has none. On by default.
+  [R032](ADRs/R032-ADR-SharedConstantsRule.md)
 - **`timeless-tests`** -- a test reads no clock and waits on no timer: in
   `tests/`, `benches/` and `src/`'s test modules, a function reading
   `Instant::now` or its kin, an `elapsed()` off one, sleeping, racing a
