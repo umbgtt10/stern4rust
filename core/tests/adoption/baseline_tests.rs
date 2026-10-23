@@ -37,8 +37,8 @@ fn apply_forgives_an_offence_that_moved_to_a_new_line() {
     let outcome = baseline.apply(vec![offence("src/a.rs", 400, "header", "wrong")]);
 
     // Assert
-    assert!(outcome.kept.is_empty());
-    assert_eq!(outcome.suppressed, 1);
+    assert!(outcome.kept().is_empty());
+    assert_eq!(outcome.suppressed(), 1);
 }
 
 #[test]
@@ -57,8 +57,8 @@ fn apply_forgives_each_recorded_offence_once() {
     ]);
 
     // Assert
-    assert_eq!(outcome.kept.len(), 1);
-    assert_eq!(outcome.suppressed, 2);
+    assert_eq!(outcome.kept().len(), 1);
+    assert_eq!(outcome.suppressed(), 2);
 }
 
 #[test]
@@ -70,8 +70,8 @@ fn apply_of_an_empty_baseline_keeps_everything() {
     let outcome = baseline.apply(vec![offence("src/a.rs", 1, "header", "wrong")]);
 
     // Assert
-    assert_eq!(outcome.kept.len(), 1);
-    assert_eq!(outcome.suppressed, 0);
+    assert_eq!(outcome.kept().len(), 1);
+    assert_eq!(outcome.suppressed(), 0);
 }
 
 #[test]
@@ -83,9 +83,9 @@ fn apply_reports_an_offence_the_baseline_never_saw() {
     let outcome = baseline.apply(vec![offence("src/b.rs", 1, "header", "wrong")]);
 
     // Assert
-    assert_eq!(outcome.kept.len(), 1);
-    assert_eq!(outcome.kept[0].file, "src/b.rs");
-    assert_eq!(outcome.suppressed, 0);
+    assert_eq!(outcome.kept().len(), 1);
+    assert_eq!(outcome.kept()[0].file, "src/b.rs");
+    assert_eq!(outcome.suppressed(), 0);
 }
 
 // An entry matching nothing describes an offence somebody has since fixed. Dead
@@ -102,7 +102,7 @@ fn apply_reports_how_many_entries_matched_nothing() {
     let outcome = baseline.apply(vec![offence("src/a.rs", 1, "header", "wrong")]);
 
     // Assert
-    assert_eq!(outcome.stale, 1);
+    assert_eq!(outcome.stale(), 1);
     assert!(outcome.is_stale());
 }
 

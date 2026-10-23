@@ -41,13 +41,29 @@ fn excluded_total_sums_every_pattern() {
 }
 
 #[test]
+fn into_parts_gives_up_the_paths_kept_and_each_patterns_count() {
+    // Arrange
+    let found = ExclusionOutcome::new(
+        vec![PathBuf::from("src/a.rs")],
+        vec![("x/**".to_string(), 1)],
+    );
+
+    // Act
+    let (kept, excluded) = found.into_parts();
+
+    // Assert
+    assert_eq!(kept, [PathBuf::from("src/a.rs")]);
+    assert_eq!(excluded, [("x/**".to_string(), 1)]);
+}
+
+#[test]
 fn new_keeps_every_field_it_was_given() {
     // Arrange & Act
     let found = ExclusionOutcome::new(vec![PathBuf::from("src/a.rs")], vec![("x/**".into(), 1)]);
 
     // Assert
-    assert_eq!(found.kept, [PathBuf::from("src/a.rs")]);
-    assert_eq!(found.excluded, [("x/**".to_string(), 1)]);
+    assert_eq!(found.kept(), [PathBuf::from("src/a.rs")]);
+    assert_eq!(found.excluded(), [("x/**".to_string(), 1)]);
 }
 
 #[test]

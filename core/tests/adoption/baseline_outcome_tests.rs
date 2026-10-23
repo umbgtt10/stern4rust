@@ -22,6 +22,18 @@ fn offence() -> Offence {
 }
 
 #[test]
+fn into_kept_gives_up_the_offences_kept() {
+    // Arrange
+    let outcome = BaselineOutcome::new(vec![offence()], 3, 1);
+
+    // Act
+    let kept = outcome.into_kept();
+
+    // Assert
+    assert_eq!(kept, [offence()]);
+}
+
+#[test]
 fn is_stale_with_a_dead_entry_is_true() {
     // Arrange & Act
     let outcome = BaselineOutcome::new(Vec::new(), 0, 2);
@@ -45,7 +57,7 @@ fn new_keeps_every_field_it_was_given() {
     let outcome = BaselineOutcome::new(vec![offence()], 3, 1);
 
     // Assert
-    assert_eq!(outcome.kept.len(), 1);
-    assert_eq!(outcome.suppressed, 3);
-    assert_eq!(outcome.stale, 1);
+    assert_eq!(outcome.kept().len(), 1);
+    assert_eq!(outcome.suppressed(), 3);
+    assert_eq!(outcome.stale(), 1);
 }

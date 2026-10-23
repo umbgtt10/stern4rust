@@ -13,8 +13,8 @@ use std::path::PathBuf;
 // indistinguishable from a run that had nothing to say -- which is the same
 // failure this tool refuses everywhere else.
 pub struct ExclusionOutcome {
-    pub kept: Vec<PathBuf>,
-    pub excluded: Vec<(String, usize)>,
+    kept: Vec<PathBuf>,
+    excluded: Vec<(String, usize)>,
 }
 
 impl ExclusionOutcome {
@@ -22,8 +22,20 @@ impl ExclusionOutcome {
         Self { kept, excluded }
     }
 
+    pub fn excluded(&self) -> &[(String, usize)] {
+        &self.excluded
+    }
+
     pub fn excluded_total(&self) -> usize {
         self.excluded.iter().map(|(_, count)| count).sum()
+    }
+
+    pub fn into_parts(self) -> (Vec<PathBuf>, Vec<(String, usize)>) {
+        (self.kept, self.excluded)
+    }
+
+    pub fn kept(&self) -> &[PathBuf] {
+        &self.kept
     }
 
     // The patterns that turned out to cover nothing, which the report names so

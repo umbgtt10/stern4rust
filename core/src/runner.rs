@@ -192,10 +192,12 @@ impl Runner {
             // the tree -- "there is exactly one all_tests.rs" -- cannot be
             // answered a file at a time, and the file that carries the offence
             // is often the one that does not exist.
-            let outcome = exclusions.apply(SourceWalker::walk(root), root);
+            let (kept, patterns) = exclusions
+                .apply(SourceWalker::walk(root), root)
+                .into_parts();
             let mut files: Vec<SourceFile> = Vec::new();
             let mut found: Vec<Offence> = Vec::new();
-            for path in outcome.kept {
+            for path in kept {
                 files_scanned += 1;
                 match SourceReader::read(root, &path) {
                     Ok(file) => files.push(file),
@@ -231,7 +233,7 @@ impl Runner {
             let mut seen = HashSet::new();
             found.retain(|offence| seen.insert(offence.clone()));
             offences.extend(found);
-            excluded.push(outcome.excluded);
+            excluded.push(patterns);
         }
 
         // Rules run in registration order and the tree-wide pass runs last, so
@@ -244,13 +246,14 @@ impl Runner {
             return Self::record(&config, offences).map(|outcome| (outcome, String::new()));
         }
         let baselined = Self::baselined(&config, offences)?;
-        let offences = baselined.kept;
+        let summary = BaselineOutcome::new(Vec::new(), baselined.suppressed(), baselined.stale());
+        let offences = baselined.into_kept();
         let report = Self::report(
             &config,
             &registry,
             ScanTotals::new(files_scanned, fixed),
             &Self::merged(excluded),
-            &BaselineOutcome::new(Vec::new(), baselined.suppressed, baselined.stale),
+            &summary,
             &rosters,
             &offences,
         );
@@ -467,12 +470,12 @@ impl Runner {
                 .with_threshold(threshold)
                 .with_rules(applied.clone(), skipped.clone(), unconfigured.clone())
                 .with_package_rosters(rosters.to_vec())
-                .with_exclusions(excluded.excluded.clone())
+                .with_exclusions(excluded.excluded().to_vec())
                 .with_config_file(Self::shown(config))
                 .with_baseline(
                     Self::baseline_shown(config),
-                    baselined.suppressed,
-                    baselined.stale,
+                    baselined.suppressed(),
+                    baselined.stale(),
                 )
                 .with_fixed(totals.fixed)
                 .render(offences),
@@ -480,12 +483,12 @@ impl Runner {
                 .with_threshold(threshold)
                 .with_rules(applied, skipped, unconfigured_names)
                 .with_package_rosters(rosters.to_vec())
-                .with_exclusions(excluded.excluded.clone())
+                .with_exclusions(excluded.excluded().to_vec())
                 .with_config_file(Self::shown(config))
                 .with_baseline(
                     Self::baseline_shown(config),
-                    baselined.suppressed,
-                    baselined.stale,
+                    baselined.suppressed(),
+                    baselined.stale(),
                 )
                 .with_fixed(totals.fixed)
                 .render(offences),

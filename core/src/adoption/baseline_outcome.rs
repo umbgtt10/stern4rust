@@ -16,9 +16,9 @@ use crate::reporting::offence::Offence;
 // fixed, and until the baseline is rewritten it is dead weight that makes the
 // file look like it is still holding something back.
 pub struct BaselineOutcome {
-    pub kept: Vec<Offence>,
-    pub suppressed: usize,
-    pub stale: usize,
+    kept: Vec<Offence>,
+    suppressed: usize,
+    stale: usize,
 }
 
 impl BaselineOutcome {
@@ -30,7 +30,23 @@ impl BaselineOutcome {
         }
     }
 
+    pub fn into_kept(self) -> Vec<Offence> {
+        self.kept
+    }
+
     pub fn is_stale(&self) -> bool {
         self.stale > 0
+    }
+
+    pub fn kept(&self) -> &[Offence] {
+        &self.kept
+    }
+
+    pub fn stale(&self) -> usize {
+        self.stale
+    }
+
+    pub fn suppressed(&self) -> usize {
+        self.suppressed
     }
 }

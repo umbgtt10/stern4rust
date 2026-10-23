@@ -40,8 +40,8 @@ fn apply_attributes_a_doubly_covered_path_to_the_first_pattern_only() {
 
     // Assert
     assert_eq!(outcome.excluded_total(), 1);
-    assert_eq!(outcome.excluded[0], ("fixture/**".to_string(), 1));
-    assert_eq!(outcome.excluded[1], ("**/*.rs".to_string(), 0));
+    assert_eq!(outcome.excluded()[0], ("fixture/**".to_string(), 1));
+    assert_eq!(outcome.excluded()[1], ("**/*.rs".to_string(), 0));
 }
 
 #[test]
@@ -61,8 +61,8 @@ fn apply_counts_what_each_pattern_removed() {
     );
 
     // Assert
-    assert_eq!(outcome.excluded[0], ("fixture/**".to_string(), 2));
-    assert_eq!(outcome.excluded[1], ("vendor/**".to_string(), 1));
+    assert_eq!(outcome.excluded()[0], ("fixture/**".to_string(), 2));
+    assert_eq!(outcome.excluded()[1], ("vendor/**".to_string(), 1));
     assert_eq!(outcome.excluded_total(), 3);
 }
 
@@ -75,7 +75,7 @@ fn apply_keeps_a_path_no_pattern_covers() {
     let outcome = set.apply(paths(&["fixture/a.rs", "src/b.rs"]), Path::new(ROOT));
 
     // Assert
-    assert_eq!(outcome.kept, paths(&["src/b.rs"]));
+    assert_eq!(outcome.kept(), paths(&["src/b.rs"]));
 }
 
 // The case a total would hide: a pattern naming a tree that no longer exists
@@ -102,8 +102,8 @@ fn apply_with_no_patterns_keeps_everything() {
     let outcome = set.apply(paths(&["src/a.rs", "tests/b.rs"]), Path::new(ROOT));
 
     // Assert
-    assert_eq!(outcome.kept.len(), 2);
-    assert!(outcome.excluded.is_empty());
+    assert_eq!(outcome.kept().len(), 2);
+    assert!(outcome.excluded().is_empty());
 }
 
 #[test]

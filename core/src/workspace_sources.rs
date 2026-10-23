@@ -25,10 +25,10 @@ impl WorkspaceSources {
         members
             .iter()
             .flat_map(|(member, exclusions)| {
-                exclusions
+                let (kept, _) = exclusions
                     .apply(SourceWalker::walk(member), member)
-                    .kept
-                    .into_iter()
+                    .into_parts();
+                kept.into_iter()
                     .filter_map(|path| SourceReader::read(root, &path).ok())
             })
             .collect()
