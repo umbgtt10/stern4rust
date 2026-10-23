@@ -135,14 +135,27 @@ more testing surface, at the price of the tests that pin it.
   syntax. Whether a field should be read at all is a design question a syntax
   tree cannot answer.
 
-## Open questions for the owner
+## Open questions for the owner, answered
 
-1. **Getter names.** The family names a getter after its field -- 725 of them,
-  none `get_<field>` -- and uses `get_` for lookups that take an argument:
-  `get_term(node_id)`, `get_proposer(height)`. Whether to require either is a
-  separate rule, not this one's.
-2. **Builders.** One house shape for a record past seven fields -- a builder
-  type, or `Default` with `with_<field>` steps -- or left to each crate.
+1. **Getter names** -- not this rule's, and on 2026-10-23 not any rule's: the owner dropped a getter-naming rule in
+   either direction. A getter keeps the family's habit, named after its field.
+2. **Builders** -- left to each crate. Where a record is past seven fields, this repository uses a `Default` and
+   `with_<field>(self, value) -> Self` steps, the shape the family's experiment plans take as their default.
+
+## Building it
+
+Decided by the owner on 2026-10-23: the rule ships in the coming release and is enforced on the tools and on
+`etheram-ibft`. The rule's own gate runs the development build over this repository first, so this repository goes
+first, in commits that change no behaviour, and the rule lands on a tree it finds clean:
+
+1. **This repository's 36 structs made private**, a module group a commit -- adoption, the finding models, the
+   layout models, reporting, the settings, `Config` alone, then `xtask` -- each getter called by a test before it
+   exists, and every literal site moved to a constructor or a `with_` step.
+2. **The rule**, test-first, as *Enforcement* below says, with `RULES.md`, the README, the ADR index,
+   `IMPLEMENTED-FEATURES.md`, the roadmap, the CLAUDE.md count and the changelog.
+3. **The census re-run with the rule** over the sixteen repositories, read-only, and recorded here.
+4. **The tools, `slotgate` and `etheram-core`**, a repository at a time and a module group a commit, each through its
+   own gates and the development build. `etheram-ibft` takes the rule in its own overhaul, not here.
 
 ## Enforcement
 
