@@ -15,9 +15,9 @@ use stern4rust::source_file::SourceFile;
 
 fn kinds(body: &str) -> Vec<(String, MemberKind)> {
     single(body)
-        .members
-        .into_iter()
-        .map(|member| (member.name, member.kind))
+        .members()
+        .iter()
+        .map(|member| (member.name().to_string(), member.kind()))
         .collect()
 }
 
@@ -36,7 +36,7 @@ fn parse_a_comment_after_the_last_member_does_not_refuse_the_fix() {
     let layout = single("    fn b() {}\n\n    fn a() {}\n\n    // the end\n");
 
     // Assert
-    assert_eq!(layout.refusal, None);
+    assert_eq!(layout.refusal(), None);
 }
 
 #[test]
@@ -72,7 +72,7 @@ fn parse_a_free_comment_between_functions_refuses_the_fix() {
     let layout = single("    fn b() {}\n\n    // -- queries --\n\n    fn a() {}\n");
 
     // Assert
-    assert_eq!(layout.refusal, Some(FixRefusal::FreeComment));
+    assert_eq!(layout.refusal(), Some(FixRefusal::FreeComment));
 }
 
 #[test]
@@ -81,7 +81,7 @@ fn parse_a_macro_among_the_members_refuses_the_fix() {
     let layout = single("    fn b() {}\n\n    accessors!();\n\n    fn a() {}\n");
 
     // Assert
-    assert_eq!(layout.refusal, Some(FixRefusal::MacroInvocation));
+    assert_eq!(layout.refusal(), Some(FixRefusal::MacroInvocation));
 }
 
 #[test]
@@ -91,8 +91,8 @@ fn parse_a_member_spans_its_attributes_doc_and_comment() {
         single("    fn b() {}\n\n    // Why.\n    /// What.\n    #[inline]\n    fn a() {}\n");
 
     // Assert
-    assert_eq!(layout.members[1].first_line, 4);
-    assert_eq!(layout.members[1].last_line, 7);
+    assert_eq!(layout.members()[1].first_line(), 4);
+    assert_eq!(layout.members()[1].last_line(), 7);
 }
 
 #[test]
@@ -137,10 +137,10 @@ fn parse_an_impl_names_its_type_line_and_braces() {
     ));
 
     // Assert
-    assert_eq!(layouts[0].owner, "Store");
-    assert_eq!(layouts[0].line, 3);
-    assert_eq!(layouts[0].open_line, 3);
-    assert_eq!(layouts[0].close_line, 5);
+    assert_eq!(layouts[0].owner(), "Store");
+    assert_eq!(layouts[0].line(), 3);
+    assert_eq!(layouts[0].open_line(), 3);
+    assert_eq!(layouts[0].close_line(), 5);
 }
 
 #[test]
@@ -172,7 +172,7 @@ fn parse_counts_a_constructors_parameters() {
     let layout = single("    fn from_parts(a: u8, b: u8) -> Self {\n        Self\n    }\n");
 
     // Assert
-    assert_eq!(layout.members[0].parameters, 2);
+    assert_eq!(layout.members()[0].parameters(), 2);
 }
 
 // A raw identifier sorts as the word it spells.
@@ -191,5 +191,5 @@ fn parse_two_members_on_one_line_refuses_the_fix() {
     let layout = single("    fn b() {} fn a() {}\n");
 
     // Assert
-    assert_eq!(layout.refusal, Some(FixRefusal::SharedLine));
+    assert_eq!(layout.refusal(), Some(FixRefusal::SharedLine));
 }

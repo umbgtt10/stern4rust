@@ -10,24 +10,20 @@ use stern4rust::finding::model::layout::impl_member::ImplMember;
 use stern4rust::finding::model::layout::member_kind::MemberKind;
 
 fn layout(members: &[(&str, MemberKind)]) -> ImplLayout {
-    ImplLayout {
-        owner: String::from("Bookkeepers"),
-        line: 1,
-        open_line: 1,
-        close_line: 20,
-        members: members
+    ImplLayout::new(
+        String::from("Bookkeepers"),
+        1,
+        1,
+        20,
+        members
             .iter()
             .enumerate()
-            .map(|(at, (name, kind))| ImplMember {
-                name: String::from(*name),
-                kind: *kind,
-                parameters: 0,
-                first_line: at * 4 + 2,
-                last_line: at * 4 + 4,
+            .map(|(at, (name, kind))| {
+                ImplMember::new(String::from(*name), *kind, 0, at * 4 + 2, at * 4 + 4)
             })
             .collect(),
-        refusal: None,
-    }
+        None,
+    )
 }
 
 #[test]
@@ -61,7 +57,21 @@ fn first_misplaced_points_at_the_first_member_out_of_place() {
 
     // Assert
     assert_eq!(misplaced, Some(1));
-    assert_eq!(block.ordered()[1].name, "catch_up");
+    assert_eq!(block.ordered()[1].name(), "catch_up");
+}
+
+#[test]
+fn new_keeps_every_field_it_was_given() {
+    // Arrange & Act
+    let block = layout(&[("new", MemberKind::Constructor)]);
+
+    // Assert
+    assert_eq!(block.owner(), "Bookkeepers");
+    assert_eq!(block.line(), 1);
+    assert_eq!(block.open_line(), 1);
+    assert_eq!(block.close_line(), 20);
+    assert_eq!(block.members().len(), 1);
+    assert_eq!(block.refusal(), None);
 }
 
 #[test]
@@ -75,11 +85,7 @@ fn ordered_puts_every_kind_in_its_place() {
     ]);
 
     // Act
-    let names: Vec<&str> = block
-        .ordered()
-        .iter()
-        .map(|member| member.name.as_str())
-        .collect();
+    let names: Vec<&str> = block.ordered().iter().map(|member| member.name()).collect();
 
     // Assert
     assert_eq!(names, vec!["LIMIT", "new", "len", "helper"]);

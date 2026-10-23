@@ -8,12 +8,7 @@
 use stern4rust::finding::model::layout::misplaced_constant::MisplacedConstant;
 
 fn limit() -> MisplacedConstant {
-    MisplacedConstant {
-        name: String::from("LIMIT"),
-        line: 9,
-        first_line: 7,
-        last_line: 10,
-    }
+    MisplacedConstant::new(String::from("LIMIT"), 9, 7, 10)
 }
 
 #[test]
@@ -45,4 +40,15 @@ fn holds_the_last_line_of_its_block_returns_true() {
 
     // Assert
     assert!(held);
+}
+
+#[test]
+fn new_keeps_every_field_it_was_given() {
+    // Arrange & Act
+    let found = limit();
+
+    // Assert
+    assert_eq!(found.name(), "LIMIT");
+    assert_eq!(found.line(), 9);
+    assert_eq!((found.first_line(), found.last_line()), (7, 10));
 }

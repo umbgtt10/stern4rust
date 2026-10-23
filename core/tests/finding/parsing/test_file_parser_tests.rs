@@ -23,7 +23,7 @@ fn items(contents: &str) -> Vec<TestFileItem> {
 fn sections(contents: &str) -> Vec<Section> {
     items(contents)
         .into_iter()
-        .map(|item| item.section)
+        .map(|item| item.section())
         .collect()
 }
 
@@ -95,7 +95,7 @@ fn parse_folds_a_leading_comment_into_the_item_below_it() {
     let found = items("fn a() {}\n\n// Why this one matters.\n#[test]\nfn b() {}\n");
 
     // Assert
-    assert_eq!(found[1].first_line, 3);
+    assert_eq!(found[1].first_line(), 3);
 }
 
 #[test]
@@ -104,7 +104,7 @@ fn parse_folds_several_leading_comment_lines_into_the_item_below_them() {
     let found = items("fn a() {}\n\n// One.\n// Two.\n#[test]\nfn b() {}\n");
 
     // Assert
-    assert_eq!(found[1].first_line, 3);
+    assert_eq!(found[1].first_line(), 3);
 }
 
 #[test]
@@ -113,7 +113,7 @@ fn parse_names_a_constant_by_its_identifier() {
     let found = items("const SOME_LIMIT: usize = 1;\n");
 
     // Assert
-    assert_eq!(found[0].name, "SOME_LIMIT");
+    assert_eq!(found[0].name(), "SOME_LIMIT");
 }
 
 #[test]
@@ -122,7 +122,7 @@ fn parse_names_a_function_by_its_identifier() {
     let found = items("fn helper_name() {}\n");
 
     // Assert
-    assert_eq!(found[0].name, "helper_name");
+    assert_eq!(found[0].name(), "helper_name");
 }
 
 // An impl block has no name of its own, so it borrows the type's and sits beside
@@ -133,7 +133,7 @@ fn parse_names_an_impl_block_after_the_type_it_implements() {
     let found = items("impl Recorder {}\n");
 
     // Assert
-    assert_eq!(found[0].name, "Recorder");
+    assert_eq!(found[0].name(), "Recorder");
 }
 
 #[test]
@@ -142,7 +142,7 @@ fn parse_names_an_import_as_it_was_written() {
     let found = items("use alpha::One;\n");
 
     // Assert
-    assert!(found[0].name.contains("alpha::One"));
+    assert!(found[0].name().contains("alpha::One"));
 }
 
 // rustc will say so far more clearly, and guessing at a shape from broken source
@@ -171,7 +171,7 @@ fn parse_reports_the_line_an_item_ends_on() {
     let found = items("fn a() {\n    let _ = 1;\n}\n");
 
     // Assert
-    assert_eq!(found[0].last_line, 3);
+    assert_eq!(found[0].last_line(), 3);
 }
 
 #[test]
@@ -180,7 +180,7 @@ fn parse_reports_the_line_an_item_starts_on() {
     let found = items("\n\nfn a() {}\n");
 
     // Assert
-    assert_eq!(found[0].first_line, 3);
+    assert_eq!(found[0].first_line(), 3);
 }
 
 // The attribute is part of the test, so the block starts there rather than at
@@ -191,7 +191,7 @@ fn parse_starts_a_test_block_at_its_attribute() {
     let found = items("#[test]\nfn a() {}\n");
 
     // Assert
-    assert_eq!(found[0].first_line, 1);
+    assert_eq!(found[0].first_line(), 1);
 }
 
 // A string literal's continuation lines can start with `//` -- the HEADER
@@ -205,5 +205,5 @@ fn parse_stops_folding_comments_at_the_item_above() {
     );
 
     // Assert
-    assert_eq!(found[1].first_line, 3);
+    assert_eq!(found[1].first_line(), 3);
 }

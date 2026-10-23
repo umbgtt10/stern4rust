@@ -1,3 +1,7 @@
 [[ignore]]
 fingerprint = "38e695a6ee84bafb"
 reason = "A plain constructor, Self { a, b, c, d }: under private-fields (R035) the struct's shape, not copied logic. dry4rust leaves plain constructors out from its next release (ADR-PlainConstructorsAreTheStructsShape); delete this entry then."
+
+[[ignore]]
+fingerprint = "b8b993fd4881660f"
+reason = "Plain constructors of four to six fields, a near-duplicate group: under private-fields (R035) each is its struct's shape, not copied logic. dry4rust leaves plain constructors out from its next release (ADR-PlainConstructorsAreTheStructsShape); delete this entry then."

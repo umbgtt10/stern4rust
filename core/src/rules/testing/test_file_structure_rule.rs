@@ -30,7 +30,7 @@ impl TestFileStructureRule {
     }
 
     fn alphabetic_order(&self, previous: &TestFileItem, item: &TestFileItem) -> Option<Offence> {
-        if previous.section != item.section || item.sort_key() >= previous.sort_key() {
+        if previous.section() != item.section() || item.sort_key() >= previous.sort_key() {
             return None;
         }
         if Self::ordered_by_rustfmt(previous, item) {
@@ -40,9 +40,10 @@ impl TestFileStructureRule {
             item,
             format!(
                 "{} is out of alphabetic order; it follows {}",
-                item.name, previous.name
+                item.name(),
+                previous.name()
             ),
-            format!("move `{}` above `{}`", item.name, previous.name),
+            format!("move `{}` above `{}`", item.name(), previous.name()),
         ))
     }
 
@@ -72,33 +73,34 @@ impl TestFileStructureRule {
     }
 
     fn offence(&self, item: &TestFileItem, description: String, correction: String) -> Offence {
-        Offence::new("", item.first_line, self.name(), description, correction)
-            .with_subject(&item.name)
+        Offence::new("", item.first_line(), self.name(), description, correction)
+            .with_subject(item.name())
     }
 
     // A pair whose order rustfmt decides is not this rule's to judge. Demanding
     // the alphabet there would make the file unsatisfiable rather than merely
     // wrong: the formatter runs first and writes the other order back.
     fn ordered_by_rustfmt(previous: &TestFileItem, item: &TestFileItem) -> bool {
-        item.section == Section::Imports && ImportPath::decides_order(&previous.name, &item.name)
+        item.section() == Section::Imports
+            && ImportPath::decides_order(previous.name(), item.name())
     }
 
     fn section_order(&self, previous: &TestFileItem, item: &TestFileItem) -> Option<Offence> {
-        if item.section >= previous.section {
+        if item.section() >= previous.section() {
             return None;
         }
         Some(self.offence(
             item,
             format!(
                 "a {} follows a {}, but every {} belongs above them",
-                item.section.label(),
-                previous.section.label(),
-                item.section.label()
+                item.section().label(),
+                previous.section().label(),
+                item.section().label()
             ),
             format!(
                 "move `{}` up above the {}s",
-                item.name,
-                previous.section.label()
+                item.name(),
+                previous.section().label()
             ),
         ))
     }
@@ -109,11 +111,11 @@ impl TestFileStructureRule {
         previous: &TestFileItem,
         item: &TestFileItem,
     ) -> Option<Offence> {
-        if previous.section != item.section {
+        if previous.section() != item.section() {
             return None;
         }
-        let expected = item.section.blank_lines_between_entries();
-        let found = Self::blank_lines_between(file, previous.last_line, item.first_line);
+        let expected = item.section().blank_lines_between_entries();
+        let found = Self::blank_lines_between(file, previous.last_line(), item.first_line());
         if found == expected {
             return None;
         }
@@ -121,11 +123,12 @@ impl TestFileStructureRule {
             item,
             format!(
                 "expected {expected} blank line(s) before {} but found {found}",
-                item.name
+                item.name()
             ),
             format!(
                 "leave exactly {expected} blank line(s) between `{}` and `{}`",
-                previous.name, item.name
+                previous.name(),
+                item.name()
             ),
         ))
     }

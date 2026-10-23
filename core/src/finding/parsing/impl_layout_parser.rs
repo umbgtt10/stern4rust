@@ -50,19 +50,19 @@ impl ImplLayoutParser {
     fn crowded(members: &[ImplMember], open_line: usize, close_line: usize) -> bool {
         let edges = members
             .first()
-            .is_some_and(|first| first.first_line <= open_line)
+            .is_some_and(|first| first.first_line() <= open_line)
             || members
                 .last()
-                .is_some_and(|last| last.last_line >= close_line);
+                .is_some_and(|last| last.last_line() >= close_line);
         edges
             || members
                 .windows(2)
-                .any(|pair| pair[1].first_line <= pair[0].last_line)
+                .any(|pair| pair[1].first_line() <= pair[0].last_line())
     }
 
     fn free_comment(file: &SourceFile, members: &[ImplMember]) -> bool {
         members.windows(2).any(|pair| {
-            (pair[0].last_line + 1..pair[1].first_line).any(|line| {
+            (pair[0].last_line() + 1..pair[1].first_line()).any(|line| {
                 file.lines()
                     .get(line - 1)
                     .is_some_and(|text| !text.trim().is_empty())
@@ -93,14 +93,14 @@ impl ImplLayoutParser {
             floor = last_line + 1;
         }
         let refusal = Self::refusal(file, block, &members, open_line, close_line);
-        ImplLayout {
+        ImplLayout::new(
             owner,
-            line: block.impl_token.span.start().line,
+            block.impl_token.span.start().line,
             open_line,
             close_line,
             members,
             refusal,
-        }
+        )
     }
 
     fn member(
@@ -119,13 +119,9 @@ impl ImplLayoutParser {
             ),
             _ => return None,
         };
-        Some(ImplMember {
-            name,
-            kind,
-            parameters,
-            first_line,
-            last_line,
-        })
+        Some(ImplMember::new(
+            name, kind, parameters, first_line, last_line,
+        ))
     }
 
     fn names(ty: &Type, owner: &str) -> bool {

@@ -20,10 +20,10 @@ fn new_keeps_every_field_it_was_given() {
     let subject = TestFileItem::new(Section::Tests, "alpha".to_string(), 10, 14);
 
     // Assert
-    assert_eq!(subject.section, Section::Tests);
-    assert_eq!(subject.name, "alpha");
-    assert_eq!(subject.first_line, 10);
-    assert_eq!(subject.last_line, 14);
+    assert_eq!(subject.section(), Section::Tests);
+    assert_eq!(subject.name(), "alpha");
+    assert_eq!(subject.first_line(), 10);
+    assert_eq!(subject.last_line(), 14);
 }
 
 #[test]

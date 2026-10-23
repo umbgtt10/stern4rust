@@ -39,16 +39,16 @@ impl LeadingConstantsRule {
     }
 
     fn correction(layout: &ConstantLayout) -> String {
-        match layout.refusal {
+        match layout.refusal() {
             None => format!(
                 "move it, and every constant below `{}`, straight after the imports, or run \
                  `--fix`",
-                layout.leader
+                layout.leader()
             ),
             Some(refusal) => format!(
                 "move it, and every constant below `{}`, straight after the imports by hand: \
                  `--fix` leaves alone {}",
-                layout.leader,
+                layout.leader(),
                 refusal.reason()
             ),
         }
@@ -61,15 +61,16 @@ impl LeadingConstantsRule {
     fn offence(file: &SourceFile, layout: &ConstantLayout, first: &MisplacedConstant) -> Offence {
         Offence::new(
             file.relative_path(),
-            first.line,
+            first.line(),
             Self::NAME,
             format!(
                 "`{}` is declared after `{}`; constants come straight after the imports",
-                first.name, layout.leader
+                first.name(),
+                layout.leader()
             ),
             Self::correction(layout),
         )
-        .with_subject(&first.name)
+        .with_subject(first.name())
     }
 }
 
@@ -91,7 +92,7 @@ impl Rule for LeadingConstantsRule {
         ConstantLayoutParser::parse(file)
             .and_then(|layout| {
                 layout
-                    .misplaced
+                    .misplaced()
                     .first()
                     .map(|first| Self::offence(file, &layout, first))
             })

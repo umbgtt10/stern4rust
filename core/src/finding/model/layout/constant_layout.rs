@@ -13,17 +13,53 @@ use crate::finding::model::layout::misplaced_constant::MisplacedConstant;
 // blank line between.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ConstantLayout {
-    pub leader: String,
-    pub insertion_line: usize,
-    pub follows_constant: bool,
-    pub misplaced: Vec<MisplacedConstant>,
-    pub refusal: Option<FixRefusal>,
+    leader: String,
+    insertion_line: usize,
+    follows_constant: bool,
+    misplaced: Vec<MisplacedConstant>,
+    refusal: Option<FixRefusal>,
 }
 
 impl ConstantLayout {
+    pub fn new(
+        leader: String,
+        insertion_line: usize,
+        follows_constant: bool,
+        misplaced: Vec<MisplacedConstant>,
+        refusal: Option<FixRefusal>,
+    ) -> Self {
+        Self {
+            leader,
+            insertion_line,
+            follows_constant,
+            misplaced,
+            refusal,
+        }
+    }
+
+    pub fn follows_constant(&self) -> bool {
+        self.follows_constant
+    }
+
+    pub fn insertion_line(&self) -> usize {
+        self.insertion_line
+    }
+
+    pub fn leader(&self) -> &str {
+        &self.leader
+    }
+
+    pub fn misplaced(&self) -> &[MisplacedConstant] {
+        &self.misplaced
+    }
+
     // Whether a line leaves its place: it belongs to one of the misplaced
     // constants' blocks.
     pub fn moves(&self, line: usize) -> bool {
         self.misplaced.iter().any(|constant| constant.holds(line))
+    }
+
+    pub fn refusal(&self) -> Option<FixRefusal> {
+        self.refusal
     }
 }

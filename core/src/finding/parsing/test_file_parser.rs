@@ -36,7 +36,7 @@ impl TestFileParser {
                 .iter()
                 .map(|item| {
                     let parsed = Self::item(file, item, floor);
-                    floor = parsed.last_line + 1;
+                    floor = parsed.last_line() + 1;
                     parsed
                 })
                 .collect(),

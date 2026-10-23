@@ -15,9 +15,9 @@ fn names(contents: &str) -> Vec<String> {
     ConstantLayoutParser::parse(&SourceFile::new("src/widget.rs", contents))
         .map(|layout| {
             layout
-                .misplaced
-                .into_iter()
-                .map(|constant| constant.name)
+                .misplaced()
+                .iter()
+                .map(|constant| constant.name().to_string())
                 .collect()
         })
         .unwrap_or_default()
@@ -47,10 +47,10 @@ fn parse_a_constant_after_a_struct_finds_it_and_the_struct() {
     let layout = ConstantLayoutParser::parse(&file).expect("a misplaced constant");
 
     // Assert
-    assert_eq!(layout.leader, "Widget");
-    assert_eq!(layout.misplaced.len(), 1);
-    assert_eq!(layout.misplaced[0].name, "LIMIT");
-    assert_eq!(layout.misplaced[0].line, 5);
+    assert_eq!(layout.leader(), "Widget");
+    assert_eq!(layout.misplaced().len(), 1);
+    assert_eq!(layout.misplaced()[0].name(), "LIMIT");
+    assert_eq!(layout.misplaced()[0].line(), 5);
 }
 
 #[test]
@@ -65,7 +65,7 @@ fn parse_a_constant_after_an_impl_names_the_impl() {
     let layout = ConstantLayoutParser::parse(&file).expect("a misplaced constant");
 
     // Assert
-    assert_eq!(layout.leader, "impl Widget");
+    assert_eq!(layout.leader(), "impl Widget");
 }
 
 // A comment directly above a constant introduces it, and an attribute is part of
@@ -82,10 +82,10 @@ fn parse_a_constant_below_a_comment_and_an_attribute_spans_all_three() {
     let layout = ConstantLayoutParser::parse(&file).expect("a misplaced constant");
 
     // Assert
-    let constant = &layout.misplaced[0];
-    assert_eq!(constant.line, 5);
-    assert_eq!(constant.first_line, 3);
-    assert_eq!(constant.last_line, 5);
+    let constant = &layout.misplaced()[0];
+    assert_eq!(constant.line(), 5);
+    assert_eq!(constant.first_line(), 3);
+    assert_eq!(constant.last_line(), 5);
 }
 
 #[test]
@@ -97,7 +97,7 @@ fn parse_a_constant_on_the_line_of_the_item_it_follows_refuses_the_fix() {
     let layout = ConstantLayoutParser::parse(&file).expect("a misplaced constant");
 
     // Assert
-    assert_eq!(layout.refusal, Some(FixRefusal::SharedLine));
+    assert_eq!(layout.refusal(), Some(FixRefusal::SharedLine));
 }
 
 #[test]
@@ -112,7 +112,7 @@ fn parse_a_constant_on_the_line_of_the_next_item_refuses_the_fix() {
     let layout = ConstantLayoutParser::parse(&file).expect("a misplaced constant");
 
     // Assert
-    assert_eq!(layout.refusal, Some(FixRefusal::SharedLine));
+    assert_eq!(layout.refusal(), Some(FixRefusal::SharedLine));
 }
 
 #[test]
@@ -159,8 +159,8 @@ fn parse_a_file_with_a_macro_rules_refuses_the_fix() {
     let layout = ConstantLayoutParser::parse(&file).expect("a misplaced constant");
 
     // Assert
-    assert_eq!(layout.leader, "macro_rules! limit");
-    assert_eq!(layout.refusal, Some(FixRefusal::MacroRules));
+    assert_eq!(layout.leader(), "macro_rules! limit");
+    assert_eq!(layout.refusal(), Some(FixRefusal::MacroRules));
 }
 
 #[test]
@@ -175,7 +175,7 @@ fn parse_a_first_item_on_the_line_of_an_import_refuses_the_fix() {
     let layout = ConstantLayoutParser::parse(&file).expect("a misplaced constant");
 
     // Assert
-    assert_eq!(layout.refusal, Some(FixRefusal::SharedLine));
+    assert_eq!(layout.refusal(), Some(FixRefusal::SharedLine));
 }
 
 // With nothing above the first item, a comment running from the top of the file
@@ -192,7 +192,7 @@ fn parse_a_first_item_the_opening_comment_runs_into_refuses_the_fix() {
     let layout = ConstantLayoutParser::parse(&file).expect("a misplaced constant");
 
     // Assert
-    assert_eq!(layout.refusal, Some(FixRefusal::OpeningComment));
+    assert_eq!(layout.refusal(), Some(FixRefusal::OpeningComment));
 }
 
 #[test]
@@ -207,8 +207,8 @@ fn parse_after_a_constant_in_place_inserts_after_it() {
     let layout = ConstantLayoutParser::parse(&file).expect("a misplaced constant");
 
     // Assert
-    assert_eq!(layout.insertion_line, 4);
-    assert!(layout.follows_constant);
+    assert_eq!(layout.insertion_line(), 4);
+    assert!(layout.follows_constant());
 }
 
 #[test]
@@ -223,9 +223,9 @@ fn parse_after_the_imports_inserts_after_the_last_of_them() {
     let layout = ConstantLayoutParser::parse(&file).expect("a misplaced constant");
 
     // Assert
-    assert_eq!(layout.insertion_line, 3);
-    assert!(!layout.follows_constant);
-    assert_eq!(layout.refusal, None);
+    assert_eq!(layout.insertion_line(), 3);
+    assert!(!layout.follows_constant());
+    assert_eq!(layout.refusal(), None);
 }
 
 #[test]
@@ -290,7 +290,7 @@ fn parse_with_nothing_above_the_first_item_inserts_before_its_block() {
     let layout = ConstantLayoutParser::parse(&file).expect("a misplaced constant");
 
     // Assert
-    assert_eq!(layout.insertion_line, 3);
-    assert!(!layout.follows_constant);
-    assert_eq!(layout.refusal, None);
+    assert_eq!(layout.insertion_line(), 3);
+    assert!(!layout.follows_constant());
+    assert_eq!(layout.refusal(), None);
 }

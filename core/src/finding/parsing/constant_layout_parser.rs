@@ -43,13 +43,13 @@ impl ConstantLayoutParser {
         if misplaced.is_empty() {
             return None;
         }
-        Some(ConstantLayout {
-            leader: Self::label(file, &items[leader]),
-            insertion_line: Self::insertion_line(&items, &firsts, leader),
-            follows_constant: leader > 0 && Self::constant(&items[leader - 1]).is_some(),
+        Some(ConstantLayout::new(
+            Self::label(file, &items[leader]),
+            Self::insertion_line(&items, &firsts, leader),
+            leader > 0 && Self::constant(&items[leader - 1]).is_some(),
             misplaced,
-            refusal: Self::refusal(&items, &firsts, leader),
-        })
+            Self::refusal(&items, &firsts, leader),
+        ))
     }
 
     fn after_another(items: &[Item], firsts: &[usize], at: usize) -> bool {
@@ -137,11 +137,13 @@ impl ConstantLayoutParser {
     }
 
     fn misplaced(item: &Item, first_line: usize) -> Option<MisplacedConstant> {
-        Self::constant(item).map(|ident| MisplacedConstant {
-            name: ident.to_string(),
-            line: ident.span().start().line,
-            first_line,
-            last_line: Self::last_line(item),
+        Self::constant(item).map(|ident| {
+            MisplacedConstant::new(
+                ident.to_string(),
+                ident.span().start().line,
+                first_line,
+                Self::last_line(item),
+            )
         })
     }
 

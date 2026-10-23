@@ -7,14 +7,39 @@
 // with it -- its attributes and the comment directly above it included.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MisplacedConstant {
-    pub name: String,
-    pub line: usize,
-    pub first_line: usize,
-    pub last_line: usize,
+    name: String,
+    line: usize,
+    first_line: usize,
+    last_line: usize,
 }
 
 impl MisplacedConstant {
+    pub fn new(name: String, line: usize, first_line: usize, last_line: usize) -> Self {
+        Self {
+            name,
+            line,
+            first_line,
+            last_line,
+        }
+    }
+
+    pub fn first_line(&self) -> usize {
+        self.first_line
+    }
+
     pub fn holds(&self, line: usize) -> bool {
         (self.first_line..=self.last_line).contains(&line)
+    }
+
+    pub fn last_line(&self) -> usize {
+        self.last_line
+    }
+
+    pub fn line(&self) -> usize {
+        self.line
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
     }
 }

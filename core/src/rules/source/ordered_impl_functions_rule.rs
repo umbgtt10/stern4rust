@@ -36,7 +36,7 @@ impl OrderedImplFunctionsRule {
     fn correction(layout: &ImplLayout) -> String {
         let order = "constructors first, fewest parameters first, then its `pub` functions, then \
                      the rest, each alphabetical, its constants and types ahead";
-        match layout.refusal {
+        match layout.refusal() {
             None => format!("list {order} -- or run `--fix`"),
             Some(refusal) => format!(
                 "list {order}, by hand: `--fix` leaves alone {}",
@@ -50,17 +50,17 @@ impl OrderedImplFunctionsRule {
         Some(
             Offence::new(
                 file.relative_path(),
-                layout.line,
+                layout.line(),
                 Self::NAME,
                 format!(
                     "`impl {}` is out of order: `{}` belongs before `{}`",
-                    layout.owner,
-                    layout.ordered()[at].name,
-                    layout.members[at].name
+                    layout.owner(),
+                    layout.ordered()[at].name(),
+                    layout.members()[at].name()
                 ),
                 Self::correction(layout),
             )
-            .with_subject(&layout.owner),
+            .with_subject(layout.owner()),
         )
     }
 }

@@ -11,10 +11,10 @@ use crate::finding::model::layout::section::Section;
 // comment is the separator and the comment itself is not a gap.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TestFileItem {
-    pub section: Section,
-    pub name: String,
-    pub first_line: usize,
-    pub last_line: usize,
+    section: Section,
+    name: String,
+    first_line: usize,
+    last_line: usize,
 }
 
 impl TestFileItem {
@@ -25,6 +25,22 @@ impl TestFileItem {
             first_line,
             last_line,
         }
+    }
+
+    pub fn first_line(&self) -> usize {
+        self.first_line
+    }
+
+    pub fn last_line(&self) -> usize {
+        self.last_line
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn section(&self) -> Section {
+        self.section
     }
 
     // Case-insensitive, because a constant is SHOUTED and a function is not, and

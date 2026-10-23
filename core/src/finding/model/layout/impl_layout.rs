@@ -10,27 +10,69 @@ use crate::finding::model::layout::impl_member::ImplMember;
 // could not.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ImplLayout {
-    pub owner: String,
-    pub line: usize,
-    pub open_line: usize,
-    pub close_line: usize,
-    pub members: Vec<ImplMember>,
-    pub refusal: Option<FixRefusal>,
+    owner: String,
+    line: usize,
+    open_line: usize,
+    close_line: usize,
+    members: Vec<ImplMember>,
+    refusal: Option<FixRefusal>,
 }
 
 impl ImplLayout {
+    pub fn new(
+        owner: String,
+        line: usize,
+        open_line: usize,
+        close_line: usize,
+        members: Vec<ImplMember>,
+        refusal: Option<FixRefusal>,
+    ) -> Self {
+        Self {
+            owner,
+            line,
+            open_line,
+            close_line,
+            members,
+            refusal,
+        }
+    }
+
+    pub fn close_line(&self) -> usize {
+        self.close_line
+    }
+
     // The first position at which the members as written differ from the
     // members in order.
     pub fn first_misplaced(&self) -> Option<usize> {
         self.ordered()
             .iter()
             .zip(&self.members)
-            .position(|(belongs, written)| belongs.first_line != written.first_line)
+            .position(|(belongs, written)| belongs.first_line() != written.first_line())
+    }
+
+    pub fn line(&self) -> usize {
+        self.line
+    }
+
+    pub fn members(&self) -> &[ImplMember] {
+        &self.members
+    }
+
+    pub fn open_line(&self) -> usize {
+        self.open_line
     }
 
     pub fn ordered(&self) -> Vec<&ImplMember> {
         let mut ordered: Vec<&ImplMember> = self.members.iter().collect();
         ordered.sort_by(|left, right| left.order(right));
         ordered
+    }
+
+    pub fn owner(&self) -> &str {
+        &self.owner
+    }
+
+    pub fn refusal(&self) -> Option<FixRefusal> {
+        self.refusal
     }
 }

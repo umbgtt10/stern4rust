@@ -11,13 +11,19 @@ use stern4rust::finding::model::layout::impl_member::ImplMember;
 use stern4rust::finding::model::layout::member_kind::MemberKind;
 
 fn member(name: &str, kind: MemberKind, parameters: usize) -> ImplMember {
-    ImplMember {
-        name: String::from(name),
-        kind,
-        parameters,
-        first_line: 1,
-        last_line: 1,
-    }
+    ImplMember::new(String::from(name), kind, parameters, 1, 1)
+}
+
+#[test]
+fn new_keeps_every_field_it_was_given() {
+    // Arrange & Act
+    let found = member("election", MemberKind::Public, 2);
+
+    // Assert
+    assert_eq!(found.name(), "election");
+    assert_eq!(found.kind(), MemberKind::Public);
+    assert_eq!(found.parameters(), 2);
+    assert_eq!((found.first_line(), found.last_line()), (1, 1));
 }
 
 #[test]

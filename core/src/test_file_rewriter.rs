@@ -74,8 +74,8 @@ impl TestFileRewriter {
     fn block(file: &SourceFile, item: &TestFileItem) -> String {
         file.lines()
             .iter()
-            .skip(item.first_line - 1)
-            .take(item.last_line + 1 - item.first_line)
+            .skip(item.first_line() - 1)
+            .take(item.last_line() + 1 - item.first_line())
             .cloned()
             .collect::<Vec<String>>()
             .join("\n")
@@ -104,7 +104,7 @@ impl TestFileRewriter {
     fn grouped(items: &[TestFileItem]) -> BTreeMap<Section, Vec<&TestFileItem>> {
         let mut grouped: BTreeMap<Section, Vec<&TestFileItem>> = BTreeMap::new();
         for item in items {
-            grouped.entry(item.section).or_default().push(item);
+            grouped.entry(item.section()).or_default().push(item);
         }
         for (section, members) in grouped.iter_mut() {
             if *section != Section::Imports {
@@ -117,7 +117,11 @@ impl TestFileRewriter {
     // Everything above the first item: the header and any file-level commentary,
     // which belong where their author put them and are never reordered.
     fn preamble(file: &SourceFile, items: &[TestFileItem]) -> String {
-        let first = items.iter().map(|item| item.first_line).min().unwrap_or(1);
+        let first = items
+            .iter()
+            .map(|item| item.first_line())
+            .min()
+            .unwrap_or(1);
         let kept: Vec<&String> = file.lines().iter().take(first - 1).collect();
         let trimmed: Vec<&&String> = kept
             .iter()
@@ -136,7 +140,7 @@ impl TestFileRewriter {
     // belongs to nobody and losing it would be the rewriter destroying content
     // it was asked to tidy.
     fn tail(file: &SourceFile, items: &[TestFileItem]) -> String {
-        let last = items.iter().map(|item| item.last_line).max().unwrap_or(0);
+        let last = items.iter().map(|item| item.last_line()).max().unwrap_or(0);
         let rest: Vec<String> = file
             .lines()
             .iter()

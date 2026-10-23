@@ -34,21 +34,21 @@ impl LeadingConstantsRewriter {
     fn assemble(file: &SourceFile, layout: &ConstantLayout) -> String {
         let lines = file.lines();
         let head = BlankLines::without_trailing(
-            &lines[..layout.insertion_line - 1]
+            &lines[..layout.insertion_line() - 1]
                 .iter()
                 .map(String::as_str)
                 .collect::<Vec<&str>>(),
         );
         let moved: Vec<&str> = layout
-            .misplaced
+            .misplaced()
             .iter()
-            .flat_map(|constant| &lines[constant.first_line - 1..constant.last_line])
+            .flat_map(|constant| &lines[constant.first_line() - 1..constant.last_line()])
             .map(String::as_str)
             .collect();
         let mut out = String::new();
         if !head.is_empty() {
             out.push_str(&head.join("\n"));
-            out.push_str(if layout.follows_constant {
+            out.push_str(if layout.follows_constant() {
                 "\n"
             } else {
                 "\n\n"
@@ -74,7 +74,7 @@ impl LeadingConstantsRewriter {
     fn rest<'a>(lines: &'a [String], layout: &ConstantLayout) -> Vec<&'a str> {
         let mut kept: Vec<&str> = Vec::new();
         let mut after_removal = false;
-        for (index, line) in lines.iter().enumerate().skip(layout.insertion_line - 1) {
+        for (index, line) in lines.iter().enumerate().skip(layout.insertion_line() - 1) {
             if layout.moves(index + 1) {
                 after_removal = true;
                 continue;
@@ -108,7 +108,7 @@ impl SourceRewriter for LeadingConstantsRewriter {
             return None;
         }
         let layout = ConstantLayoutParser::parse(file)?;
-        if layout.refusal.is_some() {
+        if layout.refusal().is_some() {
             return None;
         }
         Some(Self::assemble(file, &layout))

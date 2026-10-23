@@ -29,11 +29,13 @@ impl OrderedImplFunctionsRewriter {
     }
 
     fn body(lines: &[String], layout: &ImplLayout) -> Vec<String> {
-        let (Some(first), Some(last)) = (layout.members.first(), layout.members.last()) else {
+        let (Some(first), Some(last)) = (layout.members().first(), layout.members().last()) else {
             return Vec::new();
         };
-        let leading = BlankLines::without_trailing(&lines[layout.open_line..first.first_line - 1]);
-        let trailing = BlankLines::without_leading(&lines[last.last_line..layout.close_line - 1]);
+        let leading =
+            BlankLines::without_trailing(&lines[layout.open_line()..first.first_line() - 1]);
+        let trailing =
+            BlankLines::without_leading(&lines[last.last_line()..layout.close_line() - 1]);
         let mut body = leading.clone();
         if !leading.is_empty() {
             body.push(String::new());
@@ -41,12 +43,12 @@ impl OrderedImplFunctionsRewriter {
         let mut previous: Option<MemberKind> = None;
         for member in layout.ordered() {
             if previous
-                .is_some_and(|kind| kind != MemberKind::Head || member.kind != MemberKind::Head)
+                .is_some_and(|kind| kind != MemberKind::Head || member.kind() != MemberKind::Head)
             {
                 body.push(String::new());
             }
-            body.extend_from_slice(&lines[member.first_line - 1..member.last_line]);
-            previous = Some(member.kind);
+            body.extend_from_slice(&lines[member.first_line() - 1..member.last_line()]);
+            previous = Some(member.kind());
         }
         if !trailing.is_empty() {
             body.push(String::new());
@@ -75,16 +77,16 @@ impl SourceRewriter for OrderedImplFunctionsRewriter {
         }
         let mut fixable: Vec<ImplLayout> = ImplLayoutParser::parse(file)
             .into_iter()
-            .filter(|layout| layout.refusal.is_none() && layout.first_misplaced().is_some())
+            .filter(|layout| layout.refusal().is_none() && layout.first_misplaced().is_some())
             .collect();
         if fixable.is_empty() {
             return None;
         }
-        fixable.sort_by_key(|layout| layout.open_line);
+        fixable.sort_by_key(|layout| layout.open_line());
         let mut lines = file.lines().to_vec();
         for layout in fixable.iter().rev() {
             let body = Self::body(file.lines(), layout);
-            lines.splice(layout.open_line..layout.close_line - 1, body);
+            lines.splice(layout.open_line()..layout.close_line() - 1, body);
         }
         Some(lines.join("\n"))
     }

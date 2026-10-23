@@ -103,13 +103,14 @@ Re-record the baseline only to drop groups that are gone, never to admit new
 ones, and at the same floor -- a baseline matches only at the floor it was
 recorded at: `cargo dry4rust --path core/src --min-nodes 25 --baseline "$PWD/dry4rust-baseline.json" baseline`.
 
-`core/src/.dry4rust-ignore.toml` holds one fingerprint, with its reason: a
-plain constructor -- `Self { a, b, c, d }` -- which `private-fields` makes
-every struct have, so any two with as many fields look alike. dry4rust leaves
+`core/src/.dry4rust-ignore.toml` holds the fingerprints, each with its
+reason, of plain constructors -- `Self { a, b, c, d }` -- which
+`private-fields` makes every struct have, so any two with as many fields look
+alike, and a few with a field more or less nearly alike. dry4rust leaves
 plain constructors out from its next release
 (ADR-PlainConstructorsAreTheStructsShape, in dry4rust); until the gate installs
-it, this entry bridges, one per field count that meets another, and the file
-goes when the release does.
+it, these entries bridge -- an exact group per field count, a near group across
+counts -- and the file goes when the release does.
 
 It runs `stern4rust` against itself, built from source rather than from whatever
 is installed. A tool that enforces a rule it does not satisfy is not worth
