@@ -123,9 +123,9 @@ fn new_keeps_the_licence_it_was_given() {
     let package = ScannedPackage::new("node", root.clone(), Some("Apache-2.0".to_string()));
 
     // Assert
-    assert_eq!(package.name, "node");
-    assert_eq!(package.root, root);
-    assert_eq!(package.license.as_deref(), Some("Apache-2.0"));
+    assert_eq!(package.name(), "node");
+    assert_eq!(package.root(), root);
+    assert_eq!(package.license(), Some("Apache-2.0"));
 }
 
 // A manifest with no `license` field is not an error and not a default. It is
@@ -136,5 +136,5 @@ fn new_without_a_licence_keeps_it_absent() {
     let package = ScannedPackage::new("node", PathBuf::from("core"), None);
 
     // Assert
-    assert!(package.license.is_none());
+    assert!(package.license().is_none());
 }

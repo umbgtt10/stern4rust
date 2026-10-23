@@ -31,9 +31,9 @@ fn default_selects_and_skips_nothing() {
     let config = PackageConfig::default();
 
     // Assert
-    assert!(config.rules.is_empty());
-    assert_eq!(config.skip, None);
-    assert!(config.exclude.is_empty());
+    assert!(config.rules().is_empty());
+    assert_eq!(config.skip(), None);
+    assert!(config.exclude().is_empty());
 }
 
 // An absolute path is already an answer, and joining leaves it alone.
@@ -41,10 +41,7 @@ fn default_selects_and_skips_nothing() {
 fn header_file_from_leaves_an_absolute_path_alone() {
     // Arrange
     let absolute = Path::new("/etc").join("header.txt");
-    let config = PackageConfig {
-        header_file: Some(absolute.clone()),
-        ..PackageConfig::default()
-    };
+    let config = PackageConfig::default().with_header_file(absolute.clone());
 
     // Act
     let resolved = config.header_file_from(Path::new("/repo"));
@@ -59,14 +56,31 @@ fn header_file_from_leaves_an_absolute_path_alone() {
 #[test]
 fn header_file_from_resolves_against_the_directory_it_is_given() {
     // Arrange
-    let config = PackageConfig {
-        header_file: Some(PathBuf::from("docs/header.txt")),
-        ..PackageConfig::default()
-    };
+    let config = PackageConfig::default().with_header_file(PathBuf::from("docs/header.txt"));
 
     // Act
     let resolved = config.header_file_from(Path::new("/repo"));
 
     // Assert
     assert_eq!(resolved, Some(Path::new("/repo").join("docs/header.txt")));
+}
+
+#[test]
+fn with_header_file_names_the_header_and_keeps_the_rest() {
+    // Arrange & Act
+    let config = PackageConfig::default().with_header_file(PathBuf::from("docs/header.txt"));
+
+    // Assert
+    assert_eq!(config.header_file(), Some(Path::new("docs/header.txt")));
+    assert!(config.skip().is_none());
+}
+
+#[test]
+fn with_skip_stands_the_rules_down_and_keeps_the_rest() {
+    // Arrange & Act
+    let config = PackageConfig::default().with_skip(vec![String::from("paired-test-file")]);
+
+    // Assert
+    assert_eq!(config.skip(), Some(&[String::from("paired-test-file")][..]));
+    assert!(config.header_file().is_none());
 }

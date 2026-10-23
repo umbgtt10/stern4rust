@@ -102,7 +102,7 @@ impl Runner {
                 &sections.skipped_anywhere(
                     &packages
                         .iter()
-                        .map(|package| package.name.as_str())
+                        .map(|package| package.name())
                         .collect::<Vec<_>>(),
                 ),
             ),
@@ -134,8 +134,8 @@ impl Runner {
         .into_iter()
         .map(|member| {
             Ok((
-                member.root,
-                ExclusionSet::new(&Self::config_from(&args, sections.of(&member.name))?.excludes)?,
+                member.root().to_path_buf(),
+                ExclusionSet::new(&Self::config_from(&args, sections.of(member.name()))?.excludes)?,
             ))
         })
         .collect::<Result<Vec<_>>>()?;
@@ -161,29 +161,29 @@ impl Runner {
             // other package. Deduplication would have to guess that; the loop
             // already knows it.
             let package_config = Config {
-                manifest_license: package.license.clone(),
+                manifest_license: package.license().map(str::to_string),
                 workspace_dependencies: ManifestDependency::in_manifest(
                     &config.workspace_dependencies,
                     &ManifestResolver::relative_to(
                         &workspace_root,
-                        &package.root.join(ManifestResolver::MANIFEST),
+                        &package.root().join(ManifestResolver::MANIFEST),
                     ),
                 ),
                 name_readers: readers.in_package(&ManifestResolver::relative_to(
                     &workspace_root,
-                    &package.root,
+                    package.root(),
                 )),
-                ..Self::config_from(&args, sections.of(&package.name))?
+                ..Self::config_from(&args, sections.of(package.name()))?
             };
             let registry = RuleRegistry::from_config(&package_config);
             rosters.push(PackageRoster::new(
-                &package.name,
+                package.name(),
                 Self::owned(&registry.names()),
                 Self::owned(&RuleRegistry::skipped_names(&package_config.selection)),
                 registry.unconfigured(&package_config),
             ));
             let exclusions = ExclusionSet::new(&package_config.excludes)?;
-            let root = &package.root;
+            let root = &package.root();
             // Read the whole package before judging it. Rules whose subject is
             // the tree -- "there is exactly one all_tests.rs" -- cannot be
             // answered a file at a time, and the file that carries the offence
@@ -296,7 +296,7 @@ impl Runner {
         };
         let threshold = args
             .offence_threshold
-            .or_else(|| found.and_then(|file| file.offence_threshold))
+            .or_else(|| found.and_then(|file| file.offence_threshold()))
             .unwrap_or(OffenceThreshold::DEFAULT);
         Ok(Config {
             // Filled in by `run` once the manifest has been read; the command
@@ -319,15 +319,18 @@ impl Runner {
             config_file: found.map(|_| directory.join(ConfigFile::NAME)),
             manifest_path: args.manifest_path.clone(),
             max_files_per_directory: section
-                .and_then(|s| s.max_files_per_directory)
-                .or_else(|| found.and_then(|file| file.max_files_per_directory)),
+                .and_then(|s| s.max_files_per_directory())
+                .or_else(|| found.and_then(|file| file.max_files_per_directory())),
             max_subfolders_per_directory: section
-                .and_then(|s| s.max_subfolders_per_directory)
-                .or_else(|| found.and_then(|file| file.max_subfolders_per_directory)),
+                .and_then(|s| s.max_subfolders_per_directory())
+                .or_else(|| found.and_then(|file| file.max_subfolders_per_directory())),
             packages: args.packages.clone(),
             excludes: Self::preferred(
                 args.excludes.clone(),
-                Self::section_or_root(section.map(|s| &s.exclude), found.map(|file| &file.exclude)),
+                Self::section_or_root(
+                    section.map(|s| s.exclude()),
+                    found.map(|file| file.exclude()),
+                ),
             ),
             expected_header,
             format: args.format,
@@ -335,13 +338,16 @@ impl Runner {
             selection: RuleSelection::new(
                 Self::preferred(
                     args.rules.clone(),
-                    Self::section_or_root(section.map(|s| &s.rules), found.map(|file| &file.rules)),
+                    Self::section_or_root(
+                        section.map(|s| s.rules()),
+                        found.map(|file| file.rules()),
+                    ),
                 ),
                 Self::preferred(
                     args.skipped_rules.clone(),
                     section
-                        .and_then(|s| s.skip.as_ref())
-                        .or(found.map(|file| &file.skip)),
+                        .and_then(|s| s.skip())
+                        .or(found.map(|file| file.skip())),
                 ),
             ),
         })
@@ -386,11 +392,11 @@ impl Runner {
         names.iter().map(|name| (*name).to_string()).collect()
     }
 
-    fn preferred(from_args: Vec<String>, from_file: Option<&Vec<String>>) -> Vec<String> {
+    fn preferred(from_args: Vec<String>, from_file: Option<&[String]>) -> Vec<String> {
         if !from_args.is_empty() {
             return from_args;
         }
-        from_file.cloned().unwrap_or_default()
+        from_file.map(<[String]>::to_vec).unwrap_or_default()
     }
 
     // Recording is not judging. The run exits clean because nothing was
@@ -513,9 +519,9 @@ impl Runner {
     // the argument already made for the command line against the file, one level
     // down: a reader who wants to know what a package skips reads one list.
     fn section_or_root<'a>(
-        section: Option<&'a Vec<String>>,
-        root: Option<&'a Vec<String>>,
-    ) -> Option<&'a Vec<String>> {
+        section: Option<&'a [String]>,
+        root: Option<&'a [String]>,
+    ) -> Option<&'a [String]> {
         match section {
             Some(values) if !values.is_empty() => Some(values),
             _ => root,

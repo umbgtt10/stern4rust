@@ -2,6 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use std::path::Path;
 use std::path::PathBuf;
 
 // One package about to be walked, and what its manifest says about it.
@@ -16,12 +17,12 @@ use std::path::PathBuf;
 // See [ADR-ManifestDataIsPerPackage](../../docs/ADRs/ADR-ManifestDataIsPerPackage.md).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ScannedPackage {
-    pub name: String,
-    pub root: PathBuf,
+    name: String,
+    root: PathBuf,
     // None where the manifest declares no `license`, which is the one case
     // `spdx-matches-manifest` cannot judge and stands down on. A virtual
     // manifest has no package and so never reaches here at all.
-    pub license: Option<String>,
+    license: Option<String>,
 }
 
 impl ScannedPackage {
@@ -46,5 +47,17 @@ impl ScannedPackage {
             .iter()
             .all(|package| package.license.as_ref() == Some(first))
             .then(|| first.clone())
+    }
+
+    pub fn license(&self) -> Option<&str> {
+        self.license.as_deref()
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn root(&self) -> &Path {
+        &self.root
     }
 }

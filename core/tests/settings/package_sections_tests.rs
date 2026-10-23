@@ -30,10 +30,8 @@ fn skipping(entries: &[(&str, &[&str])]) -> PackageSections {
             .map(|(name, skip)| {
                 (
                     (*name).to_string(),
-                    PackageConfig {
-                        skip: Some(skip.iter().map(|rule| (*rule).to_string()).collect()),
-                        ..PackageConfig::default()
-                    },
+                    PackageConfig::default()
+                        .with_skip(skip.iter().map(|rule| (*rule).to_string()).collect()),
                 )
             })
             .collect::<BTreeMap<_, _>>(),

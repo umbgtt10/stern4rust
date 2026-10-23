@@ -28,25 +28,25 @@ use toml::from_str;
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub struct ConfigFile {
     #[serde(default)]
-    pub baseline: Option<PathBuf>,
+    baseline: Option<PathBuf>,
     #[serde(default)]
-    pub header_file: Option<PathBuf>,
+    header_file: Option<PathBuf>,
     #[serde(default)]
-    pub max_files_per_directory: Option<usize>,
+    max_files_per_directory: Option<usize>,
     #[serde(default)]
-    pub max_subfolders_per_directory: Option<usize>,
+    max_subfolders_per_directory: Option<usize>,
     #[serde(default)]
-    pub offence_threshold: Option<usize>,
+    offence_threshold: Option<usize>,
     #[serde(default)]
-    pub rules: Vec<String>,
+    rules: Vec<String>,
     #[serde(default)]
-    pub skip: Vec<String>,
+    skip: Vec<String>,
     #[serde(default)]
-    pub exclude: Vec<String>,
+    exclude: Vec<String>,
     // A section per package, keyed by the name its manifest declares. Absent
     // for the packages that apply everything, which is most of them.
     #[serde(default, rename = "package")]
-    pub packages: BTreeMap<String, PackageConfig>,
+    packages: BTreeMap<String, PackageConfig>,
 }
 
 impl ConfigFile {
@@ -68,6 +68,10 @@ impl ConfigFile {
         Ok(Some(parsed))
     }
 
+    pub fn baseline(&self) -> Option<&Path> {
+        self.baseline.as_deref()
+    }
+
     // Paths in the file are relative to the file, so a repository can be checked
     // out anywhere and cloned into any directory name.
     pub fn baseline_from(&self, directory: &Path) -> Option<PathBuf> {
@@ -76,9 +80,45 @@ impl ConfigFile {
             .map(|relative| directory.join(relative))
     }
 
+    pub fn exclude(&self) -> &[String] {
+        &self.exclude
+    }
+
+    pub fn header_file(&self) -> Option<&Path> {
+        self.header_file.as_deref()
+    }
+
     pub fn header_file_from(&self, directory: &Path) -> Option<PathBuf> {
         self.header_file
             .as_ref()
             .map(|relative| directory.join(relative))
+    }
+
+    pub fn into_packages(self) -> BTreeMap<String, PackageConfig> {
+        self.packages
+    }
+
+    pub fn max_files_per_directory(&self) -> Option<usize> {
+        self.max_files_per_directory
+    }
+
+    pub fn max_subfolders_per_directory(&self) -> Option<usize> {
+        self.max_subfolders_per_directory
+    }
+
+    pub fn offence_threshold(&self) -> Option<usize> {
+        self.offence_threshold
+    }
+
+    pub fn packages(&self) -> &BTreeMap<String, PackageConfig> {
+        &self.packages
+    }
+
+    pub fn rules(&self) -> &[String] {
+        &self.rules
+    }
+
+    pub fn skip(&self) -> &[String] {
+        &self.skip
     }
 }

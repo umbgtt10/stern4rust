@@ -29,7 +29,7 @@ impl PackageSections {
     pub fn load(directory: &Path) -> Result<Self> {
         Ok(Self::new(
             ConfigFile::load(directory)?
-                .map(|file| file.packages)
+                .map(ConfigFile::into_packages)
                 .unwrap_or_default(),
         ))
     }
@@ -63,7 +63,7 @@ impl PackageSections {
             .sections
             .iter()
             .filter(|(name, _)| scanned.contains(&name.as_str()))
-            .flat_map(|(_, section)| section.skip.iter().flatten().cloned())
+            .flat_map(|(_, section)| section.skip().into_iter().flatten().cloned())
             .collect();
         skipped.sort();
         skipped.dedup();

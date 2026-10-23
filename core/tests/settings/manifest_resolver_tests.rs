@@ -70,7 +70,7 @@ fn packages_of_this_crate_by_name_returns_its_directory() {
 
     // Assert
     assert_eq!(roots.len(), 1);
-    assert!(roots[0].root.join("Cargo.toml").exists());
+    assert!(roots[0].root().join("Cargo.toml").exists());
 }
 
 // The expectation `spdx-matches-manifest` holds every header to, taken from the
@@ -86,8 +86,8 @@ fn packages_of_this_crate_carries_the_licence_its_manifest_declares() {
 
     // Assert
     assert_eq!(packages.len(), 1);
-    assert_eq!(packages[0].name, "cargo-stern4rust");
-    assert_eq!(packages[0].license.as_deref(), Some("MIT"));
+    assert_eq!(packages[0].name(), "cargo-stern4rust");
+    assert_eq!(packages[0].license(), Some("MIT"));
 }
 
 // This repository is a workspace of two members, so a scan naming no package
@@ -104,7 +104,7 @@ fn packages_without_a_named_package_returns_every_workspace_member() {
     // Assert
     let names: Vec<String> = roots
         .iter()
-        .map(|package| package.name.to_string())
+        .map(|package| package.name().to_string())
         .collect();
     assert_eq!(names.len(), 2);
     assert!(names.contains(&String::from("cargo-stern4rust")));

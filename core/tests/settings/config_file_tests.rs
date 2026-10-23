@@ -48,6 +48,25 @@ fn baseline_from_resolves_against_the_directory_of_the_config() {
 }
 
 #[test]
+fn baseline_is_the_path_the_file_names() {
+    // Arrange
+    let path = directory(
+        "baseline-as-named",
+        Some("baseline = \"stern4rust-baseline.json\"\n"),
+    );
+    let loaded = ConfigFile::load(&path).expect("loads").expect("present");
+
+    // Act
+    let baseline = loaded.baseline();
+
+    // Assert
+    assert_eq!(
+        baseline,
+        Some(PathBuf::from("stern4rust-baseline.json").as_path())
+    );
+}
+
+#[test]
 fn header_file_from_resolves_against_the_directory_of_the_config() {
     // Arrange
     let path = directory("header", Some("header-file = \"docs/header.txt\"\n"));
@@ -58,6 +77,19 @@ fn header_file_from_resolves_against_the_directory_of_the_config() {
 
     // Assert
     assert_eq!(header, Some(path.join("docs/header.txt")));
+}
+
+#[test]
+fn into_packages_gives_up_every_section() {
+    // Arrange
+    let path = directory("sections-given-up", Some("[package.node]\nskip = []\n"));
+    let loaded = ConfigFile::load(&path).expect("loads").expect("present");
+
+    // Act
+    let sections = loaded.into_packages();
+
+    // Assert
+    assert_eq!(sections.keys().collect::<Vec<_>>(), ["node"]);
 }
 
 #[test]
@@ -78,10 +110,10 @@ fn load_of_a_config_reads_every_field() {
     let loaded = ConfigFile::load(&path).expect("loads").expect("present");
 
     // Assert
-    assert_eq!(loaded.offence_threshold, Some(25));
-    assert_eq!(loaded.rules, ["header", "tests-layout"]);
-    assert_eq!(loaded.skip, ["test-file-structure"]);
-    assert_eq!(loaded.exclude, ["fixture/**"]);
+    assert_eq!(loaded.offence_threshold(), Some(25));
+    assert_eq!(loaded.rules(), ["header", "tests-layout"]);
+    assert_eq!(loaded.skip(), ["test-file-structure"]);
+    assert_eq!(loaded.exclude(), ["fixture/**"]);
 }
 
 #[test]
@@ -107,7 +139,7 @@ fn load_of_a_file_with_no_sections_reads_no_packages() {
     let file = ConfigFile::load(&path).expect("read").expect("a file");
 
     // Assert
-    assert!(file.packages.is_empty());
+    assert!(file.packages().is_empty());
 }
 
 // baseline is a set of fingerprints for one run and offence-threshold is about
@@ -165,13 +197,13 @@ max-subfolders-per-directory = 8
     let file = ConfigFile::load(&path).expect("read").expect("a file");
 
     // Assert
-    let node = &file.packages["node"];
-    assert_eq!(node.rules, vec!["header"]);
-    assert_eq!(node.skip, Some(vec![String::from("paired-test-file")]));
-    assert_eq!(node.exclude, vec!["vendor/**"]);
-    assert_eq!(node.max_files_per_directory, Some(30));
-    assert_eq!(node.max_subfolders_per_directory, Some(8));
-    assert!(node.header_file.is_some());
+    let node = &file.packages()["node"];
+    assert_eq!(node.rules(), vec!["header"]);
+    assert_eq!(node.skip(), Some(&[String::from("paired-test-file")][..]));
+    assert_eq!(node.exclude(), vec!["vendor/**"]);
+    assert_eq!(node.max_files_per_directory(), Some(30));
+    assert_eq!(node.max_subfolders_per_directory(), Some(8));
+    assert!(node.header_file().is_some());
 }
 
 // Every key a section may carry, so that adding one to the struct without
@@ -193,8 +225,8 @@ fn load_of_a_section_stating_an_empty_skip_list_keeps_it_apart_from_saying_nothi
     let loaded = ConfigFile::load(&path).expect("loads").expect("present");
 
     // Assert
-    assert_eq!(loaded.packages["node"].skip, Some(Vec::new()));
-    assert_eq!(loaded.packages["types"].skip, None);
+    assert_eq!(loaded.packages()["node"].skip(), Some(&[][..]));
+    assert_eq!(loaded.packages()["types"].skip(), None);
 }
 
 // Every key is optional, so a repository can set one thing without restating
@@ -263,13 +295,13 @@ exclude = ["**/generated/**"]
     let file = ConfigFile::load(&path).expect("read").expect("a file");
 
     // Assert
-    assert_eq!(file.packages.len(), 2);
+    assert_eq!(file.packages().len(), 2);
     assert_eq!(
-        file.packages["validation"].skip,
-        Some(vec![String::from("paired-test-file")])
+        file.packages()["validation"].skip(),
+        Some(&[String::from("paired-test-file")][..])
     );
     assert_eq!(
-        file.packages["system-tests"].exclude,
+        file.packages()["system-tests"].exclude(),
         vec!["**/generated/**"]
     );
 }
