@@ -108,7 +108,7 @@ fn run_capturing_returns_the_canned_stdout() {
     let outcome = runner.run_capturing("cargo", &[]).expect("capturing");
 
     // Assert
-    assert_eq!(outcome.stdout, "payload");
+    assert_eq!(outcome.stdout(), "payload");
 }
 
 #[test]
@@ -124,7 +124,7 @@ fn run_capturing_with_a_code_of_its_own_answers_with_it_rather_than_the_streamin
         .expect("the fake always launches");
 
     // Assert
-    assert_eq!(outcome.exit_code, Some(0));
+    assert_eq!(outcome.exit_code(), Some(0));
 }
 
 #[test]

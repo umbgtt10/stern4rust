@@ -39,9 +39,9 @@ fn new_holds_the_values_it_was_given() {
     let outcome = CommandOutcome::new(Some(2), String::from("out"), String::from("err"));
 
     // Assert
-    assert_eq!(outcome.exit_code, Some(2));
-    assert_eq!(outcome.stdout, "out");
-    assert_eq!(outcome.stderr, "err");
+    assert_eq!(outcome.exit_code(), Some(2));
+    assert_eq!(outcome.stdout(), "out");
+    assert_eq!(outcome.stderr(), "err");
 }
 
 #[test]
@@ -50,5 +50,5 @@ fn new_with_no_exit_code_holds_none() {
     let outcome = CommandOutcome::new(None, String::new(), String::new());
 
     // Assert
-    assert_eq!(outcome.exit_code, None);
+    assert_eq!(outcome.exit_code(), None);
 }

@@ -8,16 +8,28 @@ const CLEAN_VERDICT: &str = "Clean";
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct CrapFunction {
-    pub name: String,
-    pub relative_file: String,
-    pub line: u32,
-    pub complexity: u32,
-    pub coverage: f64,
-    pub crap_score: f64,
-    pub verdict: String,
+    name: String,
+    relative_file: String,
+    line: u32,
+    complexity: u32,
+    coverage: f64,
+    crap_score: f64,
+    verdict: String,
 }
 
 impl CrapFunction {
+    pub fn complexity(&self) -> u32 {
+        self.complexity
+    }
+
+    pub fn coverage(&self) -> f64 {
+        self.coverage
+    }
+
+    pub fn crap_score(&self) -> f64 {
+        self.crap_score
+    }
+
     pub fn describe(&self) -> String {
         format!(
             "{}:{} {} (complexity {}, coverage {:.0}%, crap {:.1}) [{}]",
@@ -33,5 +45,21 @@ impl CrapFunction {
 
     pub fn is_clean(&self) -> bool {
         self.verdict == CLEAN_VERDICT
+    }
+
+    pub fn line(&self) -> u32 {
+        self.line
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn relative_file(&self) -> &str {
+        &self.relative_file
+    }
+
+    pub fn verdict(&self) -> &str {
+        &self.verdict
     }
 }

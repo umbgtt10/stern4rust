@@ -7,12 +7,22 @@
 use xtask::process::launch_failure::LaunchFailure;
 
 #[test]
+fn new_keeps_the_program_and_the_reason() {
+    // Arrange & Act
+    let failure = LaunchFailure::new(String::from("cargo"), String::from("denied"));
+
+    // Assert
+    assert_eq!(failure.program(), "cargo");
+    assert_eq!(failure.reason(), "denied");
+}
+
+#[test]
 fn to_string_names_the_program_and_why() {
     // Arrange
-    let failure = LaunchFailure {
-        program: String::from("cargo"),
-        reason: String::from("No such file or directory"),
-    };
+    let failure = LaunchFailure::new(
+        String::from("cargo"),
+        String::from("No such file or directory"),
+    );
 
     // Act
     let text = failure.to_string();

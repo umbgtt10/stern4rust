@@ -54,8 +54,8 @@ fn run_capturing_a_succeeding_command_returns_its_stdout_and_zero() {
     let outcome = runner.run_capturing("cargo", &args).expect("cargo runs");
 
     // Assert
-    assert_eq!(outcome.exit_code, Some(0));
-    assert!(outcome.stdout.starts_with("cargo "));
+    assert_eq!(outcome.exit_code(), Some(0));
+    assert!(outcome.stdout().starts_with("cargo "));
 }
 
 #[test]

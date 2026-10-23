@@ -8,8 +8,22 @@ use std::fmt;
 // always reported it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LaunchFailure {
-    pub program: String,
-    pub reason: String,
+    program: String,
+    reason: String,
+}
+
+impl LaunchFailure {
+    pub fn new(program: String, reason: String) -> Self {
+        Self { program, reason }
+    }
+
+    pub fn program(&self) -> &str {
+        &self.program
+    }
+
+    pub fn reason(&self) -> &str {
+        &self.reason
+    }
 }
 
 impl fmt::Display for LaunchFailure {

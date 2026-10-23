@@ -26,8 +26,8 @@ fn parse_a_bare_report_returns_its_totals() {
     let report = parser.parse(CLEAN_REPORT).expect("a bare report parses");
 
     // Assert
-    assert_eq!(report.total_functions, 77);
-    assert_eq!(report.crappy_functions, 0);
+    assert_eq!(report.total_functions(), 77);
+    assert_eq!(report.crappy_functions(), 0);
 }
 
 // The case that made two CI runs unreadable: crap4rust runs the test suite for
@@ -42,7 +42,7 @@ fn parse_a_report_behind_test_output_still_finds_the_report() {
     let report = parser.parse(&stdout).expect("the report is found");
 
     // Assert
-    assert_eq!(report.total_functions, 77);
+    assert_eq!(report.total_functions(), 77);
 }
 
 // Every brace inside the payload is indented, so only the report's own opening
@@ -76,9 +76,9 @@ fn parse_a_report_holding_nested_objects_anchors_on_the_outermost_brace() {
         .expect("nested objects do not confuse it");
 
     // Assert
-    assert_eq!(report.total_functions, 1);
-    assert_eq!(report.functions.len(), 1);
-    assert_eq!(report.functions[0].name, "f");
+    assert_eq!(report.total_functions(), 1);
+    assert_eq!(report.functions().len(), 1);
+    assert_eq!(report.functions()[0].name(), "f");
 }
 
 #[test]

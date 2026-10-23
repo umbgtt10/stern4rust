@@ -7,13 +7,25 @@ use serde::Deserialize;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct CrapReport {
-    pub total_functions: u32,
-    pub crappy_functions: u32,
-    pub crappy_percent: f64,
-    pub functions: Vec<CrapFunction>,
+    total_functions: u32,
+    crappy_functions: u32,
+    crappy_percent: f64,
+    functions: Vec<CrapFunction>,
 }
 
 impl CrapReport {
+    pub fn crappy_functions(&self) -> u32 {
+        self.crappy_functions
+    }
+
+    pub fn crappy_percent(&self) -> f64 {
+        self.crappy_percent
+    }
+
+    pub fn functions(&self) -> &[CrapFunction] {
+        &self.functions
+    }
+
     pub fn is_clean(&self) -> bool {
         self.crappy_functions == 0
     }
@@ -30,5 +42,9 @@ impl CrapReport {
             "crap4rust: {}/{} functions crappy ({:.1}%)",
             self.crappy_functions, self.total_functions, self.crappy_percent
         )
+    }
+
+    pub fn total_functions(&self) -> u32 {
+        self.total_functions
     }
 }

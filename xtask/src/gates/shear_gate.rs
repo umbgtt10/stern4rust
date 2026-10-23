@@ -41,10 +41,10 @@ impl<'a> ShearGate<'a> {
             ],
         )?;
         if !metadata.is_success() {
-            return Err(GateFailure::CouldNotRun(metadata.exit_code));
+            return Err(GateFailure::CouldNotRun(metadata.exit_code()));
         }
         let unexplained = IgnoreReasons::new()
-            .unexplained(&metadata.stdout)
+            .unexplained(metadata.stdout())
             .map_err(|error| {
                 GateFailure::Found(format!("could not read cargo metadata: {error}"))
             })?;

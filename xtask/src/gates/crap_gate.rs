@@ -84,12 +84,12 @@ impl Gate for CrapGate<'_> {
         // failure, which is the case where the tool genuinely did not report.
         let report =
             self.parser
-                .parse(&outcome.stdout)
+                .parse(outcome.stdout())
                 .map_err(|failure| GateFailure::Unreported {
                     failure,
-                    exit_code: outcome.exit_code,
-                    stderr: outcome.stderr.clone(),
-                    stdout_tail: Self::tail(&outcome.stdout),
+                    exit_code: outcome.exit_code(),
+                    stderr: outcome.stderr().to_string(),
+                    stdout_tail: Self::tail(outcome.stdout()),
                 })?;
 
         println!("{}", report.summary());
@@ -104,7 +104,7 @@ impl Gate for CrapGate<'_> {
 
         Err(GateFailure::Found(format!(
             "{} crappy functions detected",
-            report.crappy_functions
+            report.crappy_functions()
         )))
     }
 }
