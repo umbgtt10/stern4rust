@@ -16,8 +16,8 @@
 // so the two match.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PublicEntryPoint {
-    pub name: String,
-    pub arity: usize,
+    name: String,
+    arity: usize,
 }
 
 impl PublicEntryPoint {
@@ -26,6 +26,14 @@ impl PublicEntryPoint {
             name: name.to_string(),
             arity,
         }
+    }
+
+    pub fn arity(&self) -> usize {
+        self.arity
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
     }
 
     // How the offence names it, so two entry points sharing a name are still

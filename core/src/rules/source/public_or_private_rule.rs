@@ -48,7 +48,7 @@ impl PublicOrPrivateRule {
     ) -> bool {
         calls
             .iter()
-            .any(|(caller, called)| caller != file && called.contains(&method.call))
+            .any(|(caller, called)| caller != file && called.contains(method.call()))
     }
 
     fn calls(files: &[SourceFile]) -> BTreeMap<String, BTreeSet<PublicEntryPoint>> {
@@ -70,12 +70,12 @@ impl PublicOrPrivateRule {
         if method.is_private_already() {
             return String::from("make it private: `fn`");
         }
-        if homes.spread().contains(&method.owner) {
+        if homes.spread().iter().any(|home| home == method.owner()) {
             return format!(
                 "implement `{}` in one file, as `implemented-in-one-file` asks: the restriction \
                  serves its spread over {} files",
-                method.owner,
-                homes.implementing_files(&method.owner).len()
+                method.owner(),
+                homes.implementing_files(method.owner()).len()
             );
         }
         if Self::called_elsewhere(calls, file, method) {
@@ -104,15 +104,17 @@ impl PublicOrPrivateRule {
             .map(|method| {
                 Offence::new(
                     path,
-                    method.line,
+                    method.line(),
                     Self::NAME,
                     format!(
                         "`{}` is `{}` in `impl {}`; a method is `pub` or private",
-                        method.call.name, method.visibility, method.owner
+                        method.call().name(),
+                        method.visibility(),
+                        method.owner()
                     ),
                     Self::correction(homes, calls, path, method),
                 )
-                .with_subject(&method.call.name)
+                .with_subject(method.call().name())
             })
             .collect()
     }

@@ -8,10 +8,10 @@ use crate::finding::model::time_call_kind::TimeCallKind;
 // it stands, so the first of several can be named.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TimeCall {
-    pub kind: TimeCallKind,
-    pub written: String,
-    pub line: usize,
-    pub column: usize,
+    kind: TimeCallKind,
+    written: String,
+    line: usize,
+    column: usize,
 }
 
 impl TimeCall {
@@ -22,5 +22,21 @@ impl TimeCall {
             line,
             column,
         }
+    }
+
+    pub fn column(&self) -> usize {
+        self.column
+    }
+
+    pub fn kind(&self) -> TimeCallKind {
+        self.kind
+    }
+
+    pub fn line(&self) -> usize {
+        self.line
+    }
+
+    pub fn written(&self) -> &str {
+        &self.written
     }
 }

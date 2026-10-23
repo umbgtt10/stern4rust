@@ -13,7 +13,7 @@ fn new_keeps_the_call_as_it_was_written() {
     let call = TimeCall::new(TimeCallKind::Wait, "thread::sleep", 7, 9);
 
     // Assert
-    assert_eq!(call.written, "thread::sleep");
-    assert_eq!((call.line, call.column), (7, 9));
-    assert_eq!(call.kind, TimeCallKind::Wait);
+    assert_eq!(call.written(), "thread::sleep");
+    assert_eq!((call.line(), call.column()), (7, 9));
+    assert_eq!(call.kind(), TimeCallKind::Wait);
 }

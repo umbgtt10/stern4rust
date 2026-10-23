@@ -80,7 +80,7 @@ impl<'a> TimeCallFinder<'a> {
     pub fn calls_in(mut self, body: &Block) -> Vec<TimeCall> {
         self.visit_block(body);
         let mut calls = self.calls;
-        calls.sort_by_key(|call| (call.line, call.column));
+        calls.sort_by_key(|call| (call.line(), call.column()));
         calls
     }
 

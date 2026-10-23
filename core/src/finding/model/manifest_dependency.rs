@@ -10,10 +10,10 @@
 // and one spelled out in the member look identical once resolved.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ManifestDependency {
-    pub manifest: String,
-    pub name: String,
-    pub section: String,
-    pub takes_from_workspace: bool,
+    manifest: String,
+    name: String,
+    section: String,
+    takes_from_workspace: bool,
 }
 
 impl ManifestDependency {
@@ -48,5 +48,21 @@ impl ManifestDependency {
             section: section.to_string(),
             takes_from_workspace,
         }
+    }
+
+    pub fn manifest(&self) -> &str {
+        &self.manifest
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn section(&self) -> &str {
+        &self.section
+    }
+
+    pub fn takes_from_workspace(&self) -> bool {
+        self.takes_from_workspace
     }
 }

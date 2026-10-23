@@ -23,7 +23,10 @@ fn found(body: &str) -> Vec<QualifiedCall> {
 }
 
 fn paths(body: &str) -> Vec<String> {
-    found(body).into_iter().map(|call| call.path).collect()
+    found(body)
+        .into_iter()
+        .map(|call| call.path().to_string())
+        .collect()
 }
 
 // A call inside a function body is still a call.
@@ -224,7 +227,7 @@ fn find_reports_the_line_of_the_call() {
     let found = found("fn outer() {\n\n    let _ = syn::parse_file(\"\");\n}\n");
 
     // Assert
-    assert_eq!(found[0].line, 3);
+    assert_eq!(found[0].line(), 3);
 }
 
 #[test]

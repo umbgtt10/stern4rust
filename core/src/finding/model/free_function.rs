@@ -12,14 +12,22 @@ use std::collections::BTreeSet;
 // business, and one that never does may be a subject of its own.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FreeFunction {
-    pub name: String,
-    pub line: usize,
+    name: String,
+    line: usize,
     uses: BTreeSet<String>,
 }
 
 impl FreeFunction {
     pub fn new(name: String, line: usize, uses: BTreeSet<String>) -> Self {
         Self { name, line, uses }
+    }
+
+    pub fn line(&self) -> usize {
+        self.line
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
     }
 
     pub fn names(&self, identifier: &str) -> bool {

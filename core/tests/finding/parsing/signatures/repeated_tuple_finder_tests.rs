@@ -61,8 +61,8 @@ fn first_in_a_tuple_repeating_a_type_finds_the_tuple_and_the_type() {
     let found = RepeatedTupleFinder::first_in(&repeated).expect("a repeated tuple");
 
     // Assert
-    assert_eq!(found.tuple, "(u64, u64)");
-    assert_eq!(found.element, "u64");
+    assert_eq!(found.tuple(), "(u64, u64)");
+    assert_eq!(found.element(), "u64");
 }
 
 #[test]
@@ -74,8 +74,8 @@ fn first_in_a_tuple_repeating_a_type_with_different_lifetimes_finds_it() {
     let found = RepeatedTupleFinder::first_in(&repeated).expect("a repeated tuple");
 
     // Assert
-    assert_eq!(found.tuple, "(&str, usize, &str)");
-    assert_eq!(found.element, "&str");
+    assert_eq!(found.tuple(), "(&str, usize, &str)");
+    assert_eq!(found.element(), "&str");
 }
 
 #[test]
@@ -87,7 +87,7 @@ fn first_in_a_tuple_wrapped_in_a_generic_finds_it() {
     let found = RepeatedTupleFinder::first_in(&wrapped).expect("a repeated tuple");
 
     // Assert
-    assert_eq!(found.element, "Instant");
+    assert_eq!(found.element(), "Instant");
 }
 
 #[test]
@@ -99,7 +99,7 @@ fn first_in_a_vec_of_pairs_finds_the_pair() {
     let found = RepeatedTupleFinder::first_in(&pairs).expect("a repeated tuple");
 
     // Assert
-    assert_eq!(found.tuple, "(usize, usize)");
+    assert_eq!(found.tuple(), "(usize, usize)");
 }
 
 #[test]
@@ -123,6 +123,6 @@ fn first_in_two_repeated_tuples_finds_the_outer_one() {
     let found = RepeatedTupleFinder::first_in(&nested).expect("a repeated tuple");
 
     // Assert
-    assert_eq!(found.tuple, "((u8, u8), (u8, u8))");
-    assert_eq!(found.element, "(u8, u8)");
+    assert_eq!(found.tuple(), "((u8, u8), (u8, u8))");
+    assert_eq!(found.element(), "(u8, u8)");
 }

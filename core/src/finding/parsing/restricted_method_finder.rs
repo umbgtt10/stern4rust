@@ -47,12 +47,12 @@ impl RestrictedMethodFinder {
         let Visibility::Restricted(restriction) = &method.vis else {
             return None;
         };
-        Some(RestrictedMethod {
-            call: PublicEntryPointFinder::of_signature(&method.sig),
-            line: method.sig.ident.span().start().line,
-            visibility: Self::written(restriction),
-            owner: owner.to_string(),
-        })
+        Some(RestrictedMethod::new(
+            PublicEntryPointFinder::of_signature(&method.sig),
+            method.sig.ident.span().start().line,
+            Self::written(restriction),
+            owner.to_string(),
+        ))
     }
 
     // As written, without the spaces a token stream puts in: `pub(in crate::store)`.

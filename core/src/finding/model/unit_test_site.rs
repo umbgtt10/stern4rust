@@ -12,9 +12,9 @@
 // useful about either.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UnitTestSite {
-    pub line: usize,
-    pub label: String,
-    pub correction: String,
+    line: usize,
+    label: String,
+    correction: String,
 }
 
 impl UnitTestSite {
@@ -24,5 +24,17 @@ impl UnitTestSite {
             label: label.to_string(),
             correction: correction.to_string(),
         }
+    }
+
+    pub fn correction(&self) -> &str {
+        &self.correction
+    }
+
+    pub fn label(&self) -> &str {
+        &self.label
+    }
+
+    pub fn line(&self) -> usize {
+        self.line
     }
 }

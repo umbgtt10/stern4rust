@@ -6,12 +6,20 @@
 // only position tells apart.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RepeatedTuple {
-    pub tuple: String,
-    pub element: String,
+    tuple: String,
+    element: String,
 }
 
 impl RepeatedTuple {
     pub fn new(tuple: String, element: String) -> Self {
         Self { tuple, element }
+    }
+
+    pub fn element(&self) -> &str {
+        &self.element
+    }
+
+    pub fn tuple(&self) -> &str {
+        &self.tuple
     }
 }

@@ -35,8 +35,13 @@ impl ImplementedTypeFinder {
         let implemented = ImplBlocks::of(items);
         DeclaredItemFinder::types(items)
             .into_iter()
-            .filter(|candidate| implemented.targets().contains(&candidate.name))
-            .map(|declared| ImplementedType::new(&declared.name, declared.line))
+            .filter(|candidate| {
+                implemented
+                    .targets()
+                    .iter()
+                    .any(|target| target == candidate.name())
+            })
+            .map(|declared| ImplementedType::new(declared.name(), declared.line()))
             .collect()
     }
 

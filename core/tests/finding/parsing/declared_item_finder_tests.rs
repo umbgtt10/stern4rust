@@ -19,7 +19,10 @@ fn items(source: &str) -> Vec<Item> {
 }
 
 fn names(found: Vec<DeclaredItem>) -> Vec<String> {
-    found.into_iter().map(|item| item.name).collect()
+    found
+        .into_iter()
+        .map(|item| item.name().to_string())
+        .collect()
 }
 
 #[test]

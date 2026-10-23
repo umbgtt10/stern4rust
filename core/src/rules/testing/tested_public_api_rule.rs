@@ -73,11 +73,12 @@ impl TestedPublicApiRule {
             self.name(),
             format!(
                 "`{}` is public but no test calls it with {} argument(s)",
-                entry.name, entry.arity
+                entry.name(),
+                entry.arity()
             ),
             format!(
                 "call `{}` from a test, or stop exposing it if nothing outside needs it",
-                entry.name
+                entry.name()
             ),
         )
         .with_subject(&entry.signature())

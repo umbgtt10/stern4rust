@@ -33,15 +33,15 @@ impl ImportedPathsRule {
     fn offence(&self, file: &SourceFile, call: &QualifiedCall) -> Offence {
         Offence::new(
             file.relative_path(),
-            call.line,
+            call.line(),
             self.name(),
             format!(
                 "`{}` is reached through a path; no import of this file names it",
-                call.path
+                call.path()
             ),
             format!("add `use {};` and call `{}`", call.import(), call.call()),
         )
-        .with_subject(&call.path)
+        .with_subject(call.path())
     }
 }
 

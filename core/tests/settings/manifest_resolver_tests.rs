@@ -169,7 +169,7 @@ fn workspace_dependencies_of_a_workspace_names_what_the_root_declares() {
     let declared = declared.expect("the workspace root declares dependencies");
     let names: Vec<&str> = declared
         .iter()
-        .map(|dependency| dependency.name.as_str())
+        .map(|dependency| dependency.name())
         .collect();
     assert!(names.contains(&"syn"));
     assert!(names.contains(&"walkdir"));

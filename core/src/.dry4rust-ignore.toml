@@ -1,0 +1,3 @@
+[[ignore]]
+fingerprint = "38e695a6ee84bafb"
+reason = "A plain constructor, Self { a, b, c, d }: under private-fields (R035) the struct's shape, not copied logic. dry4rust leaves plain constructors out from its next release (ADR-PlainConstructorsAreTheStructsShape); delete this entry then."

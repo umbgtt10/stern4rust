@@ -11,8 +11,8 @@
 // while `std::env::args` keeps `env` because it says something -- `use std::env`
 // and `env::args`.
 pub struct QualifiedCall {
-    pub path: String,
-    pub line: usize,
+    path: String,
+    line: usize,
 }
 
 impl QualifiedCall {
@@ -40,6 +40,14 @@ impl QualifiedCall {
             return self.path.clone();
         }
         segments[..segments.len() - 1].join("::")
+    }
+
+    pub fn line(&self) -> usize {
+        self.line
+    }
+
+    pub fn path(&self) -> &str {
+        &self.path
     }
 
     fn segments(&self) -> Vec<&str> {

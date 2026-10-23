@@ -11,8 +11,8 @@ use crate::finding::model::type_name::TypeName;
 // is what a reader moves when the file turns out to have two subjects.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ImplementedType {
-    pub name: String,
-    pub line: usize,
+    name: String,
+    line: usize,
 }
 
 impl ImplementedType {
@@ -21,6 +21,14 @@ impl ImplementedType {
             name: name.to_string(),
             line,
         }
+    }
+
+    pub fn line(&self) -> usize {
+        self.line
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
     }
 
     // The file this type would live in on its own: its words in snake_case, so

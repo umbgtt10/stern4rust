@@ -13,6 +13,6 @@ fn new_keeps_the_tuple_and_the_type_it_repeats() {
     let found = RepeatedTuple::new(String::from("(u64, u64)"), String::from("u64"));
 
     // Assert
-    assert_eq!(found.tuple, "(u64, u64)");
-    assert_eq!(found.element, "u64");
+    assert_eq!(found.tuple(), "(u64, u64)");
+    assert_eq!(found.element(), "u64");
 }

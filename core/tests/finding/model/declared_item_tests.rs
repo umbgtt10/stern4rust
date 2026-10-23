@@ -12,6 +12,6 @@ fn new_keeps_every_field_it_was_given() {
     let found = DeclaredItem::new("Partitioner", 7);
 
     // Assert
-    assert_eq!(found.name, "Partitioner");
-    assert_eq!(found.line, 7);
+    assert_eq!(found.name(), "Partitioner");
+    assert_eq!(found.line(), 7);
 }

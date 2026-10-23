@@ -49,19 +49,19 @@ impl TestsLayoutRule {
             .map(|stray| {
                 Offence::new(
                     file.relative_path(),
-                    stray.line,
+                    stray.line(),
                     self.name(),
                     format!(
                         "{} does not belong in a registry, which holds the header \
                          and pub mod declarations only",
-                        stray.label
+                        stray.label()
                     ),
                     format!(
                         "move {} out of the registry into the file that needs it",
-                        stray.label
+                        stray.label()
                     ),
                 )
-                .with_subject(&stray.label)
+                .with_subject(stray.label())
             })
             .collect()
     }

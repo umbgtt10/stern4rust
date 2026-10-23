@@ -14,7 +14,7 @@ use syn::parse_file;
 fn visibilities(source: &str) -> Vec<String> {
     RestrictedMethodFinder::find(&parse_file(source).expect("parses").items)
         .into_iter()
-        .map(|method| method.visibility)
+        .map(|method| method.visibility().to_string())
         .collect()
 }
 
@@ -42,10 +42,10 @@ fn find_a_pub_crate_method_returns_its_call_line_visibility_and_owner() {
 
     // Assert
     assert_eq!(found.len(), 1);
-    assert_eq!(found[0].call, PublicEntryPoint::new("election", 1));
-    assert_eq!(found[0].line, 2);
-    assert_eq!(found[0].visibility, "pub(crate)");
-    assert_eq!(found[0].owner, "RaftProtocol");
+    assert_eq!(found[0].call(), &PublicEntryPoint::new("election", 1));
+    assert_eq!(found[0].line(), 2);
+    assert_eq!(found[0].visibility(), "pub(crate)");
+    assert_eq!(found[0].owner(), "RaftProtocol");
 }
 
 #[test]

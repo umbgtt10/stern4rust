@@ -23,7 +23,10 @@ fn items(source: &str) -> Vec<Item> {
 }
 
 fn names(found: Vec<FreeFunction>) -> Vec<String> {
-    found.into_iter().map(|function| function.name).collect()
+    found
+        .into_iter()
+        .map(|function| function.name().to_string())
+        .collect()
 }
 
 #[test]
@@ -151,7 +154,7 @@ fn among_records_the_line_and_the_names_a_function_uses() {
 
     // Assert
     assert_eq!(found.len(), 1);
-    assert_eq!(found[0].line, 3);
+    assert_eq!(found[0].line(), 3);
     assert!(found[0].names("Widget"));
     assert!(!found[0].names("Gadget"));
 }

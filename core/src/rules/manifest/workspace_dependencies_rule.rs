@@ -42,14 +42,15 @@ impl WorkspaceDependenciesRule {
     // Reported against the member manifest at line 1: the edit is one line in
     // that file, plus one in the root.
     fn offence(&self, dependency: &ManifestDependency) -> Offence {
-        let name = &dependency.name;
+        let name = &dependency.name();
         Offence::new(
-            &dependency.manifest,
+            dependency.manifest(),
             1,
             self.name(),
             format!(
                 "{} declares `{name}` in [{}] rather than taking it from the workspace",
-                dependency.manifest, dependency.section
+                dependency.manifest(),
+                dependency.section()
             ),
             format!(
                 "add `{name}` to [workspace.dependencies] in the root manifest, and write \
@@ -76,7 +77,7 @@ impl Rule for WorkspaceDependenciesRule {
         self.declared
             .iter()
             .flatten()
-            .filter(|dependency| !dependency.takes_from_workspace)
+            .filter(|dependency| !dependency.takes_from_workspace())
             .map(|dependency| self.offence(dependency))
             .collect()
     }

@@ -114,7 +114,7 @@ impl TimelessTestsRule {
 
     fn offence(path: &str, function: &Ident, call: &TimeCall) -> Offence {
         let name = function.to_string();
-        let reason = match call.kind {
+        let reason = match call.kind() {
             TimeCallKind::Random => Self::UNREPEATABLE,
             _ => Self::MACHINE,
         };
@@ -124,10 +124,10 @@ impl TimelessTestsRule {
             Self::NAME,
             format!(
                 "`{name}` {} with `{}`; {reason}",
-                call.kind.verb(),
-                call.written
+                call.kind().verb(),
+                call.written()
             ),
-            String::from(Self::correction(call.kind)),
+            String::from(Self::correction(call.kind())),
         )
         .with_subject(&name)
     }

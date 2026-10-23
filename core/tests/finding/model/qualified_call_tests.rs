@@ -55,6 +55,6 @@ fn new_keeps_every_field_it_was_given() {
     let call = QualifiedCall::new("std::env::args", 42);
 
     // Assert
-    assert_eq!(call.path, "std::env::args");
-    assert_eq!(call.line, 42);
+    assert_eq!(call.path(), "std::env::args");
+    assert_eq!(call.line(), 42);
 }

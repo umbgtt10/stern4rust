@@ -10,8 +10,8 @@
 // claimed a file had four problems while naming none of them.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RegistryItem {
-    pub line: usize,
-    pub label: String,
+    line: usize,
+    label: String,
 }
 
 impl RegistryItem {
@@ -20,5 +20,13 @@ impl RegistryItem {
             line,
             label: label.to_string(),
         }
+    }
+
+    pub fn label(&self) -> &str {
+        &self.label
+    }
+
+    pub fn line(&self) -> usize {
+        self.line
     }
 }

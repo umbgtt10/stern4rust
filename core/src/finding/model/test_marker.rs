@@ -24,9 +24,9 @@ pub enum MarkerPhase {
 // A marker ends on a **word boundary**. Without it `// Actually this needs
 // explaining` is an Act, and the sequence a test reads as becomes nonsense.
 pub struct TestMarker {
-    pub line: usize,
-    pub label: String,
-    pub phases: Vec<MarkerPhase>,
+    line: usize,
+    label: String,
+    phases: Vec<MarkerPhase>,
 }
 
 impl TestMarker {
@@ -48,6 +48,18 @@ impl TestMarker {
             label: format!("// {form}"),
             phases: Self::phases_of(form),
         })
+    }
+
+    pub fn label(&self) -> &str {
+        &self.label
+    }
+
+    pub fn line(&self) -> usize {
+        self.line
+    }
+
+    pub fn phases(&self) -> &[MarkerPhase] {
+        &self.phases
     }
 
     fn form_of(comment: &str) -> Option<&'static str> {

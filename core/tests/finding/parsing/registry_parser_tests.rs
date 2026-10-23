@@ -16,7 +16,10 @@ use stern4rust::finding::parsing::registry_parser::RegistryParser;
 use stern4rust::source_file::SourceFile;
 
 fn labels(body: &str) -> Vec<String> {
-    strays(body).into_iter().map(|stray| stray.label).collect()
+    strays(body)
+        .into_iter()
+        .map(|stray| stray.label().to_string())
+        .collect()
 }
 
 fn strays(body: &str) -> Vec<RegistryItem> {
@@ -163,7 +166,10 @@ fn strays_reports_each_stray_at_its_own_line() {
     // Assert
     assert_eq!(found.len(), 3);
     assert_eq!(
-        found.iter().map(|stray| stray.line).collect::<Vec<usize>>(),
+        found
+            .iter()
+            .map(|stray| stray.line())
+            .collect::<Vec<usize>>(),
         [1, 3, 5]
     );
 }

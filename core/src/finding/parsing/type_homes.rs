@@ -121,10 +121,10 @@ impl TypeHomes {
     fn record(&mut self, path: &str, items: &[Item], module_gated: bool) {
         for declared in DeclaredItemFinder::types(items) {
             self.declared
-                .entry(declared.name)
+                .entry(declared.name().to_string())
                 .or_default()
                 .entry(path.to_string())
-                .or_insert(declared.line);
+                .or_insert(declared.line());
         }
         for block in ImplBlocks::inherent(items) {
             let name = ItemNaming::implemented_type(&block.self_ty);

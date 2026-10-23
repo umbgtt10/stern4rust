@@ -60,12 +60,12 @@ impl Rule for TestFreeSourceRule {
             .map(|site| {
                 Offence::new(
                     file.relative_path(),
-                    site.line,
+                    site.line(),
                     self.name(),
-                    format!("{} does not belong in the source tree", site.label),
-                    site.correction.clone(),
+                    format!("{} does not belong in the source tree", site.label()),
+                    site.correction().to_string(),
                 )
-                .with_subject(&site.label)
+                .with_subject(site.label())
             })
             .collect()
     }

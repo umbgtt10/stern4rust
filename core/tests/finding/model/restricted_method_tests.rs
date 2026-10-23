@@ -9,12 +9,12 @@ use stern4rust::finding::model::public_entry_point::PublicEntryPoint;
 use stern4rust::finding::model::restricted_method::RestrictedMethod;
 
 fn restricted(visibility: &str) -> RestrictedMethod {
-    RestrictedMethod {
-        call: PublicEntryPoint::new("election", 1),
-        line: 12,
-        visibility: String::from(visibility),
-        owner: String::from("RaftProtocol"),
-    }
+    RestrictedMethod::new(
+        PublicEntryPoint::new("election", 1),
+        12,
+        String::from(visibility),
+        String::from("RaftProtocol"),
+    )
 }
 
 #[test]
@@ -35,4 +35,16 @@ fn is_private_already_of_pub_self_returns_true() {
 
     // Assert
     assert!(private);
+}
+
+#[test]
+fn new_keeps_every_field_it_was_given() {
+    // Arrange & Act
+    let method = restricted("pub(crate)");
+
+    // Assert
+    assert_eq!(method.call(), &PublicEntryPoint::new("election", 1));
+    assert_eq!(method.line(), 12);
+    assert_eq!(method.visibility(), "pub(crate)");
+    assert_eq!(method.owner(), "RaftProtocol");
 }

@@ -142,7 +142,7 @@ impl ArrangeActAssertRule {
         let markers = Self::markers_of(file, function);
         let phases: Vec<MarkerPhase> = markers
             .iter()
-            .flat_map(|marker| marker.phases.clone())
+            .flat_map(|marker| marker.phases().iter().copied())
             .collect();
         if !Self::is_legal(&phases) {
             return vec![self.sequence_offence(file, function, &Self::named(&phases))];
@@ -179,17 +179,17 @@ impl ArrangeActAssertRule {
         markers
             .iter()
             .skip(1)
-            .filter(|marker| !Self::is_blank_above(file, marker.line))
+            .filter(|marker| !Self::is_blank_above(file, marker.line()))
             .map(|marker| {
                 Offence::new(
                     file.relative_path(),
-                    marker.line,
+                    marker.line(),
                     self.name(),
                     format!(
                         "`{}` in `{name}` is not preceded by a blank line",
-                        marker.label
+                        marker.label()
                     ),
-                    format!("put a blank line before `{}`", marker.label),
+                    format!("put a blank line before `{}`", marker.label()),
                 )
                 .with_subject(&name)
             })

@@ -26,12 +26,15 @@ use syn::parse_str;
 fn corrections(body: &str) -> Vec<String> {
     sites(body)
         .into_iter()
-        .map(|site| site.correction)
+        .map(|site| site.correction().to_string())
         .collect()
 }
 
 fn labels(body: &str) -> Vec<String> {
-    sites(body).into_iter().map(|site| site.label).collect()
+    sites(body)
+        .into_iter()
+        .map(|site| site.label().to_string())
+        .collect()
 }
 
 fn sites(body: &str) -> Vec<UnitTestSite> {
@@ -153,9 +156,9 @@ fn sites_of_a_cfg_attr_on_test_reports_it() {
     // Assert
     assert_eq!(found.len(), 1);
     assert!(
-        found[0].label.contains("`#[cfg_attr(test, ...)]`"),
+        found[0].label().contains("`#[cfg_attr(test, ...)]`"),
         "got {}",
-        found[0].label
+        found[0].label()
     );
 }
 
@@ -298,5 +301,5 @@ fn sites_reports_the_line_the_item_starts_on() {
     let found = sites("pub struct A;\n\n#[cfg(test)]\nmod tests {}\n");
 
     // Assert
-    assert_eq!(found[0].line, 3);
+    assert_eq!(found[0].line(), 3);
 }

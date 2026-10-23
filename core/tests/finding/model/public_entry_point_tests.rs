@@ -17,8 +17,8 @@ fn new_keeps_every_field_it_was_given() {
     let entry = PublicEntryPoint::new("with_fixed", 1);
 
     // Assert
-    assert_eq!(entry.name, "with_fixed");
-    assert_eq!(entry.arity, 1);
+    assert_eq!(entry.name(), "with_fixed");
+    assert_eq!(entry.arity(), 1);
 }
 
 #[test]

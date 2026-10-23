@@ -17,8 +17,8 @@ fn new_keeps_every_field_it_was_given() {
     let found = ImplementedType::new("ColumnWidths", 42);
 
     // Assert
-    assert_eq!(found.name, "ColumnWidths");
-    assert_eq!(found.line, 42);
+    assert_eq!(found.name(), "ColumnWidths");
+    assert_eq!(found.line(), 42);
 }
 
 #[test]

@@ -24,7 +24,7 @@ fn first(source: &str, paused: bool) -> Option<(TimeCallKind, String, usize)> {
         .expect("a function");
     TimeCallFinder::new(&names, paused)
         .first_in(&body)
-        .map(|call| (call.kind, call.written, call.line))
+        .map(|call| (call.kind(), call.written().to_string(), call.line()))
 }
 
 #[test]
@@ -45,7 +45,7 @@ fn calls_in_lists_every_call_in_the_order_written() {
     // Assert
     let found: Vec<(TimeCallKind, &str)> = calls
         .iter()
-        .map(|call| (call.kind, call.written.as_str()))
+        .map(|call| (call.kind(), call.written()))
         .collect();
     assert_eq!(
         found,

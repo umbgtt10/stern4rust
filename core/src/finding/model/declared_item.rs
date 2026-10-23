@@ -8,8 +8,8 @@
 // renames or moves.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DeclaredItem {
-    pub name: String,
-    pub line: usize,
+    name: String,
+    line: usize,
 }
 
 impl DeclaredItem {
@@ -18,5 +18,13 @@ impl DeclaredItem {
             name: name.to_string(),
             line,
         }
+    }
+
+    pub fn line(&self) -> usize {
+        self.line
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
     }
 }

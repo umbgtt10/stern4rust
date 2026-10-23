@@ -49,11 +49,12 @@ impl DistinctTupleElementsRule {
             Self::NAME,
             format!(
                 "`{function}` returns `{}`, whose `{}`s only their position tells apart",
-                found.tuple, found.element
+                found.tuple(),
+                found.element()
             ),
             format!(
                 "return a struct whose fields say which `{}` is which",
-                found.element
+                found.element()
             ),
         )
         .with_subject(&function)

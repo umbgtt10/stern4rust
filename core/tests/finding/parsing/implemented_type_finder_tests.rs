@@ -23,7 +23,10 @@ fn found(body: &str) -> Vec<ImplementedType> {
 }
 
 fn names(body: &str) -> Vec<String> {
-    found(body).into_iter().map(|found| found.name).collect()
+    found(body)
+        .into_iter()
+        .map(|found| found.name().to_string())
+        .collect()
 }
 
 // For a caller that has parsed the file already and asks more of it than this.
@@ -137,6 +140,6 @@ fn find_reports_the_line_the_type_is_declared_on() {
     let found = found("pub struct A;\nimpl A {}\n\npub struct B;\nimpl B {}\n");
 
     // Assert
-    assert_eq!(found[0].line, 1);
-    assert_eq!(found[1].line, 4);
+    assert_eq!(found[0].line(), 1);
+    assert_eq!(found[1].line(), 4);
 }

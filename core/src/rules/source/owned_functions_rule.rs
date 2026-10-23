@@ -64,7 +64,7 @@ impl OwnedFunctionsRule {
         ownable: bool,
         impls: &ImplBlocks,
     ) -> String {
-        let name = &function.name;
+        let name = &function.name();
         if !ownable {
             return format!("move `{name}` into a file of its own");
         }
@@ -104,18 +104,22 @@ impl OwnedFunctionsRule {
         let stem = FileStem::of(file.relative_path());
         let implemented: Vec<String> = ImplementedTypeFinder::among(items)
             .into_iter()
-            .map(|found| found.name)
+            .map(|found| found.name().to_string())
             .collect();
         let declared: Vec<String> = DeclaredItemFinder::types(items)
             .into_iter()
-            .map(|found| found.name)
+            .map(|found| found.name().to_string())
             .collect();
         let traits = DeclaredItemFinder::traits(items);
         Self::named(&stem, &implemented)
             .or_else(|| impls.targets().first().cloned())
             .or_else(|| Self::named(&stem, &declared))
             .map(|name| (name, true))
-            .or_else(|| traits.first().map(|found| (found.name.clone(), false)))
+            .or_else(|| {
+                traits
+                    .first()
+                    .map(|found| (found.name().to_string(), false))
+            })
     }
 }
 
@@ -146,15 +150,15 @@ impl Rule for OwnedFunctionsRule {
             .map(|function| {
                 Offence::new(
                     file.relative_path(),
-                    function.line,
+                    function.line(),
                     self.name(),
                     format!(
                         "`{}` is a free function in a file whose subject is `{subject}`",
-                        function.name
+                        function.name()
                     ),
                     Self::correction(function, &subject, ownable, &impls),
                 )
-                .with_subject(&function.name)
+                .with_subject(function.name())
             })
             .collect()
     }

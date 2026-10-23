@@ -60,7 +60,7 @@ impl NamedSubjectRule {
     fn candidates(items: &[Item]) -> (Vec<DeclaredItem>, &'static str) {
         let implemented: Vec<DeclaredItem> = ImplementedTypeFinder::among(items)
             .into_iter()
-            .map(|found| DeclaredItem::new(&found.name, found.line))
+            .map(|found| DeclaredItem::new(found.name(), found.line()))
             .collect();
         if !implemented.is_empty() {
             return (implemented, Self::IMPLEMENTED);
@@ -88,12 +88,12 @@ impl NamedSubjectRule {
         let subject = candidates.first()?;
         let listed = candidates
             .iter()
-            .map(|candidate| format!("`{}`", candidate.name))
+            .map(|candidate| format!("`{}`", candidate.name()))
             .collect::<Vec<String>>()
             .join(", ");
         let offence = Offence::new(
             file.relative_path(),
-            subject.line,
+            subject.line(),
             self.name(),
             format!(
                 "`{}` is named after none of {kind}: {listed}",
@@ -101,11 +101,11 @@ impl NamedSubjectRule {
             ),
             format!(
                 "rename the file to {}, or rename `{}` after the file",
-                TypeName::new(&subject.name).file_name(),
-                subject.name
+                TypeName::new(subject.name()).file_name(),
+                subject.name()
             ),
         );
-        Some(offence.with_subject(&subject.name))
+        Some(offence.with_subject(subject.name()))
     }
 }
 
@@ -131,7 +131,7 @@ impl Rule for NamedSubjectRule {
         let stem = FileStem::of(file.relative_path());
         if candidates
             .iter()
-            .any(|candidate| stem.names(&candidate.name))
+            .any(|candidate| stem.names(candidate.name()))
         {
             return Vec::new();
         }

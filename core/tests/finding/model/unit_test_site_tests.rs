@@ -17,9 +17,9 @@ fn new_keeps_every_field_it_was_given() {
     let site = UnitTestSite::new(12, "the `#[cfg(test)]` module `tests`", "move it");
 
     // Assert
-    assert_eq!(site.line, 12);
-    assert_eq!(site.label, "the `#[cfg(test)]` module `tests`");
-    assert_eq!(site.correction, "move it");
+    assert_eq!(site.line(), 12);
+    assert_eq!(site.label(), "the `#[cfg(test)]` module `tests`");
+    assert_eq!(site.correction(), "move it");
 }
 
 #[test]
@@ -29,5 +29,5 @@ fn new_keeps_two_sites_of_the_same_label_distinct_by_line() {
     let second = UnitTestSite::new(9, "the test function `alpha`", "move it");
 
     // Assert
-    assert_ne!(first.line, second.line);
+    assert_ne!(first.line(), second.line());
 }

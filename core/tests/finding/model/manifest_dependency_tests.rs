@@ -25,7 +25,7 @@ fn in_manifest_keeps_only_the_declarations_of_that_manifest() {
     // Assert
     let kept = kept.expect("a workspace yields a list");
     assert_eq!(kept.len(), 1);
-    assert_eq!(kept[0].name, "serde");
+    assert_eq!(kept[0].name(), "serde");
 }
 
 #[test]
@@ -62,10 +62,10 @@ fn new_keeps_every_field_it_was_given() {
     let dependency = ManifestDependency::new("node/Cargo.toml", "anyhow", "dependencies", true);
 
     // Assert
-    assert_eq!(dependency.manifest, "node/Cargo.toml");
-    assert_eq!(dependency.name, "anyhow");
-    assert_eq!(dependency.section, "dependencies");
-    assert!(dependency.takes_from_workspace);
+    assert_eq!(dependency.manifest(), "node/Cargo.toml");
+    assert_eq!(dependency.name(), "anyhow");
+    assert_eq!(dependency.section(), "dependencies");
+    assert!(dependency.takes_from_workspace());
 }
 
 // The three tables a manifest can declare a dependency in. Dev and build

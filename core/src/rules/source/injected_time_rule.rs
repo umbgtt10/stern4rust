@@ -61,7 +61,7 @@ impl InjectedTimeRule {
                 TimeCallFinder::new(&names, false)
                     .calls_in(body)
                     .into_iter()
-                    .find(|call| call.kind != TimeCallKind::Random)
+                    .find(|call| call.kind() != TimeCallKind::Random)
                     .map(|call| Self::offence(file, function, &call))
             })
             .collect()
@@ -76,8 +76,8 @@ impl InjectedTimeRule {
             format!(
                 "`{name}` {} with `{}`; take time through a port the package declares, so a test can \
                  drive it",
-                call.kind.verb(),
-                call.written
+                call.kind().verb(),
+                call.written()
             ),
             String::from(Self::CORRECTION),
         )
@@ -113,7 +113,7 @@ impl Rule for InjectedTimeRule {
         let declared: BTreeSet<String> = parsed
             .iter()
             .flat_map(|(_, syntax)| DeclaredItemFinder::traits(&syntax.items))
-            .map(|declared| declared.name)
+            .map(|declared| declared.name().to_string())
             .collect();
         let library = LibraryTarget::of(files);
         parsed

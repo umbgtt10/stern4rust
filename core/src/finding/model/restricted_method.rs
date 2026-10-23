@@ -10,18 +10,43 @@ use crate::finding::model::public_entry_point::PublicEntryPoint;
 // belongs to.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RestrictedMethod {
-    pub call: PublicEntryPoint,
-    pub line: usize,
-    pub visibility: String,
-    pub owner: String,
+    call: PublicEntryPoint,
+    line: usize,
+    visibility: String,
+    owner: String,
 }
 
 impl RestrictedMethod {
     pub const PRIVATE_SPELLED_LONG: &'static str = "pub(self)";
 
+    pub fn new(call: PublicEntryPoint, line: usize, visibility: String, owner: String) -> Self {
+        Self {
+            call,
+            line,
+            visibility,
+            owner,
+        }
+    }
+
+    pub fn call(&self) -> &PublicEntryPoint {
+        &self.call
+    }
+
     // `pub(self)` restricts a method to its own module, which is what `fn`
     // already means.
     pub fn is_private_already(&self) -> bool {
         self.visibility == Self::PRIVATE_SPELLED_LONG
+    }
+
+    pub fn line(&self) -> usize {
+        self.line
+    }
+
+    pub fn owner(&self) -> &str {
+        &self.owner
+    }
+
+    pub fn visibility(&self) -> &str {
+        &self.visibility
     }
 }

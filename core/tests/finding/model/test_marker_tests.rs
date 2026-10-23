@@ -18,12 +18,8 @@ fn parse_of_a_fully_merged_marker_names_all_three_phases() {
 
     // Assert
     assert_eq!(
-        marker.map(|found| found.phases),
-        Some(vec![
-            MarkerPhase::Arrange,
-            MarkerPhase::Act,
-            MarkerPhase::Assert
-        ])
+        marker.as_ref().map(|found| found.phases()),
+        Some(&[MarkerPhase::Arrange, MarkerPhase::Act, MarkerPhase::Assert][..])
     );
 }
 
@@ -33,7 +29,7 @@ fn parse_of_a_marker_keeps_the_line_it_was_found_on() {
     let marker = TestMarker::parse("    // Assert", 42);
 
     // Assert
-    assert_eq!(marker.map(|found| found.line), Some(42));
+    assert_eq!(marker.map(|found| found.line()), Some(42));
 }
 
 #[test]
@@ -43,7 +39,7 @@ fn parse_of_a_marker_labels_it_as_written() {
 
     // Assert
     assert_eq!(
-        marker.map(|found| found.label),
+        marker.map(|found| found.label().to_string()),
         Some("// Arrange & Act".to_string())
     );
 }
@@ -55,8 +51,8 @@ fn parse_of_a_marker_with_trailing_prose_names_its_phase() {
 
     // Assert
     assert_eq!(
-        marker.map(|found| found.phases),
-        Some(vec![MarkerPhase::Act])
+        marker.as_ref().map(|found| found.phases()),
+        Some(&[MarkerPhase::Act][..])
     );
 }
 
@@ -67,8 +63,8 @@ fn parse_of_a_merged_act_and_assert_names_both_phases() {
 
     // Assert
     assert_eq!(
-        marker.map(|found| found.phases),
-        Some(vec![MarkerPhase::Act, MarkerPhase::Assert])
+        marker.as_ref().map(|found| found.phases()),
+        Some(&[MarkerPhase::Act, MarkerPhase::Assert][..])
     );
 }
 
@@ -79,8 +75,8 @@ fn parse_of_a_plain_arrange_names_one_phase() {
 
     // Assert
     assert_eq!(
-        marker.map(|found| found.phases),
-        Some(vec![MarkerPhase::Arrange])
+        marker.as_ref().map(|found| found.phases()),
+        Some(&[MarkerPhase::Arrange][..])
     );
 }
 
@@ -102,8 +98,8 @@ fn parse_of_an_arrange_with_dashed_prose_names_one_phase() {
 
     // Assert
     assert_eq!(
-        marker.map(|found| found.phases),
-        Some(vec![MarkerPhase::Arrange])
+        marker.as_ref().map(|found| found.phases()),
+        Some(&[MarkerPhase::Arrange][..])
     );
 }
 

@@ -42,20 +42,20 @@ impl SingleImplementedTypeRule {
     fn offence(&self, file: &SourceFile, subject: &str, extra: &ImplementedType) -> Offence {
         Offence::new(
             file.relative_path(),
-            extra.line,
+            extra.line(),
             self.name(),
             format!(
                 "`{}` is a second type with an impl block; this file's subject is \
                  already `{subject}`",
-                extra.name
+                extra.name()
             ),
             format!(
                 "move `{}` and its impl blocks into {}",
-                extra.name,
+                extra.name(),
                 extra.suggested_file()
             ),
         )
-        .with_subject(&extra.name)
+        .with_subject(extra.name())
     }
 
     // The subject is the type the file is named after, wherever it stands, and
@@ -69,7 +69,7 @@ impl SingleImplementedTypeRule {
         let stem = FileStem::of(file.relative_path());
         found
             .iter()
-            .find(|candidate| stem.names(&candidate.name))
+            .find(|candidate| stem.names(candidate.name()))
             .or_else(|| found.first())
     }
 }
@@ -96,7 +96,7 @@ impl Rule for SingleImplementedTypeRule {
         found
             .iter()
             .filter(|extra| *extra != subject)
-            .map(|extra| self.offence(file, &subject.name, extra))
+            .map(|extra| self.offence(file, subject.name(), extra))
             .collect()
     }
 

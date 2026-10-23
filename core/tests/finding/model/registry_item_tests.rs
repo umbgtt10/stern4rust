@@ -16,8 +16,8 @@ fn new_keeps_every_field_it_was_given() {
     let item = RegistryItem::new(7, "the constant `LIMIT`");
 
     // Assert
-    assert_eq!(item.line, 7);
-    assert_eq!(item.label, "the constant `LIMIT`");
+    assert_eq!(item.line(), 7);
+    assert_eq!(item.label(), "the constant `LIMIT`");
 }
 
 #[test]
@@ -27,5 +27,5 @@ fn new_keeps_two_items_of_the_same_label_distinct_by_line() {
     let second = RegistryItem::new(9, "the function `helper`");
 
     // Assert
-    assert_ne!(first.line, second.line);
+    assert_ne!(first.line(), second.line());
 }

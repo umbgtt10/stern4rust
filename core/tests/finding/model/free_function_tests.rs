@@ -42,6 +42,6 @@ fn new_keeps_its_name_and_line() {
     let found = FreeFunction::new(String::from("parse"), 3, BTreeSet::new());
 
     // Assert
-    assert_eq!(found.name, "parse");
-    assert_eq!(found.line, 3);
+    assert_eq!(found.name(), "parse");
+    assert_eq!(found.line(), 3);
 }
