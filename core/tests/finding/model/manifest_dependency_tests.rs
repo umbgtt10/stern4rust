@@ -20,7 +20,7 @@ fn in_manifest_keeps_only_the_declarations_of_that_manifest() {
     ]);
 
     // Act
-    let kept = ManifestDependency::in_manifest(&all, "alpha/Cargo.toml");
+    let kept = ManifestDependency::in_manifest(all.as_deref(), "alpha/Cargo.toml");
 
     // Assert
     let kept = kept.expect("a workspace yields a list");
@@ -39,7 +39,7 @@ fn in_manifest_of_a_manifest_declaring_nothing_is_empty() {
     )]);
 
     // Act
-    let kept = ManifestDependency::in_manifest(&all, "beta/Cargo.toml");
+    let kept = ManifestDependency::in_manifest(all.as_deref(), "beta/Cargo.toml");
 
     // Assert
     assert_eq!(kept, Some(Vec::new()));
@@ -50,7 +50,7 @@ fn in_manifest_of_a_manifest_declaring_nothing_is_empty() {
 #[test]
 fn in_manifest_of_no_workspace_stays_none() {
     // Arrange & Act
-    let kept = ManifestDependency::in_manifest(&None, "alpha/Cargo.toml");
+    let kept = ManifestDependency::in_manifest(None, "alpha/Cargo.toml");
 
     // Assert
     assert!(kept.is_none());

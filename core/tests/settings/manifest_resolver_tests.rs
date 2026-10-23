@@ -14,11 +14,9 @@ use stern4rust::settings::config::Config;
 use stern4rust::settings::manifest_resolver::ManifestResolver;
 
 fn config_for(packages: &[&str]) -> Config {
-    Config {
-        manifest_path: Some(Path::new("Cargo.toml").to_path_buf()),
-        packages: packages.iter().map(|name| (*name).to_string()).collect(),
-        ..Config::default()
-    }
+    Config::default()
+        .with_manifest_path(Some(Path::new("Cargo.toml").to_path_buf()))
+        .with_packages(packages.iter().map(|name| (*name).to_string()).collect())
 }
 
 #[test]

@@ -2,6 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::finding::model::manifest_dependency::ManifestDependency;
 use crate::reporting::offence::Offence;
 use crate::reporting::rule_explanation::RuleExplanation;
 use crate::reporting::unconfigured_rule::UnconfiguredRule;
@@ -58,7 +59,7 @@ impl RuleRegistry {
     pub fn from_config(config: &Config) -> Self {
         let rules = Self::all(config)
             .into_iter()
-            .filter(|rule| rule.is_configured() && config.selection.includes(rule.name()))
+            .filter(|rule| rule.is_configured() && config.selection().includes(rule.name()))
             .collect();
         Self { rules }
     }
@@ -125,7 +126,7 @@ impl RuleRegistry {
         Self::all(config)
             .iter()
             .filter(|rule| {
-                config.selection.includes(rule.name()) && !applied.contains(&rule.name())
+                config.selection().includes(rule.name()) && !applied.contains(&rule.name())
             })
             .map(|rule| {
                 UnconfiguredRule::new(rule.name(), rule.requirement().unwrap_or("not configured"))
@@ -159,12 +160,12 @@ impl RuleRegistry {
             Box::new(DeclaredByNameRule::new()),
             Box::new(DirectoryFileCountRule::new(
                 config
-                    .max_files_per_directory
+                    .max_files_per_directory()
                     .unwrap_or(DirectoryFileCountRule::DEFAULT_LIMIT),
             )),
             Box::new(DirectorySubfolderCountRule::new(
                 config
-                    .max_subfolders_per_directory
+                    .max_subfolders_per_directory()
                     .unwrap_or(DirectorySubfolderCountRule::DEFAULT_LIMIT),
             )),
             Box::new(DistinctTupleElementsRule::new()),
@@ -183,10 +184,10 @@ impl RuleRegistry {
             Box::new(PureTraitsRule::new()),
             Box::new(RegistryCompletenessRule::new()),
             Box::new(ReturnedMutationsRule::new()),
-            Box::new(SharedConstantsRule::new(config.name_readers.clone())),
+            Box::new(SharedConstantsRule::new(config.name_readers().clone())),
             Box::new(SingleImplementedTypeRule::new()),
             Box::new(SpdxMatchesManifestRule::new(
-                config.manifest_license.clone(),
+                config.manifest_license().map(str::to_string),
             )),
             Box::new(TestFileNamePostfixRule::new()),
             Box::new(TestFileStructureRule::new()),
@@ -197,9 +198,11 @@ impl RuleRegistry {
             Box::new(TimelessTestsRule::new()),
             Box::new(TypedErrorsRule::new()),
             Box::new(WorkspaceDependenciesRule::new(
-                config.workspace_dependencies.clone(),
+                config
+                    .workspace_dependencies()
+                    .map(<[ManifestDependency]>::to_vec),
             )),
-            Box::new(HeaderRule::new(config.expected_header.clone())),
+            Box::new(HeaderRule::new(config.expected_header().to_vec())),
         ]
     }
 }

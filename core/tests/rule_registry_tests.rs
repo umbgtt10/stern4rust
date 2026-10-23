@@ -59,11 +59,9 @@ fn file() -> SourceFile {
 // Everything a run can be given: a header to compare against and a manifest
 // that names a licence. Two rules need one each, and both are dropped without.
 fn fully_configured(lines: &[&str]) -> Config {
-    Config {
-        expected_header: lines.iter().map(|line| (*line).to_string()).collect(),
-        manifest_license: Some("MIT".to_string()),
-        ..Config::default()
-    }
+    Config::default()
+        .with_expected_header(lines.iter().map(|line| (*line).to_string()).collect())
+        .with_manifest_license(Some("MIT".to_string()))
 }
 
 struct NeverOffends;
@@ -308,10 +306,10 @@ fn from_config_with_a_header_registers_the_header_rule_alongside_the_others() {
 #[test]
 fn from_config_with_a_selection_registers_only_the_selected_rules() {
     // Arrange
-    let config = Config {
-        selection: RuleSelection::new(vec!["tests-layout".to_string()], Vec::new()),
-        ..Config::default()
-    };
+    let config = Config::default().with_selection(RuleSelection::new(
+        vec!["tests-layout".to_string()],
+        Vec::new(),
+    ));
 
     // Act
     let registry = RuleRegistry::from_config(&config);
@@ -323,10 +321,10 @@ fn from_config_with_a_selection_registers_only_the_selected_rules() {
 #[test]
 fn from_config_with_a_skip_leaves_that_rule_out() {
     // Arrange
-    let config = Config {
-        selection: RuleSelection::new(Vec::new(), vec!["test-file-structure".to_string()]),
-        ..Config::default()
-    };
+    let config = Config::default().with_selection(RuleSelection::new(
+        Vec::new(),
+        vec!["test-file-structure".to_string()],
+    ));
 
     // Act
     let registry = RuleRegistry::from_config(&config);
@@ -514,11 +512,9 @@ fn unconfigured_names_does_not_list_a_skipped_rule() {
     // Arrange
     // A licence, so that the header rule is the only one that could be
     // unconfigured -- and it is the one being skipped.
-    let config = Config {
-        selection: RuleSelection::new(Vec::new(), vec!["header".to_string()]),
-        manifest_license: Some("MIT".to_string()),
-        ..Config::default()
-    };
+    let config = Config::default()
+        .with_selection(RuleSelection::new(Vec::new(), vec!["header".to_string()]))
+        .with_manifest_license(Some("MIT".to_string()));
     let registry = RuleRegistry::from_config(&config);
 
     // Act

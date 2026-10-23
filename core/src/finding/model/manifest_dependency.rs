@@ -31,10 +31,9 @@ impl ManifestDependency {
     //
     // `None` stays `None`: that is how a package outside a workspace tells the
     // rule to stand down, and filtering must not turn it into an empty list.
-    pub fn in_manifest(all: &Option<Vec<Self>>, manifest: &str) -> Option<Vec<Self>> {
+    pub fn in_manifest(all: Option<&[Self]>, manifest: &str) -> Option<Vec<Self>> {
         Some(
-            all.as_ref()?
-                .iter()
+            all?.iter()
                 .filter(|dependency| dependency.manifest == manifest)
                 .cloned()
                 .collect(),
