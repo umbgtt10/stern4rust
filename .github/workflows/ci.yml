@@ -58,6 +58,7 @@ jobs:
           cargo install --locked cargo-crap4rust
           cargo install --locked cargo-twin4rust
           cargo install --locked cargo-iceberg4rust
+          cargo install --locked cargo-shear --version 1.14.0
 
       - name: Run ${{ matrix.stage }}
         run: just ${{ matrix.stage }}

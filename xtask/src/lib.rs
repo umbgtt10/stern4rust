@@ -5,3 +5,4 @@
 pub mod crap;
 pub mod gates;
 pub mod process;
+pub mod shear;

@@ -13,6 +13,7 @@ use xtask::process::launch_failure::LaunchFailure;
 pub struct FakeCommandRunner {
     available: bool,
     streaming_code: Option<i32>,
+    capturing_code: Option<i32>,
     stdout: String,
     calls: RefCell<Vec<Vec<String>>>,
 }
@@ -22,6 +23,7 @@ impl FakeCommandRunner {
         Self {
             available: true,
             streaming_code: Some(0),
+            capturing_code: Some(0),
             stdout: String::new(),
             calls: RefCell::new(Vec::new()),
         }
@@ -32,8 +34,16 @@ impl FakeCommandRunner {
         self
     }
 
+    // A captured run answers with the streaming code too, unless told otherwise:
+    // a gate that captures one command and streams another needs the two apart.
+    pub fn with_capturing_code(mut self, capturing_code: Option<i32>) -> Self {
+        self.capturing_code = capturing_code;
+        self
+    }
+
     pub fn with_streaming_code(mut self, streaming_code: Option<i32>) -> Self {
         self.streaming_code = streaming_code;
+        self.capturing_code = streaming_code;
         self
     }
 
@@ -70,7 +80,7 @@ impl CommandRunner for FakeCommandRunner {
     ) -> Result<CommandOutcome, LaunchFailure> {
         self.calls.borrow_mut().push(args.to_vec());
         Ok(CommandOutcome::new(
-            self.streaming_code,
+            self.capturing_code,
             self.stdout.clone(),
             String::new(),
         ))
@@ -99,6 +109,22 @@ fn run_capturing_returns_the_canned_stdout() {
 
     // Assert
     assert_eq!(outcome.stdout, "payload");
+}
+
+#[test]
+fn run_capturing_with_a_code_of_its_own_answers_with_it_rather_than_the_streaming_one() {
+    // Arrange
+    let runner = FakeCommandRunner::new()
+        .with_streaming_code(Some(1))
+        .with_capturing_code(Some(0));
+
+    // Act
+    let outcome = runner
+        .run_capturing("cargo", &[])
+        .expect("the fake always launches");
+
+    // Assert
+    assert_eq!(outcome.exit_code, Some(0));
 }
 
 #[test]
