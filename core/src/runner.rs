@@ -76,10 +76,10 @@ impl Runner {
         // Before anything is read. The listing answers from the registry alone,
         // so it works in a checkout with no manifest worth reading and cannot
         // fail the way a run can.
-        if args.list_rules {
+        if args.list_rules() {
             return Ok((RunOutcome::Clean, Self::rule_listing(&args)));
         }
-        let sections = PackageSections::load(&Self::manifest_directory(&args.manifest_path))?;
+        let sections = PackageSections::load(&Self::manifest_directory(args.manifest_path()))?;
         let config = Self::config_from(&args, None)?;
         Self::validate_selection(&config)?;
         let config = Config {
@@ -282,12 +282,12 @@ impl Runner {
     // selected", which is the opposite of what naming one rule means everywhere
     // else in this tool.
     fn config_from(args: &Args, section: Option<&PackageConfig>) -> Result<Config> {
-        let directory = Self::manifest_directory(&args.manifest_path);
+        let directory = Self::manifest_directory(args.manifest_path());
         let file = ConfigFile::load(&directory)?;
         let found = file.as_ref();
         let header_file = args
-            .header_file
-            .clone()
+            .header_file()
+            .map(Path::to_path_buf)
             .or_else(|| section.and_then(|s| s.header_file_from(&directory)))
             .or_else(|| found.and_then(|file| file.header_file_from(&directory)));
         let expected_header = match &header_file {
@@ -295,7 +295,7 @@ impl Runner {
             None => Vec::new(),
         };
         let threshold = args
-            .offence_threshold
+            .offence_threshold()
             .or_else(|| found.and_then(|file| file.offence_threshold()))
             .unwrap_or(OffenceThreshold::DEFAULT);
         Ok(Config {
@@ -310,41 +310,41 @@ impl Runner {
             // baseline names it and states how many offences it hid, so a
             // reader can always see that one is in force.
             baseline: args
-                .baseline
-                .clone()
+                .baseline()
+                .map(Path::to_path_buf)
                 .or_else(|| found.and_then(|file| file.baseline_from(&directory)))
-                .or_else(|| Self::discovered_baseline(&directory, args.write_baseline)),
-            write_baseline: args.write_baseline,
-            fix: args.fix,
+                .or_else(|| Self::discovered_baseline(&directory, args.write_baseline())),
+            write_baseline: args.write_baseline(),
+            fix: args.fix(),
             config_file: found.map(|_| directory.join(ConfigFile::NAME)),
-            manifest_path: args.manifest_path.clone(),
+            manifest_path: args.manifest_path().map(Path::to_path_buf),
             max_files_per_directory: section
                 .and_then(|s| s.max_files_per_directory())
                 .or_else(|| found.and_then(|file| file.max_files_per_directory())),
             max_subfolders_per_directory: section
                 .and_then(|s| s.max_subfolders_per_directory())
                 .or_else(|| found.and_then(|file| file.max_subfolders_per_directory())),
-            packages: args.packages.clone(),
+            packages: args.packages().to_vec(),
             excludes: Self::preferred(
-                args.excludes.clone(),
+                args.excludes().to_vec(),
                 Self::section_or_root(
                     section.map(|s| s.exclude()),
                     found.map(|file| file.exclude()),
                 ),
             ),
             expected_header,
-            format: args.format,
+            format: args.format(),
             offence_threshold: OffenceThreshold::new(threshold),
             selection: RuleSelection::new(
                 Self::preferred(
-                    args.rules.clone(),
+                    args.rules().to_vec(),
                     Self::section_or_root(
                         section.map(|s| s.rules()),
                         found.map(|file| file.rules()),
                     ),
                 ),
                 Self::preferred(
-                    args.skipped_rules.clone(),
+                    args.skipped_rules().to_vec(),
                     section
                         .and_then(|s| s.skip())
                         .or(found.map(|file| file.skip())),
@@ -363,9 +363,8 @@ impl Runner {
 
     // The config lives beside the manifest it configures, so a workspace and a
     // package in it can hold different ones.
-    fn manifest_directory(manifest_path: &Option<PathBuf>) -> PathBuf {
+    fn manifest_directory(manifest_path: Option<&Path>) -> PathBuf {
         manifest_path
-            .as_ref()
             .and_then(|path| path.parent())
             .map(Path::to_path_buf)
             .unwrap_or_else(|| PathBuf::from("."))
@@ -512,7 +511,7 @@ impl Runner {
             manifest_license: Some(String::new()),
             ..Config::default()
         });
-        RuleListing::new(&registry.explanations()).render(args.format)
+        RuleListing::new(&registry.explanations()).render(args.format())
     }
 
     // A section states its whole list rather than adding to the root's, which is

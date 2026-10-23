@@ -9,10 +9,29 @@
 // to be called stern4rust must survive.
 
 use clap::Parser;
+use stern4rust::reporting::output_format::OutputFormat;
 use stern4rust::settings::args::Args;
 
 fn argv(parts: &[&str]) -> Vec<String> {
     parts.iter().map(|part| (*part).to_string()).collect()
+}
+
+#[test]
+fn parse_from_collects_every_exclude_flag() {
+    // Arrange & Act
+    let args = Args::parse_from(argv(&[
+        "cargo-stern4rust",
+        "--exclude",
+        "fixture/**",
+        "--exclude",
+        "vendor/**",
+    ]));
+
+    // Assert
+    assert_eq!(
+        args.excludes(),
+        ["fixture/**".to_string(), "vendor/**".to_string()]
+    );
 }
 
 #[test]
@@ -27,7 +46,28 @@ fn parse_from_collects_every_package_flag() {
     ]));
 
     // Assert
-    assert_eq!(args.packages, vec!["alpha".to_string(), "beta".to_string()]);
+    assert_eq!(
+        args.packages(),
+        vec!["alpha".to_string(), "beta".to_string()]
+    );
+}
+
+#[test]
+fn parse_from_collects_every_skip_flag() {
+    // Arrange & Act
+    let args = Args::parse_from(argv(&[
+        "cargo-stern4rust",
+        "--skip",
+        "header",
+        "--skip",
+        "test-naming",
+    ]));
+
+    // Assert
+    assert_eq!(
+        args.skipped_rules(),
+        ["header".to_string(), "test-naming".to_string()]
+    );
 }
 
 #[test]
@@ -36,8 +76,39 @@ fn parse_from_defaults_to_no_packages_and_no_manifest_path() {
     let args = Args::parse_from(argv(&["cargo-stern4rust"]));
 
     // Assert
-    assert!(args.packages.is_empty());
-    assert!(args.manifest_path.is_none());
+    assert!(args.packages().is_empty());
+    assert!(args.manifest_path().is_none());
+}
+
+#[test]
+fn parse_from_of_no_switches_leaves_every_one_off() {
+    // Arrange & Act
+    let args = Args::parse_from(argv(&["cargo-stern4rust"]));
+
+    // Assert
+    assert!(!args.fix());
+    assert!(!args.list_rules());
+    assert!(!args.write_baseline());
+    assert_eq!(args.format(), OutputFormat::Text);
+}
+
+#[test]
+fn parse_from_reads_each_switch_and_the_format() {
+    // Arrange & Act
+    let args = Args::parse_from(argv(&[
+        "cargo-stern4rust",
+        "--fix",
+        "--rules",
+        "--write-baseline",
+        "--format",
+        "json",
+    ]));
+
+    // Assert
+    assert!(args.fix());
+    assert!(args.list_rules());
+    assert!(args.write_baseline());
+    assert_eq!(args.format(), OutputFormat::Json);
 }
 
 #[test]
@@ -51,7 +122,7 @@ fn parse_from_reads_the_manifest_path() {
 
     // Assert
     assert_eq!(
-        args.manifest_path.as_deref(),
+        args.manifest_path(),
         Some(std::path::Path::new("/tmp/Cargo.toml"))
     );
 }
