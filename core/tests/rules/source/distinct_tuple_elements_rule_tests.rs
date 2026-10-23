@@ -40,7 +40,7 @@ fn check_a_function_in_an_inline_module_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].subject.as_deref(), Some("span"));
+    assert_eq!(offences[0].subject(), Some("span"));
 }
 
 #[test]
@@ -67,9 +67,9 @@ fn check_a_private_function_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].rule, RULE);
-    assert_eq!(offences[0].subject.as_deref(), Some("bounds"));
-    assert_eq!(offences[0].line, 5);
+    assert_eq!(offences[0].rule(), RULE);
+    assert_eq!(offences[0].subject(), Some("bounds"));
+    assert_eq!(offences[0].line(), 5);
 }
 
 #[test]
@@ -83,14 +83,14 @@ fn check_a_repeated_tuple_names_the_type_and_offers_a_struct() {
     // Assert
     assert_eq!(offences.len(), 1);
     assert!(
-        offences[0].description.contains("`(u64, u64)`"),
+        offences[0].description().contains("`(u64, u64)`"),
         "got {:?}",
-        offences[0].description
+        offences[0].description()
     );
     assert!(
-        offences[0].correction.contains("struct") && offences[0].correction.contains("`u64`"),
+        offences[0].correction().contains("struct") && offences[0].correction().contains("`u64`"),
         "got {:?}",
-        offences[0].correction
+        offences[0].correction()
     );
 }
 
@@ -129,7 +129,7 @@ fn check_a_trait_declaration_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].subject.as_deref(), Some("ends"));
+    assert_eq!(offences[0].subject(), Some("ends"));
 }
 
 #[test]
@@ -155,7 +155,7 @@ fn check_a_tuple_wrapped_in_a_generic_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].subject.as_deref(), Some("window"));
+    assert_eq!(offences[0].subject(), Some("window"));
 }
 
 #[test]
@@ -168,7 +168,7 @@ fn check_an_inherent_method_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].subject.as_deref(), Some("counts"));
+    assert_eq!(offences[0].subject(), Some("counts"));
 }
 
 #[test]

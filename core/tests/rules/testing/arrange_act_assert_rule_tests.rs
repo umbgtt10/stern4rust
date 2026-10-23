@@ -103,13 +103,13 @@ fn check_a_marker_not_preceded_by_a_blank_line_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].rule, RULE);
+    assert_eq!(offences[0].rule(), RULE);
     assert!(
-        offences[0].description.contains("blank line"),
+        offences[0].description().contains("blank line"),
         "got {}",
-        offences[0].description
+        offences[0].description()
     );
-    assert_eq!(offences[0].correction, "put a blank line before `// Act`");
+    assert_eq!(offences[0].correction(), "put a blank line before `// Act`");
 }
 
 // The observed style: a marker that explains itself.
@@ -180,11 +180,8 @@ fn check_a_test_with_no_markers_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].rule, RULE);
-    assert_eq!(
-        offences[0].subject.as_deref(),
-        Some("poll_of_a_queue_returns_it")
-    );
+    assert_eq!(offences[0].rule(), RULE);
+    assert_eq!(offences[0].subject(), Some("poll_of_a_queue_returns_it"));
 }
 
 #[test]
@@ -197,9 +194,9 @@ fn check_an_act_without_an_assert_reports_it() {
     // Assert
     assert_eq!(offences.len(), 1);
     assert!(
-        offences[0].description.contains("Arrange, Act"),
+        offences[0].description().contains("Arrange, Act"),
         "the sequence found is named, got {}",
-        offences[0].description
+        offences[0].description()
     );
 }
 
@@ -225,9 +222,9 @@ fn check_an_unmerged_missing_arrange_reports_it() {
     // Assert
     assert_eq!(offences.len(), 1);
     assert!(
-        offences[0].correction.contains("Arrange & Act"),
+        offences[0].correction().contains("Arrange & Act"),
         "got {}",
-        offences[0].correction
+        offences[0].correction()
     );
 }
 

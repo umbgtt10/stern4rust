@@ -53,7 +53,7 @@ fn check_of_a_multi_segment_call_names_the_import_to_add() {
 
     // Assert
     assert_eq!(
-        found[0].correction,
+        found[0].correction(),
         "add `use std::env;` and call `env::args`"
     );
 }
@@ -77,11 +77,11 @@ fn check_of_a_path_qualified_call_reports_it() {
 
     // Assert
     assert_eq!(found.len(), 1);
-    assert_eq!(found[0].line, 2);
-    assert_eq!(found[0].rule, "imported-paths");
-    assert_eq!(found[0].subject.as_deref(), Some("syn::parse_file"));
+    assert_eq!(found[0].line(), 2);
+    assert_eq!(found[0].rule(), "imported-paths");
+    assert_eq!(found[0].subject(), Some("syn::parse_file"));
     assert_eq!(
-        found[0].correction,
+        found[0].correction(),
         "add `use syn::parse_file;` and call `parse_file`"
     );
 }
@@ -97,7 +97,7 @@ fn check_of_a_return_type_reached_through_a_path_reports_it() {
     // Assert
     assert_eq!(found.len(), 1, "expected one, got {found:?}");
     assert_eq!(
-        found[0].correction,
+        found[0].correction(),
         "add `use std::io;` and call `io::Result`"
     );
 }
@@ -203,8 +203,8 @@ fn check_reports_every_offending_call() {
 
     // Assert
     assert_eq!(found.len(), 2);
-    assert_eq!(found[0].line, 2);
-    assert_eq!(found[1].line, 3);
+    assert_eq!(found[0].line(), 2);
+    assert_eq!(found[1].line(), 3);
 }
 
 #[test]

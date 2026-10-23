@@ -43,7 +43,7 @@ fn check_a_source_file_with_a_cfg_attr_on_test_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].rule, RULE);
+    assert_eq!(offences[0].rule(), RULE);
 }
 
 #[test]
@@ -53,14 +53,14 @@ fn check_a_source_file_with_a_cfg_test_module_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].file, "src/subject.rs");
-    assert_eq!(offences[0].line, 1);
+    assert_eq!(offences[0].file(), "src/subject.rs");
+    assert_eq!(offences[0].line(), 1);
     assert!(
         offences[0]
-            .description
+            .description()
             .contains("`#[cfg(test)]` module `tests`"),
         "got {}",
-        offences[0].description
+        offences[0].description()
     );
 }
 
@@ -73,10 +73,10 @@ fn check_a_source_file_with_a_test_function_reports_it() {
     assert_eq!(offences.len(), 1);
     assert!(
         offences[0]
-            .description
+            .description()
             .contains("test function `checks_it`"),
         "got {}",
-        offences[0].description
+        offences[0].description()
     );
 }
 
@@ -109,10 +109,10 @@ fn check_correction_names_the_mirrored_test_file() {
     // Assert
     assert!(
         offences[0]
-            .correction
+            .correction()
             .contains("tests/rules/subject_tests.rs"),
         "got {}",
-        offences[0].correction
+        offences[0].correction()
     );
 }
 

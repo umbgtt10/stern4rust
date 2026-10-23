@@ -39,7 +39,7 @@ fn check_of_a_cfg_test_module_in_src_reports_its_test() {
 
     // Assert
     assert_eq!(offences.len(), 1, "{offences:?}");
-    assert_eq!(offences[0].line, 6);
+    assert_eq!(offences[0].line(), 6);
 }
 
 #[test]
@@ -52,7 +52,7 @@ fn check_of_a_helper_that_names_a_temp_directory_from_the_clock_reports_it() {
 
     // Assert
     assert_eq!(
-        offences[0].description,
+        offences[0].description(),
         "`scratch` reads the clock with `SystemTime::now`; a test's verdict must not depend on how fast the machine is"
     );
 }
@@ -91,10 +91,10 @@ fn check_of_a_stopwatch_test_reports_it_at_its_name() {
 
     // Assert
     assert_eq!(offences.len(), 1, "{offences:?}");
-    assert_eq!(offences[0].rule, RULE);
-    assert_eq!(offences[0].line, 4);
+    assert_eq!(offences[0].rule(), RULE);
+    assert_eq!(offences[0].line(), 4);
     assert_eq!(
-        offences[0].description,
+        offences[0].description(),
         "`finishes_in_time` reads the clock with `Instant::now`; a test's verdict must not depend on how fast the machine is"
     );
 }
@@ -121,11 +121,11 @@ fn check_of_a_test_drawing_unseeded_randomness_names_the_seed() {
 
     // Assert
     assert_eq!(
-        offences[0].description,
+        offences[0].description(),
         "`shuffles` draws unseeded randomness with `rand::random`; a test's verdict must not depend on a draw it cannot repeat"
     );
     assert_eq!(
-        offences[0].correction,
+        offences[0].correction(),
         "seed the generator, `StdRng::seed_from_u64`, so every run draws the same"
     );
 }
@@ -152,11 +152,11 @@ fn check_of_a_test_that_waits_through_an_import_names_the_correction() {
 
     // Assert
     assert_eq!(
-        offences[0].description,
+        offences[0].description(),
         "`acquire_blocks` waits on a timer with `sleep`; a test's verdict must not depend on how fast the machine is"
     );
     assert_eq!(
-        offences[0].correction,
+        offences[0].correction(),
         "wait for the event itself -- a channel, a barrier, a rendezvous of the parties --, run on Tokio's paused \
          clock, or inject a clock into the code under test and drive it from the test; name a temp directory after \
          the test, or let a temp-directory crate choose"
@@ -174,9 +174,9 @@ fn check_of_a_test_with_two_calls_reports_it_once_at_the_first() {
     // Assert
     assert_eq!(offences.len(), 1, "{offences:?}");
     assert!(
-        offences[0].description.contains("`std::thread::sleep`"),
+        offences[0].description().contains("`std::thread::sleep`"),
         "{}",
-        offences[0].description
+        offences[0].description()
     );
 }
 
@@ -225,8 +225,8 @@ fn explanation_breaks_the_rule_it_explains() {
     let explanation = TimelessTestsRule::new().explanation();
 
     // Act
-    let broken = check("tests/example_tests.rs", explanation.breaks);
-    let mended = check("tests/example_tests.rs", explanation.instead);
+    let broken = check("tests/example_tests.rs", explanation.breaks());
+    let mended = check("tests/example_tests.rs", explanation.instead());
 
     // Assert
     assert_eq!(broken.len(), 1, "{broken:?}");
@@ -240,12 +240,12 @@ fn explanation_shows_the_stopwatch_and_the_channel() {
 
     // Assert
     assert_eq!(
-        explanation.breaks,
+        explanation.breaks(),
         "#[test]\nfn finishes_in_time() {\n    let start = std::time::Instant::now();\n    run();\n    \
          assert!(start.elapsed() < LIMIT);\n}\n"
     );
     assert_eq!(
-        explanation.instead,
+        explanation.instead(),
         "#[test]\nfn finishes() {\n    let (sender, receiver) = std::sync::mpsc::channel();\n    run(sender);\n    \
          assert!(receiver.recv().is_ok());\n}\n"
     );

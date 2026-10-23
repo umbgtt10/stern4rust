@@ -84,7 +84,7 @@ fn apply_reports_an_offence_the_baseline_never_saw() {
 
     // Assert
     assert_eq!(outcome.kept().len(), 1);
-    assert_eq!(outcome.kept()[0].file, "src/b.rs");
+    assert_eq!(outcome.kept()[0].file(), "src/b.rs");
     assert_eq!(outcome.suppressed(), 0);
 }
 

@@ -23,13 +23,13 @@ use crate::reporting::offence_order::OffenceOrder;
 // worth acting on -- the exact shape of silent gap this tool exists to catch.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize)]
 pub struct Offence {
-    pub file: String,
-    pub line: usize,
-    pub rule: &'static str,
-    pub description: String,
-    pub correction: String,
-    pub subject: Option<String>,
-    pub expected: Option<String>,
+    file: String,
+    line: usize,
+    rule: &'static str,
+    description: String,
+    correction: String,
+    subject: Option<String>,
+    expected: Option<String>,
 }
 
 impl Offence {
@@ -51,6 +51,30 @@ impl Offence {
         }
     }
 
+    pub fn correction(&self) -> &str {
+        &self.correction
+    }
+
+    pub fn description(&self) -> &str {
+        &self.description
+    }
+
+    pub fn expected(&self) -> Option<&str> {
+        self.expected.as_deref()
+    }
+
+    pub fn file(&self) -> &str {
+        &self.file
+    }
+
+    pub fn line(&self) -> usize {
+        self.line
+    }
+
+    pub fn rule(&self) -> &'static str {
+        self.rule
+    }
+
     // Offences are found in whatever order the rules happen to run, which puts
     // every tree-wide one after every per-file one. Grouping by file and then by
     // line is what lets a reader -- or a tool consuming the report -- work
@@ -59,9 +83,20 @@ impl Offence {
         OffenceOrder::new(&self.file, self.line, self.rule)
     }
 
+    pub fn subject(&self) -> Option<&str> {
+        self.subject.as_deref()
+    }
+
     pub fn with_expected(self, expected: &str) -> Self {
         Self {
             expected: Some(expected.to_string()),
+            ..self
+        }
+    }
+
+    pub fn with_file(self, file: &str) -> Self {
+        Self {
+            file: file.to_string(),
             ..self
         }
     }

@@ -32,7 +32,7 @@ fn check_a_constant_after_a_function_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].subject.as_deref(), Some("LIMIT"));
+    assert_eq!(offences[0].subject(), Some("LIMIT"));
 }
 
 #[test]
@@ -45,9 +45,9 @@ fn check_a_constant_after_a_struct_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].rule, RULE);
-    assert_eq!(offences[0].subject.as_deref(), Some("LIMIT"));
-    assert_eq!(offences[0].line, 9);
+    assert_eq!(offences[0].rule(), RULE);
+    assert_eq!(offences[0].subject(), Some("LIMIT"));
+    assert_eq!(offences[0].line(), 9);
 }
 
 #[test]
@@ -70,9 +70,9 @@ fn check_a_constant_after_an_impl_reports_it() {
     // Assert
     assert_eq!(offences.len(), 1);
     assert!(
-        offences[0].description.contains("`impl Widget`"),
+        offences[0].description().contains("`impl Widget`"),
         "got {:?}",
-        offences[0].description
+        offences[0].description()
     );
 }
 
@@ -110,9 +110,10 @@ fn check_a_file_the_fix_can_repair_offers_it() {
 
     // Assert
     assert!(
-        offences[0].correction.contains("`--fix`") && !offences[0].correction.contains("by hand"),
+        offences[0].correction().contains("`--fix`")
+            && !offences[0].correction().contains("by hand"),
         "got {:?}",
-        offences[0].correction
+        offences[0].correction()
     );
 }
 
@@ -129,10 +130,10 @@ fn check_a_file_the_fix_declines_says_why() {
     // Assert
     assert_eq!(offences.len(), 1);
     assert!(
-        offences[0].correction.contains("by hand")
-            && offences[0].correction.contains("`macro_rules!`"),
+        offences[0].correction().contains("by hand")
+            && offences[0].correction().contains("`macro_rules!`"),
         "got {:?}",
-        offences[0].correction
+        offences[0].correction()
     );
 }
 
@@ -146,7 +147,7 @@ fn check_a_misplaced_constant_names_it_and_the_item_it_follows() {
 
     // Assert
     assert_eq!(
-        offences[0].description,
+        offences[0].description(),
         "`LIMIT` is declared after `Widget`; constants come straight after the imports"
     );
 }
@@ -173,7 +174,7 @@ fn check_a_static_after_a_struct_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].subject.as_deref(), Some("COUNT"));
+    assert_eq!(offences[0].subject(), Some("COUNT"));
 }
 
 #[test]
@@ -234,7 +235,7 @@ fn check_two_misplaced_constants_reports_the_first_once() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].subject.as_deref(), Some("LOW"));
+    assert_eq!(offences[0].subject(), Some("LOW"));
 }
 
 // This rule answers the per-file question only, and says so rather than

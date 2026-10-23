@@ -39,10 +39,10 @@ fn check_a_file_claiming_a_licence_in_prose_only_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].rule, "spdx-matches-manifest");
-    assert_eq!(offences[0].expected.as_deref(), Some("MIT"));
+    assert_eq!(offences[0].rule(), "spdx-matches-manifest");
+    assert_eq!(offences[0].expected(), Some("MIT"));
     assert_eq!(
-        offences[0].correction,
+        offences[0].correction(),
         "add `// SPDX-License-Identifier: MIT` to the header, or correct the manifest"
     );
 }
@@ -55,7 +55,7 @@ fn check_a_file_with_no_header_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].subject.as_deref(), Some("src/traits/mod.rs"));
+    assert_eq!(offences[0].subject(), Some("src/traits/mod.rs"));
 }
 
 #[test]
@@ -79,14 +79,14 @@ fn check_a_mismatched_spdx_reports_it() {
     // Assert
     assert_eq!(offences.len(), 1);
     assert!(
-        offences[0].description.contains("Apache-2.0"),
+        offences[0].description().contains("Apache-2.0"),
         "the identifier found is named, got {}",
-        offences[0].description
+        offences[0].description()
     );
     assert!(
-        offences[0].description.contains("MIT"),
+        offences[0].description().contains("MIT"),
         "the manifest's licence is named, got {}",
-        offences[0].description
+        offences[0].description()
     );
 }
 

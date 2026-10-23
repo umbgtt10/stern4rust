@@ -114,7 +114,7 @@ fn check_workspace_of_a_test_file_in_the_wrong_directory_reports_it() {
     // Assert
     assert_eq!(offences.len(), 1);
     assert_eq!(
-        offences[0].expected.as_deref(),
+        offences[0].expected(),
         Some("src/widget_rule.rs"),
         "the pairing is by path, not by name alone"
     );
@@ -127,26 +127,29 @@ fn check_workspace_of_a_test_file_with_no_source_file_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].rule, RULE);
-    assert_eq!(offences[0].file, "tests/state/etheram_state_ibft_tests.rs");
-    assert_eq!(offences[0].line, 1);
+    assert_eq!(offences[0].rule(), RULE);
     assert_eq!(
-        offences[0].subject.as_deref(),
+        offences[0].file(),
+        "tests/state/etheram_state_ibft_tests.rs"
+    );
+    assert_eq!(offences[0].line(), 1);
+    assert_eq!(
+        offences[0].subject(),
         Some("tests/state/etheram_state_ibft_tests.rs")
     );
     assert_eq!(
-        offences[0].expected.as_deref(),
+        offences[0].expected(),
         Some("src/state/etheram_state_ibft.rs")
     );
     assert!(
         offences[0]
-            .description
+            .description()
             .contains("src/state/etheram_state_ibft.rs"),
         "got {}",
-        offences[0].description
+        offences[0].description()
     );
     assert_eq!(
-        offences[0].correction,
+        offences[0].correction(),
         "rename it after the source file it exercises, or delete it if that file is gone"
     );
 }
@@ -188,8 +191,8 @@ fn check_workspace_reports_every_unpaired_file() {
     // Assert. Reported in the order the files were walked; Offence::sort_key is
     // what orders the report, not the rule.
     assert_eq!(offences.len(), 2);
-    assert_eq!(offences[0].file, "tests/gone_tests.rs");
-    assert_eq!(offences[1].file, "tests/also_gone_tests.rs");
+    assert_eq!(offences[0].file(), "tests/gone_tests.rs");
+    assert_eq!(offences[1].file(), "tests/also_gone_tests.rs");
 }
 
 #[test]

@@ -21,10 +21,10 @@ fn of_no_offences_falls_back_to_the_heading_widths() {
     let widths = ColumnWidths::of(&[]);
 
     // Assert
-    assert_eq!(widths.file, "file".len());
-    assert_eq!(widths.line, "line".len());
-    assert_eq!(widths.rule, "rule".len());
-    assert_eq!(widths.description, "offence".len());
+    assert_eq!(widths.file(), "file".len());
+    assert_eq!(widths.line(), "line".len());
+    assert_eq!(widths.rule(), "rule".len());
+    assert_eq!(widths.description(), "offence".len());
 }
 
 // Never narrower than the heading, however short every entry is.
@@ -34,9 +34,9 @@ fn of_offences_narrower_than_their_headings_keeps_the_heading_width() {
     let widths = ColumnWidths::of(&[offence("a.rs", 1, "x", "y")]);
 
     // Assert
-    assert_eq!(widths.line, "line".len());
-    assert_eq!(widths.rule, "rule".len());
-    assert_eq!(widths.description, "offence".len());
+    assert_eq!(widths.line(), "line".len());
+    assert_eq!(widths.rule(), "rule".len());
+    assert_eq!(widths.description(), "offence".len());
 }
 
 // A path longer than its heading must widen the column rather than overflow it.
@@ -57,8 +57,8 @@ fn of_offences_takes_the_widest_entry_of_each_column() {
     ]);
 
     // Assert
-    assert_eq!(widths.file, long.len());
-    assert_eq!(widths.line, "1234".len());
-    assert_eq!(widths.rule, "test-file-structure".len());
-    assert_eq!(widths.description, "a much longer description".len());
+    assert_eq!(widths.file(), long.len());
+    assert_eq!(widths.line(), "1234".len());
+    assert_eq!(widths.rule(), "test-file-structure".len());
+    assert_eq!(widths.description(), "a much longer description".len());
 }

@@ -102,7 +102,7 @@ fn check_workspace_of_an_inline_module_does_not_count_as_a_declaration() {
 
     // Assert
     assert_eq!(found.len(), 1);
-    assert_eq!(found[0].subject.as_deref(), Some("widget"));
+    assert_eq!(found[0].subject(), Some("widget"));
 }
 
 // The failure this rule exists for: the file is fine, the registry is valid,
@@ -118,10 +118,10 @@ fn check_workspace_of_an_undeclared_file_reports_it_against_the_registry() {
 
     // Assert
     assert_eq!(found.len(), 1);
-    assert_eq!(found[0].file, "src/lib.rs");
-    assert_eq!(found[0].rule, "registry-completeness");
-    assert_eq!(found[0].subject.as_deref(), Some("orphan"));
-    assert_eq!(found[0].correction, "add `pub mod orphan;` to src/lib.rs");
+    assert_eq!(found[0].file(), "src/lib.rs");
+    assert_eq!(found[0].rule(), "registry-completeness");
+    assert_eq!(found[0].subject(), Some("orphan"));
+    assert_eq!(found[0].correction(), "add `pub mod orphan;` to src/lib.rs");
 }
 
 // A subfolder with a registry of its own is a module and has to be declared.
@@ -137,8 +137,8 @@ fn check_workspace_of_an_undeclared_subfolder_reports_it() {
 
     // Assert
     assert_eq!(found.len(), 1);
-    assert_eq!(found[0].file, "src/lib.rs");
-    assert_eq!(found[0].subject.as_deref(), Some("rules"));
+    assert_eq!(found[0].file(), "src/lib.rs");
+    assert_eq!(found[0].subject(), Some("rules"));
 }
 
 // The tests tree is the shape the gap was first noticed in.
@@ -153,8 +153,8 @@ fn check_workspace_of_an_undeclared_test_file_reports_it() {
 
     // Assert
     assert_eq!(found.len(), 1);
-    assert_eq!(found[0].file, "tests/all_tests.rs");
-    assert_eq!(found[0].subject.as_deref(), Some("beta_tests"));
+    assert_eq!(found[0].file(), "tests/all_tests.rs");
+    assert_eq!(found[0].subject(), Some("beta_tests"));
 }
 
 // One real offence must not become a page of wrong ones. readable-source

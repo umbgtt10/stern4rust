@@ -165,10 +165,7 @@ impl Rule for TestFileStructureRule {
         }
         offences
             .into_iter()
-            .map(|offence| Offence {
-                file: file.relative_path().to_string(),
-                ..offence
-            })
+            .map(|offence| offence.with_file(file.relative_path()))
             .collect()
     }
 

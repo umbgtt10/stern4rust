@@ -93,8 +93,8 @@ fn kept_returns_the_offences_in_the_order_it_was_given() {
     let kept = OffenceThreshold::new(2).kept(&found);
 
     // Assert
-    assert_eq!(kept[0].line, 1);
-    assert_eq!(kept[1].line, 2);
+    assert_eq!(kept[0].line(), 1);
+    assert_eq!(kept[1].line(), 2);
 }
 
 #[test]

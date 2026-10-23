@@ -140,7 +140,7 @@ impl RuleRegistry {
     pub fn unconfigured_names(&self, config: &Config) -> Vec<&'static str> {
         self.unconfigured(config)
             .into_iter()
-            .map(|rule| rule.name)
+            .map(|rule| rule.name())
             .collect()
     }
 

@@ -157,14 +157,11 @@ fn check_an_out_of_order_attributed_import_names_the_import_not_the_attribute() 
     );
 
     // Assert
-    assert_eq!(
-        offences[0].subject.as_deref(),
-        Some("use alpha_crate::Alpha;")
-    );
+    assert_eq!(offences[0].subject(), Some("use alpha_crate::Alpha;"));
     assert!(
-        offences[0].description.contains("use zeta_crate::Zeta;"),
+        offences[0].description().contains("use zeta_crate::Zeta;"),
         "{:?}",
-        offences[0].description
+        offences[0].description()
     );
 }
 
@@ -178,19 +175,18 @@ fn check_an_unsorted_import_block_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].rule, RULE);
-    assert_eq!(offences[0].line, 6);
-    assert_eq!(
-        offences[0].subject.as_deref(),
-        Some("use aaa_crate::Alpha;")
-    );
+    assert_eq!(offences[0].rule(), RULE);
+    assert_eq!(offences[0].line(), 6);
+    assert_eq!(offences[0].subject(), Some("use aaa_crate::Alpha;"));
     assert!(
-        offences[0].description.contains("out of alphabetic order"),
+        offences[0]
+            .description()
+            .contains("out of alphabetic order"),
         "got {}",
-        offences[0].description
+        offences[0].description()
     );
     assert_eq!(
-        offences[0].correction,
+        offences[0].correction(),
         "move `use aaa_crate::Alpha;` above `use zzz_crate::Zed;`"
     );
 }
@@ -264,8 +260,8 @@ fn check_reports_every_unordered_pair() {
 
     // Assert
     assert_eq!(offences.len(), 2);
-    assert_eq!(offences[0].subject.as_deref(), Some("use bbb_crate::B;"));
-    assert_eq!(offences[1].subject.as_deref(), Some("use aaa_crate::A;"));
+    assert_eq!(offences[0].subject(), Some("use bbb_crate::B;"));
+    assert_eq!(offences[1].subject(), Some("use aaa_crate::A;"));
 }
 
 #[test]

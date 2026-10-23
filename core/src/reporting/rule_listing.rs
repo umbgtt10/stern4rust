@@ -61,10 +61,10 @@ impl<'a> RuleListing<'a> {
             .iter()
             .map(|entry| {
                 json!({
-                    "name": entry.name,
-                    "summary": entry.summary,
-                    "breaks": entry.breaks,
-                    "instead": entry.instead,
+                    "name": entry.name(),
+                    "summary": entry.summary(),
+                    "breaks": entry.breaks(),
+                    "instead": entry.instead(),
                 })
             })
             .collect();
@@ -85,10 +85,11 @@ impl<'a> RuleListing<'a> {
 {}
   {}
 ",
-                entry.name, entry.summary
+                entry.name(),
+                entry.summary()
             ));
-            out.push_str(&Self::block("breaks", entry.breaks));
-            out.push_str(&Self::block("instead", entry.instead));
+            out.push_str(&Self::block("breaks", entry.breaks()));
+            out.push_str(&Self::block("instead", entry.instead()));
         }
         out
     }

@@ -81,7 +81,7 @@ fn check_workspace_of_a_foreign_traits_impl_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1, "{offences:?}");
-    assert_eq!(offences[0].subject.as_deref(), Some("fmt"));
+    assert_eq!(offences[0].subject(), Some("fmt"));
 }
 
 #[test]
@@ -97,16 +97,16 @@ fn check_workspace_of_a_free_function_reading_the_clock_reports_it_at_its_name()
 
     // Assert
     assert_eq!(offences.len(), 1, "{offences:?}");
-    assert_eq!(offences[0].rule, RULE);
-    assert_eq!(offences[0].file, "src/retry.rs");
-    assert_eq!(offences[0].line, 3);
-    assert_eq!(offences[0].subject.as_deref(), Some("expired"));
+    assert_eq!(offences[0].rule(), RULE);
+    assert_eq!(offences[0].file(), "src/retry.rs");
+    assert_eq!(offences[0].line(), 3);
+    assert_eq!(offences[0].subject(), Some("expired"));
     assert_eq!(
-        offences[0].description,
+        offences[0].description(),
         "`expired` reads the clock with `Instant::now`; take time through a port the package declares, so a \
          test can drive it"
     );
-    assert_eq!(offences[0].correction, CORRECTION);
+    assert_eq!(offences[0].correction(), CORRECTION);
 }
 
 #[test]
@@ -124,7 +124,7 @@ fn check_workspace_of_a_function_with_randomness_then_a_clock_names_the_clock() 
     // Assert
     assert_eq!(offences.len(), 1, "{offences:?}");
     assert_eq!(
-        offences[0].description,
+        offences[0].description(),
         "`jitter` reads the clock with `std::time::Instant::now`; take time through a port the package \
          declares, so a test can drive it"
     );
@@ -145,7 +145,7 @@ fn check_workspace_of_a_function_with_two_calls_reports_it_once_at_the_first() {
     // Assert
     assert_eq!(offences.len(), 1, "{offences:?}");
     assert_eq!(
-        offences[0].description,
+        offences[0].description(),
         "`backoff` waits on a timer with `sleep`; take time through a port the package declares, so a test \
          can drive it"
     );
@@ -197,9 +197,9 @@ fn check_workspace_of_a_race_in_an_inherent_method_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1, "{offences:?}");
-    assert_eq!(offences[0].subject.as_deref(), Some("attempt"));
+    assert_eq!(offences[0].subject(), Some("attempt"));
     assert_eq!(
-        offences[0].description,
+        offences[0].description(),
         "`attempt` races a timer with `tokio::time::timeout`; take time through a port the package declares, \
          so a test can drive it"
     );
@@ -292,8 +292,8 @@ fn explanation_breaks_the_rule_it_explains() {
     let explanation = InjectedTimeRule::new().explanation();
 
     // Act
-    let broken = check(&[("src/lib.rs", explanation.breaks)]);
-    let mended = check(&[("src/lib.rs", explanation.instead)]);
+    let broken = check(&[("src/lib.rs", explanation.breaks())]);
+    let mended = check(&[("src/lib.rs", explanation.instead())]);
 
     // Assert
     assert_eq!(broken.len(), 1, "{broken:?}");

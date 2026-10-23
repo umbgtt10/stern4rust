@@ -42,13 +42,13 @@ fn check_a_file_named_after_its_second_implemented_type_reports_the_first() {
 
     // Assert
     assert_eq!(offences.len(), 1, "got {offences:?}");
-    assert_eq!(offences[0].subject.as_deref(), Some("WireTransaction"));
+    assert_eq!(offences[0].subject(), Some("WireTransaction"));
     assert_eq!(
-        offences[0].description,
+        offences[0].description(),
         "`WireTransaction` is a second type with an impl block; this file's subject is already `WireClientRequest`"
     );
     assert_eq!(
-        offences[0].correction,
+        offences[0].correction(),
         "move `WireTransaction` and its impl blocks into wire_transaction.rs"
     );
 }
@@ -67,13 +67,13 @@ fn check_a_file_named_after_the_last_words_of_its_second_implemented_type_report
 
     // Assert
     assert_eq!(offences.len(), 1, "got {offences:?}");
-    assert_eq!(offences[0].subject.as_deref(), Some("Backoff"));
+    assert_eq!(offences[0].subject(), Some("Backoff"));
     assert_eq!(
-        offences[0].description,
+        offences[0].description(),
         "`Backoff` is a second type with an impl block; this file's subject is already `UdpListener`"
     );
     assert_eq!(
-        offences[0].correction,
+        offences[0].correction(),
         "move `Backoff` and its impl blocks into backoff.rs"
     );
 }
@@ -135,16 +135,16 @@ fn check_a_file_with_two_implemented_types_reports_the_second() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].rule, RULE);
+    assert_eq!(offences[0].rule(), RULE);
     assert!(
-        offences[0].description.contains("ColumnWidths"),
+        offences[0].description().contains("ColumnWidths"),
         "got {}",
-        offences[0].description
+        offences[0].description()
     );
     assert!(
-        offences[0].correction.contains("column_widths.rs"),
+        offences[0].correction().contains("column_widths.rs"),
         "got {}",
-        offences[0].correction
+        offences[0].correction()
     );
 }
 
@@ -159,7 +159,7 @@ fn check_a_file_with_two_subjects_one_of_them_an_enum_reports_the_second() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert!(offences[0].description.contains("B"));
+    assert!(offences[0].description().contains("B"));
 }
 
 // Tests have their own shape, and a test file legitimately holds several fakes
@@ -186,8 +186,8 @@ fn check_reports_every_type_after_the_first() {
 
     // Assert
     assert_eq!(offences.len(), 2);
-    assert!(offences[0].description.contains("B"));
-    assert!(offences[1].description.contains("C"));
+    assert!(offences[0].description().contains("B"));
+    assert!(offences[1].description().contains("C"));
 }
 
 #[test]

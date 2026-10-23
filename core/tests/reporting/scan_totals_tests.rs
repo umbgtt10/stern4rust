@@ -17,8 +17,8 @@ fn new_keeps_the_counts_it_was_given() {
     let totals = ScanTotals::new(250, 2);
 
     // Assert
-    assert_eq!(totals.files_scanned, 250);
-    assert_eq!(totals.fixed, 2);
+    assert_eq!(totals.files_scanned(), 250);
+    assert_eq!(totals.fixed(), 2);
 }
 
 // A run that repaired nothing is the ordinary one, and the report says nothing
@@ -29,5 +29,5 @@ fn new_without_repairs_records_none() {
     let totals = ScanTotals::new(127, 0);
 
     // Assert
-    assert_eq!(totals.fixed, 0);
+    assert_eq!(totals.fixed(), 0);
 }

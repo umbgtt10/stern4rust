@@ -59,12 +59,12 @@ fn check_a_constant_its_own_file_and_one_other_read_says_to_share_it() {
     // Assert
     assert_eq!(offences.len(), 1, "{offences:?}");
     assert_eq!(
-        offences[0].description,
+        offences[0].description(),
         "`LIMIT` is read here and by `node/tests/baseline_tests.rs`, from a file that is not a \
          constants file"
     );
     assert_eq!(
-        offences[0].correction,
+        offences[0].correction(),
         "move it into a constants file -- imports, constants, statics and type aliases only --, \
          such as `<topic>_constants.rs`, or make it private if `node/tests/baseline_tests.rs` \
          can do without it"
@@ -82,15 +82,15 @@ fn check_a_constant_one_other_file_reads_says_to_move_it_there() {
 
     // Assert
     assert_eq!(offences.len(), 1, "{offences:?}");
-    assert_eq!(offences[0].rule, RULE);
-    assert_eq!(offences[0].line, 5);
-    assert_eq!(offences[0].subject.as_deref(), Some("LIMIT"));
+    assert_eq!(offences[0].rule(), RULE);
+    assert_eq!(offences[0].line(), 5);
+    assert_eq!(offences[0].subject(), Some("LIMIT"));
     assert_eq!(
-        offences[0].description,
+        offences[0].description(),
         "`LIMIT` is public, and only `node/src/pool.rs` reads it"
     );
     assert_eq!(
-        offences[0].correction,
+        offences[0].correction(),
         "move it into `node/src/pool.rs` and make it private"
     );
 }
@@ -133,11 +133,11 @@ fn check_a_public_constant_no_other_file_reads_says_to_make_it_private() {
     // Assert
     assert_eq!(offences.len(), 1, "{offences:?}");
     assert_eq!(
-        offences[0].description,
+        offences[0].description(),
         "`LIMIT` is public, and no other file reads it"
     );
     assert_eq!(
-        offences[0].correction,
+        offences[0].correction(),
         "make it private, or delete it if nothing reads it"
     );
 }
@@ -163,7 +163,7 @@ fn check_a_restricted_constant_says_private_or_public() {
     // Assert
     let described: Vec<&str> = offences
         .iter()
-        .map(|offence| offence.description.as_str())
+        .map(|offence| offence.description())
         .collect();
     assert_eq!(
         described,
@@ -173,7 +173,7 @@ fn check_a_restricted_constant_says_private_or_public() {
         ]
     );
     assert_eq!(
-        offences[0].correction,
+        offences[0].correction(),
         "make it private, or `pub` and shared from a constants file"
     );
 }
@@ -194,11 +194,11 @@ fn check_a_shared_constant_beside_other_items_says_to_move_it_into_a_constants_f
     // Assert
     assert_eq!(offences.len(), 1, "{offences:?}");
     assert_eq!(
-        offences[0].description,
+        offences[0].description(),
         "`LIMIT` is read by 2 other files, from a file that is not a constants file"
     );
     assert_eq!(
-        offences[0].correction,
+        offences[0].correction(),
         "move it into a constants file -- imports, constants, statics and type aliases only --, \
          such as `<topic>_constants.rs`"
     );
@@ -259,10 +259,7 @@ fn check_two_public_constants_nobody_reads_reports_each() {
     );
 
     // Assert
-    let subjects: Vec<Option<&str>> = offences
-        .iter()
-        .map(|offence| offence.subject.as_deref())
-        .collect();
+    let subjects: Vec<Option<&str>> = offences.iter().map(|offence| offence.subject()).collect();
     assert_eq!(subjects, vec![Some("LIMIT"), Some("PAGE")]);
 }
 
@@ -288,8 +285,8 @@ fn explanation_breaks_the_rule_it_explains() {
     let explanation = rule.explanation();
 
     // Act
-    let broken = rule.check(&SourceFile::new("src/example.rs", explanation.breaks));
-    let mended = rule.check(&SourceFile::new("src/example.rs", explanation.instead));
+    let broken = rule.check(&SourceFile::new("src/example.rs", explanation.breaks()));
+    let mended = rule.check(&SourceFile::new("src/example.rs", explanation.instead()));
 
     // Assert
     assert_eq!(broken.len(), 1, "{broken:?}");

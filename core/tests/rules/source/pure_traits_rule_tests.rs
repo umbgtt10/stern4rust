@@ -74,7 +74,7 @@ fn check_a_trait_in_an_inline_module_reports_the_method() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].subject.as_deref(), Some("Inner::ready"));
+    assert_eq!(offences[0].subject(), Some("Inner::ready"));
 }
 
 #[test]
@@ -87,17 +87,17 @@ fn check_a_trait_with_a_default_body_reports_the_method() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].rule, RULE);
-    assert_eq!(offences[0].file, "src/collection.rs");
-    assert_eq!(offences[0].line, 7);
-    assert_eq!(offences[0].subject.as_deref(), Some("Collection::is_empty"));
+    assert_eq!(offences[0].rule(), RULE);
+    assert_eq!(offences[0].file(), "src/collection.rs");
+    assert_eq!(offences[0].line(), 7);
+    assert_eq!(offences[0].subject(), Some("Collection::is_empty"));
     assert!(
-        offences[0].description.contains("Collection::is_empty"),
+        offences[0].description().contains("Collection::is_empty"),
         "got {}",
-        offences[0].description
+        offences[0].description()
     );
     assert_eq!(
-        offences[0].correction,
+        offences[0].correction(),
         "move the body into each implementor"
     );
 }
@@ -139,8 +139,8 @@ fn check_a_trait_with_two_default_bodies_reports_both() {
 
     // Assert
     assert_eq!(offences.len(), 2);
-    assert_eq!(offences[0].subject.as_deref(), Some("Rule::check"));
-    assert_eq!(offences[1].subject.as_deref(), Some("Rule::is_configured"));
+    assert_eq!(offences[0].subject(), Some("Rule::check"));
+    assert_eq!(offences[1].subject(), Some("Rule::is_configured"));
 }
 
 // The bodies in an impl block are the whole point of an impl block. This is

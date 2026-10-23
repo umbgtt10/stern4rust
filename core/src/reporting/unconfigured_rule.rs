@@ -5,12 +5,20 @@
 // A rule that was selected but could not run, and what it was waiting for.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct UnconfiguredRule {
-    pub name: &'static str,
-    pub requirement: &'static str,
+    name: &'static str,
+    requirement: &'static str,
 }
 
 impl UnconfiguredRule {
     pub fn new(name: &'static str, requirement: &'static str) -> Self {
         Self { name, requirement }
+    }
+
+    pub fn name(&self) -> &'static str {
+        self.name
+    }
+
+    pub fn requirement(&self) -> &'static str {
+        self.requirement
     }
 }

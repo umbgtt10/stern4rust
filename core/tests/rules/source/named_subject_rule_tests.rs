@@ -78,16 +78,16 @@ fn check_a_file_named_after_no_implemented_type_reports_the_first() {
 
     // Assert
     assert_eq!(offences.len(), 1, "got {offences:?}");
-    assert_eq!(offences[0].rule, RULE);
-    assert_eq!(offences[0].file, "src/listener.rs");
-    assert_eq!(offences[0].line, 7);
-    assert_eq!(offences[0].subject.as_deref(), Some("UdpListenerTask"));
+    assert_eq!(offences[0].rule(), RULE);
+    assert_eq!(offences[0].file(), "src/listener.rs");
+    assert_eq!(offences[0].line(), 7);
+    assert_eq!(offences[0].subject(), Some("UdpListenerTask"));
     assert_eq!(
-        offences[0].description,
+        offences[0].description(),
         "`listener.rs` is named after none of the types it implements: `UdpListenerTask`"
     );
     assert_eq!(
-        offences[0].correction,
+        offences[0].correction(),
         "rename the file to udp_listener_task.rs, or rename `UdpListenerTask` after the file"
     );
 }
@@ -102,13 +102,13 @@ fn check_a_file_named_after_no_trait_or_type_reports_the_first_trait() {
 
     // Assert
     assert_eq!(offences.len(), 1, "got {offences:?}");
-    assert_eq!(offences[0].subject.as_deref(), Some("InboxSend"));
+    assert_eq!(offences[0].subject(), Some("InboxSend"));
     assert_eq!(
-        offences[0].description,
+        offences[0].description(),
         "`inbox.rs` is named after none of the traits and types it declares: `InboxSend`, `Envelope`"
     );
     assert_eq!(
-        offences[0].correction,
+        offences[0].correction(),
         "rename the file to inbox_send.rs, or rename `InboxSend` after the file"
     );
 }
@@ -137,9 +137,9 @@ fn check_a_file_named_after_plain_data_beside_an_implemented_type_reports_the_im
 
     // Assert
     assert_eq!(offences.len(), 1, "got {offences:?}");
-    assert_eq!(offences[0].subject.as_deref(), Some("LogSeverity"));
+    assert_eq!(offences[0].subject(), Some("LogSeverity"));
     assert_eq!(
-        offences[0].correction,
+        offences[0].correction(),
         "rename the file to log_severity.rs, or rename `LogSeverity` after the file"
     );
 }
@@ -187,13 +187,13 @@ fn check_a_file_of_data_types_named_after_none_reports_the_first() {
 
     // Assert
     assert_eq!(offences.len(), 1, "got {offences:?}");
-    assert_eq!(offences[0].line, 5);
+    assert_eq!(offences[0].line(), 5);
     assert_eq!(
-        offences[0].description,
+        offences[0].description(),
         "`cluster_query_types.rs` is named after none of the traits and types it declares: `QueryRequest`, `QueryResponse`"
     );
     assert_eq!(
-        offences[0].correction,
+        offences[0].correction(),
         "rename the file to query_request.rs, or rename `QueryRequest` after the file"
     );
 }
@@ -254,7 +254,7 @@ fn check_a_file_with_several_implemented_types_named_after_none_reports_once() {
 
     // Assert
     assert_eq!(offences.len(), 1, "got {offences:?}");
-    assert_eq!(offences[0].subject.as_deref(), Some("Left"));
+    assert_eq!(offences[0].subject(), Some("Left"));
 }
 
 // The trait is the implemented type's companion, so the file answers for the
@@ -270,7 +270,7 @@ fn check_a_trait_beside_an_implemented_type_reports_the_type() {
     // Assert
     assert_eq!(offences.len(), 1, "got {offences:?}");
     assert_eq!(
-        offences[0].description,
+        offences[0].description(),
         "`backoff_policy.rs` is named after none of the types it implements: `Fixed`"
     );
 }

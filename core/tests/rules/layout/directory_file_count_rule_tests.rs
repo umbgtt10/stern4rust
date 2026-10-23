@@ -68,7 +68,7 @@ fn check_workspace_counts_main_against_the_limit() {
 
     // Assert
     assert_eq!(found.len(), 1);
-    assert!(found[0].description.contains("holds 4 files"));
+    assert!(found[0].description().contains("holds 4 files"));
 }
 
 // An index of the directory is not something in it.
@@ -97,7 +97,7 @@ fn check_workspace_of_a_directory_without_an_index_names_the_directory() {
     let found = check_numbered(3, "src", 4, &[]);
 
     // Assert
-    assert_eq!(found[0].file, "src");
+    assert_eq!(found[0].file(), "src");
 }
 
 #[test]
@@ -107,9 +107,9 @@ fn check_workspace_over_the_limit_reports_the_directory() {
 
     // Assert
     assert_eq!(found.len(), 1);
-    assert_eq!(found[0].rule, "directory-file-count");
-    assert_eq!(found[0].subject.as_deref(), Some("src"));
-    assert!(found[0].description.contains("holds 4 files"));
+    assert_eq!(found[0].rule(), "directory-file-count");
+    assert_eq!(found[0].subject(), Some("src"));
+    assert!(found[0].description().contains("holds 4 files"));
 }
 
 // The index is where the split has to be written, so that is where the offence
@@ -120,7 +120,7 @@ fn check_workspace_reports_against_the_directorys_index() {
     let found = check_numbered(3, "src", 4, &["src/lib.rs"]);
 
     // Assert
-    assert_eq!(found[0].file, "src/lib.rs");
+    assert_eq!(found[0].file(), "src/lib.rs");
 }
 
 #[test]

@@ -35,7 +35,7 @@ fn check_a_file_of_nul_bytes_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].rule, RULE);
+    assert_eq!(offences[0].rule(), RULE);
 }
 
 #[test]
@@ -46,9 +46,9 @@ fn check_a_file_that_does_not_parse_reports_it() {
     // Assert
     assert_eq!(offences.len(), 1);
     assert!(
-        offences[0].description.contains("does not parse"),
+        offences[0].description().contains("does not parse"),
         "got {}",
-        offences[0].description
+        offences[0].description()
     );
 }
 
@@ -78,7 +78,7 @@ fn check_names_the_file_it_judged() {
     let offences = check("fn broken( {\n");
 
     // Assert
-    assert_eq!(offences[0].file, "src/subject.rs");
+    assert_eq!(offences[0].file(), "src/subject.rs");
 }
 
 // The line rustc would also point at, so the two reports agree rather than
@@ -89,7 +89,7 @@ fn check_reports_the_line_the_parse_failed_on() {
     let offences = check("pub struct Fine;\n\npub struct Also;\n\nfn broken( {\n");
 
     // Assert
-    assert!(offences[0].line >= 5, "got line {}", offences[0].line);
+    assert!(offences[0].line() >= 5, "got line {}", offences[0].line());
 }
 
 #[test]

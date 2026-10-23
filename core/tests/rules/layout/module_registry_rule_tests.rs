@@ -79,11 +79,11 @@ fn check_a_registry_holding_a_function_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].rule, RULE);
+    assert_eq!(offences[0].rule(), RULE);
     assert!(
-        offences[0].description.contains("the function `helper`"),
+        offences[0].description().contains("the function `helper`"),
         "got {}",
-        offences[0].description
+        offences[0].description()
     );
 }
 
@@ -98,9 +98,9 @@ fn check_a_registry_holding_a_private_mod_reports_it() {
     // Assert
     assert_eq!(offences.len(), 1);
     assert!(
-        offences[0].description.contains("hidden"),
+        offences[0].description().contains("hidden"),
         "got {}",
-        offences[0].description
+        offences[0].description()
     );
 }
 
@@ -169,7 +169,7 @@ fn check_reports_every_stray_at_its_own_line() {
     // Assert
     assert_eq!(offences.len(), 2);
     assert_eq!(
-        offences.iter().map(|o| o.line).collect::<Vec<usize>>(),
+        offences.iter().map(|o| o.line()).collect::<Vec<usize>>(),
         [5, 9]
     );
 }

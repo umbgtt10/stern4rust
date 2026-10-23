@@ -77,7 +77,7 @@ fn check_a_constructor_storing_a_mut_borrow_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].subject.as_deref(), Some("new::protocol"));
+    assert_eq!(offences[0].subject(), Some("new::protocol"));
 }
 
 // The unparseable file reads as a file with nothing wrong with it only because
@@ -98,17 +98,17 @@ fn check_a_free_function_with_a_mut_ref_parameter_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].rule, RULE);
-    assert_eq!(offences[0].file, "src/apply.rs");
-    assert_eq!(offences[0].line, 5);
-    assert_eq!(offences[0].subject.as_deref(), Some("apply::target"));
+    assert_eq!(offences[0].rule(), RULE);
+    assert_eq!(offences[0].file(), "src/apply.rs");
+    assert_eq!(offences[0].line(), 5);
+    assert_eq!(offences[0].subject(), Some("apply::target"));
     assert!(
-        offences[0].description.contains("apply::target"),
+        offences[0].description().contains("apply::target"),
         "got {}",
-        offences[0].description
+        offences[0].description()
     );
     assert_eq!(
-        offences[0].correction,
+        offences[0].correction(),
         "return the new value instead of writing it through `&mut target`"
     );
 }
@@ -124,7 +124,7 @@ fn check_a_function_in_an_inline_module_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].subject.as_deref(), Some("tweak::value"));
+    assert_eq!(offences[0].subject(), Some("tweak::value"));
 }
 
 // A `&mut` buried in a generic argument is still a `&mut` the caller hands in.
@@ -135,7 +135,7 @@ fn check_a_mut_ref_inside_a_generic_reports_the_parameter() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].subject.as_deref(), Some("stash::slot"));
+    assert_eq!(offences[0].subject(), Some("stash::slot"));
 }
 
 // A `&mut` buried in a tuple is still a `&mut` the caller hands in.
@@ -146,7 +146,7 @@ fn check_a_mut_ref_inside_a_tuple_reports_the_parameter() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].subject.as_deref(), Some("pair::items"));
+    assert_eq!(offences[0].subject(), Some("pair::items"));
 }
 
 // The receiver is the one mutable reference the house standard sanctions.
@@ -201,7 +201,7 @@ fn check_a_trait_declaration_with_a_mut_ref_parameter_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].subject.as_deref(), Some("commit::buffer"));
+    assert_eq!(offences[0].subject(), Some("commit::buffer"));
 }
 
 // A trait impl's signature is fixed by the trait, which may be external and
@@ -229,7 +229,7 @@ fn check_an_inherent_method_with_a_mut_ref_parameter_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].subject.as_deref(), Some("write::out"));
+    assert_eq!(offences[0].subject(), Some("write::out"));
 }
 
 // Every offending parameter is named, because each one is a separate edit.
@@ -243,8 +243,8 @@ fn check_two_mut_ref_parameters_reports_both() {
 
     // Assert
     assert_eq!(offences.len(), 2);
-    assert_eq!(offences[0].subject.as_deref(), Some("merge::a"));
-    assert_eq!(offences[1].subject.as_deref(), Some("merge::b"));
+    assert_eq!(offences[0].subject(), Some("merge::a"));
+    assert_eq!(offences[1].subject(), Some("merge::b"));
 }
 
 // This rule answers the per-file question only, and says so rather than

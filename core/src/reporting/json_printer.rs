@@ -55,7 +55,7 @@ impl JsonPrinter {
     }
 
     pub fn render(&self, offences: &[Offence]) -> String {
-        let broken: BTreeSet<&str> = offences.iter().map(|offence| offence.rule).collect();
+        let broken: BTreeSet<&str> = offences.iter().map(|offence| offence.rule()).collect();
         let shown = self.threshold.kept(offences);
         let document = json!({
             "baseline": self.baseline,
@@ -157,15 +157,15 @@ impl JsonPrinter {
             .iter()
             .map(|roster| {
                 json!({
-                    "package": roster.package,
-                    "rules_applied": roster.applied,
-                    "rules_skipped": roster.skipped,
+                    "package": roster.package(),
+                    "rules_applied": roster.applied(),
+                    "rules_skipped": roster.skipped(),
                     "rules_unconfigured": roster
-                        .unconfigured
+                        .unconfigured()
                         .iter()
-                        .map(|(rule, requirement)| json!({
-                            "rule": rule,
-                            "requirement": requirement,
+                        .map(|rule| json!({
+                            "rule": rule.name(),
+                            "requirement": rule.requirement(),
                         }))
                         .collect::<Vec<_>>(),
                 })

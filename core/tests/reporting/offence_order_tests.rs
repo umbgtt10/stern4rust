@@ -14,9 +14,9 @@ fn new_keeps_the_file_the_line_and_the_rule() {
     let order = OffenceOrder::new("src/a.rs", 3, "header");
 
     // Assert
-    assert_eq!(order.file, "src/a.rs");
-    assert_eq!(order.line, 3);
-    assert_eq!(order.rule, "header");
+    assert_eq!(order.file(), "src/a.rs");
+    assert_eq!(order.line(), 3);
+    assert_eq!(order.rule(), "header");
 }
 
 #[test]

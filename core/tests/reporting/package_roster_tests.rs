@@ -11,6 +11,7 @@
 // this package do" but "did this package do the same as that one".
 
 use stern4rust::reporting::package_roster::PackageRoster;
+use stern4rust::reporting::unconfigured_rule::UnconfiguredRule;
 
 fn roster(name: &str, applied: &[&str], skipped: &[&str]) -> PackageRoster {
     PackageRoster::new(
@@ -30,9 +31,9 @@ fn absences_names_a_skipped_rule_and_an_unconfigured_one_apart() {
         "system-tests",
         vec!["header".to_string()],
         vec!["paired-test-file".to_string()],
-        vec![(
-            "spdx-matches-manifest".to_string(),
-            "needs a `license` field in Cargo.toml".to_string(),
+        vec![UnconfiguredRule::new(
+            "spdx-matches-manifest",
+            "needs a `license` field in Cargo.toml",
         )],
     );
 
@@ -104,9 +105,9 @@ fn agrees_with_a_roster_whose_rule_is_unconfigured_rather_than_skipped_is_false(
         "node-infra",
         vec!["header".to_string()],
         Vec::new(),
-        vec![(
-            "spdx-matches-manifest".to_string(),
-            "needs a `license` field in Cargo.toml".to_string(),
+        vec![UnconfiguredRule::new(
+            "spdx-matches-manifest",
+            "needs a `license` field in Cargo.toml",
         )],
     );
 
@@ -115,10 +116,32 @@ fn agrees_with_a_roster_whose_rule_is_unconfigured_rather_than_skipped_is_false(
 }
 
 #[test]
+fn new_keeps_each_rules_place_in_the_roster() {
+    // Arrange
+    let unconfigured = UnconfiguredRule::new(
+        "spdx-matches-manifest",
+        "needs a `license` field in Cargo.toml",
+    );
+
+    // Act
+    let roster = PackageRoster::new(
+        "node",
+        vec!["header".to_string()],
+        vec!["paired-test-file".to_string()],
+        vec![unconfigured],
+    );
+
+    // Assert
+    assert_eq!(roster.applied(), ["header".to_string()]);
+    assert_eq!(roster.skipped(), ["paired-test-file".to_string()]);
+    assert_eq!(roster.unconfigured(), [unconfigured]);
+}
+
+#[test]
 fn new_keeps_the_package_it_is_about() {
     // Arrange & Act
     let roster = roster("node", &["header"], &[]);
 
     // Assert
-    assert_eq!(roster.package, "node");
+    assert_eq!(roster.package(), "node");
 }

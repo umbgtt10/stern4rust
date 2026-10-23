@@ -50,7 +50,7 @@ fn check_workspace_counts_at_every_level() {
 
     // Assert
     assert_eq!(found.len(), 1);
-    assert_eq!(found[0].subject.as_deref(), Some("src/deep"));
+    assert_eq!(found[0].subject(), Some("src/deep"));
 }
 
 // A folder holding no .rs file is invisible to the walk and is nobody's module.
@@ -70,9 +70,9 @@ fn check_workspace_over_the_limit_reports_the_directory() {
 
     // Assert
     assert_eq!(found.len(), 1);
-    assert_eq!(found[0].rule, "directory-subfolder-count");
-    assert_eq!(found[0].subject.as_deref(), Some("src"));
-    assert!(found[0].description.contains("holds 3 subfolders"));
+    assert_eq!(found[0].rule(), "directory-subfolder-count");
+    assert_eq!(found[0].subject(), Some("src"));
+    assert!(found[0].description().contains("holds 3 subfolders"));
 }
 
 #[test]

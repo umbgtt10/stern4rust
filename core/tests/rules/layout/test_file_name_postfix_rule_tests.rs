@@ -38,7 +38,7 @@ fn check_a_custom_test_attribute_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].rule, RULE);
+    assert_eq!(offences[0].rule(), RULE);
 }
 
 #[test]
@@ -72,24 +72,18 @@ fn check_a_file_with_a_test_not_named_tests_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].rule, RULE);
-    assert_eq!(offences[0].file, "tests/rules/widget.rs");
-    assert_eq!(offences[0].line, 1);
-    assert_eq!(
-        offences[0].subject.as_deref(),
-        Some("tests/rules/widget.rs")
-    );
-    assert_eq!(
-        offences[0].expected.as_deref(),
-        Some("tests/rules/widget_tests.rs")
-    );
+    assert_eq!(offences[0].rule(), RULE);
+    assert_eq!(offences[0].file(), "tests/rules/widget.rs");
+    assert_eq!(offences[0].line(), 1);
+    assert_eq!(offences[0].subject(), Some("tests/rules/widget.rs"));
+    assert_eq!(offences[0].expected(), Some("tests/rules/widget_tests.rs"));
     assert!(
-        offences[0].description.contains('2'),
+        offences[0].description().contains('2'),
         "expected the test count, got {}",
-        offences[0].description
+        offences[0].description()
     );
     assert_eq!(
-        offences[0].correction,
+        offences[0].correction(),
         "rename it `tests/rules/widget_tests.rs`"
     );
 }
@@ -143,10 +137,7 @@ fn check_a_test_in_an_inline_module_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(
-        offences[0].expected.as_deref(),
-        Some("tests/nested_tests.rs")
-    );
+    assert_eq!(offences[0].expected(), Some("tests/nested_tests.rs"));
 }
 
 #[test]

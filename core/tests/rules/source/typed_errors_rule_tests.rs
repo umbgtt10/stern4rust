@@ -72,7 +72,7 @@ fn check_workspace_of_a_borrowed_str_reports_it() {
     let offences = library("pub fn read<'a>() -> Result<u8, &'a str> {\n    Ok(0)\n}\n");
 
     // Assert
-    assert_eq!(offences[0].description, "`read` fails with a `&str`");
+    assert_eq!(offences[0].description(), "`read` fails with a `&str`");
 }
 
 #[test]
@@ -84,7 +84,7 @@ fn check_workspace_of_a_boxed_error_reports_it() {
 
     // Assert
     assert_eq!(
-        offences[0].description,
+        offences[0].description(),
         "`read` fails with a `Box<dyn std::error::Error + Send + Sync>`"
     );
 }
@@ -119,8 +119,8 @@ fn check_workspace_of_a_pub_trait_reports_it_at_its_declaration() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].line, 2);
-    assert_eq!(offences[0].subject.as_deref(), Some("run"));
+    assert_eq!(offences[0].line(), 2);
+    assert_eq!(offences[0].subject(), Some("run"));
 }
 
 #[test]
@@ -130,13 +130,13 @@ fn check_workspace_of_a_string_error_reports_it_at_the_function() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].rule, RULE);
-    assert_eq!(offences[0].file, "src/store.rs");
-    assert_eq!(offences[0].line, 1);
-    assert_eq!(offences[0].subject.as_deref(), Some("read"));
-    assert_eq!(offences[0].description, "`read` fails with a `String`");
+    assert_eq!(offences[0].rule(), RULE);
+    assert_eq!(offences[0].file(), "src/store.rs");
+    assert_eq!(offences[0].line(), 1);
+    assert_eq!(offences[0].subject(), Some("read"));
+    assert_eq!(offences[0].description(), "`read` fails with a `String`");
     assert_eq!(
-        offences[0].correction,
+        offences[0].correction(),
         "give the crate an error enum its callers and tests can match"
     );
 }

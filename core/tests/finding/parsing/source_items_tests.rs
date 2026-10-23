@@ -68,7 +68,7 @@ fn in_returns_reports_each_signature_whose_return_type_holds_what_is_looked_for(
     // Assert
     let descriptions: Vec<&str> = offences
         .iter()
-        .map(|offence| offence.description.as_str())
+        .map(|offence| offence.description())
         .collect();
     assert_eq!(descriptions, ["read returns Shelf"]);
 }

@@ -69,17 +69,17 @@ fn check_a_module_declared_through_a_path_attribute_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].rule, RULE);
-    assert_eq!(offences[0].file, "src/lib.rs");
-    assert_eq!(offences[0].subject.as_deref(), Some("alpha"));
-    assert_eq!(offences[0].expected.as_deref(), Some("alpha.rs"));
+    assert_eq!(offences[0].rule(), RULE);
+    assert_eq!(offences[0].file(), "src/lib.rs");
+    assert_eq!(offences[0].subject(), Some("alpha"));
+    assert_eq!(offences[0].expected(), Some("alpha.rs"));
     assert!(
-        offences[0].description.contains("elsewhere/other.rs"),
+        offences[0].description().contains("elsewhere/other.rs"),
         "the file it points at is named, got {}",
-        offences[0].description
+        offences[0].description()
     );
     assert_eq!(
-        offences[0].correction,
+        offences[0].correction(),
         "move `elsewhere/other.rs` to `alpha.rs` beside this file and drop the `#[path]` attribute"
     );
 }
@@ -96,7 +96,7 @@ fn check_a_nested_module_with_a_path_attribute_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].subject.as_deref(), Some("inner"));
+    assert_eq!(offences[0].subject(), Some("inner"));
 }
 
 // The rule is not scoped to a tree: `all_tests.rs` is where the house standard
@@ -111,7 +111,7 @@ fn check_a_path_attribute_in_a_test_file_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].subject.as_deref(), Some("alpha_tests"));
+    assert_eq!(offences[0].subject(), Some("alpha_tests"));
 }
 
 #[test]
@@ -133,8 +133,8 @@ fn check_reports_every_path_attribute() {
 
     // Assert
     assert_eq!(offences.len(), 2);
-    assert_eq!(offences[0].subject.as_deref(), Some("alpha"));
-    assert_eq!(offences[1].subject.as_deref(), Some("beta"));
+    assert_eq!(offences[0].subject(), Some("alpha"));
+    assert_eq!(offences[1].subject(), Some("beta"));
 }
 
 #[test]

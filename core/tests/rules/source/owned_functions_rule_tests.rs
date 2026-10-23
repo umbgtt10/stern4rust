@@ -39,7 +39,7 @@ fn check(path: &str, body: &str) -> Vec<Offence> {
 fn subjects(offences: &[Offence]) -> Vec<String> {
     offences
         .iter()
-        .map(|offence| offence.subject.clone().unwrap_or_default())
+        .map(|offence| offence.subject().unwrap_or_default().to_string())
         .collect()
 }
 
@@ -99,11 +99,11 @@ fn check_a_function_beside_a_trait_offers_only_a_file_of_its_own() {
     // Assert
     assert_eq!(offences.len(), 1, "got {offences:?}");
     assert_eq!(
-        offences[0].description,
+        offences[0].description(),
         "`init_udp_stack_factory` is a free function in a file whose subject is `UdpStackFactory`"
     );
     assert_eq!(
-        offences[0].correction,
+        offences[0].correction(),
         "move `init_udp_stack_factory` into a file of its own"
     );
 }
@@ -121,7 +121,7 @@ fn check_a_function_beside_a_type_it_never_touches_offers_a_file_of_its_own_firs
     // Assert
     assert_eq!(offences.len(), 1, "got {offences:?}");
     assert_eq!(
-        offences[0].correction,
+        offences[0].correction(),
         "move `checksum` into a file of its own, or into `impl Widget` if it belongs there"
     );
 }
@@ -138,11 +138,11 @@ fn check_a_function_beside_an_impl_for_a_type_declared_elsewhere_reports_it() {
     // Assert
     assert_eq!(offences.len(), 1, "got {offences:?}");
     assert_eq!(
-        offences[0].description,
+        offences[0].description(),
         "`route` is a free function in a file whose subject is `IbftProtocol`"
     );
     assert_eq!(
-        offences[0].correction,
+        offences[0].correction(),
         "move `route` into `impl IbftProtocol` as an associated function"
     );
 }
@@ -159,7 +159,7 @@ fn check_a_function_beside_plain_data_reports_it_with_the_type_to_move_into() {
     // Assert
     assert_eq!(offences.len(), 1, "got {offences:?}");
     assert_eq!(
-        offences[0].correction,
+        offences[0].correction(),
         "move `analyze` into `impl Analysis` as an associated function"
     );
 }
@@ -189,7 +189,7 @@ fn check_a_function_naming_the_subject_is_offered_its_impl() {
     // Assert
     assert_eq!(offences.len(), 1, "got {offences:?}");
     assert_eq!(
-        offences[0].correction,
+        offences[0].correction(),
         "move `parse` into `impl Widget` as an associated function"
     );
 }
@@ -206,7 +206,7 @@ fn check_a_function_nested_in_a_method_is_reported() {
     // Assert
     assert_eq!(subjects(&offences), ["inner"]);
     assert_eq!(
-        offences[0].correction,
+        offences[0].correction(),
         "move `inner` into `impl Widget` as an associated function"
     );
 }
@@ -256,16 +256,16 @@ fn check_a_helper_the_impl_calls_reports_it_with_the_impl_to_move_into() {
 
     // Assert
     assert_eq!(offences.len(), 1, "got {offences:?}");
-    assert_eq!(offences[0].rule, RULE);
-    assert_eq!(offences[0].file, "src/widget.rs");
-    assert_eq!(offences[0].line, 12);
-    assert_eq!(offences[0].subject.as_deref(), Some("border"));
+    assert_eq!(offences[0].rule(), RULE);
+    assert_eq!(offences[0].file(), "src/widget.rs");
+    assert_eq!(offences[0].line(), 12);
+    assert_eq!(offences[0].subject(), Some("border"));
     assert_eq!(
-        offences[0].description,
+        offences[0].description(),
         "`border` is a free function in a file whose subject is `Widget`"
     );
     assert_eq!(
-        offences[0].correction,
+        offences[0].correction(),
         "move `border` into `impl Widget` as an associated function"
     );
 }

@@ -39,11 +39,11 @@ impl OffenceFingerprint {
     pub fn of(offence: &Offence) -> String {
         format!(
             "{}{}{}{}{}",
-            offence.file,
+            offence.file(),
             Self::SEPARATOR,
-            offence.rule,
+            offence.rule(),
             Self::SEPARATOR,
-            offence.subject.as_ref().unwrap_or(&offence.description)
+            offence.subject().as_ref().unwrap_or(&offence.description())
         )
     }
 }

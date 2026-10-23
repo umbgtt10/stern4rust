@@ -54,11 +54,11 @@ fn check_workspace_of_a_dependency_declared_in_a_member_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].rule, RULE);
-    assert_eq!(offences[0].file, "validation/Cargo.toml");
-    assert_eq!(offences[0].subject.as_deref(), Some("node"));
+    assert_eq!(offences[0].rule(), RULE);
+    assert_eq!(offences[0].file(), "validation/Cargo.toml");
+    assert_eq!(offences[0].subject(), Some("node"));
     assert_eq!(
-        offences[0].correction,
+        offences[0].correction(),
         "add `node` to [workspace.dependencies] in the root manifest, and write \
          `node = { workspace = true }` here"
     );
@@ -99,9 +99,9 @@ fn check_workspace_of_a_pinned_dev_dependency_reports_it() {
     // Assert
     assert_eq!(offences.len(), 1);
     assert!(
-        offences[0].description.contains("dev-dependencies"),
+        offences[0].description().contains("dev-dependencies"),
         "the table is named, got {}",
-        offences[0].description
+        offences[0].description()
     );
 }
 
@@ -116,8 +116,8 @@ fn check_workspace_reports_every_member_declaration() {
 
     // Assert
     assert_eq!(offences.len(), 2);
-    assert_eq!(offences[0].subject.as_deref(), Some("serde"));
-    assert_eq!(offences[1].subject.as_deref(), Some("toml"));
+    assert_eq!(offences[0].subject(), Some("serde"));
+    assert_eq!(offences[1].subject(), Some("toml"));
 }
 
 #[test]

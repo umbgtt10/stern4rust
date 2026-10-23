@@ -37,7 +37,7 @@ fn check(files: &[(&str, &str)]) -> Vec<Offence> {
 fn descriptions(files: &[(&str, &str)]) -> String {
     check(files)
         .into_iter()
-        .map(|offence| format!("{} {}", offence.file, offence.description))
+        .map(|offence| format!("{} {}", offence.file(), offence.description()))
         .collect::<Vec<String>>()
         .join(" | ")
 }
@@ -121,12 +121,12 @@ fn check_workspace_a_registry_holding_a_constant_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].file, "tests/rules/mod.rs");
-    assert_eq!(offences[0].line, 5);
+    assert_eq!(offences[0].file(), "tests/rules/mod.rs");
+    assert_eq!(offences[0].line(), 5);
     assert!(
-        offences[0].description.contains("the constant `LIMIT`"),
+        offences[0].description().contains("the constant `LIMIT`"),
         "got {}",
-        offences[0].description
+        offences[0].description()
     );
 }
 
@@ -140,12 +140,12 @@ fn check_workspace_a_registry_holding_a_function_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].file, "tests/all_tests.rs");
-    assert_eq!(offences[0].line, 7);
+    assert_eq!(offences[0].file(), "tests/all_tests.rs");
+    assert_eq!(offences[0].line(), 7);
     assert!(
-        offences[0].description.contains("the function `helper`"),
+        offences[0].description().contains("the function `helper`"),
         "got {}",
-        offences[0].description
+        offences[0].description()
     );
 }
 
@@ -159,11 +159,11 @@ fn check_workspace_a_registry_holding_an_import_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].line, 5);
+    assert_eq!(offences[0].line(), 5);
     assert!(
-        offences[0].description.contains("use alpha::One;"),
+        offences[0].description().contains("use alpha::One;"),
         "got {}",
-        offences[0].description
+        offences[0].description()
     );
 }
 
@@ -178,10 +178,10 @@ fn check_workspace_a_registry_holding_an_inline_module_reports_it() {
     assert_eq!(offences.len(), 1);
     assert!(
         offences[0]
-            .description
+            .description()
             .contains("the inline module `alpha_tests`"),
         "got {}",
-        offences[0].description
+        offences[0].description()
     );
 }
 
@@ -202,14 +202,14 @@ fn check_workspace_a_registry_holding_several_strays_reports_each_at_its_own_lin
     assert_eq!(
         offences
             .iter()
-            .map(|offence| offence.line)
+            .map(|offence| offence.line())
             .collect::<Vec<usize>>(),
         [5, 7, 9]
     );
     assert_eq!(
         offences
             .iter()
-            .filter(|offence| offence.description == offences[0].description)
+            .filter(|offence| offence.description() == offences[0].description())
             .count(),
         1
     );
@@ -239,7 +239,7 @@ fn check_workspace_a_second_all_tests_below_the_top_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].file, "tests/rules/all_tests.rs");
+    assert_eq!(offences[0].file(), "tests/rules/all_tests.rs");
 }
 
 // The source tree has its own shape and is not this rule's business.
@@ -265,7 +265,7 @@ fn check_workspace_a_subfolder_without_a_mod_file_reports_it_missing() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].file, "tests/rules/mod.rs");
+    assert_eq!(offences[0].file(), "tests/rules/mod.rs");
 }
 
 // Without the door nothing below it is compiled. The files are still there and
@@ -277,8 +277,8 @@ fn check_workspace_a_tests_folder_without_all_tests_reports_it_missing() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].rule, RULE);
-    assert_eq!(offences[0].file, "tests/all_tests.rs");
+    assert_eq!(offences[0].rule(), RULE);
+    assert_eq!(offences[0].file(), "tests/all_tests.rs");
 }
 
 // An all_tests.rs that is not at the top is not the door, so the folder still
@@ -344,12 +344,12 @@ fn check_workspace_of_an_unparseable_registry_says_it_was_not_checked() {
     // Assert
     let skipped: Vec<&Offence> = offences
         .iter()
-        .filter(|offence| offence.description.contains("could not be parsed"))
+        .filter(|offence| offence.description().contains("could not be parsed"))
         .collect();
     assert_eq!(skipped.len(), 1);
-    assert_eq!(skipped[0].file, "tests/deep/mod.rs");
+    assert_eq!(skipped[0].file(), "tests/deep/mod.rs");
     assert_eq!(
-        skipped[0].correction,
+        skipped[0].correction(),
         "correct the syntax error readable-source reports, so this registry can be checked"
     );
 }

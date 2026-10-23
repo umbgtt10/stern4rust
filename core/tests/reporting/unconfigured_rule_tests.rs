@@ -13,6 +13,6 @@ fn new_keeps_the_name_and_what_it_waits_for() {
     let unconfigured = UnconfiguredRule::new("header", "needs --header-file");
 
     // Assert
-    assert_eq!(unconfigured.name, "header");
-    assert_eq!(unconfigured.requirement, "needs --header-file");
+    assert_eq!(unconfigured.name(), "header");
+    assert_eq!(unconfigured.requirement(), "needs --header-file");
 }

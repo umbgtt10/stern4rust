@@ -57,7 +57,7 @@ fn check_a_file_carrying_the_header_below_other_code_reports_the_first_line() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].line, 1);
+    assert_eq!(offences[0].line(), 1);
 }
 
 // A wrong licence is the failure this rule exists to catch, and it sits on the
@@ -73,7 +73,7 @@ fn check_a_file_carrying_the_wrong_licence_reports_the_licence_line() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].line, 2);
+    assert_eq!(offences[0].line(), 2);
 }
 
 #[test]
@@ -90,7 +90,7 @@ fn check_a_file_missing_the_last_header_line_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].line, 3);
+    assert_eq!(offences[0].line(), 3);
 }
 
 #[test]
@@ -134,7 +134,7 @@ fn check_a_file_that_ends_before_the_header_does_reports_its_length() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert!(offences[0].description.contains("header is 3"));
+    assert!(offences[0].description().contains("header is 3"));
 }
 
 #[test]
@@ -148,9 +148,9 @@ fn check_a_file_whose_first_line_differs_reports_that_line() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].line, 1);
-    assert_eq!(offences[0].rule, "header");
-    assert_eq!(offences[0].file, "src/subject.rs");
+    assert_eq!(offences[0].line(), 1);
+    assert_eq!(offences[0].rule(), "header");
+    assert_eq!(offences[0].file(), "src/subject.rs");
 }
 
 // The same file with a trailing newline is a different case: it has a second
@@ -165,8 +165,8 @@ fn check_a_file_whose_second_line_is_blank_reports_the_divergence_not_the_length
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].line, 2);
-    assert!(offences[0].description.contains("Licensed under"));
+    assert_eq!(offences[0].line(), 2);
+    assert!(offences[0].description().contains("Licensed under"));
 }
 
 #[test]
@@ -179,7 +179,7 @@ fn check_a_file_with_no_header_at_all_reports_the_first_line() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].line, 1);
+    assert_eq!(offences[0].line(), 1);
 }
 
 #[test]
@@ -192,7 +192,7 @@ fn check_an_empty_file_reports_that_it_carries_no_header() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert!(offences[0].description.contains("empty"));
+    assert!(offences[0].description().contains("empty"));
 }
 
 // One offence per file, not one per header line. A file with no header would

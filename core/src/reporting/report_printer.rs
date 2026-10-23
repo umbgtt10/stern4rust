@@ -208,8 +208,8 @@ impl ReportPrinter {
     // correction is a sentence rather than a field -- side by side, neither
     // would be readable.
     fn correction_row(offence: &Offence, widths: &ColumnWidths) -> String {
-        let indent = widths.file + widths.line + widths.rule + 6;
-        format!("{}fix: {}\n", " ".repeat(indent), offence.correction)
+        let indent = widths.file() + widths.line() + widths.rule() + 6;
+        format!("{}fix: {}\n", " ".repeat(indent), offence.correction())
     }
 
     fn everything_ran(&self) -> bool {
@@ -260,13 +260,13 @@ impl ReportPrinter {
             "file",
             "line",
             "rule",
-            "-".repeat(widths.file),
-            "-".repeat(widths.line),
-            "-".repeat(widths.rule),
-            "-".repeat(widths.description),
-            file = widths.file,
-            line = widths.line,
-            rule = widths.rule
+            "-".repeat(widths.file()),
+            "-".repeat(widths.line()),
+            "-".repeat(widths.rule()),
+            "-".repeat(widths.description()),
+            file = widths.file(),
+            line = widths.line(),
+            rule = widths.rule()
         )
     }
 
@@ -275,7 +275,7 @@ impl ReportPrinter {
         if let Some(name) = package {
             rendered.push_str(&format!("  {name}:\n"));
         }
-        rendered.push_str(&format!("  applied: {}\n", roster.applied.join(", ")));
+        rendered.push_str(&format!("  applied: {}\n", roster.applied().join(", ")));
         let absences = roster.absences();
         if !absences.is_empty() {
             rendered.push_str(&format!("  not applied: {}\n", absences.join(", ")));
@@ -310,7 +310,7 @@ impl ReportPrinter {
         }
         self.rosters
             .iter()
-            .map(|roster| Self::lines_for(Some(&roster.package), roster))
+            .map(|roster| Self::lines_for(Some(roster.package()), roster))
             .collect()
     }
 
@@ -334,18 +334,18 @@ impl ReportPrinter {
     fn row(offence: &Offence, widths: &ColumnWidths) -> String {
         format!(
             "{:<file$}  {:>line$}  {:<rule$}  {}\n",
-            offence.file,
-            offence.line,
-            offence.rule,
-            offence.description,
-            file = widths.file,
-            line = widths.line,
-            rule = widths.rule
+            offence.file(),
+            offence.line(),
+            offence.rule(),
+            offence.description(),
+            file = widths.file(),
+            line = widths.line(),
+            rule = widths.rule()
         )
     }
 
     fn summary(&self, offences: &[Offence]) -> String {
-        let broken: BTreeSet<&str> = offences.iter().map(|offence| offence.rule).collect();
+        let broken: BTreeSet<&str> = offences.iter().map(|offence| offence.rule()).collect();
         format!(
             "summary: files_scanned={} files_excluded={} offences={} baselined={} fixed={} \
              rules_broken={} rules_applied={} rules_skipped={} rules_unconfigured={}",

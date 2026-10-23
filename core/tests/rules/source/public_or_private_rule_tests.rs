@@ -50,7 +50,7 @@ fn check_workspace_matches_a_call_on_its_arity_too() {
     ]);
 
     // Assert
-    assert_eq!(offences[0].correction, "make it private: `fn`");
+    assert_eq!(offences[0].correction(), "make it private: `fn`");
 }
 
 #[test]
@@ -78,7 +78,7 @@ fn check_workspace_of_a_method_called_from_another_file_offers_pub_and_a_test() 
 
     // Assert
     assert_eq!(
-        offences[0].correction,
+        offences[0].correction(),
         "make it `pub` and give it a test, or move the caller's need behind the type's public \
          contract"
     );
@@ -95,7 +95,7 @@ fn check_workspace_of_a_method_called_only_in_its_own_file_offers_private() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].correction, "make it private: `fn`");
+    assert_eq!(offences[0].correction(), "make it private: `fn`");
 }
 
 #[test]
@@ -111,7 +111,7 @@ fn check_workspace_of_a_method_in_a_spread_impl_names_implemented_in_one_file() 
 
     // Assert
     assert_eq!(
-        offences[0].correction,
+        offences[0].correction(),
         "implement `RaftProtocol` in one file, as `implemented-in-one-file` asks: the restriction \
          serves its spread over 2 files"
     );
@@ -124,12 +124,12 @@ fn check_workspace_of_a_pub_crate_method_reports_it_at_its_name() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].rule, RULE);
-    assert_eq!(offences[0].file, "src/raft.rs");
-    assert_eq!(offences[0].line, 4);
-    assert_eq!(offences[0].subject.as_deref(), Some("election"));
+    assert_eq!(offences[0].rule(), RULE);
+    assert_eq!(offences[0].file(), "src/raft.rs");
+    assert_eq!(offences[0].line(), 4);
+    assert_eq!(offences[0].subject(), Some("election"));
     assert_eq!(
-        offences[0].description,
+        offences[0].description(),
         "`election` is `pub(crate)` in `impl RaftProtocol`; a method is `pub` or private"
     );
 }
@@ -144,7 +144,7 @@ fn check_workspace_of_a_pub_self_method_offers_private() {
     )]);
 
     // Assert
-    assert_eq!(offences[0].correction, "make it private: `fn`");
+    assert_eq!(offences[0].correction(), "make it private: `fn`");
 }
 
 #[test]
@@ -181,10 +181,7 @@ fn check_workspace_reports_each_restricted_method() {
     )]);
 
     // Assert
-    let subjects: Vec<Option<&str>> = offences
-        .iter()
-        .map(|offence| offence.subject.as_deref())
-        .collect();
+    let subjects: Vec<Option<&str>> = offences.iter().map(|offence| offence.subject()).collect();
     assert_eq!(subjects, vec![Some("grow"), Some("shrink")]);
 }
 

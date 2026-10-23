@@ -11,28 +11,44 @@ use crate::reporting::offence::Offence;
 // heading, which is what keeps the header row aligned with a report of one short
 // offence.
 pub struct ColumnWidths {
-    pub file: usize,
-    pub line: usize,
-    pub rule: usize,
-    pub description: usize,
+    file: usize,
+    line: usize,
+    rule: usize,
+    description: usize,
 }
 
 impl ColumnWidths {
     pub fn of(offences: &[Offence]) -> Self {
         Self {
-            file: Self::widest(offences.iter().map(|offence| offence.file.len()), "file"),
+            file: Self::widest(offences.iter().map(|offence| offence.file().len()), "file"),
             line: Self::widest(
                 offences
                     .iter()
-                    .map(|offence| offence.line.to_string().len()),
+                    .map(|offence| offence.line().to_string().len()),
                 "line",
             ),
-            rule: Self::widest(offences.iter().map(|offence| offence.rule.len()), "rule"),
+            rule: Self::widest(offences.iter().map(|offence| offence.rule().len()), "rule"),
             description: Self::widest(
-                offences.iter().map(|offence| offence.description.len()),
+                offences.iter().map(|offence| offence.description().len()),
                 "offence",
             ),
         }
+    }
+
+    pub fn description(&self) -> usize {
+        self.description
+    }
+
+    pub fn file(&self) -> usize {
+        self.file
+    }
+
+    pub fn line(&self) -> usize {
+        self.line
+    }
+
+    pub fn rule(&self) -> usize {
+        self.rule
     }
 
     fn widest<I: Iterator<Item = usize>>(lengths: I, heading: &str) -> usize {

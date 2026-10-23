@@ -76,9 +76,9 @@ fn check_of_a_two_part_name_reports_it() {
 
     // Assert
     assert_eq!(found.len(), 1);
-    assert_eq!(found[0].rule, "test-naming");
-    assert_eq!(found[0].subject.as_deref(), Some("find_works"));
-    assert!(found[0].description.contains("fewer than 3 parts"));
+    assert_eq!(found[0].rule(), "test-naming");
+    assert_eq!(found[0].subject(), Some("find_works"));
+    assert!(found[0].description().contains("fewer than 3 parts"));
 }
 
 #[test]

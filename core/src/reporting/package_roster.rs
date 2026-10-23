@@ -2,6 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::reporting::unconfigured_rule::UnconfiguredRule;
+
 // Which rules ran against one package, and which did not.
 //
 // A run whose members answer to different rule sets cannot state one roster and
@@ -16,10 +18,10 @@
 // See [ADR-PerPackageConfiguration](../../docs/ADRs/ADR-PerPackageConfiguration.md).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PackageRoster {
-    pub package: String,
-    pub applied: Vec<String>,
-    pub skipped: Vec<String>,
-    pub unconfigured: Vec<(String, String)>,
+    package: String,
+    applied: Vec<String>,
+    skipped: Vec<String>,
+    unconfigured: Vec<UnconfiguredRule>,
 }
 
 impl PackageRoster {
@@ -27,7 +29,7 @@ impl PackageRoster {
         package: &str,
         applied: Vec<String>,
         skipped: Vec<String>,
-        unconfigured: Vec<(String, String)>,
+        unconfigured: Vec<UnconfiguredRule>,
     ) -> Self {
         Self {
             package: package.to_string(),
@@ -47,7 +49,7 @@ impl PackageRoster {
             .chain(
                 self.unconfigured
                     .iter()
-                    .map(|(name, requirement)| format!("{name} ({requirement})")),
+                    .map(|rule| format!("{} ({})", rule.name(), rule.requirement())),
             )
             .collect()
     }
@@ -56,5 +58,21 @@ impl PackageRoster {
         self.applied == other.applied
             && self.skipped == other.skipped
             && self.unconfigured == other.unconfigured
+    }
+
+    pub fn applied(&self) -> &[String] {
+        &self.applied
+    }
+
+    pub fn package(&self) -> &str {
+        &self.package
+    }
+
+    pub fn skipped(&self) -> &[String] {
+        &self.skipped
+    }
+
+    pub fn unconfigured(&self) -> &[UnconfiguredRule] {
+        &self.unconfigured
     }
 }

@@ -13,6 +13,7 @@ use stern4rust::reporting::offence::Offence;
 use stern4rust::reporting::offence_threshold::OffenceThreshold;
 use stern4rust::reporting::package_roster::PackageRoster;
 use stern4rust::reporting::report_printer::ReportPrinter;
+use stern4rust::reporting::unconfigured_rule::UnconfiguredRule;
 
 fn many(count: usize) -> Vec<Offence> {
     (1..=count)
@@ -164,9 +165,9 @@ fn render_of_a_package_whose_rule_could_not_run_names_the_requirement() {
             "fixture",
             vec!["header".to_string()],
             Vec::new(),
-            vec![(
-                "spdx-matches-manifest".to_string(),
-                "needs a `license` field in Cargo.toml".to_string(),
+            vec![UnconfiguredRule::new(
+                "spdx-matches-manifest",
+                "needs a `license` field in Cargo.toml",
             )],
         ),
     ]);

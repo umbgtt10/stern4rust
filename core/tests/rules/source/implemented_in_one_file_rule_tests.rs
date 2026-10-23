@@ -51,7 +51,7 @@ fn check_workspace_names_every_file_that_implements_the_type() {
     // Assert
     assert_eq!(offences.len(), 1);
     assert_eq!(
-        offences[0].description,
+        offences[0].description(),
         "`Store` is implemented in 3 files: `src/bytes.rs`, `src/store.rs`, `src/text.rs`"
     );
 }
@@ -81,9 +81,9 @@ fn check_workspace_of_a_type_declared_nowhere_offers_one_file() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].file, "src/a.rs");
+    assert_eq!(offences[0].file(), "src/a.rs");
     assert_eq!(
-        offences[0].correction,
+        offences[0].correction(),
         "move every `impl Store` into one file, or split `Store` into types of their own"
     );
 }
@@ -113,10 +113,10 @@ fn check_workspace_of_a_type_implemented_in_two_files_reports_it_at_its_declarat
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].rule, RULE);
-    assert_eq!(offences[0].file, "src/store.rs");
-    assert_eq!(offences[0].line, 3);
-    assert_eq!(offences[0].subject.as_deref(), Some("Store"));
+    assert_eq!(offences[0].rule(), RULE);
+    assert_eq!(offences[0].file(), "src/store.rs");
+    assert_eq!(offences[0].line(), 3);
+    assert_eq!(offences[0].subject(), Some("Store"));
 }
 
 #[test]
@@ -135,7 +135,7 @@ fn check_workspace_of_a_type_split_by_platform_offers_a_trait() {
     // Assert
     assert_eq!(offences.len(), 1);
     assert_eq!(
-        offences[0].correction,
+        offences[0].correction(),
         "put the contract in a trait in `traits/` and give each platform its own implementing type"
     );
 }
@@ -164,12 +164,12 @@ fn check_workspace_of_alternatives_with_an_impl_astray_names_it_and_offers_their
     // Assert
     assert_eq!(offences.len(), 1);
     assert_eq!(
-        offences[0].description,
+        offences[0].description(),
         "`Flash` is declared in 2 files and implemented in 1 that declares neither: \
          `src/flash_ops.rs`"
     );
     assert_eq!(
-        offences[0].correction,
+        offences[0].correction(),
         "move each `impl Flash` beside the declaration it is for, or give the types that \
          share the name names of their own"
     );
@@ -197,7 +197,7 @@ fn check_workspace_offers_the_declaring_file_or_a_split() {
 
     // Assert
     assert_eq!(
-        offences[0].correction,
+        offences[0].correction(),
         "move every `impl Store` into `src/store.rs`, or split `Store` into types of their own"
     );
 }

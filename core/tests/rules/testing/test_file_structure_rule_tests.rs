@@ -33,7 +33,7 @@ fn check(contents: &str) -> Vec<Offence> {
 fn descriptions(contents: &str) -> Vec<String> {
     check(contents)
         .into_iter()
-        .map(|offence| offence.description)
+        .map(|offence| offence.description().to_string())
         .collect()
 }
 
@@ -66,7 +66,7 @@ fn check_a_blank_line_between_imports_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert!(offences[0].description.contains("blank"));
+    assert!(offences[0].description().contains("blank"));
 }
 
 // A comment introducing a test belongs to that test, so the blank line before
@@ -102,7 +102,7 @@ fn check_a_constant_after_a_helper_reports_the_section_order() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert!(offences[0].description.contains("constant"));
+    assert!(offences[0].description().contains("constant"));
 }
 
 #[test]
@@ -200,7 +200,7 @@ fn check_a_helper_after_a_test_reports_the_section_order() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert!(offences[0].description.contains("helper"));
+    assert!(offences[0].description().contains("helper"));
 }
 
 #[test]
@@ -261,7 +261,7 @@ fn check_a_struct_helper_out_of_order_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert!(offences[0].description.contains("build"));
+    assert!(offences[0].description().contains("build"));
 }
 
 // A recording double is a helper like any other, and sorts by its type name
@@ -315,7 +315,7 @@ fn check_an_import_after_a_test_reports_the_section_order() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert!(offences[0].description.contains("import"));
+    assert!(offences[0].description().contains("import"));
 }
 
 #[test]
@@ -329,7 +329,7 @@ fn check_constants_out_of_alphabetic_order_reports_the_later_one() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert!(offences[0].description.contains("FIRST"));
+    assert!(offences[0].description().contains("FIRST"));
 }
 
 // Constants pack like imports: both are runs of one-line declarations read by
@@ -362,7 +362,7 @@ fn check_constants_separated_by_a_blank_line_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert!(offences[0].description.contains("blank"));
+    assert!(offences[0].description().contains("blank"));
 }
 
 #[test]
@@ -377,7 +377,7 @@ fn check_helpers_out_of_alphabetic_order_reports_the_later_one() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert!(offences[0].description.contains("alpha"));
+    assert!(offences[0].description().contains("alpha"));
 }
 
 // rustfmt sorts crate/self/super ahead of every other path, so demanding the
@@ -415,7 +415,7 @@ fn check_imports_out_of_alphabetic_order_beside_a_crate_path_still_reports_them(
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert!(offences[0].description.contains("anyhow::Result"));
+    assert!(offences[0].description().contains("anyhow::Result"));
 }
 
 #[test]
@@ -429,8 +429,8 @@ fn check_imports_out_of_alphabetic_order_reports_the_later_one() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].rule, RULE);
-    assert!(offences[0].description.contains("alpha::One"));
+    assert_eq!(offences[0].rule(), RULE);
+    assert!(offences[0].description().contains("alpha::One"));
 }
 
 #[test]
@@ -475,7 +475,7 @@ fn check_reports_the_line_the_offending_item_starts_on() {
     let offences = check(contents);
 
     // Assert
-    assert_eq!(offences[0].line, 6);
+    assert_eq!(offences[0].line(), 6);
 }
 
 #[test]
@@ -492,7 +492,7 @@ fn check_tests_out_of_alphabetic_order_reports_the_later_one() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert!(offences[0].description.contains("alpha_does_something"));
+    assert!(offences[0].description().contains("alpha_does_something"));
 }
 
 #[test]
@@ -510,7 +510,7 @@ fn check_two_blank_lines_between_tests_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert!(offences[0].description.contains("blank"));
+    assert!(offences[0].description().contains("blank"));
 }
 
 #[test]

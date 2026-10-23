@@ -26,11 +26,11 @@ fn read_of_a_file_that_does_not_exist_names_the_readable_source_rule() {
 
     // Assert
     let offence = found.expect_err("expected an offence");
-    assert_eq!(offence.rule, RULE);
+    assert_eq!(offence.rule(), RULE);
     assert!(
-        offence.description.contains("could not be read"),
+        offence.description().contains("could not be read"),
         "got {}",
-        offence.description
+        offence.description()
     );
 }
 

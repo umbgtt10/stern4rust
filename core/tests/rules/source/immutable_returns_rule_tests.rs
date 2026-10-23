@@ -56,9 +56,9 @@ fn check_a_free_function_returning_a_mut_ref_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].rule, RULE);
-    assert_eq!(offences[0].subject.as_deref(), Some("first"));
-    assert_eq!(offences[0].line, 5);
+    assert_eq!(offences[0].rule(), RULE);
+    assert_eq!(offences[0].subject(), Some("first"));
+    assert_eq!(offences[0].line(), 5);
 }
 
 #[test]
@@ -71,7 +71,7 @@ fn check_a_function_in_an_inline_module_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].subject.as_deref(), Some("slot"));
+    assert_eq!(offences[0].subject(), Some("slot"));
 }
 
 #[test]
@@ -96,7 +96,7 @@ fn check_a_mut_ref_inside_a_generic_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].subject.as_deref(), Some("find"));
+    assert_eq!(offences[0].subject(), Some("find"));
 }
 
 #[test]
@@ -109,7 +109,7 @@ fn check_a_mut_ref_inside_a_tuple_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].subject.as_deref(), Some("split"));
+    assert_eq!(offences[0].subject(), Some("split"));
 }
 
 // A chain of `&mut Self` calls holds a mutable borrow across every call; taking
@@ -125,9 +125,9 @@ fn check_a_mut_self_return_offers_to_take_self_by_value() {
     // Assert
     assert_eq!(offences.len(), 1);
     assert!(
-        offences[0].correction.contains("`self` by value"),
+        offences[0].correction().contains("`self` by value"),
         "got {:?}",
-        offences[0].correction
+        offences[0].correction()
     );
 }
 
@@ -181,7 +181,7 @@ fn check_a_trait_declaration_returning_a_mut_ref_reports_it() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].subject.as_deref(), Some("slot"));
+    assert_eq!(offences[0].subject(), Some("slot"));
 }
 
 #[test]
@@ -207,11 +207,11 @@ fn check_an_inherent_method_returning_a_mut_ref_offers_to_return_the_value() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].subject.as_deref(), Some("total_mut"));
+    assert_eq!(offences[0].subject(), Some("total_mut"));
     assert!(
-        offences[0].correction.contains("return the value"),
+        offences[0].correction().contains("return the value"),
         "got {:?}",
-        offences[0].correction
+        offences[0].correction()
     );
 }
 

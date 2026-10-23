@@ -19,6 +19,7 @@ use stern4rust::reporting::json_printer::JsonPrinter;
 use stern4rust::reporting::offence::Offence;
 use stern4rust::reporting::offence_threshold::OffenceThreshold;
 use stern4rust::reporting::package_roster::PackageRoster;
+use stern4rust::reporting::unconfigured_rule::UnconfiguredRule;
 
 fn parsed(files_scanned: usize, offences: &[Offence]) -> Value {
     from_str(&JsonPrinter::new(files_scanned).render(offences)).expect("valid json")
@@ -183,9 +184,9 @@ fn render_names_why_a_package_rule_is_unconfigured() {
         "node",
         Vec::new(),
         Vec::new(),
-        vec![(
-            "spdx-matches-manifest".to_string(),
-            "needs a `license` field in Cargo.toml".to_string(),
+        vec![UnconfiguredRule::new(
+            "spdx-matches-manifest",
+            "needs a `license` field in Cargo.toml",
         )],
     )]);
 

@@ -180,11 +180,7 @@ impl Runner {
                 &package.name,
                 Self::owned(&registry.names()),
                 Self::owned(&RuleRegistry::skipped_names(&package_config.selection)),
-                registry
-                    .unconfigured(&package_config)
-                    .into_iter()
-                    .map(|rule| (rule.name.to_string(), rule.requirement.to_string()))
-                    .collect(),
+                registry.unconfigured(&package_config),
             ));
             let exclusions = ExclusionSet::new(&package_config.excludes)?;
             let root = &package.root;
@@ -462,11 +458,11 @@ impl Runner {
         let unconfigured: Vec<(String, String)> = registry
             .unconfigured(config)
             .into_iter()
-            .map(|rule| (rule.name.to_string(), rule.requirement.to_string()))
+            .map(|rule| (rule.name().to_string(), rule.requirement().to_string()))
             .collect();
         let unconfigured_names = Self::owned(&registry.unconfigured_names(config));
         match config.format {
-            OutputFormat::Text => ReportPrinter::new(totals.files_scanned)
+            OutputFormat::Text => ReportPrinter::new(totals.files_scanned())
                 .with_threshold(threshold)
                 .with_rules(applied.clone(), skipped.clone(), unconfigured.clone())
                 .with_package_rosters(rosters.to_vec())
@@ -477,9 +473,9 @@ impl Runner {
                     baselined.suppressed(),
                     baselined.stale(),
                 )
-                .with_fixed(totals.fixed)
+                .with_fixed(totals.fixed())
                 .render(offences),
-            OutputFormat::Json => JsonPrinter::new(totals.files_scanned)
+            OutputFormat::Json => JsonPrinter::new(totals.files_scanned())
                 .with_threshold(threshold)
                 .with_rules(applied, skipped, unconfigured_names)
                 .with_package_rosters(rosters.to_vec())
@@ -490,7 +486,7 @@ impl Runner {
                     baselined.suppressed(),
                     baselined.stale(),
                 )
-                .with_fixed(totals.fixed)
+                .with_fixed(totals.fixed())
                 .render(offences),
         }
     }

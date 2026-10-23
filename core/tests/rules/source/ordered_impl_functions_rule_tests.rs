@@ -49,11 +49,11 @@ fn check_a_block_out_of_order_names_the_first_member_misplaced() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].rule, RULE);
-    assert_eq!(offences[0].line, 3);
-    assert_eq!(offences[0].subject.as_deref(), Some("Bookkeepers"));
+    assert_eq!(offences[0].rule(), RULE);
+    assert_eq!(offences[0].line(), 3);
+    assert_eq!(offences[0].subject(), Some("Bookkeepers"));
     assert_eq!(
-        offences[0].description,
+        offences[0].description(),
         "`impl Bookkeepers` is out of order: `catch_up` belongs before `cluster`"
     );
 }
@@ -65,9 +65,10 @@ fn check_a_block_the_fix_can_repair_offers_it() {
 
     // Assert
     assert!(
-        offences[0].correction.contains("`--fix`") && !offences[0].correction.contains("by hand"),
+        offences[0].correction().contains("`--fix`")
+            && !offences[0].correction().contains("by hand"),
         "got {:?}",
-        offences[0].correction
+        offences[0].correction()
     );
 }
 
@@ -81,9 +82,10 @@ fn check_a_block_the_fix_declines_says_why() {
 
     // Assert
     assert!(
-        offences[0].correction.contains("by hand") && offences[0].correction.contains("comment"),
+        offences[0].correction().contains("by hand")
+            && offences[0].correction().contains("comment"),
         "got {:?}",
-        offences[0].correction
+        offences[0].correction()
     );
 }
 
@@ -97,7 +99,7 @@ fn check_a_constant_after_a_function_reports_it() {
 
     // Assert
     assert_eq!(
-        offences[0].description,
+        offences[0].description(),
         "`impl Store` is out of order: `LIMIT` belongs before `a`"
     );
 }
@@ -121,7 +123,7 @@ fn check_a_private_function_before_a_pub_one_reports_it() {
 
     // Assert
     assert_eq!(
-        offences[0].description,
+        offences[0].description(),
         "`impl Store` is out of order: `b` belongs before `a`"
     );
 }
@@ -180,7 +182,7 @@ fn check_constructors_out_of_parameter_order_report_it() {
 
     // Assert
     assert_eq!(
-        offences[0].description,
+        offences[0].description(),
         "`impl Store` is out of order: `new` belongs before `with_capacity`"
     );
 }
@@ -195,10 +197,7 @@ fn check_reports_each_block_out_of_order_once() {
     );
 
     // Assert
-    let subjects: Vec<Option<&str>> = offences
-        .iter()
-        .map(|offence| offence.subject.as_deref())
-        .collect();
+    let subjects: Vec<Option<&str>> = offences.iter().map(|offence| offence.subject()).collect();
     assert_eq!(subjects, vec![Some("Store"), Some("Shelf")]);
 }
 

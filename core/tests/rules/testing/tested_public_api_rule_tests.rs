@@ -41,7 +41,7 @@ fn check_workspace_of_a_call_from_source_only_reports_it() {
 
     // Assert
     assert_eq!(found.len(), 1);
-    assert_eq!(found[0].subject.as_deref(), Some("run/1"));
+    assert_eq!(found[0].subject(), Some("run/1"));
 }
 
 // The call most tests care about lives inside an assertion macro.
@@ -77,7 +77,7 @@ fn check_workspace_of_a_call_with_the_wrong_arity_reports_it() {
 
     // Assert
     assert_eq!(found.len(), 1);
-    assert_eq!(found[0].subject.as_deref(), Some("run/2"));
+    assert_eq!(found[0].subject(), Some("run/2"));
 }
 
 #[test]
@@ -124,9 +124,9 @@ fn check_workspace_of_an_uncalled_entry_point_reports_it() {
 
     // Assert
     assert_eq!(found.len(), 1);
-    assert_eq!(found[0].rule, "tested-public-api");
-    assert_eq!(found[0].file, "src/a.rs");
-    assert_eq!(found[0].subject.as_deref(), Some("run/1"));
+    assert_eq!(found[0].rule(), "tested-public-api");
+    assert_eq!(found[0].file(), "src/a.rs");
+    assert_eq!(found[0].subject(), Some("run/1"));
 }
 
 #[test]

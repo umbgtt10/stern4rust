@@ -178,7 +178,7 @@ fn check_reports_the_broken_rule_when_another_is_satisfied() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].rule, "always");
+    assert_eq!(offences[0].rule(), "always");
 }
 
 // The registry asks both questions of every rule, so a rule that answers only
@@ -194,8 +194,8 @@ fn check_workspace_collects_the_offences_of_every_registered_rule() {
 
     // Assert
     assert_eq!(offences.len(), 1);
-    assert_eq!(offences[0].rule, "workspace");
-    assert_eq!(offences[0].description, "saw 2 files");
+    assert_eq!(offences[0].rule(), "workspace");
+    assert_eq!(offences[0].description(), "saw 2 files");
 }
 
 #[test]
@@ -207,7 +207,7 @@ fn explanations_covers_every_registered_rule() {
     let explained: Vec<&'static str> = registry
         .explanations()
         .iter()
-        .map(|entry| entry.name)
+        .map(|entry| entry.name())
         .collect();
 
     // Assert
@@ -225,8 +225,8 @@ fn explanations_offer_examples_that_their_own_rule_reports() {
     let unproven: Vec<&'static str> = registry
         .explanations()
         .iter()
-        .filter(|entry| entry.summary.trim().is_empty())
-        .map(|entry| entry.name)
+        .filter(|entry| entry.summary().trim().is_empty())
+        .map(|entry| entry.name())
         .collect();
 
     // Assert
@@ -246,8 +246,8 @@ fn from_config_registers_rules_that_each_offer_an_example_and_a_remedy() {
     let silent: Vec<&'static str> = registry
         .explanations()
         .iter()
-        .filter(|entry| entry.breaks.trim().is_empty() || entry.instead.trim().is_empty())
-        .map(|entry| entry.name)
+        .filter(|entry| entry.breaks().trim().is_empty() || entry.instead().trim().is_empty())
+        .map(|entry| entry.name())
         .collect();
 
     // Assert
