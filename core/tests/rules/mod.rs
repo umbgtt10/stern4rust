@@ -6,3 +6,4 @@ pub mod layout;
 pub mod manifest;
 pub mod source;
 pub mod testing;
+pub mod types;

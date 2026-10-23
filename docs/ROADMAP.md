@@ -70,11 +70,11 @@ the tool runs against its own tree on every build with zero offences.
 
 ## What is left
 
-The rule set is at thirty-four, with one more proposed (R035),
+The rule set is at thirty-five,
 each sized by a census before it was built -- the original candidate list
 shipped in full, `returned-mutations` turned the family's written `&mut`
 standard into a gate, `immutable-returns` closed its mirror, `distinct-tuple-elements` names what position alone
-told apart, `leading-constants` puts a file's numbers at its top, `shared-constants` gives each one a single home, `implemented-in-one-file` keeps a type to one file, `public-or-private` leaves a method two honest states, `ordered-impl-functions` decides where each one sits, `typed-errors` makes a library's failures a type its callers can match, `timeless-tests` keeps the machine's speed out of a test's verdict, `injected-time` brings time into the code under test through a port, `named-subject` holds a file to the name of what it
+told apart, `leading-constants` puts a file's numbers at its top, `shared-constants` gives each one a single home, `implemented-in-one-file` keeps a type to one file, `public-or-private` leaves a method two honest states, `ordered-impl-functions` decides where each one sits, `typed-errors` makes a library's failures a type its callers can match, `timeless-tests` keeps the machine's speed out of a test's verdict, `injected-time` brings time into the code under test through a port, `private-fields` keeps a type's state its own, `named-subject` holds a file to the name of what it
 holds, and `owned-functions` keeps everything in it the subject's -- the library surface is decided, and every remaining gap is
 a limit with no structural answer -- collected in
 [OPEN_POINTS.md](OPEN_POINTS.md).

@@ -93,6 +93,15 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
   sixteen repositories, every protocol-repository one in `system-tests`; this
   repository has none. On by default.
   [R034](ADRs/R034-ADR-InjectedTimeRule.md)
+- **`private-fields`** -- a struct's fields are private: in `src/`, a `pub`,
+  `pub(crate)`, `pub(super)` or `pub(in ...)` field is reported once per struct,
+  at its name, naming the fields, a tuple struct's by position. `pub(self)`,
+  enum variants' fields, `tests/` and `#[cfg(test)]` code are left alone. The
+  first rule in `rules/types/`. 1,793 fields in 421 structs across the family;
+  this repository's 36 structs were made private first, each read through a
+  getter, `Config` built over its `Default` with a `with_` step per field. On by
+  default.
+  [R035](ADRs/R035-ADR-PrivateFieldsRule.md)
 
 ### Autofix
 

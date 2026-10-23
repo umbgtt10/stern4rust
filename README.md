@@ -16,7 +16,7 @@ already own correctness. These are the things a reviewer would otherwise have to
 say by hand, every time, forever — and the ones that quietly stop being true
 across a codebase the moment nobody is checking.
 
-> **Status: thirty-four rules.** The set below is what is implemented and
+> **Status: thirty-five rules.** The set below is what is implemented and
 > gated. `stern4rust` runs against its own tree on every build, so a rule that
 > would fail this repository cannot be merged into it.
 
@@ -827,6 +827,16 @@ skip = []
 ```
 
 [R034](docs/ADRs/R034-ADR-InjectedTimeRule.md)
+
+### `private-fields`
+
+A struct's fields are private. In `src/`, a field declared `pub`, `pub(crate)`,
+`pub(super)` or `pub(in ...)` is reported once per struct, at its name, naming
+the fields -- a newtype's included. Reading goes through a getter, building
+through a constructor, or a `Default` and `with_<field>` steps past seven
+fields; there are no setters. `tests/` and `#[cfg(test)]` code are exempt, and
+enum variants' fields are the language's.
+[R035](docs/ADRs/R035-ADR-PrivateFieldsRule.md)
 
 ## Output
 

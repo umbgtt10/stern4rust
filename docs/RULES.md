@@ -1,6 +1,6 @@
 # Rules
 
-Thirty-four rules, each independent, each naming itself in the report. This is the
+Thirty-five rules, each independent, each naming itself in the report. This is the
 reference; the reasoning behind each one is in its ADR.
 
 Every offence carries a **correction** as well as a description — what to do,
@@ -9,7 +9,7 @@ without answering it.
 
 Each rule also carries an **explanation** — what it wants, a scrap of source
 that breaks it and the same scrap put right — and that field is required too.
-`cargo stern4rust --rules` prints all thirty-four, in text or with
+`cargo stern4rust --rules` prints all thirty-five, in text or with
 `--format json`, without scanning anything. See
 [ADR-RulesExplainThemselves](ADRs/ADR-RulesExplainThemselves.md).
 
@@ -22,6 +22,7 @@ that breaks it and the same scrap put right — and that field is required too.
 | `directory-subfolder-count` | [R011](ADRs/R011-ADR-DirectorySubfolderCountRule.md) | optional, default 5 |
 | `imported-paths` | [R008](ADRs/R008-ADR-ImportedPathsRule.md) | no |
 | `injected-time` | [R034](ADRs/R034-ADR-InjectedTimeRule.md) | no |
+| `private-fields` | [R035](ADRs/R035-ADR-PrivateFieldsRule.md) | no |
 | `registry-completeness` | [R009](ADRs/R009-ADR-RegistryCompletenessRule.md) | no |
 | `paired-test-file` | [R016](ADRs/R016-ADR-PairedTestFileRule.md) | no |
 | `test-file-name-postfix` | [R015](ADRs/R015-ADR-TestFileNamePostfixRule.md) | no |
@@ -1358,6 +1359,36 @@ either from being lost to the next change reaching for `Instant::now()`.
 
 **Does not catch:** time inside a dependency, which reads the clock or times out
 on its own; time a macro generates; randomness, by decision.
+
+## `private-fields`
+
+A struct's fields are private. **In `src/`, a struct field declared `pub`,
+`pub(crate)`, `pub(super)` or `pub(in ...)` is an offence, a tuple struct's
+included.**
+
+A public field lets every file read the state and write it, so the type keeps no
+invariant of its own, and a change of representation breaks every reader at
+once. Restricted visibility is the same with a shorter list of readers.
+
+- **Reading** goes through a getter named after the field: by value where it is
+  `Copy`, by reference otherwise -- a string as `&str`, a vector as a slice.
+- **Building** goes through a constructor, or, past clippy's seven arguments, a
+  `Default` and `with_<field>(self, value) -> Self` steps.
+- **No setters.** A change of state is a method that says what it does.
+- **One offence per struct**, at its name, naming the fields: all of them up to
+  three, the first two and a count beyond.
+- `pub(self)` already means private. Enum variants' fields are public by the
+  language and are not this rule's.
+
+| offence | correction |
+|---|---|
+| `` `Config` exposes `baseline`, `config_file` and 14 more fields; a struct's fields are private `` | `make them private: give a reader a getter and a builder a constructor` |
+
+`tests/`, `benches/` and `#[cfg(test)]` code are exempt: test support is not an
+API.
+
+**Does not catch:** shared mutability behind a getter -- `&RefCell<T>`, `&Mutex<T>`;
+a getter for every field, which makes private fields public in all but syntax.
 
 ## What is not walked
 

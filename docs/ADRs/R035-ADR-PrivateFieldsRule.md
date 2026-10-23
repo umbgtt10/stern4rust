@@ -1,7 +1,7 @@
 # R035-ADR-PrivateFieldsRule
 
-- **Status:** Proposed
-- **Date:** 2026-10-22
+- **Status:** Accepted
+- **Date:** 2026-10-22, built 2026-10-23
 
 ## Context
 
@@ -93,6 +93,36 @@ literal sites** build or destructure 280 of those structs.
   records -- `stern4rust`'s `Config` (17 fields), `etheram-raft`'s
   `RaftContextSnapshot` (12) -- past what one constructor may take.
 
+**Re-run with the rule on 2026-10-23**, read-only, `--rule private-fields` and no cap on the listing: **1,793
+non-private fields in 421 structs**. Against the heuristic, every difference is accounted for: this repository's 36
+structs and 151 fields, made private before the rule landed, and two structs and four fields `etheram-raft` has
+since taken private.
+
+| repository | structs | fields |
+|---|---:|---:|
+| `etheram-ibft` | 127 | 547 |
+| `etheram-ibft-embassy`, with `demo` and `tools/cluster-console` | 53 | 203 |
+| `etheram-tools` | 28 | 194 |
+| `etheram-raft` | 36 | 110 |
+| `etheram-raft-embassy` | 26 | 106 |
+| `etheram-embassy` | 33 | 100 |
+| `dry4rust` | 28 | 117 |
+| `grip4rust` | 20 | 94 |
+| `crap4rust` | 16 | 85 |
+| `braintax4rust` | 18 | 84 |
+| `iceberg4rust` | 12 | 59 |
+| `slotgate` | 10 | 48 |
+| `twin4rust` | 11 | 32 |
+| `etheram-core` | 3 | 14 |
+| this repository, an analysis workspace | **0** | **0** |
+
+**What this repository's own adoption showed**, in eight commits: a wide record takes its `Default` and a
+`with_<field>` step per field (`Config`, sixteen); a record with no functions gains a mirrored test file once its
+getters exist; a getter returning a tuple of two strings is `distinct-tuple-elements`' offence, answered by holding a
+named type (`PackageRoster` holds `UnconfiguredRule`); and every plain constructor -- `Self { a, b, c, d }` -- is a
+duplicate of every other with as many fields, which dry4rust counted until it learned to leave them out
+(ADR-PlainConstructorsAreTheStructsShape, in dry4rust; bridged here by an ignore list until its release).
+
 ## Rejected alternatives
 
 **Fields `pub` or private, restricted visibility the only offence** --
@@ -148,24 +178,27 @@ Decided by the owner on 2026-10-23: the rule ships in the coming release and is 
 `etheram-ibft`. The rule's own gate runs the development build over this repository first, so this repository goes
 first, in commits that change no behaviour, and the rule lands on a tree it finds clean:
 
-1. **This repository's 36 structs made private**, a module group a commit -- adoption, the finding models, the
+1. **Landed** (`7bb2007`..`1be25a3`). **This repository's 36 structs made private**, a module group a commit -- adoption, the finding models, the
    layout models, reporting, the settings, `Config` alone, then `xtask` -- each getter called by a test before it
    exists, and every literal site moved to a constructor or a `with_` step.
-2. **The rule**, test-first, as *Enforcement* below says, with `RULES.md`, the README, the ADR index,
+2. **Landed.** **The rule**, test-first, as *Enforcement* below says, with `RULES.md`, the README, the ADR index,
    `IMPLEMENTED-FEATURES.md`, the roadmap, the CLAUDE.md count and the changelog.
-3. **The census re-run with the rule** over the sixteen repositories, read-only, and recorded here.
+3. **Landed.** **The census re-run with the rule** over the sixteen repositories, read-only, and recorded here.
 4. **The tools, `slotgate` and `etheram-core`**, a repository at a time and a module group a commit, each through its
    own gates and the development build. `etheram-ibft` takes the rule in its own overhaul, not here.
 
 ## Enforcement
 
-To be written test-first when the rule is built: a `pub`, a `pub(crate)`, a
-`pub(super)` and a `pub(in ...)` field each reported, at the struct, with the
-fields named; a newtype's public field reported; a struct of private fields, an
-enum's variant fields, a unit struct, `tests/` and a `#[cfg(test)]` module left
-alone; one offence per struct however many fields; the unparseable file;
-`check_workspace`, `is_configured`, the name and the requirement;
-`tests/rule_registry_tests.rs` updated.
+Written test-first (`tests/rules/types/private_fields_rule_tests.rs`, twenty tests): a `pub`, a `pub(crate)`, a
+`pub(super)` and a `pub(in ...)` field each reported at the struct, the fields named -- one, two, three in full, four
+or more as the first two and a count -- and the correction in the singular or the plural; a newtype's field reported
+by position; a struct in an inline module reported at its own line; a struct of private fields, an enum's variant
+fields, a unit struct, `tests/`, a `#[cfg(test)]` module and an unparseable file left alone; `check_workspace` empty;
+the explanation, `is_configured`, the name and the requirement. `tests/rule_registry_tests.rs` lists the rule, and
+the runner's listing counts thirty-five.
+
+The rule lives in `rules/types/`, the first of a group for how a type holds its state: `rules/source/` holds twenty
+rules, `directory-file-count`'s limit.
 
 ## Related
 
