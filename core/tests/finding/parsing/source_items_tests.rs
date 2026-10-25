@@ -13,6 +13,7 @@ use stern4rust::source_file::SourceFile;
 use syn::Item;
 use syn::Signature;
 use syn::Type;
+use syn::parse_file;
 
 const ROOT: &str = "src/";
 
@@ -71,6 +72,27 @@ fn in_returns_reports_each_signature_whose_return_type_holds_what_is_looked_for(
         .map(|offence| offence.description())
         .collect();
     assert_eq!(descriptions, ["read returns Shelf"]);
+}
+
+#[test]
+fn live_of_items_flattens_inline_modules_and_leaves_test_code_out() {
+    // Arrange
+    let syntax = parse_file(
+        "struct Kept;\n\nmod inner {\n    struct Nested;\n}\n\n#[cfg(test)]\nmod tests {\n    struct Fake;\n}\n\n#[cfg(test)]\nstruct Gated;\n",
+    )
+    .expect("parses");
+
+    // Act
+    let names: Vec<String> = SourceItems::live(&syntax.items)
+        .into_iter()
+        .filter_map(|item| match item {
+            Item::Struct(declared) => Some(declared.ident.to_string()),
+            _ => None,
+        })
+        .collect();
+
+    // Assert
+    assert_eq!(names, ["Kept", "Nested"]);
 }
 
 #[test]

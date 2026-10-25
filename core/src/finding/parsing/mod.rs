@@ -5,6 +5,7 @@
 pub mod call_site_finder;
 pub mod constant_layout_parser;
 pub mod declared_item_finder;
+pub mod dependencies;
 pub mod free_function_finder;
 pub mod identifiers;
 pub mod impl_blocks;

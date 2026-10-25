@@ -5,6 +5,7 @@
 pub mod call_site_finder_tests;
 pub mod constant_layout_parser_tests;
 pub mod declared_item_finder_tests;
+pub mod dependencies;
 pub mod free_function_finder_tests;
 pub mod identifiers_tests;
 pub mod impl_blocks_tests;

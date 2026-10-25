@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-Twelve rules added, all on by default, so they move what this tool reports
+Thirteen rules added, all on by default, so they move what this tool reports
 about your code once it is released. A function returning a mutable reference, one
 returning a tuple that repeats an element type, a module-level constant declared
 after another item, a public one without a constants file and readers to share
@@ -14,13 +14,14 @@ it, a type implemented in more than one file, a method that is neither `pub`
 nor private, an impl block out of order, a library function failing with a
 string, a test reading a clock or waiting on a timer, and library code doing
 either outside a port, a struct that is neither a record with public fields
-nor an object with private ones, and a record or data enum away from where its
-users put it become offences;
+nor an object with private ones, a record or data enum away from where its
+users put it, and a type building a part it declared as a trait become
+offences;
 to adopt one later, add its name --
 `immutable-returns`, `distinct-tuple-elements`, `leading-constants`,
 `shared-constants`, `implemented-in-one-file`, `public-or-private`,
 `ordered-impl-functions`, `typed-errors`, `timeless-tests`, `injected-time`,
-`records-and-objects` or `record-home` -- to `skip` in your `stern4rust.toml` once you install a version that knows
+`records-and-objects`, `record-home` or `injected-dependencies` -- to `skip` in your `stern4rust.toml` once you install a version that knows
 it. Two are fixable: `--fix` moves the constants and
 reorders the impls.
 And `--fix` now repairs only what the run applies: test files are left alone
@@ -179,6 +180,21 @@ where `test-file-structure` is skipped or not selected.
   the one file using it, as a private struct. `TimeCall` and `TimeCallKind` move
   to `finding/model/time/`, beside `finding/parsing/time/`, to keep
   `finding/model/` within its twenty files.
+- **`injected-dependencies`: a type does not build its own dependencies.** In
+  `src/`, a field declared as a trait -- a `dyn Trait` or a trait-bounded type
+  parameter, as it is or wrapped in a `Box`, `Rc`, `Arc`, `Option`, `Vec` or
+  reference -- receives only what the caller passed in: a parameter, as it is
+  or as `Some`, `Box::new`, `Rc::new`, `Arc::new`, `clone`, `Rc::clone`,
+  `Arc::clone` or `into` of it, or its field; `None` or an empty vector; or a
+  local bound to one of these. Judged in every constructor and `Default`,
+  `From` and `TryFrom` impl, in what a constructor hands another constructor
+  of its type, and in every `self.field = ...` elsewhere. A builder is left
+  alone. [R038](docs/ADRs/R038-ADR-InjectedDependenciesRule.md)
+
+  A census of the family, 2026-10-25, finds about 15 constructors building a
+  part they declared as a trait. This repository has two,
+  `RuleRegistry::from_config` and `RewriterRegistry::all`, baselined until
+  they take their parts.
 - **`injected-time`: time reaches production code through a port.** In the
   library target, a function reading a clock, waiting on a timer or racing one
   -- `timeless-tests`' calls, randomness aside -- is reported once, at its name,

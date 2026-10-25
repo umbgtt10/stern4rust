@@ -37,6 +37,10 @@ use crate::source_file::SourceFile;
 pub struct ImplLayoutParser;
 
 impl ImplLayoutParser {
+    pub fn is_constructor(method: &ImplItemFn, owner: &str) -> bool {
+        method.sig.receiver().is_none() && Self::returns(&method.sig.output, owner)
+    }
+
     pub fn parse(file: &SourceFile) -> Vec<ImplLayout> {
         let Ok(syntax) = parse_file(&file.contents()) else {
             return Vec::new();
@@ -71,7 +75,7 @@ impl ImplLayoutParser {
     }
 
     fn kind(method: &ImplItemFn, owner: &str) -> MemberKind {
-        if method.sig.receiver().is_none() && Self::returns(&method.sig.output, owner) {
+        if Self::is_constructor(method, owner) {
             MemberKind::Constructor
         } else if matches!(method.vis, Visibility::Public(_)) {
             MemberKind::Public

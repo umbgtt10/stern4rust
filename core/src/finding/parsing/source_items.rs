@@ -8,6 +8,7 @@ use syn::Type;
 use syn::parse_file;
 
 use crate::finding::parsing::signatures::authored_signatures::AuthoredSignatures;
+use crate::finding::parsing::unit_test_finder::UnitTestFinder;
 use crate::reporting::offence::Offence;
 use crate::source_file::SourceFile;
 
@@ -42,6 +43,23 @@ impl SourceItems {
         })
     }
 
+    // The items of a file that build into the library: inline modules flattened,
+    // `#[cfg(test)]` modules and items left out.
+    pub fn live(items: &[Item]) -> Vec<&Item> {
+        items
+            .iter()
+            .filter(|item| !Self::is_test_only(item))
+            .flat_map(|item| match item {
+                Item::Mod(module) => module
+                    .content
+                    .as_ref()
+                    .map(|(_, inner)| Self::live(inner))
+                    .unwrap_or_default(),
+                _ => vec![item],
+            })
+            .collect()
+    }
+
     pub fn offences<T, F, J>(root: &str, file: &SourceFile, find: F, judge: J) -> Vec<Offence>
     where
         F: for<'i> Fn(&'i [Item]) -> Vec<&'i T>,
@@ -61,5 +79,16 @@ impl SourceItems {
         parse_file(&file.contents())
             .map(|syntax| syntax.items)
             .unwrap_or_default()
+    }
+
+    fn is_test_only(item: &Item) -> bool {
+        let attrs = match item {
+            Item::Mod(module) => &module.attrs,
+            Item::Impl(block) => &block.attrs,
+            Item::Struct(declared) => &declared.attrs,
+            Item::Enum(declared) => &declared.attrs,
+            _ => return false,
+        };
+        attrs.iter().any(UnitTestFinder::is_cfg_test)
     }
 }

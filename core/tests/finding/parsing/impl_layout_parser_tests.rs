@@ -12,6 +12,8 @@ use stern4rust::finding::model::layout::impl_layout::ImplLayout;
 use stern4rust::finding::model::layout::member_kind::MemberKind;
 use stern4rust::finding::parsing::impl_layout_parser::ImplLayoutParser;
 use stern4rust::source_file::SourceFile;
+use syn::ImplItemFn;
+use syn::parse_str;
 
 fn kinds(body: &str) -> Vec<(String, MemberKind)> {
     single(body)
@@ -28,6 +30,33 @@ fn single(body: &str) -> ImplLayout {
     ));
     assert_eq!(layouts.len(), 1, "expected one impl block");
     layouts.remove(0)
+}
+
+#[test]
+fn is_constructor_of_a_function_returning_a_result_of_its_type_is_true() {
+    // Arrange
+    let method: ImplItemFn =
+        parse_str("pub fn open(path: &str) -> Result<Store, Error> {\n    todo!()\n}")
+            .expect("parses");
+
+    // Act
+    let constructor = ImplLayoutParser::is_constructor(&method, "Store");
+
+    // Assert
+    assert!(constructor);
+}
+
+#[test]
+fn is_constructor_of_a_method_returning_self_is_false() {
+    // Arrange
+    let method: ImplItemFn =
+        parse_str("pub fn grown(&self) -> Self {\n    todo!()\n}").expect("parses");
+
+    // Act
+    let constructor = ImplLayoutParser::is_constructor(&method, "Store");
+
+    // Assert
+    assert!(!constructor);
 }
 
 #[test]

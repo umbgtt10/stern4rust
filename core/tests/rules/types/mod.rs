@@ -2,5 +2,6 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+pub mod injected_dependencies_rule_tests;
 pub mod record_home_rule_tests;
 pub mod records_and_objects_rule_tests;

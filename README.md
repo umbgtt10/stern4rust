@@ -16,7 +16,7 @@ already own correctness. These are the things a reviewer would otherwise have to
 say by hand, every time, forever — and the ones that quietly stop being true
 across a codebase the moment nobody is checking.
 
-> **Status: thirty-six rules.** The set below is what is implemented and
+> **Status: thirty-seven rules.** The set below is what is implemented and
 > gated. `stern4rust` runs against its own tree on every build, so a rule that
 > would fail this repository cannot be merged into it.
 
@@ -850,6 +850,18 @@ that uses it, otherwise. The declaring file's own code counts as a user,
 consumers are counted across the workspace, and one offence per type, at its
 name, says where it goes. An enum with behaviour is an object, and not this
 rule's. [R037](docs/ADRs/R037-ADR-RecordHomeRule.md)
+
+### `injected-dependencies`
+
+A type does not build its own dependencies: in `src/`, a field declared as a
+trait -- a `dyn Trait` or a trait-bounded type parameter, as it is or in a
+`Box`, `Rc`, `Arc`, `Option`, `Vec` or reference -- receives only what the
+caller passed in: a parameter, as it is or wrapped, shared, cloned or
+converted, or `None`. Judged in every constructor, every `Default`, `From` and
+`TryFrom` impl, everything a constructor hands another constructor of its type,
+and every `self.field = ...` elsewhere. A builder, a type whose `build(self)`
+returns another type, composes and is not judged.
+[R038](docs/ADRs/R038-ADR-InjectedDependenciesRule.md)
 
 ## Output
 

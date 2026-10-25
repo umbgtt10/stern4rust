@@ -117,6 +117,18 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
   consumer across the family; this repository's one of each moved with it --
   `MarkerPhase` out of `test_marker.rs`, `ScanTotals` into `runner.rs`. On by default.
   [R037](ADRs/R037-ADR-RecordHomeRule.md)
+- **`injected-dependencies`** -- a field declared as a trait receives only what
+  the caller passed in, judged in every constructor, `Default`, `From` and
+  `TryFrom` impl, in what a constructor hands another constructor of its type,
+  and in every `self.field = ...` elsewhere. The pieces are in
+  `finding/parsing/dependencies/`: `SeamTypes` says which types are seams,
+  `PassedIn` whether a value came from the caller, `DependencyFills` where a
+  body fills its type's fields, and `BuiltText` names what was built. A
+  builder, by the shared classifier, is left alone. By the census of
+  2026-10-25, about 15 constructors across the family; this repository's two,
+  `RuleRegistry::from_config` and `RewriterRegistry::all`, are baselined until
+  they take their parts. On by default.
+  [R038](ADRs/R038-ADR-InjectedDependenciesRule.md)
 
 ### Autofix
 

@@ -40,6 +40,11 @@ code not yet written.
   its `with_*_variant` steps and its `build` may build whatever they like. The rule judges the product: the constructor
   `build` calls must take every part as a parameter, and does.
 
+*As built, 2026-10-25:* a `Vec` and a reference wrap a trait as a `Box` does -- the registries the census counts hold
+`Vec<Box<dyn Rule>>` -- and an empty vector, `Vec::new()` or `vec![]`, holds nothing, as `None` does; a parameter's
+field is passed in, a part handed over inside a bundle of them; and a type parameter bounded only by value traits --
+`T: Clone + Debug` -- is data the type carries, not a seam.
+
 One offence per field and method, at the field's initialiser:
 
 | offence | correction |

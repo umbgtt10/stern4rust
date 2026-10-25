@@ -41,6 +41,7 @@ use crate::rules::testing::test_file_structure_rule::TestFileStructureRule;
 use crate::rules::testing::test_naming_rule::TestNamingRule;
 use crate::rules::testing::tested_public_api_rule::TestedPublicApiRule;
 use crate::rules::testing::timeless_tests_rule::TimelessTestsRule;
+use crate::rules::types::injected_dependencies_rule::InjectedDependenciesRule;
 use crate::rules::types::record_home_rule::RecordHomeRule;
 use crate::rules::types::records_and_objects_rule::RecordsAndObjectsRule;
 use crate::settings::config::Config;
@@ -175,6 +176,7 @@ impl RuleRegistry {
             Box::new(ImmutableReturnsRule::new()),
             Box::new(ImplementedInOneFileRule::new()),
             Box::new(ImportedPathsRule::new()),
+            Box::new(InjectedDependenciesRule::new()),
             Box::new(InjectedTimeRule::new()),
             Box::new(LeadingConstantsRule::new()),
             Box::new(ModuleRegistryRule::new()),

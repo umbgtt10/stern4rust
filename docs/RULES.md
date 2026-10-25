@@ -1,6 +1,6 @@
 # Rules
 
-Thirty-six rules, each independent, each naming itself in the report. This is the
+Thirty-seven rules, each independent, each naming itself in the report. This is the
 reference; the reasoning behind each one is in its ADR.
 
 Every offence carries a **correction** as well as a description — what to do,
@@ -9,7 +9,7 @@ without answering it.
 
 Each rule also carries an **explanation** — what it wants, a scrap of source
 that breaks it and the same scrap put right — and that field is required too.
-`cargo stern4rust --rules` prints all thirty-six, in text or with
+`cargo stern4rust --rules` prints all thirty-seven, in text or with
 `--format json`, without scanning anything. See
 [ADR-RulesExplainThemselves](ADRs/ADR-RulesExplainThemselves.md).
 
@@ -24,6 +24,7 @@ that breaks it and the same scrap put right — and that field is required too.
 | `injected-time` | [R034](ADRs/R034-ADR-InjectedTimeRule.md) | no |
 | `records-and-objects` | [R035](ADRs/R035-ADR-RecordsAndObjectsRule.md) | no |
 | `record-home` | [R037](ADRs/R037-ADR-RecordHomeRule.md) | no |
+| `injected-dependencies` | [R038](ADRs/R038-ADR-InjectedDependenciesRule.md) | no |
 | `registry-completeness` | [R009](ADRs/R009-ADR-RegistryCompletenessRule.md) | no |
 | `paired-test-file` | [R016](ADRs/R016-ADR-PairedTestFileRule.md) | no |
 | `test-file-name-postfix` | [R015](ADRs/R015-ADR-TestFileNamePostfixRule.md) | no |
@@ -1475,6 +1476,46 @@ judged; `tests/`, `benches/` and `#[cfg(test)]` code are exempt.
 not name -- a record internal to a library that another repository names is told
 to go private, and fails loudly there; two types sharing a name, counted as one,
 which errs toward `pub` in a file of its own.
+
+## `injected-dependencies`
+
+A type does not build its own dependencies. **In `src/`, a field declared as a
+trait receives only what the caller passed in.**
+
+A field declared as a trait is a seam: the type promises its part can be
+swapped. A constructor that builds the part itself closes the seam -- the type
+is testable only through some other constructor, and the dependency is hidden
+from every caller of this one. Parts are built where they are composed: `main`,
+a builder, a test.
+
+- **A field declared as a trait** has a type that is, or wraps in `Box`, `Rc`,
+  `Arc`, `Option`, `Vec` or a reference, a `dyn Trait`, or a type parameter
+  bounded -- inline or in a `where` clause -- by a trait outside the value
+  traits.
+- **Passed in** is a parameter, as it is or as `Some(p)`, `Box::new(p)`,
+  `Rc::new(p)`, `Arc::new(p)`, `p.clone()`, `Rc::clone(&p)`, `Arc::clone(&p)`
+  or `p.into()`, or a parameter's field; `None`, `Vec::new()` or `vec![]`; or a
+  local bound to any of these.
+- **Judged:** every constructor -- no receiver, a return type naming `Self` --
+  and every `Default`, `From` and `TryFrom` impl, for the fields it fills and
+  for what it hands another constructor of its type; and every
+  `self.field = ...` in any other method.
+- **A builder is not judged.** A type with a `build(self)` returning another
+  type exists to choose and assemble parts; its product's constructor is
+  judged.
+
+| offence | correction |
+|---|---|
+| `` `App::new` builds `StdoutReporter` for `reporter`, a field declared as a trait `` | `take it as a parameter and build it where the parts are composed: main, a builder, a test` |
+| `` `App::new` passes `CargoPackageResolver`, which it built, to `App::with_deps` `` | `make with_deps the constructor and compose the parts in main` |
+| `` `Storage::reset` assigns `FlashRegistry::current()` to `flash`, a field declared as a trait `` | `take the replacement as a parameter` |
+
+One offence per field and method, at the value. `tests/`, `benches/` and
+`examples/` are exempt: a test is a composition root.
+
+**Does not catch:** a concrete collaborator built inside -- the rule judges the
+seams a type declared, not whether it should have declared one; a dependency
+used without being stored; a builder in name only.
 
 ## What is not walked
 

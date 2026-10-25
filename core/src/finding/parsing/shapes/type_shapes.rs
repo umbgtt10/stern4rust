@@ -11,7 +11,7 @@ use syn::spanned::Spanned;
 use crate::finding::parsing::impl_blocks::ImplBlocks;
 use crate::finding::parsing::shapes::method_classifier::MethodClassifier;
 use crate::finding::parsing::shapes::shaped_type::ShapedType;
-use crate::finding::parsing::unit_test_finder::UnitTestFinder;
+use crate::finding::parsing::source_items::SourceItems;
 use crate::source_file::SourceFile;
 
 pub struct TypeShapes {
@@ -87,7 +87,7 @@ impl TypeShapes {
     }
 
     fn declared(path: &str, items: &[Item]) -> Vec<ShapedType> {
-        Self::live(items)
+        SourceItems::live(items)
             .into_iter()
             .flat_map(|item| match item {
                 Item::Struct(declared) => vec![ShapedType::new(
@@ -106,37 +106,11 @@ impl TypeShapes {
     }
 
     fn impls(items: &[Item]) -> Vec<&ItemImpl> {
-        Self::live(items)
+        SourceItems::live(items)
             .into_iter()
             .filter_map(|item| match item {
                 Item::Impl(block) => Some(block),
                 _ => None,
-            })
-            .collect()
-    }
-
-    fn is_test_only(item: &Item) -> bool {
-        let attrs = match item {
-            Item::Mod(module) => &module.attrs,
-            Item::Impl(block) => &block.attrs,
-            Item::Struct(declared) => &declared.attrs,
-            Item::Enum(declared) => &declared.attrs,
-            _ => return false,
-        };
-        attrs.iter().any(UnitTestFinder::is_cfg_test)
-    }
-
-    fn live(items: &[Item]) -> Vec<&Item> {
-        items
-            .iter()
-            .filter(|item| !Self::is_test_only(item))
-            .flat_map(|item| match item {
-                Item::Mod(module) => module
-                    .content
-                    .as_ref()
-                    .map(|(_, inner)| Self::live(inner))
-                    .unwrap_or_default(),
-                _ => vec![item],
             })
             .collect()
     }
