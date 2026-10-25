@@ -1459,7 +1459,9 @@ The home, first match wins:
    `pub`.
 
 **A file of its own** is named after the type, as `named-subject` reads
-"named after".
+"named after". A binary target -- `src/main.rs`, `src/bin/` -- is no other
+crate's to reach: its types have no consumer outside it, and it has no public
+API, so a same-named type elsewhere in the workspace is only a name.
 
 | offence | correction |
 |---|---|

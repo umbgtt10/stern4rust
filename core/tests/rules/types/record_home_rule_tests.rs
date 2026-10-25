@@ -167,6 +167,42 @@ fn check_workspace_of_a_record_another_crate_also_uses_keeps_it_pub_in_its_file(
 }
 
 #[test]
+fn check_workspace_of_a_record_in_a_binary_under_src_bin_leaves_other_crates_out() {
+    // Arrange
+    let tool = "struct Options {\n    pub fast: bool,\n}\n\nfn main() {\n    let _ = Options { fast: true };\n}\n";
+    let workspace = [
+        SourceFile::new("node/src/bin/tool.rs", tool),
+        SourceFile::new("app/src/lib.rs", "pub fn configure(options: Options) {}\n"),
+    ];
+    let rule =
+        RecordHomeRule::new(NameReaders::new(ReadNames::index(&workspace)).in_package("node"));
+
+    // Act
+    let offences = rule.check_workspace(&[SourceFile::new("src/bin/tool.rs", tool)]);
+
+    // Assert
+    assert!(offences.is_empty(), "expected none, got {offences:?}");
+}
+
+#[test]
+fn check_workspace_of_a_record_in_a_binarys_main_leaves_other_crates_same_named_types_out() {
+    // Arrange
+    let main = "struct Cli {\n    pub verbose: bool,\n}\n\nfn main() {\n    let _ = Cli { verbose: true };\n}\n";
+    let workspace = [
+        SourceFile::new("node/src/main.rs", main),
+        SourceFile::new("app/src/main.rs", main),
+    ];
+    let rule =
+        RecordHomeRule::new(NameReaders::new(ReadNames::index(&workspace)).in_package("node"));
+
+    // Act
+    let offences = rule.check_workspace(&[SourceFile::new("src/main.rs", main)]);
+
+    // Assert
+    assert!(offences.is_empty(), "expected none, got {offences:?}");
+}
+
+#[test]
 fn check_workspace_of_a_record_in_a_cfg_test_item_reports_nothing() {
     // Arrange & Act
     let offences = check(&[(
@@ -251,6 +287,18 @@ fn check_workspace_of_a_record_named_by_a_pub_field_counts_it_as_api() {
     assert_eq!(offences.len(), 1);
     assert_eq!(offences[0].subject(), Some("Inner"));
     assert_eq!(offences[0].line(), 5);
+}
+
+#[test]
+fn check_workspace_of_a_record_named_by_a_pub_fn_of_a_binary_is_not_api() {
+    // Arrange & Act
+    let offences = check(&[(
+        "src/main.rs",
+        "pub fn run(options: Options) {}\n\nstruct Options {\n    pub fast: bool,\n}\n\nfn main() {}\n",
+    )]);
+
+    // Assert
+    assert!(offences.is_empty(), "expected none, got {offences:?}");
 }
 
 #[test]

@@ -169,8 +169,9 @@ where `test-file-structure` is skipped or not selected.
   it, when the crate's public API names it, when nothing uses it, or when two
   or more files use it or any outside the crate's `src/` -- a test, another
   crate; otherwise it is private, inside the one file that uses it. A user is a
-  file of the workspace naming the type, and the declaring file's own code. One
-  offence per type, at its name, naming the file it belongs in.
+  file of the workspace naming the type, and the declaring file's own code; a
+  binary target's types have no user in another crate, and it has no public
+  API. One offence per type, at its name, naming the file it belongs in.
   [R037](docs/ADRs/R037-ADR-RecordHomeRule.md)
 
   A census of the family, 2026-10-24, finds 31 records and 18 enums to move out

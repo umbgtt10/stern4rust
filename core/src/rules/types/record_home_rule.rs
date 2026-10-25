@@ -35,6 +35,10 @@ use crate::source_file::SourceFile;
 // files or by any outside the crate's src/, the type is `pub`, in a file named
 // after it. Used by exactly one file of src/, it is private, inside that file.
 //
+// A type in a binary target -- src/main.rs, src/bin/ -- has no consumer in another
+// crate and no public API, since no other crate can reach it: a same-named type
+// elsewhere in the workspace is only a name.
+//
 // Each record and data enum declared at the top of a src/ file is judged once, at
 // its name. Objects, an enum with behaviour among them, are single-implemented-type's.
 //
@@ -46,6 +50,8 @@ pub struct RecordHomeRule {
 impl RecordHomeRule {
     pub const NAME: &'static str = "record-home";
     pub const SOURCE_ROOT: &'static str = "src/";
+    const BINARIES: &'static str = "src/bin/";
+    const BINARY: &'static str = "src/main.rs";
 
     pub fn new(readers: NameReaders) -> Self {
         Self { readers }
@@ -75,6 +81,12 @@ impl RecordHomeRule {
         }
     }
 
+    // A binary target is no other crate's to reach: its types have no consumer
+    // outside it, and it has no public API.
+    fn is_binary(path: &str) -> bool {
+        path == Self::BINARY || path.starts_with(Self::BINARIES)
+    }
+
     fn offence(
         &self,
         path: &str,
@@ -85,7 +97,11 @@ impl RecordHomeRule {
     ) -> Option<Offence> {
         let name = declared.to_string();
         let local = self.readers.others_under(&name, path, Self::SOURCE_ROOT);
-        let outside = self.readers.others(&name, path).len() - local.len();
+        let outside = if Self::is_binary(path) {
+            0
+        } else {
+            self.readers.others(&name, path).len() - local.len()
+        };
         let own_use =
             ReadNames::in_items(items.iter().filter(|item| !Self::belongs_to(item, &name)))
                 .contains(&name);
@@ -216,7 +232,12 @@ impl Rule for RecordHomeRule {
             .cloned()
             .collect();
         let shapes = TypeShapes::of(&sources);
-        let api = PublicApiNames::of(&sources);
+        let libraries: Vec<SourceFile> = sources
+            .iter()
+            .filter(|file| !Self::is_binary(file.relative_path()))
+            .cloned()
+            .collect();
+        let api = PublicApiNames::of(&libraries);
         sources
             .iter()
             .filter_map(|file| {

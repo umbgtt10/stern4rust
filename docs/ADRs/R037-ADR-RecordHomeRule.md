@@ -51,7 +51,9 @@ The home, first match wins:
 *As built, 2026-10-25:* the declaring file's other code counts as a user beside its consumers, so a record its
 declaring file and one other file both use is used by two files -- home 3 -- rather than moved into the other, where
 the declaring file could no longer name it. A type whose home is `pub` in a file of its own, sitting in that file but
-not `pub`, is reported too: `` `LogLine` is used by 3 files but is not `pub` ``, `make it pub`.
+not `pub`, is reported too: `` `LogLine` is used by 3 files but is not `pub` ``, `make it pub`. A binary target --
+`src/main.rs`, `src/bin/` -- is no other crate's to reach, so its types have no consumer outside it and it has no
+public API: the census of 2026-10-25 found six binaries' `Cli`s in one workspace counting each other as consumers.
 
 One offence per type, at its declaration:
 
