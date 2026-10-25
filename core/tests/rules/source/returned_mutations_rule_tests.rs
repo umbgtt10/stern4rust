@@ -63,16 +63,15 @@ fn check_a_callback_taking_a_mut_ref_reports_nothing() {
     assert!(offences.is_empty(), "expected none, got {offences:?}");
 }
 
-// A constructor that keeps the borrow and mutates through `&mut self` later is
-// reported like any other parameter: the type can own the value instead, or the
-// mutation can be a method on the type it borrows.
+// Only storing the borrow is left alone. A constructor that does anything else
+// with its parameters is judged like any other function.
 #[test]
-fn check_a_constructor_storing_a_mut_borrow_reports_it() {
+fn check_a_constructor_doing_more_than_storing_a_mut_borrow_reports_it() {
     // Arrange & Act
     let offences = check(
         "src/router.rs",
-        "pub struct Router<'a> {\n    protocol: &'a mut u32,\n}\n\nimpl<'a> Router<'a> {\n    \
-         pub fn new(protocol: &'a mut u32) -> Self {\n        Self { protocol }\n    }\n}\n",
+        "pub struct Router<'a> {\n    protocol: &'a mut u32,\n    calls: u32,\n}\n\nimpl<'a> Router<'a> {\n    \
+         pub fn new(protocol: &'a mut u32) -> Self {\n        Self { protocol, calls: 0 }\n    }\n}\n",
     );
 
     // Assert
@@ -160,6 +159,22 @@ fn check_a_mut_self_receiver_reports_nothing() {
 
     // Assert
     assert!(offences.is_empty(), "expected none, got {offences:?}");
+}
+
+// A plain constructor writes nothing through the borrow it is handed: it keeps
+// it, and the writes come later through `&mut self`, which this rule leaves
+// alone. A component borrowing its owner for one call is built this way.
+#[test]
+fn check_a_plain_constructor_storing_a_mut_borrow_reports_nothing() {
+    // Arrange & Act
+    let offences = check(
+        "src/router.rs",
+        "pub struct Router<'a> {\n    protocol: &'a mut u32,\n}\n\nimpl<'a> Router<'a> {\n    \
+         pub fn new(protocol: &'a mut u32) -> Self {\n        Self { protocol }\n    }\n}\n",
+    );
+
+    // Assert
+    assert!(offences.is_empty(), "{offences:?}");
 }
 
 #[test]

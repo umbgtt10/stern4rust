@@ -160,7 +160,7 @@ removes them -- the tests it deletes shown to the owner first.
 |---|---|---|
 | 1 | These ADRs accepted; `private-fields`' ADR to `docs/history/` | **landed** |
 | 2 | One classifier in `finding/parsing/`: method shapes, the value traits, record, object and builder | **landed** -- `finding/parsing/shapes/`, sharing `ImplBlocks::target` rather than copying it |
-| 3 | `returned-mutations` leaves a plain constructor storing a `&mut` alone | |
+| 3 | `returned-mutations` leaves a plain constructor storing a `&mut` alone | **landed** |
 | 4 | `single-implemented-type` and `named-subject` count objects only | |
 | 5 | `records-and-objects` replaces `private-fields`; this repository's getter-only records in a baseline | |
 | 6 | This repository's records lose their accessors; their baseline entries go | |

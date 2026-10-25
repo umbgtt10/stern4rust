@@ -563,7 +563,7 @@ angle-bracketed generic arguments, so `(&mut A, B)` and `Vec<&mut T>` are both
 reported. Every offending parameter is reported separately, because each is its
 own edit.
 
-Three things are left alone, each because the edit does not live there:
+Four things are left alone, each because the edit does not live there:
 
 - **The `&mut self` receiver.** It carries no parameter type, so it falls out of
   the check by shape. A method mutating the thing it belongs to is the point of a
@@ -576,6 +576,12 @@ Three things are left alone, each because the edit does not live there:
 - **Callback contracts.** `impl FnMut(&mut T)` and `fn(&mut T)` describe the
   callback's parameter list, not this function's, so the walk stops at a
   parenthesised `Fn`-trait argument and at a bare function pointer.
+- **A plain constructor storing the borrow.** `new(protocol: &'a mut T) -> Self`
+  whose whole body is `Self { protocol }` writes nothing through its argument; it
+  keeps it, and the writes come later through `&mut self`. A component that
+  borrows its owner for one call is built this way. A constructor that does
+  anything else with its parameters is judged like any other function.
+  ([R022](ADRs/R022-ADR-ReturnedMutationsRule.md), amended 2026-10-25)
 
 | offence | correction |
 |---|---|

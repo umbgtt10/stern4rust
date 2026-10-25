@@ -186,6 +186,11 @@ where `test-file-structure` is skipped or not selected.
   race one. This repository has none.
 
 ### Changed
+- **`returned-mutations` leaves a plain constructor storing a `&mut` alone.**
+  A constructor whose whole body is `Self { params }` writes nothing through
+  the borrow it keeps; the writes come later, through `&mut self`, which the
+  rule never counted. Any other use of a `&mut` parameter is still reported.
+  [R022](docs/ADRs/R022-ADR-ReturnedMutationsRule.md)
 - **The library's types keep their fields private**, as `private-fields`
   asks. Every field of the 36 structs that had a public one -- `Offence`,
   `Config`, `Args`, `ConfigFile`, the finding models and the rest -- is read

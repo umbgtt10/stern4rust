@@ -2,11 +2,18 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use std::ptr;
+
 use syn::FnArg;
+use syn::ImplItem;
+use syn::Item;
 use syn::Pat;
 use syn::Signature;
 use syn::spanned::Spanned;
 
+use crate::finding::parsing::impl_blocks::ImplBlocks;
+use crate::finding::parsing::shapes::method_classifier::MethodClassifier;
+use crate::finding::parsing::shapes::method_shape::MethodShape;
 use crate::finding::parsing::signatures::authored_signatures::AuthoredSignatures;
 use crate::finding::parsing::signatures::mutable_reference_search::MutableReferenceSearch;
 use crate::finding::parsing::source_items::SourceItems;
@@ -101,6 +108,24 @@ impl ReturnedMutationsRule {
             _ => "_".to_string(),
         }
     }
+
+    fn plain_constructors(items: &[Item]) -> Vec<&Signature> {
+        ImplBlocks::inherent(items)
+            .into_iter()
+            .flat_map(|block| {
+                let name = ImplBlocks::target(&block.self_ty).unwrap_or_default();
+                block.items.iter().filter_map(move |item| match item {
+                    ImplItem::Fn(method)
+                        if MethodClassifier::shape(method, &name)
+                            == MethodShape::PlainConstructor =>
+                    {
+                        Some(&method.sig)
+                    }
+                    _ => None,
+                })
+            })
+            .collect()
+    }
 }
 
 impl Default for ReturnedMutationsRule {
@@ -115,12 +140,13 @@ impl Rule for ReturnedMutationsRule {
     }
 
     fn check(&self, file: &SourceFile) -> Vec<Offence> {
-        SourceItems::offences(
-            Self::SOURCE_ROOT,
-            file,
-            AuthoredSignatures::of,
-            Self::offences,
-        )
+        let items = SourceItems::under(Self::SOURCE_ROOT, file);
+        let plain = Self::plain_constructors(&items);
+        AuthoredSignatures::of(&items)
+            .into_iter()
+            .filter(|signature| !plain.iter().any(|stored| ptr::eq(*stored, *signature)))
+            .flat_map(|signature| Self::offences(file, signature))
+            .collect()
     }
 
     fn check_workspace(&self, _files: &[SourceFile]) -> Vec<Offence> {
