@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 // The names a crate's public API hands another crate: the signatures of its
-// pub functions, pub methods and trait methods, the types of a pub struct's
+// pub functions, a pub type's pub methods and trait methods, the types of a pub struct's
 // pub fields, a pub enum's variants, and pub aliases, constants and statics.
 // What only the crate itself can reach is left out.
 
@@ -104,15 +104,26 @@ fn of_a_pub_item_in_an_inline_module_names_its_types() {
 }
 
 #[test]
-fn of_a_pub_method_names_its_signature_and_a_private_one_does_not() {
+fn of_a_pub_method_of_a_pub_type_names_its_signature_and_a_private_one_does_not() {
     // Arrange & Act
     let found = names(
-        "impl Parser {\n    pub fn next(&self) -> Token {\n        todo!()\n    }\n\n    fn peek(&self) -> Lookahead {\n        todo!()\n    }\n}\n",
+        "pub struct Parser;\n\nimpl Parser {\n    pub fn next(&self) -> Token {\n        todo!()\n    }\n\n    fn peek(&self) -> Lookahead {\n        todo!()\n    }\n}\n",
     );
 
     // Assert
     assert!(found.contains("Token"), "{found:?}");
     assert!(!found.contains("Lookahead"), "{found:?}");
+}
+
+#[test]
+fn of_a_pub_method_of_a_type_that_is_not_pub_names_nothing() {
+    // Arrange & Act
+    let found = names(
+        "pub(crate) struct Parser;\n\nimpl Parser {\n    pub fn next(&self) -> Token {\n        todo!()\n    }\n}\n",
+    );
+
+    // Assert
+    assert!(found.is_empty(), "{found:?}");
 }
 
 #[test]

@@ -355,6 +355,18 @@ fn check_workspace_of_a_record_named_in_the_public_api_in_a_file_of_its_own_repo
 }
 
 #[test]
+fn check_workspace_of_a_record_named_only_by_a_pub_method_of_a_type_that_is_not_pub_is_not_api() {
+    // Arrange & Act
+    let offences = check(&[(
+        "src/parser.rs",
+        "pub(crate) struct Parser {\n    position: usize,\n}\n\nimpl Parser {\n    pub fn next(&self) -> Token {\n        Token { size: self.position }\n    }\n}\n\nstruct Token {\n    pub size: usize,\n}\n",
+    )]);
+
+    // Assert
+    assert!(offences.is_empty(), "expected none, got {offences:?}");
+}
+
+#[test]
 fn check_workspace_of_a_record_used_by_its_declaring_file_and_one_other_counts_both() {
     // Arrange & Act
     let offences = check(&[

@@ -53,7 +53,8 @@ declaring file and one other file both use is used by two files -- home 3 -- rat
 the declaring file could no longer name it. A type whose home is `pub` in a file of its own, sitting in that file but
 not `pub`, is reported too: `` `LogLine` is used by 3 files but is not `pub` ``, `make it pub`. A binary target --
 `src/main.rs`, `src/bin/` -- is no other crate's to reach, so its types have no consumer outside it and it has no
-public API: the census of 2026-10-25 found six binaries' `Cli`s in one workspace counting each other as consumers.
+public API: the census of 2026-10-25 found six binaries' `Cli`s in one workspace counting each other as consumers. A
+`pub` method is API only on a `pub` type -- one on a type the crate keeps to itself hands nothing over.
 
 One offence per type, at its declaration:
 

@@ -1444,7 +1444,7 @@ other rule, so which one a codebase gets would be taste.
   tests and other crates included; and the declaring file itself, where its
   code other than the declaration and the type's impls names it.
 - **The public API** is what another crate can be handed: the signature of a
-  `pub fn`, of a `pub` method and of a `pub` trait's methods; the type of a
+  `pub fn`, of a `pub` type's `pub` method and of a `pub` trait's methods; the type of a
   `pub` field of a `pub` struct; a `pub` enum's variants; a `pub` alias,
   `const` or `static`.
 

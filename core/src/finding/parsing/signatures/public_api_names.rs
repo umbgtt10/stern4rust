@@ -15,31 +15,44 @@ use syn::Type;
 use syn::Visibility;
 use syn::parse_file;
 
+use crate::finding::parsing::impl_blocks::ImplBlocks;
 use crate::finding::parsing::read_names::ReadNames;
+use crate::finding::parsing::source_items::SourceItems;
 use crate::finding::parsing::unit_test_finder::UnitTestFinder;
 use crate::source_file::SourceFile;
 
 // The names a crate's public API hands another crate: what another crate can be
-// given, and so may depend on. The signature of a pub function, of a pub method
-// and of a pub trait's methods; the type of a pub struct's pub field; a pub
-// enum's variants; a pub alias, constant or static. Read by syntax: `pub` only,
+// given, and so may depend on. The signature of a pub function, of a pub type's
+// pub method and of a pub trait's methods; the type of a pub struct's pub field;
+// a pub enum's variants; a pub alias, constant or static. A pub method on a type
+// the crate keeps to itself hands nothing over. Read by syntax: `pub` only,
 // `pub(crate)` and narrower being the crate's own, and trait impls left out --
 // their signatures are the trait's.
 pub struct PublicApiNames {
     names: BTreeSet<String>,
+    public_types: BTreeSet<String>,
 }
 
 impl PublicApiNames {
     pub fn of(files: &[SourceFile]) -> BTreeSet<String> {
-        files
+        let parsed: Vec<Vec<Item>> = files
             .iter()
-            .filter_map(|file| parse_file(&file.contents()).ok())
+            .filter_map(|file| parse_file(&file.contents()).ok().map(|syntax| syntax.items))
+            .collect();
+        let public_types = parsed
+            .iter()
+            .flat_map(|items| SourceItems::live(items))
+            .filter_map(Self::public_type)
+            .collect();
+        parsed
+            .iter()
             .fold(
                 Self {
                     names: BTreeSet::new(),
+                    public_types,
                 },
-                |mut found, syntax| {
-                    found.read_items(&syntax.items);
+                |mut found, items| {
+                    found.read_items(items);
                     found
                 },
             )
@@ -50,6 +63,18 @@ impl PublicApiNames {
         matches!(visibility, Visibility::Public(_))
     }
 
+    fn public_type(item: &Item) -> Option<String> {
+        match item {
+            Item::Struct(declared) if Self::is_public(&declared.vis) => {
+                Some(declared.ident.to_string())
+            }
+            Item::Enum(declared) if Self::is_public(&declared.vis) => {
+                Some(declared.ident.to_string())
+            }
+            _ => None,
+        }
+    }
+
     fn read_fields(&mut self, fields: &Fields, every: bool) {
         fields
             .iter()
@@ -58,7 +83,9 @@ impl PublicApiNames {
     }
 
     fn read_impl(&mut self, block: &ItemImpl) {
-        if block.trait_.is_some() {
+        let public = ImplBlocks::target(&block.self_ty)
+            .is_some_and(|target| self.public_types.contains(&target));
+        if block.trait_.is_some() || !public {
             return;
         }
         block.items.iter().for_each(|member| {
