@@ -42,6 +42,10 @@ a trait outside the value traits. The terms, each a syntactic shape:
 - **The value traits** are `Clone`, `Copy`, `Debug`, `Display`, `Default`, `PartialEq`, `Eq`, `PartialOrd`, `Ord`,
   `Hash`, `From`, `TryFrom`, `FromStr`, `AsRef`, `Error`, `Serialize`, `Deserialize`, `Send` and `Sync`. A fixed
   list in the rule, not configuration: a list a package could extend is a package deciding what counts as behaviour.
+- **A derive is not behaviour** (owner, 2026-10-25): a derived impl is generated from the fields, so it keeps no
+  invariant they don't. Clap's `#[derive(Parser)]` -- a conversion from the command line, as `FromStr` is from a
+  string -- leaves a struct a record; the census of 2026-10-25 found it the only derive outside the value traits on
+  any struct the rule reports.
 
 **A record** is a struct with no behaviour. **An object** is a struct with some. A constructor that does more than
 store its parameters -- validates, computes, fills a default -- is behaviour, so its struct is an object.

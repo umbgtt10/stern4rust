@@ -175,6 +175,23 @@ fn check_workspace_of_a_record_with_two_private_fields_names_both_in_the_plural(
 }
 
 #[test]
+fn check_workspace_of_a_struct_deriving_parser_with_private_fields_reports_it_as_a_record() {
+    // Arrange & Act
+    let offences = check(
+        "src/cli.rs",
+        "#[derive(Debug, Parser)]\npub struct Cli {\n    verbose: bool,\n}\n",
+    );
+
+    // Assert
+    assert_eq!(offences.len(), 1);
+    assert_eq!(offences[0].line(), 2);
+    assert_eq!(
+        offences[0].description(),
+        "`Cli` is a record with a private field `verbose`; a record's fields are public"
+    );
+}
+
+#[test]
 fn check_workspace_of_a_struct_in_a_cfg_test_module_reports_nothing() {
     // Arrange & Act
     let offences = check(

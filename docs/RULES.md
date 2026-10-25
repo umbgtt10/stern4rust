@@ -1401,6 +1401,9 @@ trait outside the value traits:
   `PartialEq`, `Eq`, `PartialOrd`, `Ord`, `Hash`, `From`, `TryFrom`, `FromStr`,
   `AsRef`, `Error`, `Serialize`, `Deserialize`, `Send` and `Sync` -- a fixed
   list, not configuration.
+- **A derive is not behaviour:** a derived impl is generated from the fields, so
+  it keeps no invariant they don't -- `#[derive(Parser)]` leaves a struct a
+  record.
 
 **A record** has no behaviour: every field `pub`, no getter, no plain
 constructor, no `with_` step; it is built by literal, a wide one with
