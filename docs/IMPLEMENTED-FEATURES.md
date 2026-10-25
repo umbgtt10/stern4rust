@@ -126,9 +126,9 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
   body fills its type's fields, and `BuiltText` names what was built. A
   builder, by the shared classifier, is left alone. By the census of
   2026-10-25, about 15 constructors across the family; this repository's two,
-  `RuleRegistry::from_config` and `RewriterRegistry::all`, are baselined until
-  they take their parts. On by default.
-  [R038](ADRs/R038-ADR-InjectedDependenciesRule.md)
+  `RuleRegistry::from_config` and `RewriterRegistry::all`, gave way to
+  `RuleCatalog`, which composes the rules and fixers both registries take.
+  On by default. [R038](ADRs/R038-ADR-InjectedDependenciesRule.md)
 
 ### Autofix
 

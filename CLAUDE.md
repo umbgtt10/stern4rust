@@ -14,7 +14,7 @@ The rule set is **open by design**: there will be fifteen to twenty of them, and
 there are thirty-seven today, seventeen past the range, and `core/src/rules/` is grouped into
 subfolders because `directory-file-count` would not allow a twenty-first file. That is the constraint every decision here answers to.
 Adding a rule costs a file under `core/src/rules/`, its `pub mod` line, one entry in
-`RuleRegistry::all`, a mirrored test file, an `R<NNN>` ADR and a `RULES.md`
+`RuleCatalog::all`, a mirrored test file, an `R<NNN>` ADR and a `RULES.md`
 section — and nothing in the walker, the printer or any other rule.
 
 `docs/RULES.md` is the canonical policy description. If a rule's meaning
@@ -166,8 +166,10 @@ One rule, one file, one implementation.
 - `Rule` (`core/src/rule.rs`) is the seam. A rule sees a single `SourceFile` and
   answers with what is wrong with it. It does not walk, does not print, and
   does not know which other rules exist.
-- `RuleRegistry` (`core/src/rule_registry.rs`) is the only place that knows the set.
-  A rule with nothing to work from is **left out rather than registered and
+- `RuleCatalog` (`core/src/rule_catalog.rs`) is the only place that knows the set,
+  and composes it for a run; `RuleRegistry` (`core/src/rule_registry.rs`) and
+  `RewriterRegistry` take the parts it builds, as `injected-dependencies` asks.
+  A rule with nothing to work from is **left out rather than selected and
   silently passing** — a run reporting "all rules satisfied" while a rule was
   never configured is worse than one that says so.
 - `Offence` (`core/src/reporting/offence.rs`) is the single currency. Every rule reports in it,

@@ -112,16 +112,16 @@ offences — there is no "expected text" for a missing folder.
    since none of them has a default body. That includes `explanation`, so a
    rule cannot join the set without saying what it wants and what breaking it
    looks like. The groups are `source/`, `layout/`,
-   `testing/` and `manifest/`; `tests/rules/` mirrors them exactly
+   `testing/`, `manifest/` and `types/`; `tests/rules/` mirrors them exactly
 2. a `pub mod` line in that group's `mod.rs`
-3. an import and one entry in `RuleRegistry::all`, the single list both
-   `from_config` and `known_names` read
+3. an import and one entry in `RuleCatalog::all`, the single list both
+   `selected` and `known_names` read
 4. a mirrored test file under `tests/rules/<group>/`, declared in that group`s `mod.rs`
 5. an `R<NNN>-ADR-<Name>.md` in `docs/ADRs/`, and a section in `RULES.md`
 
 Nothing else in the tool changes. A rule does not walk, does not print, and does
 not know which other rules exist. The rule-name lists in
-`tests/rule_registry_tests.rs` are the one place that has to agree, and they fail
+`tests/rule_catalog_tests.rs` are the one place that has to agree, and they fail
 loudly when it does not.
 
 ## Analysis is AST-structural

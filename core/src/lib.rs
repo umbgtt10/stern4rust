@@ -28,6 +28,7 @@ pub mod ordered_impl_functions_rewriter;
 pub mod reporting;
 pub mod rewriter_registry;
 pub mod rule;
+pub mod rule_catalog;
 pub mod rule_registry;
 pub mod rules;
 pub mod runner;

@@ -1,6 +1,0 @@
-{
-  "offences": {
-    "src/rewriter_registry.rs\u001finjected-dependencies\u001fRewriterRegistry::all": 1,
-    "src/rule_registry.rs\u001finjected-dependencies\u001fRuleRegistry::from_config": 1
-  }
-}

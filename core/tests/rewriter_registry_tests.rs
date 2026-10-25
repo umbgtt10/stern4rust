@@ -39,42 +39,6 @@ fn registry() -> RewriterRegistry {
 }
 
 #[test]
-fn all_reorders_an_impl_where_ordered_impl_functions_applies() {
-    // Arrange
-    let file = SourceFile::new(
-        "src/store.rs",
-        "impl Store {\n    fn b() {}\n\n    fn a() {}\n}\n",
-    );
-
-    // Act
-    let rewritten = RewriterRegistry::all().rewrite(&file, &["ordered-impl-functions"]);
-
-    // Assert
-    assert_eq!(
-        rewritten.as_deref(),
-        Some("impl Store {\n    fn a() {}\n\n    fn b() {}\n}\n")
-    );
-}
-
-#[test]
-fn all_repairs_a_test_file_where_test_file_structure_applies() {
-    // Arrange
-    let file = SourceFile::new(
-        "tests/widget_tests.rs",
-        "#[test]\nfn zeta() {}\n\n#[test]\nfn alpha() {}\n",
-    );
-
-    // Act
-    let rewritten = RewriterRegistry::all().rewrite(&file, &["test-file-structure"]);
-
-    // Assert
-    assert_eq!(
-        rewritten.as_deref(),
-        Some("#[test]\nfn alpha() {}\n\n#[test]\nfn zeta() {}\n")
-    );
-}
-
-#[test]
 fn rewrite_hands_each_rewriter_what_the_one_before_left() {
     // Arrange
     let file = SourceFile::new("src/widget.rs", "x");

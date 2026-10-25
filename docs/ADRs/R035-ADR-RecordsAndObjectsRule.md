@@ -167,7 +167,7 @@ removes them -- the tests it deletes shown to the owner first.
 | 7 | `record-home`; this repository's offences in the baseline | **landed** -- consumers through the `shared-constants` index, the API through `PublicApiNames`; `MarkerPhase` out, `ScanTotals` in, baselined |
 | 8 | This repository's records and enums moved; their entries go | **landed** -- `MarkerPhase` to `marker_phase.rs`, `ScanTotals` into `runner.rs`; the time-call models to `finding/model/time/` to make room |
 | 9 | `injected-dependencies`; this repository's offences in the baseline | **landed** -- the pieces in `finding/parsing/dependencies/`; `RuleRegistry::from_config` and `RewriterRegistry::all` baselined |
-| 10 | The rule and rewriter registries take their parts; the baseline goes | |
+| 10 | The rule and rewriter registries take their parts; the baseline goes | **landed** -- `RuleCatalog` composes the rules and fixers; `RuleRegistry::new` and `RewriterRegistry::new` take them; no baseline left |
 
 `RULES.md`, the README, the ADR index, `IMPLEMENTED-FEATURES.md`, the roadmap, the changelog and the `CLAUDE.md`
 counts change with the slice that changes the rule. The tools, `slotgate`, `etheram-core` and `etheram-raft`'s

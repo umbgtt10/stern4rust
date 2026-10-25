@@ -18,6 +18,7 @@ use crate::reporting::report_printer::ReportPrinter;
 use crate::reporting::rule_listing::RuleListing;
 use crate::reporting::run_outcome::RunOutcome;
 use crate::rewriter_registry::RewriterRegistry;
+use crate::rule_catalog::RuleCatalog;
 use crate::rule_registry::RuleRegistry;
 use crate::rules::source::header_rule::HeaderRule;
 use crate::settings::args::Args;
@@ -120,7 +121,7 @@ impl Runner {
             selection,
             ..config
         };
-        let registry = RuleRegistry::from_config(&config);
+        let registry = RuleRegistry::new(RuleCatalog::selected(&config));
         if registry.is_empty() {
             return Err(anyhow::anyhow!(
                 "no rules are configured, so nothing would be checked -- pass --header-file to \
@@ -187,12 +188,12 @@ impl Runner {
                 )),
                 ..Self::config_from(&args, sections.of(package.name()))?
             };
-            let registry = RuleRegistry::from_config(&package_config);
+            let registry = RuleRegistry::new(RuleCatalog::selected(&package_config));
             rosters.push(PackageRoster::new(
                 package.name(),
                 Self::owned(&registry.names()),
-                Self::owned(&RuleRegistry::skipped_names(&package_config.selection)),
-                registry.unconfigured(&package_config),
+                Self::owned(&RuleCatalog::skipped_names(&package_config.selection)),
+                RuleCatalog::unconfigured(&package_config),
             ));
             let exclusions = ExclusionSet::new(&package_config.excludes)?;
             let root = &package.root();
@@ -437,7 +438,7 @@ impl Runner {
         registry: &RuleRegistry,
     ) -> Result<(Vec<SourceFile>, usize)> {
         let applied = registry.names();
-        let rewriters = RewriterRegistry::all();
+        let rewriters = RewriterRegistry::new(RuleCatalog::rewriters());
         let mut repaired = Vec::with_capacity(files.len());
         let mut count = 0;
         for file in files {
@@ -466,13 +467,12 @@ impl Runner {
     ) -> String {
         let threshold = config.offence_threshold;
         let applied = Self::owned(&registry.names());
-        let skipped = Self::owned(&RuleRegistry::skipped_names(&config.selection));
-        let unconfigured: Vec<(String, String)> = registry
-            .unconfigured(config)
+        let skipped = Self::owned(&RuleCatalog::skipped_names(&config.selection));
+        let unconfigured: Vec<(String, String)> = RuleCatalog::unconfigured(config)
             .into_iter()
             .map(|rule| (rule.name.to_string(), rule.requirement.to_string()))
             .collect();
-        let unconfigured_names = Self::owned(&registry.unconfigured_names(config));
+        let unconfigured_names = Self::owned(&RuleCatalog::unconfigured_names(config));
         match config.format {
             OutputFormat::Text => ReportPrinter::new(totals.files_scanned)
                 .with_threshold(threshold)
@@ -513,11 +513,11 @@ impl Runner {
     // rule reads as a tool that does not have it. The first draft supplied only
     // the header and quietly listed twenty.
     fn rule_listing(args: &Args) -> String {
-        let registry = RuleRegistry::from_config(&Config {
+        let registry = RuleRegistry::new(RuleCatalog::selected(&Config {
             expected_header: vec![String::new()],
             manifest_license: Some(String::new()),
             ..Config::default()
-        });
+        }));
         RuleListing::new(&registry.explanations()).render(args.format())
     }
 
@@ -543,7 +543,7 @@ impl Runner {
     // an error rather than an empty run. Both would otherwise look exactly like
     // a run that worked.
     fn validate_selection(config: &Config) -> Result<()> {
-        let known = RuleRegistry::known_names();
+        let known = RuleCatalog::known_names();
         let unknown = config.selection.unknown_in(&known);
         if !unknown.is_empty() {
             return Err(anyhow::anyhow!(

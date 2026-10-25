@@ -192,9 +192,8 @@ where `test-file-structure` is skipped or not selected.
   alone. [R038](docs/ADRs/R038-ADR-InjectedDependenciesRule.md)
 
   A census of the family, 2026-10-25, finds about 15 constructors building a
-  part they declared as a trait. This repository has two,
-  `RuleRegistry::from_config` and `RewriterRegistry::all`, baselined until
-  they take their parts.
+  part they declared as a trait. This repository had two,
+  `RuleRegistry::from_config` and `RewriterRegistry::all`.
 - **`injected-time`: time reaches production code through a port.** In the
   library target, a function reading a clock, waiting on a timer or racing one
   -- `timeless-tests`' calls, randomness aside -- is reported once, at its name,
@@ -225,6 +224,14 @@ where `test-file-structure` is skipped or not selected.
   race one. This repository has none.
 
 ### Changed
+- **`RuleCatalog` composes the rule set; the registries take their parts.**
+  `RuleRegistry::new` and `RewriterRegistry::new` are the registries' only
+  constructors. `RuleRegistry::from_config`, `known_names`, `skipped_names`,
+  `unconfigured` and `unconfigured_names` and `RewriterRegistry::all` move to
+  `RuleCatalog` as `selected`, `known_names`, `skipped_names`, `unconfigured`,
+  `unconfigured_names` and `rewriters`, `unconfigured` and its names now
+  asked of the config rather than of a registry. Adding a rule is an entry in
+  `RuleCatalog::all`.
 - **`single-implemented-type` and `named-subject` count objects only.** A
   record or data enum whose only impls are value traits -- `Display`, `From`,
   `Default` and the rest of a fixed list -- is no longer a file's implemented
