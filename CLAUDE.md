@@ -105,7 +105,7 @@ recorded at: `cargo dry4rust --path core/src --min-nodes 25 --baseline "$PWD/dry
 
 `core/src/.dry4rust-ignore.toml` holds the fingerprints, each with its
 reason, of plain constructors -- `Self { a, b, c, d }` -- which
-`private-fields` makes every struct have, so any two with as many fields look
+every object with private fields has, so any two with as many fields look
 alike, and a few with a field more or less nearly alike. dry4rust leaves
 plain constructors out from its next release
 (ADR-PlainConstructorsAreTheStructsShape, in dry4rust); until the gate installs

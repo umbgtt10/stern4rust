@@ -828,15 +828,18 @@ skip = []
 
 [R034](docs/ADRs/R034-ADR-InjectedTimeRule.md)
 
-### `private-fields`
+### `records-and-objects`
 
-A struct's fields are private. In `src/`, a field declared `pub`, `pub(crate)`,
-`pub(super)` or `pub(in ...)` is reported once per struct, at its name, naming
-the fields -- a newtype's included. Reading goes through a getter, building
-through a constructor, or a `Default` and `with_<field>` steps past seven
-fields; there are no setters. `tests/` and `#[cfg(test)]` code are exempt, and
-enum variants' fields are the language's.
-[R035](<docs/history/[SUPERSEDED] R035 PRIVATE FIELDS.md>)
+Every struct in `src/` is a record or an object, by its impl blocks anywhere in
+the package. A record has no behaviour -- no inherent method but getters, plain
+constructors and `with_` steps, no impl of a trait outside a fixed list of value
+traits -- so its fields are all `pub` and it has no accessors: it is built by
+literal. An object has behaviour, and its fields are all private. One offence
+per struct, at its name: a getter-only record, a record with a field that is not
+`pub`, an object with a field that is not private, a newtype's by position.
+`tests/` and `#[cfg(test)]` code are exempt, and enum variants' fields are the
+language's.
+[R035](docs/ADRs/R035-ADR-RecordsAndObjectsRule.md)
 
 ## Output
 

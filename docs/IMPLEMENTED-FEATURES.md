@@ -93,15 +93,19 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
   sixteen repositories, every protocol-repository one in `system-tests`; this
   repository has none. On by default.
   [R034](ADRs/R034-ADR-InjectedTimeRule.md)
-- **`private-fields`** -- a struct's fields are private: in `src/`, a `pub`,
-  `pub(crate)`, `pub(super)` or `pub(in ...)` field is reported once per struct,
-  at its name, naming the fields, a tuple struct's by position. `pub(self)`,
-  enum variants' fields, `tests/` and `#[cfg(test)]` code are left alone. The
-  first rule in `rules/types/`. 1,793 fields in 421 structs across the family;
-  this repository's 36 structs were made private first, each read through a
-  getter, `Config` built over its `Default` with a `with_` step per field. On by
-  default.
-  [R035](<history/[SUPERSEDED] R035 PRIVATE FIELDS.md>)
+- **`records-and-objects`** -- every struct in `src/` is a record or an object,
+  by its impl blocks across the package, read through one classifier in
+  `finding/parsing/shapes/`: a record has no behaviour -- getters, plain
+  constructors, `with_` steps and value-trait impls do not count -- so its
+  fields are all `pub` and it has no accessors; an object's fields are all
+  private. One offence per struct, at its name: getter-only, a record hiding a
+  field, an object exposing one, a tuple struct's by position. Enum variants'
+  fields, `tests/` and `#[cfg(test)]` code are left alone. Replaces
+  `private-fields`, built on 2026-10-23 and never released. By the census of
+  2026-10-24, 120 records with non-`pub` fields, 104 getter-only and 96 objects
+  exposing fields across the family; this repository's 8 getter-only records
+  are in a baseline until their accessors go. On by default.
+  [R035](ADRs/R035-ADR-RecordsAndObjectsRule.md)
 
 ### Autofix
 

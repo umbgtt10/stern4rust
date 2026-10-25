@@ -2,4 +2,4 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-pub mod private_fields_rule;
+pub mod records_and_objects_rule;

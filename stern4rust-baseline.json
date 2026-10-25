@@ -1,0 +1,12 @@
+{
+  "offences": {
+    "src/finding/model/repeated_tuple.rs\u001frecords-and-objects\u001fRepeatedTuple": 1,
+    "src/gates/stage_failure.rs\u001frecords-and-objects\u001fStageFailure": 1,
+    "src/process/launch_failure.rs\u001frecords-and-objects\u001fLaunchFailure": 1,
+    "src/reporting/offence_order.rs\u001frecords-and-objects\u001fOffenceOrder": 1,
+    "src/reporting/rule_explanation.rs\u001frecords-and-objects\u001fRuleExplanation": 1,
+    "src/reporting/scan_totals.rs\u001frecords-and-objects\u001fScanTotals": 1,
+    "src/reporting/unconfigured_rule.rs\u001frecords-and-objects\u001fUnconfiguredRule": 1,
+    "src/settings/config.rs\u001frecords-and-objects\u001fConfig": 1
+  }
+}

@@ -13,12 +13,13 @@ after another item, a public one without a constants file and readers to share
 it, a type implemented in more than one file, a method that is neither `pub`
 nor private, an impl block out of order, a library function failing with a
 string, a test reading a clock or waiting on a timer, and library code doing
-either outside a port, and a struct field that is not private become offences;
+either outside a port, and a struct that is neither a record with public fields
+nor an object with private ones become offences;
 to adopt one later, add its name --
 `immutable-returns`, `distinct-tuple-elements`, `leading-constants`,
 `shared-constants`, `implemented-in-one-file`, `public-or-private`,
 `ordered-impl-functions`, `typed-errors`, `timeless-tests`, `injected-time` or
-`private-fields` -- to `skip` in your `stern4rust.toml` once you install a version that knows
+`records-and-objects` -- to `skip` in your `stern4rust.toml` once you install a version that knows
 it. Two are fixable: `--fix` moves the constants and
 reorders the impls.
 And `--fix` now repairs only what the run applies: test files are left alone
@@ -143,19 +144,23 @@ where `test-file-structure` is skipped or not selected.
   19 constants nobody else reads, 61 one other file reads, 28 their own file and
   one other share, 70 shared from beside other items, 50 of restricted
   visibility. This repository has none.
-- **`private-fields`: a struct's fields are private.** In `src/`, a struct
-  field declared `pub`, `pub(crate)`, `pub(super)` or `pub(in ...)` is reported
-  once per struct, at its name, naming the fields -- all of them up to three,
-  the first two and a count beyond -- and a tuple struct's by position. The
-  correction: make them private, give a reader a getter and a builder a
-  constructor, or past seven fields a `Default` and `with_<field>` steps.
-  `pub(self)`, enum variants' fields, `tests/`, `benches/` and `#[cfg(test)]`
-  code are left alone. The rule is the first in `rules/types/`.
-  [R035](<docs/history/[SUPERSEDED] R035 PRIVATE FIELDS.md>)
+- **`records-and-objects`: every struct is a record or an object.** In
+  `src/`, a struct with no behaviour -- no inherent method but getters, plain
+  constructors and `with_` steps, no impl of a trait outside a fixed list of
+  value traits -- is a record: its fields are all `pub` and it has no
+  accessors, being built by literal. A struct with behaviour is an object: its
+  fields are all private. One offence per struct, at its name: a getter-only
+  record, a record with a field that is not `pub`, an object with a field that
+  is not private, naming the fields -- all of them up to three, the first two
+  and a count beyond -- and a tuple struct's by position. Impls count wherever
+  in the package they are. `pub(self)`, enum variants' fields, `tests/`,
+  `benches/` and `#[cfg(test)]` code are left alone. The rule is the first in
+  `rules/types/`. [R035](docs/ADRs/R035-ADR-RecordsAndObjectsRule.md)
 
-  The rule reports 1,793 fields in 421 structs across the sixteen repositories
-  of the family, 547 of them in 127 structs of `etheram-ibft`. This repository
-  had 151 in 36 structs, and has none.
+  A census of the sixteen repositories of the family, 2026-10-24, counts 1,829
+  structs: 328 records and 1,501 objects; 120 records with non-`pub` fields,
+  104 getter-only and 96 objects exposing fields. This repository has 8
+  getter-only records, baselined until their accessors go.
 - **`injected-time`: time reaches production code through a port.** In the
   library target, a function reading a clock, waiting on a timer or racing one
   -- `timeless-tests`' calls, randomness aside -- is reported once, at its name,
@@ -199,7 +204,9 @@ where `test-file-structure` is skipped or not selected.
   rule never counted. Any other use of a `&mut` parameter is still reported.
   [R022](docs/ADRs/R022-ADR-ReturnedMutationsRule.md)
 - **The library's types keep their fields private**, as `private-fields`
-  asks. Every field of the 36 structs that had a public one -- `Offence`,
+  asked before `records-and-objects` replaced it; the 8 of them that are
+  records, getter-only by the new rule, are baselined until their accessors go.
+  Every field of the 36 structs that had a public one -- `Offence`,
   `Config`, `Args`, `ConfigFile`, the finding models and the rest -- is read
   through a getter named after it: a string as `&str`, a vector as a slice, a
   `Copy` value by value. `Config` is built over its `Default` with a

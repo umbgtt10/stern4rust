@@ -22,7 +22,7 @@ that breaks it and the same scrap put right — and that field is required too.
 | `directory-subfolder-count` | [R011](ADRs/R011-ADR-DirectorySubfolderCountRule.md) | optional, default 5 |
 | `imported-paths` | [R008](ADRs/R008-ADR-ImportedPathsRule.md) | no |
 | `injected-time` | [R034](ADRs/R034-ADR-InjectedTimeRule.md) | no |
-| `private-fields` | [R035](<history/[SUPERSEDED] R035 PRIVATE FIELDS.md>) | no |
+| `records-and-objects` | [R035](ADRs/R035-ADR-RecordsAndObjectsRule.md) | no |
 | `registry-completeness` | [R009](ADRs/R009-ADR-RegistryCompletenessRule.md) | no |
 | `paired-test-file` | [R016](ADRs/R016-ADR-PairedTestFileRule.md) | no |
 | `test-file-name-postfix` | [R015](ADRs/R015-ADR-TestFileNamePostfixRule.md) | no |
@@ -1371,35 +1371,58 @@ either from being lost to the next change reaching for `Instant::now()`.
 **Does not catch:** time inside a dependency, which reads the clock or times out
 on its own; time a macro generates; randomness, by decision.
 
-## `private-fields`
+## `records-and-objects`
 
-A struct's fields are private. **In `src/`, a struct field declared `pub`,
-`pub(crate)`, `pub(super)` or `pub(in ...)` is an offence, a tuple struct's
-included.**
+Every struct is a record or an object, and each has one shape. **In `src/`, a
+record with a field that is not `pub`, a record with accessors and an object
+with a field that is not private are offences.**
 
-A public field lets every file read the state and write it, so the type keeps no
-invariant of its own, and a change of representation breaks every reader at
-once. Restricted visibility is the same with a shorter list of readers.
+Privacy earns its keep where there is behaviour to protect: a type with methods
+can hold an invariant between its fields and change their representation behind
+them. A struct with no behaviour has no invariant of its own -- its fields are
+its contract -- and accessors around them add code, tests and files and protect
+nothing.
 
-- **Reading** goes through a getter named after the field: by value where it is
-  `Copy`, by reference otherwise -- a string as `&str`, a vector as a slice.
-- **Building** goes through a constructor, or, past clippy's seven arguments, a
-  `Default` and `with_<field>(self, value) -> Self` steps.
-- **No setters.** A change of state is a method that says what it does.
-- **One offence per struct**, at its name, naming the fields: all of them up to
-  three, the first two and a count beyond.
-- `pub(self)` already means private. Enum variants' fields are public by the
-  language and are not this rule's.
+**Behaviour** is an inherent method that is none of these, or an impl of a
+trait outside the value traits:
+
+- **A getter** takes `&self` and nothing else, and its whole body reads one
+  field: `self.f`, `&self.f`, `&*self.f`, or `.clone()`, `.as_ref()`,
+  `.as_deref()`, `.as_str()`, `.as_slice()`, `.as_path()`, `.to_vec()`,
+  `.to_string()` or `.to_owned()` on it.
+- **A plain constructor** has no receiver, returns `Self` or the type, and its
+  whole body is `Self { a, b }`, `Type { a: a, b: b }` or `Self(a, b)` with
+  every field a parameter.
+- **A `with_` step** takes `self` by value and one parameter, and its whole body
+  is `Self { field, ..self }`.
+- **The value traits** are `Clone`, `Copy`, `Debug`, `Display`, `Default`,
+  `PartialEq`, `Eq`, `PartialOrd`, `Ord`, `Hash`, `From`, `TryFrom`, `FromStr`,
+  `AsRef`, `Error`, `Serialize`, `Deserialize`, `Send` and `Sync` -- a fixed
+  list, not configuration.
+
+**A record** has no behaviour: every field `pub`, no getter, no plain
+constructor, no `with_` step; it is built by literal, a wide one with
+`..Default::default()`. **An object** has some: every field private,
+`pub(self)` counting as private, with getters, constructors and steps as it
+needs them, and no setters. A constructor that validates, computes or fills a
+default is behaviour. An impl counts wherever in the package it is, so the rule
+reads the package at once.
 
 | offence | correction |
 |---|---|
-| `` `Config` exposes `baseline`, `config_file` and 14 more fields; a struct's fields are private `` | `make them private: give a reader a getter and a builder a constructor` |
+| `` `Export` is a record with a private field `data`; a record's fields are public `` | `make it pub: a struct with no behaviour has no invariant to keep` |
+| `` `Config` is getter-only -- 16 getters, 16 `with_` steps and no behaviour `` | `delete the getters and steps, make the fields pub and build it by literal` |
+| `` `Store` is an object exposing `size` and `items`; an object's fields are private `` | `make them private: give a reader a getter and a builder a constructor` |
 
-`tests/`, `benches/` and `#[cfg(test)]` code are exempt: test support is not an
-API.
+One offence per struct, at its name, naming the fields -- all of them up to
+three, the first two and a count beyond, a tuple struct's by position. A record
+with private fields and accessors is reported once, as getter-only. Enum
+variants' fields are public by the language and are not this rule's. `tests/`,
+`benches/` and `#[cfg(test)]` code are exempt: test support is not an API.
 
-**Does not catch:** shared mutability behind a getter -- `&RefCell<T>`, `&Mutex<T>`;
-a getter for every field, which makes private fields public in all but syntax.
+**Does not catch:** shared mutability behind a getter -- `&RefCell<T>`,
+`&Mutex<T>`; an object's getters nobody needs; a record that should have an
+invariant -- once a constructor checks it, the struct is an object.
 
 ## What is not walked
 

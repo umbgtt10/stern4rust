@@ -162,7 +162,7 @@ removes them -- the tests it deletes shown to the owner first.
 | 2 | One classifier in `finding/parsing/`: method shapes, the value traits, record, object and builder | **landed** -- `finding/parsing/shapes/`, sharing `ImplBlocks::target` rather than copying it |
 | 3 | `returned-mutations` leaves a plain constructor storing a `&mut` alone | **landed** |
 | 4 | `single-implemented-type` and `named-subject` count objects only | **landed** -- through `ImplementedTypeFinder`, which `owned-functions` reads too |
-| 5 | `records-and-objects` replaces `private-fields`; this repository's getter-only records in a baseline | |
+| 5 | `records-and-objects` replaces `private-fields`; this repository's getter-only records in a baseline | **landed** -- a package rule, since a struct's impls may sit in other files; 8 getter-only records, baselined at the root and beside `core/Cargo.toml` for the runner's own test |
 | 6 | This repository's records lose their accessors; their baseline entries go | |
 | 7 | `record-home`; this repository's offences in the baseline | |
 | 8 | This repository's records and enums moved; their entries go | |
