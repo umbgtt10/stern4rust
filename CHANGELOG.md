@@ -188,8 +188,8 @@ where `test-file-structure` is skipped or not selected.
   `Arc::clone` or `into` of it, or its field; `None` or an empty vector; or a
   local bound to one of these, by name or by destructuring. Judged in every constructor and `Default`,
   `From` and `TryFrom` impl, in what a constructor hands another constructor
-  of its type, and in every `self.field = ...` elsewhere. A builder is left
-  alone. [R038](docs/ADRs/R038-ADR-InjectedDependenciesRule.md)
+  of its type, and in every `self.field = ...` elsewhere, once per field and
+  method. A builder is left alone. [R038](docs/ADRs/R038-ADR-InjectedDependenciesRule.md)
 
   A census of the family, 2026-10-25, finds about 15 constructors building a
   part they declared as a trait. This repository had two,

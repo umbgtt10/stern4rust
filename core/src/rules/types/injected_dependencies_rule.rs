@@ -75,9 +75,11 @@ impl InjectedDependenciesRule {
         seamed: &SeamedType,
     ) -> Vec<Offence> {
         let passed = PassedIn::of(&method.sig, &method.block);
+        let mut reported = BTreeSet::new();
         DependencyFills::assignments(&method.block)
             .into_iter()
             .filter(|fill| seamed.fields.contains(&fill.field) && !passed.holds(&fill.value))
+            .filter(|fill| reported.insert(fill.field.clone()))
             .map(|fill| {
                 Self::reported(
                     path,
@@ -102,9 +104,12 @@ impl InjectedDependenciesRule {
     ) -> Vec<Offence> {
         let subject = format!("{owner}::{}", method.sig.ident);
         let passed = PassedIn::of(&method.sig, &method.block);
+        let mut filled = BTreeSet::new();
+        let mut handed_over = BTreeSet::new();
         let built = DependencyFills::fills(&method.block, owner)
             .into_iter()
             .filter(|fill| seamed.fields.contains(&fill.field) && !passed.holds(&fill.value))
+            .filter(|fill| filled.insert(fill.field.clone()))
             .map(|fill| {
                 Self::reported(
                     path,
@@ -131,8 +136,10 @@ impl InjectedDependenciesRule {
                 Self::parameter_types(target)
                     .into_iter()
                     .zip(&delegation.arguments)
-                    .filter(|(ty, argument)| seams.is_seam(ty) && !passed.holds(argument))
-                    .map(|(_, argument)| {
+                    .enumerate()
+                    .filter(|(_, (ty, argument))| seams.is_seam(ty) && !passed.holds(argument))
+                    .filter(|(at, _)| handed_over.insert((delegation.target.clone(), *at)))
+                    .map(|(_, (_, argument))| {
                         Self::reported(
                             path,
                             argument.span().start().line,

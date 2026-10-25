@@ -1512,7 +1512,8 @@ a builder, a test.
 | `` `App::new` passes `CargoPackageResolver`, which it built, to `App::with_deps` `` | `make with_deps the constructor and compose the parts in main` |
 | `` `Storage::reset` assigns `FlashRegistry::current()` to `flash`, a field declared as a trait `` | `take the replacement as a parameter` |
 
-One offence per field and method, at the value. `tests/`, `benches/` and
+One offence per field and method, at the first value it builds -- a field
+filled in two branches is one offence, not two. `tests/`, `benches/` and
 `examples/` are exempt: a test is a composition root.
 
 **Does not catch:** a concrete collaborator built inside -- the rule judges the

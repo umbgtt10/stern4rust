@@ -70,6 +70,21 @@ fn check_workspace_of_a_concrete_field_built_inside_reports_nothing() {
 }
 
 #[test]
+fn check_workspace_of_a_constructor_building_a_field_in_two_arms_reports_it_once_at_the_first() {
+    // Arrange & Act
+    let offences = check(&[(
+        "src/app.rs",
+        &app(
+            "impl App {\n    pub fn new(quiet: bool) -> Self {\n        if quiet {\n            Self { reporter: Box::new(NullReporter), size: 0 }\n        } else {\n            Self { reporter: Box::new(StdoutReporter::new()), size: 0 }\n        }\n    }\n}\n",
+        ),
+    )]);
+
+    // Assert
+    assert_eq!(offences.len(), 1);
+    assert_eq!(offences[0].line(), 9);
+}
+
+#[test]
 fn check_workspace_of_a_constructor_building_a_trait_field_says_what_to_do() {
     // Arrange & Act
     let offences = check(&[(
@@ -148,6 +163,20 @@ fn check_workspace_of_a_constructor_handing_a_built_part_to_another_constructor_
         offences[0].correction(),
         "make with_deps the constructor and compose the parts in main"
     );
+}
+
+#[test]
+fn check_workspace_of_a_constructor_handing_built_parts_over_twice_reports_each_parameter_once() {
+    // Arrange & Act
+    let offences = check(&[(
+        "src/app.rs",
+        &app(
+            "impl App {\n    pub fn new(quiet: bool) -> Self {\n        if quiet {\n            Self::with_deps(Box::new(NullReporter), 0)\n        } else {\n            Self::with_deps(Box::new(StdoutReporter::new()), 1)\n        }\n    }\n\n    pub fn with_deps(reporter: Box<dyn Reporter>, size: usize) -> Self {\n        Self { reporter, size }\n    }\n}\n",
+        ),
+    )]);
+
+    // Assert
+    assert_eq!(offences.len(), 1);
 }
 
 #[test]
@@ -271,6 +300,20 @@ fn check_workspace_of_a_method_assigning_a_parameter_to_a_trait_field_reports_no
 
     // Assert
     assert!(offences.is_empty(), "expected none, got {offences:?}");
+}
+
+#[test]
+fn check_workspace_of_a_method_assigning_a_trait_field_twice_reports_it_once() {
+    // Arrange & Act
+    let offences = check(&[(
+        "src/app.rs",
+        &app(
+            "impl App {\n    pub fn reset(&mut self) {\n        self.reporter = Box::new(NullReporter);\n        self.reporter = Box::new(StdoutReporter::new());\n    }\n}\n",
+        ),
+    )]);
+
+    // Assert
+    assert_eq!(offences.len(), 1);
 }
 
 #[test]
