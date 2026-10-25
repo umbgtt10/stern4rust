@@ -186,6 +186,13 @@ where `test-file-structure` is skipped or not selected.
   race one. This repository has none.
 
 ### Changed
+- **`single-implemented-type` and `named-subject` count objects only.** A
+  record or data enum whose only impls are value traits -- `Display`, `From`,
+  `Default` and the rest of a fixed list -- is no longer a file's implemented
+  type, so a record that prints itself may sit beside its consumer's subject,
+  and does not name the file it is in. An empty `impl X {}` is not behaviour
+  either. [R007](docs/ADRs/R007-ADR-SingleImplementedTypeRule.md),
+  [R023](docs/ADRs/R023-ADR-NamedSubjectRule.md)
 - **`returned-mutations` leaves a plain constructor storing a `&mut` alone.**
   A constructor whose whole body is `Self { params }` writes nothing through
   the borrow it keeps; the writes come later, through `&mut self`, which the

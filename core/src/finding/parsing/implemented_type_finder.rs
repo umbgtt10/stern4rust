@@ -7,7 +7,8 @@ use syn::parse_file;
 
 use crate::finding::model::implemented_type::ImplementedType;
 use crate::finding::parsing::declared_item_finder::DeclaredItemFinder;
-use crate::finding::parsing::impl_blocks::ImplBlocks;
+use crate::finding::parsing::shapes::type_shape::TypeShape;
+use crate::finding::parsing::shapes::type_shapes::TypeShapes;
 use crate::source_file::SourceFile;
 
 // The types a file both declares and gives behaviour to.
@@ -32,14 +33,13 @@ impl ImplementedTypeFinder {
     // inline modules: a nested type with behaviour is still a second subject in
     // the same file.
     pub fn among(items: &[Item]) -> Vec<ImplementedType> {
-        let implemented = ImplBlocks::of(items);
+        let shapes = TypeShapes::in_items("", items);
         DeclaredItemFinder::types(items)
             .into_iter()
             .filter(|candidate| {
-                implemented
-                    .targets()
-                    .iter()
-                    .any(|target| target == candidate.name())
+                shapes
+                    .get(candidate.name())
+                    .is_some_and(|shaped| shaped.shape() != TypeShape::Record)
             })
             .map(|declared| ImplementedType::new(declared.name(), declared.line()))
             .collect()

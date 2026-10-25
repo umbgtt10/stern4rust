@@ -33,7 +33,7 @@ fn names(body: &str) -> Vec<String> {
 #[test]
 fn among_finds_the_implemented_types_in_parsed_items() {
     // Arrange
-    let items = parse_file("pub struct A;\nimpl A {}\n\npub struct B;\n")
+    let items = parse_file("pub struct A;\nimpl A { fn run(&self) {} }\n\npub struct B;\n")
         .expect("parses")
         .items;
 
@@ -48,7 +48,7 @@ fn among_finds_the_implemented_types_in_parsed_items() {
 #[test]
 fn find_counts_a_trait_impl() {
     // Arrange & Act
-    let names = names("pub struct A;\n\nimpl Display for A {}\n");
+    let names = names("pub struct A;\n\nimpl Iterator for A {}\n");
 
     // Assert
     assert_eq!(names, ["A"]);
@@ -57,8 +57,9 @@ fn find_counts_a_trait_impl() {
 #[test]
 fn find_counts_a_type_once_however_many_impl_blocks_it_has() {
     // Arrange & Act
-    let names =
-        names("pub struct A;\n\nimpl A {}\n\nimpl Display for A {}\n\nimpl Debug for A {}\n");
+    let names = names(
+        "pub struct A;\n\nimpl A { fn run(&self) {} }\n\nimpl Display for A {}\n\nimpl Debug for A {}\n",
+    );
 
     // Assert
     assert_eq!(names, ["A"]);
@@ -68,11 +69,25 @@ fn find_counts_a_type_once_however_many_impl_blocks_it_has() {
 #[test]
 fn find_descends_into_an_inline_module() {
     // Arrange & Act
-    let names =
-        names("pub struct A;\nimpl A {}\n\nmod detail {\n    pub struct B;\n    impl B {}\n}\n");
+    let names = names(
+        "pub struct A;\nimpl A { fn run(&self) {} }\n\nmod detail {\n    pub struct B;\n    impl B { fn run(&self) {} }\n}\n",
+    );
 
     // Assert
     assert_eq!(names, ["A", "B"]);
+}
+
+// A record prints, compares and converts through value traits and stays plain
+// data: those impls do not make it the file's subject (R007, amended 2026-10-25).
+#[test]
+fn find_leaves_out_a_record_whose_only_impls_are_value_traits() {
+    // Arrange & Act
+    let names = names(
+        "pub struct A {\n    pub size: u32,\n}\n\nimpl Display for A {}\n\nimpl Default for A {}\n",
+    );
+
+    // Assert
+    assert!(names.is_empty(), "{names:?}");
 }
 
 #[test]
@@ -107,7 +122,7 @@ fn find_of_a_type_without_an_impl_returns_nothing() {
 #[test]
 fn find_of_an_enum_with_an_impl_returns_it() {
     // Arrange & Act
-    let names = names("pub enum Verdict {\n    Clean,\n}\n\nimpl Verdict {}\n");
+    let names = names("pub enum Verdict {\n    Clean,\n}\n\nimpl Verdict { fn run(&self) {} }\n");
 
     // Assert
     assert_eq!(names, ["Verdict"]);
@@ -127,7 +142,9 @@ fn find_of_an_impl_for_a_type_declared_elsewhere_returns_nothing() {
 #[test]
 fn find_of_two_types_with_impls_returns_both() {
     // Arrange & Act
-    let names = names("pub struct A;\nimpl A {}\n\npub struct B;\nimpl B {}\n");
+    let names = names(
+        "pub struct A;\nimpl A { fn run(&self) {} }\n\npub struct B;\nimpl B { fn run(&self) {} }\n",
+    );
 
     // Assert
     assert_eq!(names, ["A", "B"]);
@@ -137,7 +154,9 @@ fn find_of_two_types_with_impls_returns_both() {
 #[test]
 fn find_reports_the_line_the_type_is_declared_on() {
     // Arrange & Act
-    let found = found("pub struct A;\nimpl A {}\n\npub struct B;\nimpl B {}\n");
+    let found = found(
+        "pub struct A;\nimpl A { fn run(&self) {} }\n\npub struct B;\nimpl B { fn run(&self) {} }\n",
+    );
 
     // Assert
     assert_eq!(found[0].line(), 1);

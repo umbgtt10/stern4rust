@@ -29,7 +29,7 @@ use stern4rust::source_file::SourceFile;
 const HEADER: &str = "// Copyright 2025 Umberto Gotti <umberto.gotti@umbertogotti.dev>\n\
                       // Licensed under the MIT License\n\
                       // SPDX-License-Identifier: MIT\n";
-const IMPLEMENTED: &str = "pub struct Widget;\nimpl Widget {}\n";
+const IMPLEMENTED: &str = "pub struct Widget;\nimpl Widget { fn run(&self) {} }\n";
 const RULE: &str = "owned-functions";
 
 fn check(path: &str, body: &str) -> Vec<Offence> {

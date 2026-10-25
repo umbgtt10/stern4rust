@@ -25,11 +25,26 @@ use stern4rust::source_file::SourceFile;
 const HEADER: &str = "// Copyright 2025 Umberto Gotti <umberto.gotti@umbertogotti.dev>\n\
                       // Licensed under the MIT License\n\
                       // SPDX-License-Identifier: MIT\n";
-const IMPLEMENTED: &str = "pub struct Widget;\nimpl Widget {}\n";
+const IMPLEMENTED: &str = "pub struct Widget;\nimpl Widget { fn run(&self) {} }\n";
 const RULE: &str = "named-subject";
 
 fn check(path: &str, body: &str) -> Vec<Offence> {
     NamedSubjectRule::new().check(&SourceFile::new(path, &format!("{HEADER}\n{body}")))
+}
+
+// The candidates are the objects the file implements: a record with a Display
+// impl beside its object does not name the file (amended 2026-10-25).
+#[test]
+fn check_a_file_named_after_a_record_beside_its_object_reports_the_object() {
+    // Arrange & Act
+    let offences = check(
+        "src/token.rs",
+        "pub struct Parser;\nimpl Parser {\n    pub fn run(&self) {}\n}\n\nstruct Token {\n    pub text: String,\n}\n\nimpl Display for Token {\n    fn fmt(&self, f: &mut Formatter) -> Result {\n        write!(f, \"{}\", self.text)\n    }\n}\n",
+    );
+
+    // Assert
+    assert_eq!(offences.len(), 1);
+    assert!(offences[0].description().contains("Parser"), "{offences:?}");
 }
 
 #[test]
@@ -47,7 +62,7 @@ fn check_a_file_named_after_its_second_implemented_type_reports_nothing() {
     // Arrange & Act
     let offences = check(
         "src/wire_client_request.rs",
-        "pub struct WireTransaction;\nimpl WireTransaction {}\n\npub enum WireClientRequest {\n    One,\n}\nimpl WireClientRequest {}\n",
+        "pub struct WireTransaction;\nimpl WireTransaction { fn run(&self) {} }\n\npub enum WireClientRequest {\n    One,\n}\nimpl WireClientRequest { fn run(&self) {} }\n",
     );
 
     // Assert
@@ -73,7 +88,7 @@ fn check_a_file_named_after_no_implemented_type_reports_the_first() {
     // Arrange & Act
     let offences = check(
         "src/listener.rs",
-        "const BUFFER: usize = 256;\n\npub struct UdpListenerTask;\nimpl UdpListenerTask {}\n",
+        "const BUFFER: usize = 256;\n\npub struct UdpListenerTask;\nimpl UdpListenerTask { fn run(&self) {} }\n",
     );
 
     // Assert
@@ -132,7 +147,7 @@ fn check_a_file_named_after_plain_data_beside_an_implemented_type_reports_the_im
     // Arrange & Act
     let offences = check(
         "src/log_record.rs",
-        "pub struct LogRecord {\n    pub severity: LogSeverity,\n}\n\npub enum LogSeverity {\n    Info,\n}\nimpl LogSeverity {}\n",
+        "pub struct LogRecord {\n    pub severity: LogSeverity,\n}\n\npub enum LogSeverity {\n    Info,\n}\nimpl LogSeverity { fn run(&self) {} }\n",
     );
 
     // Assert
@@ -149,7 +164,7 @@ fn check_a_file_named_after_the_last_words_of_its_implemented_type_reports_nothi
     // Arrange & Act
     let offences = check(
         "src/listener.rs",
-        "pub struct UdpEiListener;\nimpl UdpEiListener {}\n",
+        "pub struct UdpEiListener;\nimpl UdpEiListener { fn run(&self) {} }\n",
     );
 
     // Assert
@@ -249,7 +264,7 @@ fn check_a_file_with_several_implemented_types_named_after_none_reports_once() {
     // Arrange & Act
     let offences = check(
         "src/pair.rs",
-        "pub struct Left;\nimpl Left {}\n\npub struct Right;\nimpl Right {}\n",
+        "pub struct Left;\nimpl Left { fn run(&self) {} }\n\npub struct Right;\nimpl Right { fn run(&self) {} }\n",
     );
 
     // Assert
@@ -279,7 +294,10 @@ fn check_a_trait_beside_an_implemented_type_reports_the_type() {
 #[test]
 fn check_workspace_of_a_tree_with_a_misnamed_file_reports_nothing() {
     // Arrange
-    let file = SourceFile::new("src/listener.rs", "pub struct Backoff;\nimpl Backoff {}\n");
+    let file = SourceFile::new(
+        "src/listener.rs",
+        "pub struct Backoff;\nimpl Backoff { fn run(&self) {} }\n",
+    );
 
     // Act
     let offences = NamedSubjectRule::new().check_workspace(&[file]);

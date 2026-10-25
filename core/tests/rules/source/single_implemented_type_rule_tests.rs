@@ -37,7 +37,7 @@ fn check_a_file_named_after_its_second_implemented_type_reports_the_first() {
     // Arrange & Act
     let offences = check(
         "src/wire_client_request.rs",
-        "pub struct WireTransaction;\nimpl WireTransaction {}\n\npub enum WireClientRequest {\n    One,\n}\nimpl WireClientRequest {}\n",
+        "pub struct WireTransaction;\nimpl WireTransaction { fn run(&self) {} }\n\npub enum WireClientRequest {\n    One,\n}\nimpl WireClientRequest { fn run(&self) {} }\n",
     );
 
     // Assert
@@ -62,7 +62,7 @@ fn check_a_file_named_after_the_last_words_of_its_second_implemented_type_report
     // Arrange & Act
     let offences = check(
         "src/listener.rs",
-        "pub struct Backoff;\nimpl Backoff {}\n\npub struct UdpListener;\nimpl UdpListener {}\n",
+        "pub struct Backoff;\nimpl Backoff { fn run(&self) {} }\n\npub struct UdpListener;\nimpl UdpListener { fn run(&self) {} }\n",
     );
 
     // Assert
@@ -118,7 +118,7 @@ fn check_a_file_with_one_subject_and_plain_data_reports_nothing() {
     // Arrange & Act
     let offences = check(
         "src/widget.rs",
-        "pub struct Options;\npub struct Widget;\n\nimpl Widget {}\n",
+        "pub struct Options;\npub struct Widget;\n\nimpl Widget { fn run(&self) {} }\n",
     );
 
     // Assert
@@ -130,7 +130,7 @@ fn check_a_file_with_two_implemented_types_reports_the_second() {
     // Arrange & Act
     let offences = check(
         "src/report_printer.rs",
-        "pub struct ReportPrinter;\nimpl ReportPrinter {}\n\nstruct ColumnWidths;\nimpl ColumnWidths {}\n",
+        "pub struct ReportPrinter;\nimpl ReportPrinter { fn run(&self) {} }\n\nstruct ColumnWidths;\nimpl ColumnWidths { fn run(&self) {} }\n",
     );
 
     // Assert
@@ -154,12 +154,26 @@ fn check_a_file_with_two_subjects_one_of_them_an_enum_reports_the_second() {
     // Arrange & Act
     let offences = check(
         "src/subject.rs",
-        "pub struct A;\nimpl A {}\n\npub enum B {\n    One,\n}\nimpl B {}\n",
+        "pub struct A;\nimpl A { fn run(&self) {} }\n\npub enum B {\n    One,\n}\nimpl B { fn run(&self) {} }\n",
     );
 
     // Assert
     assert_eq!(offences.len(), 1);
     assert!(offences[0].description().contains("B"));
+}
+
+// A record that prints itself is still plain data beside the file's subject,
+// where record-home puts a record with one consumer (amended 2026-10-25).
+#[test]
+fn check_a_record_with_a_value_trait_impl_beside_the_subject_reports_nothing() {
+    // Arrange & Act
+    let offences = check(
+        "src/parser.rs",
+        "pub struct Parser;\nimpl Parser {\n    pub fn run(&self) {}\n}\n\nstruct Token {\n    pub text: String,\n}\n\nimpl Display for Token {\n    fn fmt(&self, f: &mut Formatter) -> Result {\n        write!(f, \"{}\", self.text)\n    }\n}\n",
+    );
+
+    // Assert
+    assert!(offences.is_empty(), "{offences:?}");
 }
 
 // Tests have their own shape, and a test file legitimately holds several fakes
@@ -169,7 +183,7 @@ fn check_a_test_file_reports_nothing() {
     // Arrange & Act
     let offences = check(
         "tests/subject_tests.rs",
-        "struct FakeOne;\nimpl FakeOne {}\n\nstruct FakeTwo;\nimpl FakeTwo {}\n",
+        "struct FakeOne;\nimpl FakeOne { fn run(&self) {} }\n\nstruct FakeTwo;\nimpl FakeTwo { fn run(&self) {} }\n",
     );
 
     // Assert
@@ -181,7 +195,7 @@ fn check_reports_every_type_after_the_first() {
     // Arrange & Act
     let offences = check(
         "src/subject.rs",
-        "pub struct A;\nimpl A {}\n\npub struct B;\nimpl B {}\n\npub struct C;\nimpl C {}\n",
+        "pub struct A;\nimpl A { fn run(&self) {} }\n\npub struct B;\nimpl B { fn run(&self) {} }\n\npub struct C;\nimpl C { fn run(&self) {} }\n",
     );
 
     // Assert

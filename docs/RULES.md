@@ -396,15 +396,19 @@ rather than an index and legitimately holds code.
 ## `single-implemented-type`
 
 A source file outside `tests/` holds at most one type that carries behaviour: at
-most one `struct` or `enum` that is both **declared in the file** and has **at
-least one `impl` block** in it. Structs and enums without impl blocks are
-unlimited -- plain data is not a subject, and a file's payload types belong
-beside the subject that uses them.
+most one `struct` or `enum` that is both **declared in the file** and **has
+behaviour** in it -- an object, as `records-and-objects` defines one. Records
+and data enums are unlimited -- plain data is not a subject, and a file's payload
+types belong beside the subject that uses them, where `record-home` puts them.
 
 Both halves do work. *Declared here*, so an `impl Display for SomeoneElsesType`
-does not make this file that type's home. *At least one impl block*, inherent or
-trait, because both are behaviour -- though `#[derive(...)]` is not an impl block
-in the syntax tree and correctly does not count.
+does not make this file that type's home. *Has behaviour*: an inherent method
+other than a getter, a plain constructor or a `with_` step, or an impl of a trait
+outside the value traits -- `Display`, `From`, `Default` and the rest of that
+fixed list are how a record prints and converts, and leave it a record. Inherent
+and trait impls are behaviour alike; `#[derive(...)]` is not an impl block in the
+syntax tree and correctly does not count. (Amended 2026-10-25,
+[R007](ADRs/R007-ADR-SingleImplementedTypeRule.md).)
 
 The subject is the implemented type the file is named after, wherever it stands
 in the file -- `WireClientRequest` in `wire_client_request.rs` -- and every other
@@ -432,8 +436,9 @@ after its subject; `named-subject` does.
 A source file is named after its subject.
 
 The candidates are the types the file implements, as `single-implemented-type`
-counts them: a `struct` or `enum` declared in the file with at least one `impl`
-block there. A file with none is named after one of the traits and types it
+counts them: a `struct` or `enum` declared in the file with behaviour there -- an
+object. A record or data enum with value-trait impls is a declared type, not an
+implemented one (amended 2026-10-25, [R023](ADRs/R023-ADR-NamedSubjectRule.md)). A file with none is named after one of the traits and types it
 declares instead, traits first, since a trait declares behaviour and a data type
 does not. A trait beside an implemented type is that type's companion and not a
 candidate.
