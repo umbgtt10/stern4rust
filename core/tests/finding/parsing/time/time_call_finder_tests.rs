@@ -5,7 +5,7 @@
 // The first call in a function's body through which it depends on time: a clock read, a wait, a race or an
 // unseeded draw, resolved through the file's imports. On Tokio's paused clock only `tokio::time` is let through.
 
-use stern4rust::finding::model::time_call_kind::TimeCallKind;
+use stern4rust::finding::model::time::time_call_kind::TimeCallKind;
 use stern4rust::finding::parsing::time::imported_names::ImportedNames;
 use stern4rust::finding::parsing::time::time_call_finder::TimeCallFinder;
 use syn::Item;

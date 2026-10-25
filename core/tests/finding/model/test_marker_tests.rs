@@ -8,7 +8,7 @@
 // prose is what lets a marker explain itself -- both observed in the family
 // before this was written.
 
-use stern4rust::finding::model::test_marker::MarkerPhase;
+use stern4rust::finding::model::marker_phase::MarkerPhase;
 use stern4rust::finding::model::test_marker::TestMarker;
 
 #[test]

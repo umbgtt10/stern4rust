@@ -174,8 +174,11 @@ where `test-file-structure` is skipped or not selected.
 
   A census of the family, 2026-10-24, finds 31 records and 18 enums to move out
   to a file of their own and 19 records and 4 enums into their only consumer.
-  This repository has one of each, `MarkerPhase` and `ScanTotals`, baselined
-  until they move.
+  This repository had one of each: `MarkerPhase` moves out of
+  `test_marker.rs` into `marker_phase.rs`, and `ScanTotals` into `runner.rs`,
+  the one file using it, as a private struct. `TimeCall` and `TimeCallKind` move
+  to `finding/model/time/`, beside `finding/parsing/time/`, to keep
+  `finding/model/` within its twenty files.
 - **`injected-time`: time reaches production code through a port.** In the
   library target, a function reading a clock, waiting on a timer or racing one
   -- `timeless-tests`' calls, randomness aside -- is reported once, at its name,
@@ -225,10 +228,10 @@ where `test-file-structure` is skipped or not selected.
   vector as a slice, a `Copy` value by value. `PackageConfig` is built with
   `with_header_file` and `with_skip`; `Offence` gains `with_file`, and the
   models built by literal gain constructors. The records -- `Config`,
-  `RuleExplanation`, `ScanTotals`, `UnconfiguredRule`, `OffenceOrder` and
-  `RepeatedTuple` -- have `pub` fields and no accessors, and are built by
-  literal, `Config` over its `Default`: `RuleExplanation::new` and
-  `ScanTotals::new` are gone. `PackageRoster` holds `UnconfiguredRule` values instead of
+  `RuleExplanation`, `UnconfiguredRule`, `OffenceOrder` and `RepeatedTuple` --
+  have `pub` fields and no accessors, and are built by literal, `Config` over
+  its `Default`: `RuleExplanation::new` is gone, and `ScanTotals`, which only
+  the runner used, is the runner's own. `PackageRoster` holds `UnconfiguredRule` values instead of
   `(String, String)` pairs, and `ManifestDependency::in_manifest` takes
   `Option<&[Self]>`. The binary's behaviour is unchanged.
 - `UnitTestFinder::is_cfg_test` and `is_test` are public, so `timeless-tests`

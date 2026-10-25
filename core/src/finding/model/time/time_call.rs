@@ -2,7 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::finding::model::time_call_kind::TimeCallKind;
+use crate::finding::model::time::time_call_kind::TimeCallKind;
 
 // One call through which a function depends on time: its kind, the path or method as the source wrote it, and where
 // it stands, so the first of several can be named.

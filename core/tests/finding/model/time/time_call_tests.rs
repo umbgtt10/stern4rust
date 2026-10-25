@@ -4,8 +4,8 @@
 
 // One call through which a function depends on time: its kind, as written, and where.
 
-use stern4rust::finding::model::time_call::TimeCall;
-use stern4rust::finding::model::time_call_kind::TimeCallKind;
+use stern4rust::finding::model::time::time_call::TimeCall;
+use stern4rust::finding::model::time::time_call_kind::TimeCallKind;
 
 #[test]
 fn new_keeps_the_call_as_it_was_written() {

@@ -10,8 +10,8 @@ use syn::ImplItem;
 use syn::Item;
 use syn::parse_file;
 
-use crate::finding::model::time_call::TimeCall;
-use crate::finding::model::time_call_kind::TimeCallKind;
+use crate::finding::model::time::time_call::TimeCall;
+use crate::finding::model::time::time_call_kind::TimeCallKind;
 use crate::finding::parsing::time::imported_names::ImportedNames;
 use crate::finding::parsing::time::time_call_finder::TimeCallFinder;
 use crate::finding::parsing::unit_test_finder::UnitTestFinder;

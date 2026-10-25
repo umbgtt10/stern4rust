@@ -17,7 +17,6 @@ use crate::reporting::package_roster::PackageRoster;
 use crate::reporting::report_printer::ReportPrinter;
 use crate::reporting::rule_listing::RuleListing;
 use crate::reporting::run_outcome::RunOutcome;
-use crate::reporting::scan_totals::ScanTotals;
 use crate::rewriter_registry::RewriterRegistry;
 use crate::rule_registry::RuleRegistry;
 use crate::rules::source::header_rule::HeaderRule;
@@ -40,6 +39,17 @@ use std::collections::HashSet;
 use std::fs::write as write_file;
 use std::path::Path;
 use std::path::PathBuf;
+
+// What a scan did, as opposed to what it found.
+//
+// The offences are the verdict; these are the work behind it. They travelled to
+// the report as separate arguments until the per-package rosters arrived and
+// took the count past the point where a reader could tell one from another.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct ScanTotals {
+    pub files_scanned: usize,
+    pub fixed: usize,
+}
 
 // Exit codes are the whole contract with a gate script:
 //

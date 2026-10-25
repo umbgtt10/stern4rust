@@ -15,8 +15,8 @@ use syn::visit::Visit;
 use syn::visit::visit_expr_method_call;
 use syn::visit::visit_expr_path;
 
-use crate::finding::model::time_call::TimeCall;
-use crate::finding::model::time_call_kind::TimeCallKind;
+use crate::finding::model::time::time_call::TimeCall;
+use crate::finding::model::time::time_call_kind::TimeCallKind;
 use crate::finding::parsing::time::imported_names::ImportedNames;
 
 // The first call in a body through which it depends on time: a clock read -- `Instant::now` and its kin, or an

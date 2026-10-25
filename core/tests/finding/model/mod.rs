@@ -17,7 +17,6 @@ pub mod registry_item_tests;
 pub mod registry_policy_tests;
 pub mod restricted_method_tests;
 pub mod test_marker_tests;
-pub mod time_call_kind_tests;
-pub mod time_call_tests;
+pub mod time;
 pub mod type_name_tests;
 pub mod unit_test_site_tests;

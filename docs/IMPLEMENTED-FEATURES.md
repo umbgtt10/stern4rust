@@ -114,8 +114,8 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
   and the declaring file's own code; the public API is read by
   `PublicApiNames`. By the census of 2026-10-24, 31 records and 18 enums to
   move out to a file of their own and 19 records and 4 enums into their only
-  consumer across the family; this repository's one of each is in a baseline
-  until it moves. On by default.
+  consumer across the family; this repository's one of each moved with it --
+  `MarkerPhase` out of `test_marker.rs`, `ScanTotals` into `runner.rs`. On by default.
   [R037](ADRs/R037-ADR-RecordHomeRule.md)
 
 ### Autofix

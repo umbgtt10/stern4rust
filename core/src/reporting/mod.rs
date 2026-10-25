@@ -14,5 +14,4 @@ pub mod report_printer;
 pub mod rule_explanation;
 pub mod rule_listing;
 pub mod run_outcome;
-pub mod scan_totals;
 pub mod unconfigured_rule;

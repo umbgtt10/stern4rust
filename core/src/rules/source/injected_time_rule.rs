@@ -8,8 +8,8 @@ use syn::File;
 use syn::Ident;
 use syn::parse_file;
 
-use crate::finding::model::time_call::TimeCall;
-use crate::finding::model::time_call_kind::TimeCallKind;
+use crate::finding::model::time::time_call::TimeCall;
+use crate::finding::model::time::time_call_kind::TimeCallKind;
 use crate::finding::parsing::declared_item_finder::DeclaredItemFinder;
 use crate::finding::parsing::modules::library_target::LibraryTarget;
 use crate::finding::parsing::time::imported_names::ImportedNames;
