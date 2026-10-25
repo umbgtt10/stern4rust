@@ -48,6 +48,11 @@ The home, first match wins:
 
 **A file of its own** is named after the type, as [R023](R023-ADR-NamedSubjectRule.md) reads "named after".
 
+*As built, 2026-10-25:* the declaring file's other code counts as a user beside its consumers, so a record its
+declaring file and one other file both use is used by two files -- home 3 -- rather than moved into the other, where
+the declaring file could no longer name it. A type whose home is `pub` in a file of its own, sitting in that file but
+not `pub`, is reported too: `` `LogLine` is used by 3 files but is not `pub` ``, `make it pub`.
+
 One offence per type, at its declaration:
 
 | offence | correction |

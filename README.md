@@ -16,7 +16,7 @@ already own correctness. These are the things a reviewer would otherwise have to
 say by hand, every time, forever — and the ones that quietly stop being true
 across a codebase the moment nobody is checking.
 
-> **Status: thirty-five rules.** The set below is what is implemented and
+> **Status: thirty-six rules.** The set below is what is implemented and
 > gated. `stern4rust` runs against its own tree on every build, so a rule that
 > would fail this repository cannot be merged into it.
 
@@ -840,6 +840,16 @@ per struct, at its name: a getter-only record, a record with a field that is not
 `tests/` and `#[cfg(test)]` code are exempt, and enum variants' fields are the
 language's.
 [R035](docs/ADRs/R035-ADR-RecordsAndObjectsRule.md)
+
+### `record-home`
+
+A record or a data enum lives where its consumers put it: `pub` in a file named
+after it when the crate's public API names it, when nothing uses it, or when two
+or more files -- or any test or other crate -- do; private, inside the one file
+that uses it, otherwise. The declaring file's own code counts as a user,
+consumers are counted across the workspace, and one offence per type, at its
+name, says where it goes. An enum with behaviour is an object, and not this
+rule's. [R037](docs/ADRs/R037-ADR-RecordHomeRule.md)
 
 ## Output
 

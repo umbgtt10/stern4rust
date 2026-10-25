@@ -41,6 +41,7 @@ use crate::rules::testing::test_file_structure_rule::TestFileStructureRule;
 use crate::rules::testing::test_naming_rule::TestNamingRule;
 use crate::rules::testing::tested_public_api_rule::TestedPublicApiRule;
 use crate::rules::testing::timeless_tests_rule::TimelessTestsRule;
+use crate::rules::types::record_home_rule::RecordHomeRule;
 use crate::rules::types::records_and_objects_rule::RecordsAndObjectsRule;
 use crate::settings::config::Config;
 use crate::settings::rule_selection::RuleSelection;
@@ -184,6 +185,7 @@ impl RuleRegistry {
             Box::new(PairedTestFileRule::new()),
             Box::new(PublicOrPrivateRule::new()),
             Box::new(PureTraitsRule::new()),
+            Box::new(RecordHomeRule::new(config.name_readers.clone())),
             Box::new(RecordsAndObjectsRule::new()),
             Box::new(RegistryCompletenessRule::new()),
             Box::new(ReturnedMutationsRule::new()),

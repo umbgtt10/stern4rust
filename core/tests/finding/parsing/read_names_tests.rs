@@ -9,9 +9,60 @@
 use std::collections::BTreeSet;
 use stern4rust::finding::parsing::read_names::ReadNames;
 use stern4rust::source_file::SourceFile;
+use syn::ItemFn;
+use syn::Type;
+use syn::parse_file;
+use syn::parse_str;
 
 fn names(contents: &str) -> BTreeSet<String> {
     ReadNames::of(&SourceFile::new("src/reader.rs", contents))
+}
+
+#[test]
+fn in_items_reads_only_the_items_it_is_given() {
+    // Arrange
+    let syntax = parse_file("struct Window {\n    size: Size,\n}\n\nfn draw(frame: Frame) {}\n")
+        .expect("parses");
+
+    // Act
+    let names = ReadNames::in_items(&syntax.items[1..]);
+
+    // Assert
+    assert!(names.contains("Frame"), "{names:?}");
+    assert!(!names.contains("Size"), "{names:?}");
+}
+
+#[test]
+fn in_signature_reads_the_types_it_names() {
+    // Arrange
+    let function: ItemFn =
+        parse_str("fn parse(kind: Kind) -> LogLine {\n    todo!()\n}").expect("parses");
+
+    // Act
+    let names = ReadNames::in_signature(&function.sig);
+
+    // Assert
+    assert!(names.contains("Kind"), "{names:?}");
+    assert!(names.contains("LogLine"), "{names:?}");
+}
+
+#[test]
+fn in_type_reads_each_path_in_it() {
+    // Arrange
+    let declared: Type = parse_str("Vec<Option<Ballot>>").expect("parses");
+
+    // Act
+    let names = ReadNames::in_type(&declared);
+
+    // Assert
+    assert_eq!(
+        names,
+        BTreeSet::from([
+            String::from("Ballot"),
+            String::from("Option"),
+            String::from("Vec"),
+        ])
+    );
 }
 
 #[test]

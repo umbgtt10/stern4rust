@@ -164,7 +164,7 @@ removes them -- the tests it deletes shown to the owner first.
 | 4 | `single-implemented-type` and `named-subject` count objects only | **landed** -- through `ImplementedTypeFinder`, which `owned-functions` reads too |
 | 5 | `records-and-objects` replaces `private-fields`; this repository's getter-only records in a baseline | **landed** -- a package rule, since a struct's impls may sit in other files; 8 getter-only records, baselined at the root and beside `core/Cargo.toml` for the runner's own test |
 | 6 | This repository's records lose their accessors; their baseline entries go | **landed** -- 33 getters, 7 constructors and 16 `with_` steps, and the 24 tests that called nothing else; both baselines gone |
-| 7 | `record-home`; this repository's offences in the baseline | |
+| 7 | `record-home`; this repository's offences in the baseline | **landed** -- consumers through the `shared-constants` index, the API through `PublicApiNames`; `MarkerPhase` out, `ScanTotals` in, baselined |
 | 8 | This repository's records and enums moved; their entries go | |
 | 9 | `injected-dependencies`; this repository's offences in the baseline | |
 | 10 | The rule and rewriter registries take their parts; the baseline goes | |

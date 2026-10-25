@@ -49,6 +49,18 @@ impl NameReaders {
             .unwrap_or_default()
     }
 
+    // The other readers inside this package's `root`, named by their
+    // package-relative paths, as the package names its own files.
+    pub fn others_under(&self, name: &str, file: &str, root: &str) -> Vec<String> {
+        let inside = self.in_workspace(root);
+        let package = self.in_workspace("");
+        self.others(name, file)
+            .into_iter()
+            .filter(|reader| reader.starts_with(&inside))
+            .map(|reader| reader.strip_prefix(&package).unwrap_or(&reader).to_string())
+            .collect()
+    }
+
     pub fn reads(&self, name: &str, file: &str) -> bool {
         self.readers
             .get(name)

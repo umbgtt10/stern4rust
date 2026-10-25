@@ -6,20 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-Eleven rules added, all on by default, so they move what this tool reports
+Twelve rules added, all on by default, so they move what this tool reports
 about your code once it is released. A function returning a mutable reference, one
 returning a tuple that repeats an element type, a module-level constant declared
 after another item, a public one without a constants file and readers to share
 it, a type implemented in more than one file, a method that is neither `pub`
 nor private, an impl block out of order, a library function failing with a
 string, a test reading a clock or waiting on a timer, and library code doing
-either outside a port, and a struct that is neither a record with public fields
-nor an object with private ones become offences;
+either outside a port, a struct that is neither a record with public fields
+nor an object with private ones, and a record or data enum away from where its
+users put it become offences;
 to adopt one later, add its name --
 `immutable-returns`, `distinct-tuple-elements`, `leading-constants`,
 `shared-constants`, `implemented-in-one-file`, `public-or-private`,
-`ordered-impl-functions`, `typed-errors`, `timeless-tests`, `injected-time` or
-`records-and-objects` -- to `skip` in your `stern4rust.toml` once you install a version that knows
+`ordered-impl-functions`, `typed-errors`, `timeless-tests`, `injected-time`,
+`records-and-objects` or `record-home` -- to `skip` in your `stern4rust.toml` once you install a version that knows
 it. Two are fixable: `--fix` moves the constants and
 reorders the impls.
 And `--fix` now repairs only what the run applies: test files are left alone
@@ -162,6 +163,19 @@ where `test-file-structure` is skipped or not selected.
   104 getter-only and 96 objects exposing fields. This repository's 8
   records lost their 33 getters, 7 constructors and 16 `with_` steps, and the
   24 tests that called nothing else.
+- **`record-home`: a record or a data enum lives where its users put it.** In
+  `src/`, a record or an enum without behaviour is `pub`, in a file named after
+  it, when the crate's public API names it, when nothing uses it, or when two
+  or more files use it or any outside the crate's `src/` -- a test, another
+  crate; otherwise it is private, inside the one file that uses it. A user is a
+  file of the workspace naming the type, and the declaring file's own code. One
+  offence per type, at its name, naming the file it belongs in.
+  [R037](docs/ADRs/R037-ADR-RecordHomeRule.md)
+
+  A census of the family, 2026-10-24, finds 31 records and 18 enums to move out
+  to a file of their own and 19 records and 4 enums into their only consumer.
+  This repository has one of each, `MarkerPhase` and `ScanTotals`, baselined
+  until they move.
 - **`injected-time`: time reaches production code through a port.** In the
   library target, a function reading a clock, waiting on a timer or racing one
   -- `timeless-tests`' calls, randomness aside -- is reported once, at its name,

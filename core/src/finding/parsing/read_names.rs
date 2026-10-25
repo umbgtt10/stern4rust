@@ -5,9 +5,12 @@
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
 
+use syn::Item;
 use syn::Macro;
 use syn::PatIdent;
 use syn::Path;
+use syn::Signature;
+use syn::Type;
 use syn::UseName;
 use syn::UseRename;
 use syn::parse_file;
@@ -29,6 +32,36 @@ pub struct ReadNames {
 }
 
 impl ReadNames {
+    fn empty() -> Self {
+        Self {
+            names: BTreeSet::new(),
+        }
+    }
+
+    // Each name these items read, for a question about part of a file.
+    pub fn in_items<'a>(items: impl IntoIterator<Item = &'a Item>) -> BTreeSet<String> {
+        items
+            .into_iter()
+            .fold(Self::empty(), |mut reader, item| {
+                reader.visit_item(item);
+                reader
+            })
+            .names
+    }
+
+    // Each name a signature reads: its parameters' and return types, its generics.
+    pub fn in_signature(signature: &Signature) -> BTreeSet<String> {
+        let mut reader = Self::empty();
+        reader.visit_signature(signature);
+        reader.names
+    }
+
+    pub fn in_type(declared: &Type) -> BTreeSet<String> {
+        let mut reader = Self::empty();
+        reader.visit_type(declared);
+        reader.names
+    }
+
     // Each name any of these files reads, with the paths of the files reading
     // it, as the files name themselves.
     pub fn index(files: &[SourceFile]) -> BTreeMap<String, BTreeSet<String>> {
@@ -48,9 +81,7 @@ impl ReadNames {
         let Ok(syntax) = parse_file(&file.contents()) else {
             return BTreeSet::new();
         };
-        let mut reader = Self {
-            names: BTreeSet::new(),
-        };
+        let mut reader = Self::empty();
         reader.visit_file(&syntax);
         reader.names
     }

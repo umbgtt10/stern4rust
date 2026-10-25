@@ -1,0 +1,6 @@
+{
+  "offences": {
+    "src/finding/model/test_marker.rs\u001frecord-home\u001fMarkerPhase": 1,
+    "src/reporting/scan_totals.rs\u001frecord-home\u001fScanTotals": 1
+  }
+}

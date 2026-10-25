@@ -1,6 +1,6 @@
 # Rules
 
-Thirty-five rules, each independent, each naming itself in the report. This is the
+Thirty-six rules, each independent, each naming itself in the report. This is the
 reference; the reasoning behind each one is in its ADR.
 
 Every offence carries a **correction** as well as a description — what to do,
@@ -9,7 +9,7 @@ without answering it.
 
 Each rule also carries an **explanation** — what it wants, a scrap of source
 that breaks it and the same scrap put right — and that field is required too.
-`cargo stern4rust --rules` prints all thirty-five, in text or with
+`cargo stern4rust --rules` prints all thirty-six, in text or with
 `--format json`, without scanning anything. See
 [ADR-RulesExplainThemselves](ADRs/ADR-RulesExplainThemselves.md).
 
@@ -23,6 +23,7 @@ that breaks it and the same scrap put right — and that field is required too.
 | `imported-paths` | [R008](ADRs/R008-ADR-ImportedPathsRule.md) | no |
 | `injected-time` | [R034](ADRs/R034-ADR-InjectedTimeRule.md) | no |
 | `records-and-objects` | [R035](ADRs/R035-ADR-RecordsAndObjectsRule.md) | no |
+| `record-home` | [R037](ADRs/R037-ADR-RecordHomeRule.md) | no |
 | `registry-completeness` | [R009](ADRs/R009-ADR-RegistryCompletenessRule.md) | no |
 | `paired-test-file` | [R016](ADRs/R016-ADR-PairedTestFileRule.md) | no |
 | `test-file-name-postfix` | [R015](ADRs/R015-ADR-TestFileNamePostfixRule.md) | no |
@@ -1423,6 +1424,57 @@ variants' fields are public by the language and are not this rule's. `tests/`,
 **Does not catch:** shared mutability behind a getter -- `&RefCell<T>`,
 `&Mutex<T>`; an object's getters nobody needs; a record that should have an
 invariant -- once a constructor checks it, the struct is an object.
+
+## `record-home`
+
+A record or a data enum lives where its consumers put it. **In `src/`, a record
+or data enum is `pub` in a file named after it, or private inside the one file
+that uses it.**
+
+Nothing else decides it. A record shared by five files may sit in one of them,
+and a record only one file uses may have a file of its own: both pass every
+other rule, so which one a codebase gets would be taste.
+
+- **A data enum** is an enum with no behaviour, by `records-and-objects`'
+  definition. An enum with behaviour is an object, and
+  `single-implemented-type`'s.
+- **A user** is a file of the workspace, other than the declaring one, that
+  names the type -- in code, in a macro's tokens, in a signature, in a `use` --
+  tests and other crates included; and the declaring file itself, where its
+  code other than the declaration and the type's impls names it.
+- **The public API** is what another crate can be handed: the signature of a
+  `pub fn`, of a `pub` method and of a `pub` trait's methods; the type of a
+  `pub` field of a `pub` struct; a `pub` enum's variants; a `pub` alias,
+  `const` or `static`.
+
+The home, first match wins:
+
+1. **Named in the public API** -- `pub`, in a file of its own.
+2. **Used nowhere** -- `pub`, in a file of its own: it exists for consumers
+   this tool cannot see.
+3. **Used by two or more files, or by one outside the crate's `src/`** -- a
+   test, another crate -- `pub`, in a file of its own.
+4. **Used by one file of `src/`** -- private, inside that file; its fields stay
+   `pub`.
+
+**A file of its own** is named after the type, as `named-subject` reads
+"named after".
+
+| offence | correction |
+|---|---|
+| `` `LogLine` is used by 3 files but declared in `src/parser.rs` `` | `move LogLine into src/log_line.rs and make it pub` |
+| `` `LogLine` is used by 3 files but is not `pub` `` | `make it pub` |
+| `` `Window` is used only by `src/scheduler.rs` but has a file of its own `` | `move Window into src/scheduler.rs and drop its pub` |
+| `` `Window` lives in its only consumer, `src/scheduler.rs`, but is `pub` `` | `drop its pub: no other file uses it` |
+| `` `Verdict` is named in the crate's public API but declared in `src/report.rs` `` | `move Verdict into src/verdict.rs and make it pub` |
+
+One offence per type, at its name. Only types declared at the top of a file are
+judged; `tests/`, `benches/` and `#[cfg(test)]` code are exempt.
+
+**Does not catch:** a consumer in another repository that the public API does
+not name -- a record internal to a library that another repository names is told
+to go private, and fails loudly there; two types sharing a name, counted as one,
+which errs toward `pub` in a file of its own.
 
 ## What is not walked
 

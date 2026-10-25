@@ -106,6 +106,17 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
   exposing fields across the family; this repository's 8 records -- `Config`,
   `RuleExplanation` and six more -- lost their 56 accessors with it. On by
   default. [R035](ADRs/R035-ADR-RecordsAndObjectsRule.md)
+- **`record-home`** -- a record or a data enum, by `records-and-objects`'
+  classifier, is `pub` in a file named after it when the crate's public API
+  names it, nothing uses it, or two or more files -- or a test, or another
+  crate -- do; private inside its only user otherwise. Users are the files of
+  the workspace naming it, read through the same index as `shared-constants`,
+  and the declaring file's own code; the public API is read by
+  `PublicApiNames`. By the census of 2026-10-24, 31 records and 18 enums to
+  move out to a file of their own and 19 records and 4 enums into their only
+  consumer across the family; this repository's one of each is in a baseline
+  until it moves. On by default.
+  [R037](ADRs/R037-ADR-RecordHomeRule.md)
 
 ### Autofix
 

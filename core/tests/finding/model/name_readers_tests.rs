@@ -49,6 +49,30 @@ fn others_of_a_name_nobody_reads_is_empty() {
 }
 
 #[test]
+fn others_under_a_root_keeps_that_packages_readers_by_their_package_paths() {
+    // Arrange
+    let readers = readers().in_package("node");
+
+    // Act
+    let others = readers.others_under("LIMIT", "src/limits.rs", "src/");
+
+    // Assert
+    assert_eq!(others, vec![String::from("src/pool.rs")]);
+}
+
+#[test]
+fn others_under_from_the_workspace_root_reads_paths_as_they_are() {
+    // Arrange
+    let readers = readers();
+
+    // Act
+    let others = readers.others_under("LIMIT", "node/src/limits.rs", "node/src/");
+
+    // Assert
+    assert_eq!(others, vec![String::from("node/src/pool.rs")]);
+}
+
+#[test]
 fn others_within_a_package_leaves_the_asking_file_out() {
     // Arrange
     let readers = readers().in_package("node");
