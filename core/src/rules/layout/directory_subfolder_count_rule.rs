@@ -103,11 +103,11 @@ impl Rule for DirectorySubfolderCountRule {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(
-            self.name(),
-            "A directory holds a number of subfolders a reader can hold in their head.",
-            "src/  -- 9 subfolders",
-            "src/  -- 4 subfolders, each grouping the rest",
-        )
+        RuleExplanation {
+            name: self.name(),
+            summary: "A directory holds a number of subfolders a reader can hold in their head.",
+            breaks: "src/  -- 9 subfolders",
+            instead: "src/  -- 4 subfolders, each grouping the rest",
+        }
     }
 }

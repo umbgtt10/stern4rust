@@ -49,7 +49,7 @@ impl PackageRoster {
             .chain(
                 self.unconfigured
                     .iter()
-                    .map(|rule| format!("{} ({})", rule.name(), rule.requirement())),
+                    .map(|rule| format!("{} ({})", rule.name, rule.requirement)),
             )
             .collect()
     }

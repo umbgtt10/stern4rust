@@ -136,14 +136,14 @@ impl Rule for ImplementedInOneFileRule {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(
-            self.name(),
-            "A type's inherent impl lives in one file.",
-            "// src/store.rs\npub struct Store;\n\nimpl Store {\n    pub fn new() -> Self {\n        \
+        RuleExplanation {
+            name: self.name(),
+            summary: "A type's inherent impl lives in one file.",
+            breaks: "// src/store.rs\npub struct Store;\n\nimpl Store {\n    pub fn new() -> Self {\n        \
              Self\n    }\n}\n\n// src/store_queries.rs\nimpl Store {\n    pub fn len(&self) -> \
              usize {\n        0\n    }\n}",
-            "// src/store.rs\npub struct Store;\n\nimpl Store {\n    pub fn new() -> Self {\n        \
+            instead: "// src/store.rs\npub struct Store;\n\nimpl Store {\n    pub fn new() -> Self {\n        \
              Self\n    }\n\n    pub fn len(&self) -> usize {\n        0\n    }\n}",
-        )
+        }
     }
 }

@@ -151,11 +151,11 @@ impl Rule for NamedSubjectRule {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(
-            self.name(),
-            "A source file is named after its subject: a type it implements, or with none, a trait or type it declares.",
-            "// listener.rs\npub struct Backoff;\nimpl Backoff { }",
-            "// backoff.rs\npub struct Backoff;\nimpl Backoff { }",
-        )
+        RuleExplanation {
+            name: self.name(),
+            summary: "A source file is named after its subject: a type it implements, or with none, a trait or type it declares.",
+            breaks: "// listener.rs\npub struct Backoff;\nimpl Backoff { }",
+            instead: "// backoff.rs\npub struct Backoff;\nimpl Backoff { }",
+        }
     }
 }

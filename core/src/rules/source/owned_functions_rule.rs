@@ -176,11 +176,11 @@ impl Rule for OwnedFunctionsRule {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(
-            self.name(),
-            "A file with a subject owns its functions: none stands free beside a type, a trait or an impl block.",
-            "pub struct Widget;\nimpl Widget {\n    pub fn area(&self) -> u32 { square(2) }\n}\n\nfn square(side: u32) -> u32 { side * side }",
-            "pub struct Widget;\nimpl Widget {\n    pub fn area(&self) -> u32 { Self::square(2) }\n\n    fn square(side: u32) -> u32 { side * side }\n}",
-        )
+        RuleExplanation {
+            name: self.name(),
+            summary: "A file with a subject owns its functions: none stands free beside a type, a trait or an impl block.",
+            breaks: "pub struct Widget;\nimpl Widget {\n    pub fn area(&self) -> u32 { square(2) }\n}\n\nfn square(side: u32) -> u32 { side * side }",
+            instead: "pub struct Widget;\nimpl Widget {\n    pub fn area(&self) -> u32 { Self::square(2) }\n\n    fn square(side: u32) -> u32 { side * side }\n}",
+        }
     }
 }

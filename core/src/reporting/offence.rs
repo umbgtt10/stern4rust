@@ -80,7 +80,11 @@ impl Offence {
     // line is what lets a reader -- or a tool consuming the report -- work
     // through one file at a time instead of jumping between them.
     pub fn sort_key(&self) -> OffenceOrder<'_> {
-        OffenceOrder::new(&self.file, self.line, self.rule)
+        OffenceOrder {
+            file: &self.file,
+            line: self.line,
+            rule: self.rule,
+        }
     }
 
     pub fn subject(&self) -> Option<&str> {

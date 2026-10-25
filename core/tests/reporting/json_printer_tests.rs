@@ -184,10 +184,10 @@ fn render_names_why_a_package_rule_is_unconfigured() {
         "node",
         Vec::new(),
         Vec::new(),
-        vec![UnconfiguredRule::new(
-            "spdx-matches-manifest",
-            "needs a `license` field in Cargo.toml",
-        )],
+        vec![UnconfiguredRule {
+            name: "spdx-matches-manifest",
+            requirement: "needs a `license` field in Cargo.toml",
+        }],
     )]);
 
     // Act

@@ -48,7 +48,12 @@ impl Rule for AlwaysOffends {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(self.name(), "a stub", "before", "after")
+        RuleExplanation {
+            name: self.name(),
+            summary: "a stub",
+            breaks: "before",
+            instead: "after",
+        }
     }
 }
 
@@ -59,9 +64,11 @@ fn file() -> SourceFile {
 // Everything a run can be given: a header to compare against and a manifest
 // that names a licence. Two rules need one each, and both are dropped without.
 fn fully_configured(lines: &[&str]) -> Config {
-    Config::default()
-        .with_expected_header(lines.iter().map(|line| (*line).to_string()).collect())
-        .with_manifest_license(Some("MIT".to_string()))
+    Config {
+        expected_header: lines.iter().map(|line| (*line).to_string()).collect(),
+        manifest_license: Some("MIT".to_string()),
+        ..Config::default()
+    }
 }
 
 struct NeverOffends;
@@ -88,7 +95,12 @@ impl Rule for NeverOffends {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(self.name(), "a stub", "before", "after")
+        RuleExplanation {
+            name: self.name(),
+            summary: "a stub",
+            breaks: "before",
+            instead: "after",
+        }
     }
 }
 
@@ -122,7 +134,12 @@ impl Rule for OffendsPerWorkspace {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(self.name(), "a stub", "before", "after")
+        RuleExplanation {
+            name: self.name(),
+            summary: "a stub",
+            breaks: "before",
+            instead: "after",
+        }
     }
 }
 
@@ -205,7 +222,7 @@ fn explanations_covers_every_registered_rule() {
     let explained: Vec<&'static str> = registry
         .explanations()
         .iter()
-        .map(|entry| entry.name())
+        .map(|entry| entry.name)
         .collect();
 
     // Assert
@@ -223,8 +240,8 @@ fn explanations_offer_examples_that_their_own_rule_reports() {
     let unproven: Vec<&'static str> = registry
         .explanations()
         .iter()
-        .filter(|entry| entry.summary().trim().is_empty())
-        .map(|entry| entry.name())
+        .filter(|entry| entry.summary.trim().is_empty())
+        .map(|entry| entry.name)
         .collect();
 
     // Assert
@@ -244,8 +261,8 @@ fn from_config_registers_rules_that_each_offer_an_example_and_a_remedy() {
     let silent: Vec<&'static str> = registry
         .explanations()
         .iter()
-        .filter(|entry| entry.breaks().trim().is_empty() || entry.instead().trim().is_empty())
-        .map(|entry| entry.name())
+        .filter(|entry| entry.breaks.trim().is_empty() || entry.instead.trim().is_empty())
+        .map(|entry| entry.name)
         .collect();
 
     // Assert
@@ -307,10 +324,10 @@ fn from_config_with_a_header_registers_the_header_rule_alongside_the_others() {
 #[test]
 fn from_config_with_a_selection_registers_only_the_selected_rules() {
     // Arrange
-    let config = Config::default().with_selection(RuleSelection::new(
-        vec!["tests-layout".to_string()],
-        Vec::new(),
-    ));
+    let config = Config {
+        selection: RuleSelection::new(vec!["tests-layout".to_string()], Vec::new()),
+        ..Config::default()
+    };
 
     // Act
     let registry = RuleRegistry::from_config(&config);
@@ -322,10 +339,10 @@ fn from_config_with_a_selection_registers_only_the_selected_rules() {
 #[test]
 fn from_config_with_a_skip_leaves_that_rule_out() {
     // Arrange
-    let config = Config::default().with_selection(RuleSelection::new(
-        Vec::new(),
-        vec!["test-file-structure".to_string()],
-    ));
+    let config = Config {
+        selection: RuleSelection::new(Vec::new(), vec!["test-file-structure".to_string()]),
+        ..Config::default()
+    };
 
     // Act
     let registry = RuleRegistry::from_config(&config);
@@ -516,9 +533,11 @@ fn unconfigured_names_does_not_list_a_skipped_rule() {
     // Arrange
     // A licence, so that the header rule is the only one that could be
     // unconfigured -- and it is the one being skipped.
-    let config = Config::default()
-        .with_selection(RuleSelection::new(Vec::new(), vec!["header".to_string()]))
-        .with_manifest_license(Some("MIT".to_string()));
+    let config = Config {
+        selection: RuleSelection::new(Vec::new(), vec!["header".to_string()]),
+        manifest_license: Some("MIT".to_string()),
+        ..Config::default()
+    };
     let registry = RuleRegistry::from_config(&config);
 
     // Act
@@ -542,11 +561,14 @@ fn unconfigured_names_each_rule_with_what_it_is_waiting_for() {
     assert_eq!(
         unconfigured,
         [
-            UnconfiguredRule::new(
-                "spdx-matches-manifest",
-                "needs a `license` field in Cargo.toml"
-            ),
-            UnconfiguredRule::new("header", "needs --header-file")
+            UnconfiguredRule {
+                name: "spdx-matches-manifest",
+                requirement: "needs a `license` field in Cargo.toml"
+            },
+            UnconfiguredRule {
+                name: "header",
+                requirement: "needs --header-file"
+            }
         ]
     );
 }

@@ -9,23 +9,6 @@
 // took the count past the point where a reader could tell one from another.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ScanTotals {
-    files_scanned: usize,
-    fixed: usize,
-}
-
-impl ScanTotals {
-    pub fn new(files_scanned: usize, fixed: usize) -> Self {
-        Self {
-            files_scanned,
-            fixed,
-        }
-    }
-
-    pub fn files_scanned(&self) -> usize {
-        self.files_scanned
-    }
-
-    pub fn fixed(&self) -> usize {
-        self.fixed
-    }
+    pub files_scanned: usize,
+    pub fixed: usize,
 }

@@ -155,7 +155,7 @@ impl ManifestResolver {
     fn metadata(config: &Config) -> Result<Metadata> {
         let mut command = MetadataCommand::new();
         command.no_deps();
-        if let Some(manifest_path) = &config.manifest_path() {
+        if let Some(manifest_path) = &config.manifest_path.as_deref() {
             command.manifest_path(manifest_path);
         }
         Ok(command.exec()?)
@@ -166,11 +166,11 @@ impl ManifestResolver {
     }
 
     fn selected<'a>(metadata: &'a Metadata, config: &Config) -> Result<Vec<&'a Package>> {
-        if config.packages().is_empty() {
+        if config.packages.is_empty() {
             return Ok(metadata.packages.iter().collect());
         }
         config
-            .packages()
+            .packages
             .iter()
             .map(|name| {
                 metadata

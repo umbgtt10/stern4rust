@@ -142,11 +142,11 @@ impl Rule for TestFileNamePostfixRule {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(
-            self.name(),
-            "A file that holds tests is named for it: <X>_tests.rs.",
-            "tests/widget_spec.rs",
-            "tests/widget_tests.rs",
-        )
+        RuleExplanation {
+            name: self.name(),
+            summary: "A file that holds tests is named for it: <X>_tests.rs.",
+            breaks: "tests/widget_spec.rs",
+            instead: "tests/widget_tests.rs",
+        }
     }
 }

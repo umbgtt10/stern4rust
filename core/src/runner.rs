@@ -83,7 +83,10 @@ impl Runner {
         let config = Self::config_from(&args, None)?;
         Self::validate_selection(&config)?;
         let workspace_dependencies = ManifestResolver::workspace_dependencies(&config);
-        let config = config.with_workspace_dependencies(workspace_dependencies);
+        let config = Config {
+            workspace_dependencies,
+            ..config
+        };
         let packages = ManifestResolver::packages(&config)?;
         let workspace = ManifestResolver::workspace_package_names(&config)?;
         sections.validate(&workspace.iter().map(String::as_str).collect::<Vec<_>>())?;
@@ -94,7 +97,7 @@ impl Runner {
         // overstates -- see
         // [ADR-PerPackageConfiguration](../docs/ADRs/ADR-PerPackageConfiguration.md),
         // where the per-package report is the piece still to come.
-        let selection = config.selection().also_skipping(
+        let selection = config.selection.also_skipping(
             &sections.skipped_anywhere(
                 &packages
                     .iter()
@@ -102,9 +105,11 @@ impl Runner {
                     .collect::<Vec<_>>(),
             ),
         );
-        let config = config
-            .with_manifest_license(ScannedPackage::agreed_license(&packages))
-            .with_selection(selection);
+        let config = Config {
+            manifest_license: ScannedPackage::agreed_license(&packages),
+            selection,
+            ..config
+        };
         let registry = RuleRegistry::from_config(&config);
         if registry.is_empty() {
             return Err(anyhow::anyhow!(
@@ -124,17 +129,18 @@ impl Runner {
         // Every member, not only those this run walks: a constant one member
         // declares and only another reads is shared all the same, and a run
         // scoped to the first must still see the second.
-        let members = ManifestResolver::packages(&config.clone().with_packages(Vec::new()))?
-            .into_iter()
-            .map(|member| {
-                Ok((
-                    member.root().to_path_buf(),
-                    ExclusionSet::new(
-                        Self::config_from(&args, sections.of(member.name()))?.excludes(),
-                    )?,
-                ))
-            })
-            .collect::<Result<Vec<_>>>()?;
+        let members = ManifestResolver::packages(&Config {
+            packages: Vec::new(),
+            ..config.clone()
+        })?
+        .into_iter()
+        .map(|member| {
+            Ok((
+                member.root().to_path_buf(),
+                ExclusionSet::new(&Self::config_from(&args, sections.of(member.name()))?.excludes)?,
+            ))
+        })
+        .collect::<Result<Vec<_>>>()?;
         let readers = NameReaders::new(ReadNames::index(&WorkspaceSources::read(
             &workspace_root,
             &members,
@@ -156,27 +162,29 @@ impl Runner {
             // finding about `alpha/Cargo.toml` belongs to `alpha` and to no
             // other package. Deduplication would have to guess that; the loop
             // already knows it.
-            let package_config = Self::config_from(&args, sections.of(package.name()))?
-                .with_manifest_license(package.license().map(str::to_string))
-                .with_workspace_dependencies(ManifestDependency::in_manifest(
-                    config.workspace_dependencies(),
+            let package_config = Config {
+                manifest_license: package.license().map(str::to_string),
+                workspace_dependencies: ManifestDependency::in_manifest(
+                    config.workspace_dependencies.as_deref(),
                     &ManifestResolver::relative_to(
                         &workspace_root,
                         &package.root().join(ManifestResolver::MANIFEST),
                     ),
-                ))
-                .with_name_readers(readers.in_package(&ManifestResolver::relative_to(
+                ),
+                name_readers: readers.in_package(&ManifestResolver::relative_to(
                     &workspace_root,
                     package.root(),
-                )));
+                )),
+                ..Self::config_from(&args, sections.of(package.name()))?
+            };
             let registry = RuleRegistry::from_config(&package_config);
             rosters.push(PackageRoster::new(
                 package.name(),
                 Self::owned(&registry.names()),
-                Self::owned(&RuleRegistry::skipped_names(package_config.selection())),
+                Self::owned(&RuleRegistry::skipped_names(&package_config.selection)),
                 registry.unconfigured(&package_config),
             ));
-            let exclusions = ExclusionSet::new(package_config.excludes())?;
+            let exclusions = ExclusionSet::new(&package_config.excludes)?;
             let root = &package.root();
             // Read the whole package before judging it. Rules whose subject is
             // the tree -- "there is exactly one all_tests.rs" -- cannot be
@@ -194,7 +202,7 @@ impl Runner {
                     Err(offence) => found.push(*offence),
                 }
             }
-            if config.fix() {
+            if config.fix {
                 let (rewritten, count) = Self::repair(root, files, &registry)?;
                 files = rewritten;
                 fixed += count;
@@ -232,7 +240,7 @@ impl Runner {
         // order on the page is not one of them.
         offences.sort_by(|left, right| left.sort_key().cmp(&right.sort_key()));
 
-        if config.write_baseline() {
+        if config.write_baseline {
             return Self::record(&config, offences).map(|outcome| (outcome, String::new()));
         }
         let baselined = Self::baselined(&config, offences)?;
@@ -241,7 +249,10 @@ impl Runner {
         let report = Self::report(
             &config,
             &registry,
-            ScanTotals::new(files_scanned, fixed),
+            ScanTotals {
+                files_scanned,
+                fixed,
+            },
             &Self::merged(excluded),
             &summary,
             &rosters,
@@ -250,18 +261,11 @@ impl Runner {
         Ok((RunOutcome::of(offences.len()), report))
     }
 
-    fn baseline_shown(config: &Config) -> Option<String> {
-        config
-            .baseline()
-            .as_ref()
-            .map(|path| path.to_string_lossy().replace('\\', "/"))
-    }
-
     // A baseline that was asked for and is not there is an error rather than an
     // empty one. A gate whose baseline path has a typo would otherwise report
     // every existing offence and look like a regression.
     fn baselined(config: &Config, offences: Vec<Offence>) -> Result<BaselineOutcome> {
-        let Some(path) = &config.baseline() else {
+        let Some(path) = &config.baseline.as_deref() else {
             return Ok(BaselineOutcome::new(offences, 0, 0));
         };
         Ok(Baseline::load(path)?.apply(offences))
@@ -295,44 +299,39 @@ impl Runner {
         // The manifest's licence, the workspace's dependencies and the name
         // readers keep their defaults: `run` fills them in once the manifest
         // has been read, and the command line has nothing to say about them.
-        Ok(Config::default()
+        Ok(Config {
             // Discovered beside the manifest when nobody named one, the same
             // way stern4rust.toml is. Implicit suppression would be
             // unacceptable if it were invisible; every report that used a
             // baseline names it and states how many offences it hid, so a
             // reader can always see that one is in force.
-            .with_baseline(
-                args.baseline()
-                    .map(Path::to_path_buf)
-                    .or_else(|| found.and_then(|file| file.baseline_from(&directory)))
-                    .or_else(|| Self::discovered_baseline(&directory, args.write_baseline())),
-            )
-            .with_write_baseline(args.write_baseline())
-            .with_fix(args.fix())
-            .with_config_file(found.map(|_| directory.join(ConfigFile::NAME)))
-            .with_manifest_path(args.manifest_path().map(Path::to_path_buf))
-            .with_max_files_per_directory(
-                section
-                    .and_then(|s| s.max_files_per_directory())
-                    .or_else(|| found.and_then(|file| file.max_files_per_directory())),
-            )
-            .with_max_subfolders_per_directory(
-                section
-                    .and_then(|s| s.max_subfolders_per_directory())
-                    .or_else(|| found.and_then(|file| file.max_subfolders_per_directory())),
-            )
-            .with_packages(args.packages().to_vec())
-            .with_excludes(Self::preferred(
+            baseline: args
+                .baseline()
+                .map(Path::to_path_buf)
+                .or_else(|| found.and_then(|file| file.baseline_from(&directory)))
+                .or_else(|| Self::discovered_baseline(&directory, args.write_baseline())),
+            write_baseline: args.write_baseline(),
+            fix: args.fix(),
+            config_file: found.map(|_| directory.join(ConfigFile::NAME)),
+            manifest_path: args.manifest_path().map(Path::to_path_buf),
+            max_files_per_directory: section
+                .and_then(|s| s.max_files_per_directory())
+                .or_else(|| found.and_then(|file| file.max_files_per_directory())),
+            max_subfolders_per_directory: section
+                .and_then(|s| s.max_subfolders_per_directory())
+                .or_else(|| found.and_then(|file| file.max_subfolders_per_directory())),
+            packages: args.packages().to_vec(),
+            excludes: Self::preferred(
                 args.excludes().to_vec(),
                 Self::section_or_root(
                     section.map(|s| s.exclude()),
                     found.map(|file| file.exclude()),
                 ),
-            ))
-            .with_expected_header(expected_header)
-            .with_format(args.format())
-            .with_offence_threshold(OffenceThreshold::new(threshold))
-            .with_selection(RuleSelection::new(
+            ),
+            expected_header,
+            format: args.format(),
+            offence_threshold: OffenceThreshold::new(threshold),
+            selection: RuleSelection::new(
                 Self::preferred(
                     args.rules().to_vec(),
                     Self::section_or_root(
@@ -346,7 +345,9 @@ impl Runner {
                         .and_then(|s| s.skip())
                         .or(found.map(|file| file.skip())),
                 ),
-            )))
+            ),
+            ..Config::default()
+        })
     }
 
     // When writing, the default path is the destination whether or not it
@@ -398,7 +399,8 @@ impl Runner {
     // assessed -- the offences were written down, which is what was asked for.
     fn record(config: &Config, offences: Vec<Offence>) -> Result<RunOutcome> {
         let path = config
-            .baseline()
+            .baseline
+            .as_deref()
             .ok_or_else(|| anyhow::anyhow!("--write-baseline needs a path to write to"))?;
         let baseline = Baseline::of(&offences);
         baseline.save(path)?;
@@ -452,41 +454,41 @@ impl Runner {
         rosters: &[PackageRoster],
         offences: &[Offence],
     ) -> String {
-        let threshold = config.offence_threshold();
+        let threshold = config.offence_threshold;
         let applied = Self::owned(&registry.names());
-        let skipped = Self::owned(&RuleRegistry::skipped_names(config.selection()));
+        let skipped = Self::owned(&RuleRegistry::skipped_names(&config.selection));
         let unconfigured: Vec<(String, String)> = registry
             .unconfigured(config)
             .into_iter()
-            .map(|rule| (rule.name().to_string(), rule.requirement().to_string()))
+            .map(|rule| (rule.name.to_string(), rule.requirement.to_string()))
             .collect();
         let unconfigured_names = Self::owned(&registry.unconfigured_names(config));
-        match config.format() {
-            OutputFormat::Text => ReportPrinter::new(totals.files_scanned())
+        match config.format {
+            OutputFormat::Text => ReportPrinter::new(totals.files_scanned)
                 .with_threshold(threshold)
                 .with_rules(applied.clone(), skipped.clone(), unconfigured.clone())
                 .with_package_rosters(rosters.to_vec())
                 .with_exclusions(excluded.excluded().to_vec())
-                .with_config_file(Self::shown(config))
+                .with_config_file(Self::shown(config.config_file.as_deref()))
                 .with_baseline(
-                    Self::baseline_shown(config),
+                    Self::shown(config.baseline.as_deref()),
                     baselined.suppressed(),
                     baselined.stale(),
                 )
-                .with_fixed(totals.fixed())
+                .with_fixed(totals.fixed)
                 .render(offences),
-            OutputFormat::Json => JsonPrinter::new(totals.files_scanned())
+            OutputFormat::Json => JsonPrinter::new(totals.files_scanned)
                 .with_threshold(threshold)
                 .with_rules(applied, skipped, unconfigured_names)
                 .with_package_rosters(rosters.to_vec())
                 .with_exclusions(excluded.excluded().to_vec())
-                .with_config_file(Self::shown(config))
+                .with_config_file(Self::shown(config.config_file.as_deref()))
                 .with_baseline(
-                    Self::baseline_shown(config),
+                    Self::shown(config.baseline.as_deref()),
                     baselined.suppressed(),
                     baselined.stale(),
                 )
-                .with_fixed(totals.fixed())
+                .with_fixed(totals.fixed)
                 .render(offences),
         }
     }
@@ -501,11 +503,11 @@ impl Runner {
     // rule reads as a tool that does not have it. The first draft supplied only
     // the header and quietly listed twenty.
     fn rule_listing(args: &Args) -> String {
-        let registry = RuleRegistry::from_config(
-            &Config::default()
-                .with_expected_header(vec![String::new()])
-                .with_manifest_license(Some(String::new())),
-        );
+        let registry = RuleRegistry::from_config(&Config {
+            expected_header: vec![String::new()],
+            manifest_license: Some(String::new()),
+            ..Config::default()
+        });
         RuleListing::new(&registry.explanations()).render(args.format())
     }
 
@@ -522,11 +524,8 @@ impl Runner {
         }
     }
 
-    fn shown(config: &Config) -> Option<String> {
-        config
-            .config_file()
-            .as_ref()
-            .map(|path| path.to_string_lossy().replace('\\', "/"))
+    fn shown(path: Option<&Path>) -> Option<String> {
+        path.map(|path| path.to_string_lossy().replace('\\', "/"))
     }
 
     // A misspelled rule name is an error rather than a switch that quietly
@@ -535,7 +534,7 @@ impl Runner {
     // a run that worked.
     fn validate_selection(config: &Config) -> Result<()> {
         let known = RuleRegistry::known_names();
-        let unknown = config.selection().unknown_in(&known);
+        let unknown = config.selection.unknown_in(&known);
         if !unknown.is_empty() {
             return Err(anyhow::anyhow!(
                 "unknown rule name(s): {} -- the rules are: {}",
@@ -543,8 +542,8 @@ impl Runner {
                 known.join(", ")
             ));
         }
-        if config.selection().selects_explicitly(HeaderRule::NAME)
-            && config.expected_header().is_empty()
+        if config.selection.selects_explicitly(HeaderRule::NAME)
+            && config.expected_header.is_empty()
         {
             return Err(anyhow::anyhow!(
                 "--rule {} needs --header-file, otherwise the run would apply no rules at all",

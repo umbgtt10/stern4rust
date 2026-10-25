@@ -225,8 +225,8 @@ fn explanation_breaks_the_rule_it_explains() {
     let explanation = TimelessTestsRule::new().explanation();
 
     // Act
-    let broken = check("tests/example_tests.rs", explanation.breaks());
-    let mended = check("tests/example_tests.rs", explanation.instead());
+    let broken = check("tests/example_tests.rs", explanation.breaks);
+    let mended = check("tests/example_tests.rs", explanation.instead);
 
     // Assert
     assert_eq!(broken.len(), 1, "{broken:?}");
@@ -240,12 +240,12 @@ fn explanation_shows_the_stopwatch_and_the_channel() {
 
     // Assert
     assert_eq!(
-        explanation.breaks(),
+        explanation.breaks,
         "#[test]\nfn finishes_in_time() {\n    let start = std::time::Instant::now();\n    run();\n    \
          assert!(start.elapsed() < LIMIT);\n}\n"
     );
     assert_eq!(
-        explanation.instead(),
+        explanation.instead,
         "#[test]\nfn finishes() {\n    let (sender, receiver) = std::sync::mpsc::channel();\n    run(sender);\n    \
          assert!(receiver.recv().is_ok());\n}\n"
     );

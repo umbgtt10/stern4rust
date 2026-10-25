@@ -103,9 +103,9 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
   fields, `tests/` and `#[cfg(test)]` code are left alone. Replaces
   `private-fields`, built on 2026-10-23 and never released. By the census of
   2026-10-24, 120 records with non-`pub` fields, 104 getter-only and 96 objects
-  exposing fields across the family; this repository's 8 getter-only records
-  are in a baseline until their accessors go. On by default.
-  [R035](ADRs/R035-ADR-RecordsAndObjectsRule.md)
+  exposing fields across the family; this repository's 8 records -- `Config`,
+  `RuleExplanation` and six more -- lost their 56 accessors with it. On by
+  default. [R035](ADRs/R035-ADR-RecordsAndObjectsRule.md)
 
 ### Autofix
 

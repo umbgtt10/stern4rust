@@ -31,10 +31,10 @@ fn absences_names_a_skipped_rule_and_an_unconfigured_one_apart() {
         "system-tests",
         vec!["header".to_string()],
         vec!["paired-test-file".to_string()],
-        vec![UnconfiguredRule::new(
-            "spdx-matches-manifest",
-            "needs a `license` field in Cargo.toml",
-        )],
+        vec![UnconfiguredRule {
+            name: "spdx-matches-manifest",
+            requirement: "needs a `license` field in Cargo.toml",
+        }],
     );
 
     // Act
@@ -105,10 +105,10 @@ fn agrees_with_a_roster_whose_rule_is_unconfigured_rather_than_skipped_is_false(
         "node-infra",
         vec!["header".to_string()],
         Vec::new(),
-        vec![UnconfiguredRule::new(
-            "spdx-matches-manifest",
-            "needs a `license` field in Cargo.toml",
-        )],
+        vec![UnconfiguredRule {
+            name: "spdx-matches-manifest",
+            requirement: "needs a `license` field in Cargo.toml",
+        }],
     );
 
     // Act & Assert
@@ -118,10 +118,10 @@ fn agrees_with_a_roster_whose_rule_is_unconfigured_rather_than_skipped_is_false(
 #[test]
 fn new_keeps_each_rules_place_in_the_roster() {
     // Arrange
-    let unconfigured = UnconfiguredRule::new(
-        "spdx-matches-manifest",
-        "needs a `license` field in Cargo.toml",
-    );
+    let unconfigured = UnconfiguredRule {
+        name: "spdx-matches-manifest",
+        requirement: "needs a `license` field in Cargo.toml",
+    };
 
     // Act
     let roster = PackageRoster::new(

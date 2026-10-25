@@ -239,11 +239,11 @@ impl Rule for ArrangeActAssertRule {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(
-            self.name(),
-            "A test reads Arrange, then one or more Act/Assert pairs.",
-            "#[test]\nfn adds_two_numbers() {\n    assert_eq!(add(1, 1), 2);\n}",
-            "#[test]\nfn adds_two_numbers() {\n    // Arrange & Act & Assert\n    assert_eq!(add(1, 1), 2);\n}",
-        )
+        RuleExplanation {
+            name: self.name(),
+            summary: "A test reads Arrange, then one or more Act/Assert pairs.",
+            breaks: "#[test]\nfn adds_two_numbers() {\n    assert_eq!(add(1, 1), 2);\n}",
+            instead: "#[test]\nfn adds_two_numbers() {\n    // Arrange & Act & Assert\n    assert_eq!(add(1, 1), 2);\n}",
+        }
     }
 }

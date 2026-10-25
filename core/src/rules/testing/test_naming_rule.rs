@@ -121,11 +121,11 @@ impl Rule for TestNamingRule {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(
-            self.name(),
-            "A test is named <method>_<conditions>_<result>.",
-            "#[test]\nfn test_widget() {}",
-            "#[test]\nfn commit_without_a_quorum_returns_none() {}",
-        )
+        RuleExplanation {
+            name: self.name(),
+            summary: "A test is named <method>_<conditions>_<result>.",
+            breaks: "#[test]\nfn test_widget() {}",
+            instead: "#[test]\nfn commit_without_a_quorum_returns_none() {}",
+        }
     }
 }

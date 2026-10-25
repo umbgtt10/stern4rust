@@ -117,11 +117,11 @@ impl Rule for ImmutableReturnsRule {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(
-            self.name(),
-            "A function does not hand out a mutable reference.",
-            "impl Meter {\n    pub fn total_mut(&mut self) -> &mut u64 {\n        &mut self.total\n    }\n}",
-            "impl Meter {\n    pub fn add(&mut self, amount: u64) {\n        self.total += amount;\n    }\n}",
-        )
+        RuleExplanation {
+            name: self.name(),
+            summary: "A function does not hand out a mutable reference.",
+            breaks: "impl Meter {\n    pub fn total_mut(&mut self) -> &mut u64 {\n        &mut self.total\n    }\n}",
+            instead: "impl Meter {\n    pub fn add(&mut self, amount: u64) {\n        self.total += amount;\n    }\n}",
+        }
     }
 }

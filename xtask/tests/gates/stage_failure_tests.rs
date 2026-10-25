@@ -8,28 +8,12 @@ use xtask::gates::gate_failure::GateFailure;
 use xtask::gates::stage_failure::StageFailure;
 
 #[test]
-fn new_keeps_the_label_and_the_failure() {
-    // Arrange & Act
-    let failure = StageFailure::new(
-        String::from("House rules"),
-        GateFailure::Found(String::from("a rule was broken")),
-    );
-
-    // Assert
-    assert_eq!(failure.label(), "House rules");
-    assert_eq!(
-        failure.failure().to_string(),
-        GateFailure::Found(String::from("a rule was broken")).to_string()
-    );
-}
-
-#[test]
 fn to_string_puts_the_gates_label_before_its_failure() {
     // Arrange
-    let failure = StageFailure::new(
-        String::from("House rules"),
-        GateFailure::Found(String::from("a rule was broken")),
-    );
+    let failure = StageFailure {
+        label: String::from("House rules"),
+        failure: GateFailure::Found(String::from("a rule was broken")),
+    };
 
     // Act
     let text = failure.to_string();

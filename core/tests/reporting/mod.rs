@@ -11,8 +11,5 @@ pub mod offence_threshold_tests;
 pub mod output_format_tests;
 pub mod package_roster_tests;
 pub mod report_printer_tests;
-pub mod rule_explanation_tests;
 pub mod rule_listing_tests;
 pub mod run_outcome_tests;
-pub mod scan_totals_tests;
-pub mod unconfigured_rule_tests;

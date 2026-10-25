@@ -224,11 +224,11 @@ impl Rule for TestsLayoutRule {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(
-            self.name(),
-            "A tests folder is reached through one door -- tests/all_tests.rs -- and a mod.rs below it.",
-            "tests/all_tests.rs\nextern crate alloc;\npub mod widget_tests;",
-            "tests/all_tests.rs\npub mod widget_tests;",
-        )
+        RuleExplanation {
+            name: self.name(),
+            summary: "A tests folder is reached through one door -- tests/all_tests.rs -- and a mod.rs below it.",
+            breaks: "tests/all_tests.rs\nextern crate alloc;\npub mod widget_tests;",
+            instead: "tests/all_tests.rs\npub mod widget_tests;",
+        }
     }
 }

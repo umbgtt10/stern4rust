@@ -153,11 +153,11 @@ impl Rule for PublicOrPrivateRule {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(
-            self.name(),
-            "A function in an inherent impl is `pub` or private.",
-            "impl Store {\n    pub(crate) fn grow(&mut self) {\n        self.size += 1;\n    }\n}",
-            "impl Store {\n    fn grow(&mut self) {\n        self.size += 1;\n    }\n}",
-        )
+        RuleExplanation {
+            name: self.name(),
+            summary: "A function in an inherent impl is `pub` or private.",
+            breaks: "impl Store {\n    pub(crate) fn grow(&mut self) {\n        self.size += 1;\n    }\n}",
+            instead: "impl Store {\n    fn grow(&mut self) {\n        self.size += 1;\n    }\n}",
+        }
     }
 }

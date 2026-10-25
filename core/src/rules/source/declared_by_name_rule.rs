@@ -138,11 +138,11 @@ impl Rule for DeclaredByNameRule {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(
-            self.name(),
-            "A module is declared by name: `mod alpha;` reaches alpha.rs or alpha/mod.rs.",
-            "#[path = \"other.rs\"]\nmod alpha;",
-            "mod alpha;",
-        )
+        RuleExplanation {
+            name: self.name(),
+            summary: "A module is declared by name: `mod alpha;` reaches alpha.rs or alpha/mod.rs.",
+            breaks: "#[path = \"other.rs\"]\nmod alpha;",
+            instead: "mod alpha;",
+        }
     }
 }

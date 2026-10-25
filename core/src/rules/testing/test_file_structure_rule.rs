@@ -182,11 +182,11 @@ impl Rule for TestFileStructureRule {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(
-            self.name(),
-            "A test file reads header, imports, constants, helpers, tests -- each group alphabetical.",
-            "#[test]\nfn zeta() {}\n\nuse std::fs;\n\n#[test]\nfn alpha() {}",
-            "use std::fs;\n\n#[test]\nfn alpha() {}\n\n#[test]\nfn zeta() {}",
-        )
+        RuleExplanation {
+            name: self.name(),
+            summary: "A test file reads header, imports, constants, helpers, tests -- each group alphabetical.",
+            breaks: "#[test]\nfn zeta() {}\n\nuse std::fs;\n\n#[test]\nfn alpha() {}",
+            instead: "use std::fs;\n\n#[test]\nfn alpha() {}\n\n#[test]\nfn zeta() {}",
+        }
     }
 }

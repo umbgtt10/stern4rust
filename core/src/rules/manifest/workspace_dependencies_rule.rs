@@ -91,11 +91,11 @@ impl Rule for WorkspaceDependenciesRule {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(
-            self.name(),
-            "A workspace declares its dependencies once, in the root, and every member takes them from there.",
-            "serde = { version = \"1\" }   -- in a member manifest",
-            "serde.workspace = true",
-        )
+        RuleExplanation {
+            name: self.name(),
+            summary: "A workspace declares its dependencies once, in the root, and every member takes them from there.",
+            breaks: "serde = { version = \"1\" }   -- in a member manifest",
+            instead: "serde.workspace = true",
+        }
     }
 }

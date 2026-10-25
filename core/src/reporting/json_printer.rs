@@ -164,8 +164,8 @@ impl JsonPrinter {
                         .unconfigured()
                         .iter()
                         .map(|rule| json!({
-                            "rule": rule.name(),
-                            "requirement": rule.requirement(),
+                            "rule": rule.name,
+                            "requirement": rule.requirement,
                         }))
                         .collect::<Vec<_>>(),
                 })

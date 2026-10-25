@@ -132,12 +132,12 @@ impl Rule for InjectedTimeRule {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(
-            self.name(),
-            "Time reaches production code through a port.",
-            "pub fn expired(deadline: std::time::Instant) -> bool {\n    std::time::Instant::now() > deadline\n}",
-            "pub trait Clock {\n    fn now(&self) -> std::time::Instant;\n}\n\npub fn expired(clock: &dyn Clock, \
+        RuleExplanation {
+            name: self.name(),
+            summary: "Time reaches production code through a port.",
+            breaks: "pub fn expired(deadline: std::time::Instant) -> bool {\n    std::time::Instant::now() > deadline\n}",
+            instead: "pub trait Clock {\n    fn now(&self) -> std::time::Instant;\n}\n\npub fn expired(clock: &dyn Clock, \
              deadline: std::time::Instant) -> bool {\n    clock.now() > deadline\n}",
-        )
+        }
     }
 }

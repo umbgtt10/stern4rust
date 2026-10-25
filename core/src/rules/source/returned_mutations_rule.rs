@@ -162,11 +162,11 @@ impl Rule for ReturnedMutationsRule {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(
-            self.name(),
-            "A function returns its output; it does not write it through a `&mut` parameter.",
-            "fn scale(factor: u32, out: &mut Vec<u32>) {\n    out.push(factor);\n}",
-            "fn scale(factor: u32) -> Vec<u32> {\n    vec![factor]\n}",
-        )
+        RuleExplanation {
+            name: self.name(),
+            summary: "A function returns its output; it does not write it through a `&mut` parameter.",
+            breaks: "fn scale(factor: u32, out: &mut Vec<u32>) {\n    out.push(factor);\n}",
+            instead: "fn scale(factor: u32) -> Vec<u32> {\n    vec![factor]\n}",
+        }
     }
 }

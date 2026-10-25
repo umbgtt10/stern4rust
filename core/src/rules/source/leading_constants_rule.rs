@@ -113,11 +113,11 @@ impl Rule for LeadingConstantsRule {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(
-            self.name(),
-            "A source file reads header, imports, constants, then everything else.",
-            "use std::fmt;\n\npub struct Widget;\n\nconst LIMIT: u8 = 3;",
-            "use std::fmt;\n\nconst LIMIT: u8 = 3;\n\npub struct Widget;",
-        )
+        RuleExplanation {
+            name: self.name(),
+            summary: "A source file reads header, imports, constants, then everything else.",
+            breaks: "use std::fmt;\n\npub struct Widget;\n\nconst LIMIT: u8 = 3;",
+            instead: "use std::fmt;\n\nconst LIMIT: u8 = 3;\n\npub struct Widget;",
+        }
     }
 }

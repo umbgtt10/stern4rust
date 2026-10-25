@@ -77,11 +77,11 @@ impl Rule for ImportedPathsRule {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(
-            self.name(),
-            "A function is called through a name this file imported, not through a path.",
-            "let parsed = syn::parse_file(text);",
-            "use syn::parse_file;\n\nlet parsed = parse_file(text);",
-        )
+        RuleExplanation {
+            name: self.name(),
+            summary: "A function is called through a name this file imported, not through a path.",
+            breaks: "let parsed = syn::parse_file(text);",
+            instead: "use syn::parse_file;\n\nlet parsed = parse_file(text);",
+        }
     }
 }

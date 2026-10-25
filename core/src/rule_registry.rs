@@ -60,7 +60,7 @@ impl RuleRegistry {
     pub fn from_config(config: &Config) -> Self {
         let rules = Self::all(config)
             .into_iter()
-            .filter(|rule| rule.is_configured() && config.selection().includes(rule.name()))
+            .filter(|rule| rule.is_configured() && config.selection.includes(rule.name()))
             .collect();
         Self { rules }
     }
@@ -127,10 +127,11 @@ impl RuleRegistry {
         Self::all(config)
             .iter()
             .filter(|rule| {
-                config.selection().includes(rule.name()) && !applied.contains(&rule.name())
+                config.selection.includes(rule.name()) && !applied.contains(&rule.name())
             })
-            .map(|rule| {
-                UnconfiguredRule::new(rule.name(), rule.requirement().unwrap_or("not configured"))
+            .map(|rule| UnconfiguredRule {
+                name: rule.name(),
+                requirement: rule.requirement().unwrap_or("not configured"),
             })
             .collect()
     }
@@ -142,7 +143,7 @@ impl RuleRegistry {
     pub fn unconfigured_names(&self, config: &Config) -> Vec<&'static str> {
         self.unconfigured(config)
             .into_iter()
-            .map(|rule| rule.name())
+            .map(|rule| rule.name)
             .collect()
     }
 
@@ -161,12 +162,12 @@ impl RuleRegistry {
             Box::new(DeclaredByNameRule::new()),
             Box::new(DirectoryFileCountRule::new(
                 config
-                    .max_files_per_directory()
+                    .max_files_per_directory
                     .unwrap_or(DirectoryFileCountRule::DEFAULT_LIMIT),
             )),
             Box::new(DirectorySubfolderCountRule::new(
                 config
-                    .max_subfolders_per_directory()
+                    .max_subfolders_per_directory
                     .unwrap_or(DirectorySubfolderCountRule::DEFAULT_LIMIT),
             )),
             Box::new(DistinctTupleElementsRule::new()),
@@ -186,10 +187,10 @@ impl RuleRegistry {
             Box::new(RecordsAndObjectsRule::new()),
             Box::new(RegistryCompletenessRule::new()),
             Box::new(ReturnedMutationsRule::new()),
-            Box::new(SharedConstantsRule::new(config.name_readers().clone())),
+            Box::new(SharedConstantsRule::new(config.name_readers.clone())),
             Box::new(SingleImplementedTypeRule::new()),
             Box::new(SpdxMatchesManifestRule::new(
-                config.manifest_license().map(str::to_string),
+                config.manifest_license.as_deref().map(str::to_string),
             )),
             Box::new(TestFileNamePostfixRule::new()),
             Box::new(TestFileStructureRule::new()),
@@ -201,10 +202,11 @@ impl RuleRegistry {
             Box::new(TypedErrorsRule::new()),
             Box::new(WorkspaceDependenciesRule::new(
                 config
-                    .workspace_dependencies()
+                    .workspace_dependencies
+                    .as_deref()
                     .map(<[ManifestDependency]>::to_vec),
             )),
-            Box::new(HeaderRule::new(config.expected_header().to_vec())),
+            Box::new(HeaderRule::new(config.expected_header.to_vec())),
         ]
     }
 }

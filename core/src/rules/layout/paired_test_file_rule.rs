@@ -132,11 +132,11 @@ impl Rule for PairedTestFileRule {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(
-            self.name(),
-            "A <X>_tests.rs names the source file it exercises, and that file exists.",
-            "tests/widget_tests.rs   -- with no src/widget.rs",
-            "tests/widget_tests.rs   -- beside src/widget.rs",
-        )
+        RuleExplanation {
+            name: self.name(),
+            summary: "A <X>_tests.rs names the source file it exercises, and that file exists.",
+            breaks: "tests/widget_tests.rs   -- with no src/widget.rs",
+            instead: "tests/widget_tests.rs   -- beside src/widget.rs",
+        }
     }
 }

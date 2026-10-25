@@ -15,7 +15,6 @@ pub mod public_entry_point_tests;
 pub mod qualified_call_tests;
 pub mod registry_item_tests;
 pub mod registry_policy_tests;
-pub mod repeated_tuple_tests;
 pub mod restricted_method_tests;
 pub mod test_marker_tests;
 pub mod time_call_kind_tests;

@@ -92,12 +92,12 @@ impl Rule for TypedErrorsRule {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(
-            self.name(),
-            "A library's public functions fail with an error type of their own.",
-            "pub fn read(path: &str) -> Result<u8, String> {\n    Err(format!(\"cannot read {path}\"))\n}",
-            "pub enum ReadError {\n    Missing,\n}\n\npub fn read(path: &str) -> Result<u8, ReadError> {\n    \
+        RuleExplanation {
+            name: self.name(),
+            summary: "A library's public functions fail with an error type of their own.",
+            breaks: "pub fn read(path: &str) -> Result<u8, String> {\n    Err(format!(\"cannot read {path}\"))\n}",
+            instead: "pub enum ReadError {\n    Missing,\n}\n\npub fn read(path: &str) -> Result<u8, ReadError> {\n    \
              Err(ReadError::Missing)\n}",
-        )
+        }
     }
 }

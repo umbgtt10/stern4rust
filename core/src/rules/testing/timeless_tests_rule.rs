@@ -177,13 +177,13 @@ impl Rule for TimelessTestsRule {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(
-            self.name(),
-            "A test reads no clock and waits on no timer.",
-            "#[test]\nfn finishes_in_time() {\n    let start = std::time::Instant::now();\n    run();\n    \
+        RuleExplanation {
+            name: self.name(),
+            summary: "A test reads no clock and waits on no timer.",
+            breaks: "#[test]\nfn finishes_in_time() {\n    let start = std::time::Instant::now();\n    run();\n    \
              assert!(start.elapsed() < LIMIT);\n}\n",
-            "#[test]\nfn finishes() {\n    let (sender, receiver) = std::sync::mpsc::channel();\n    run(sender);\n    \
+            instead: "#[test]\nfn finishes() {\n    let (sender, receiver) = std::sync::mpsc::channel();\n    run(sender);\n    \
              assert!(receiver.recv().is_ok());\n}\n",
-        )
+        }
     }
 }

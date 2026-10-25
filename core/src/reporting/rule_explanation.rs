@@ -14,40 +14,8 @@
 // question a reader arrives with is "what does this look like", and a sentence
 // answering it is longer and less exact than two lines of Rust.
 pub struct RuleExplanation {
-    name: &'static str,
-    summary: &'static str,
-    breaks: &'static str,
-    instead: &'static str,
-}
-
-impl RuleExplanation {
-    pub fn new(
-        name: &'static str,
-        summary: &'static str,
-        breaks: &'static str,
-        instead: &'static str,
-    ) -> Self {
-        Self {
-            name,
-            summary,
-            breaks,
-            instead,
-        }
-    }
-
-    pub fn breaks(&self) -> &'static str {
-        self.breaks
-    }
-
-    pub fn instead(&self) -> &'static str {
-        self.instead
-    }
-
-    pub fn name(&self) -> &'static str {
-        self.name
-    }
-
-    pub fn summary(&self) -> &'static str {
-        self.summary
-    }
+    pub name: &'static str,
+    pub summary: &'static str,
+    pub breaks: &'static str,
+    pub instead: &'static str,
 }

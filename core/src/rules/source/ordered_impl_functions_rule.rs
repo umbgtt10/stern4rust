@@ -99,13 +99,13 @@ impl Rule for OrderedImplFunctionsRule {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(
-            self.name(),
-            "An inherent impl lists constructors, then `pub` functions, then the rest, each alphabetical.",
-            "impl Store {\n    pub fn len(&self) -> usize {\n        0\n    }\n\n    pub fn new() -> Self {\n        \
+        RuleExplanation {
+            name: self.name(),
+            summary: "An inherent impl lists constructors, then `pub` functions, then the rest, each alphabetical.",
+            breaks: "impl Store {\n    pub fn len(&self) -> usize {\n        0\n    }\n\n    pub fn new() -> Self {\n        \
              Self\n    }\n}",
-            "impl Store {\n    pub fn new() -> Self {\n        Self\n    }\n\n    pub fn len(&self) -> usize {\n        \
+            instead: "impl Store {\n    pub fn new() -> Self {\n        Self\n    }\n\n    pub fn len(&self) -> usize {\n        \
              0\n    }\n}",
-        )
+        }
     }
 }

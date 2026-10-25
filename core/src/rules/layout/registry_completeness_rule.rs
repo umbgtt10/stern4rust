@@ -125,11 +125,11 @@ impl Rule for RegistryCompletenessRule {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(
-            self.name(),
-            "A registry declares every file beside it, so nothing in the tree goes uncompiled.",
-            "src/alpha.rs and src/beta.rs, with mod.rs naming only alpha",
-            "pub mod alpha;\npub mod beta;",
-        )
+        RuleExplanation {
+            name: self.name(),
+            summary: "A registry declares every file beside it, so nothing in the tree goes uncompiled.",
+            breaks: "src/alpha.rs and src/beta.rs, with mod.rs naming only alpha",
+            instead: "pub mod alpha;\npub mod beta;",
+        }
     }
 }

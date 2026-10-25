@@ -285,8 +285,8 @@ fn explanation_breaks_the_rule_it_explains() {
     let explanation = rule.explanation();
 
     // Act
-    let broken = rule.check(&SourceFile::new("src/example.rs", explanation.breaks()));
-    let mended = rule.check(&SourceFile::new("src/example.rs", explanation.instead()));
+    let broken = rule.check(&SourceFile::new("src/example.rs", explanation.breaks));
+    let mended = rule.check(&SourceFile::new("src/example.rs", explanation.instead));
 
     // Assert
     assert_eq!(broken.len(), 1, "{broken:?}");

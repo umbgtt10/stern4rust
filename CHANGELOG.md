@@ -159,8 +159,9 @@ where `test-file-structure` is skipped or not selected.
 
   A census of the sixteen repositories of the family, 2026-10-24, counts 1,829
   structs: 328 records and 1,501 objects; 120 records with non-`pub` fields,
-  104 getter-only and 96 objects exposing fields. This repository has 8
-  getter-only records, baselined until their accessors go.
+  104 getter-only and 96 objects exposing fields. This repository's 8
+  records lost their 33 getters, 7 constructors and 16 `with_` steps, and the
+  24 tests that called nothing else.
 - **`injected-time`: time reaches production code through a port.** In the
   library target, a function reading a clock, waiting on a timer or racing one
   -- `timeless-tests`' calls, randomness aside -- is reported once, at its name,
@@ -203,16 +204,17 @@ where `test-file-structure` is skipped or not selected.
   the borrow it keeps; the writes come later, through `&mut self`, which the
   rule never counted. Any other use of a `&mut` parameter is still reported.
   [R022](docs/ADRs/R022-ADR-ReturnedMutationsRule.md)
-- **The library's types keep their fields private**, as `private-fields`
-  asked before `records-and-objects` replaced it; the 8 of them that are
-  records, getter-only by the new rule, are baselined until their accessors go.
-  Every field of the 36 structs that had a public one -- `Offence`,
-  `Config`, `Args`, `ConfigFile`, the finding models and the rest -- is read
-  through a getter named after it: a string as `&str`, a vector as a slice, a
-  `Copy` value by value. `Config` is built over its `Default` with a
-  `with_<field>` step per field, `PackageConfig` with `with_header_file` and
-  `with_skip`; `Offence` gains `with_file`, and the models built by literal gain
-  constructors. `PackageRoster` holds `UnconfiguredRule` values instead of
+- **The library's objects keep their fields private and its records keep
+  theirs open**, as `records-and-objects` asks. Every field of an object that
+  had a public one -- `Offence`, `Args`, `ConfigFile`, the finding models and
+  the rest -- is read through a getter named after it: a string as `&str`, a
+  vector as a slice, a `Copy` value by value. `PackageConfig` is built with
+  `with_header_file` and `with_skip`; `Offence` gains `with_file`, and the
+  models built by literal gain constructors. The records -- `Config`,
+  `RuleExplanation`, `ScanTotals`, `UnconfiguredRule`, `OffenceOrder` and
+  `RepeatedTuple` -- have `pub` fields and no accessors, and are built by
+  literal, `Config` over its `Default`: `RuleExplanation::new` and
+  `ScanTotals::new` are gone. `PackageRoster` holds `UnconfiguredRule` values instead of
   `(String, String)` pairs, and `ManifestDependency::in_manifest` takes
   `Option<&[Self]>`. The binary's behaviour is unchanged.
 - `UnitTestFinder::is_cfg_test` and `is_test` are public, so `timeless-tests`

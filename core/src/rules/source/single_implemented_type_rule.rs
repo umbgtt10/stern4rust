@@ -113,11 +113,11 @@ impl Rule for SingleImplementedTypeRule {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(
-            self.name(),
-            "A source file has one subject: at most one type that carries behaviour.",
-            "pub struct Widget;\nimpl Widget { }\n\npub struct Gadget;\nimpl Gadget { }",
-            "// widget.rs\npub struct Widget;\nimpl Widget { }\n\n// gadget.rs\npub struct Gadget;\nimpl Gadget { }",
-        )
+        RuleExplanation {
+            name: self.name(),
+            summary: "A source file has one subject: at most one type that carries behaviour.",
+            breaks: "pub struct Widget;\nimpl Widget { }\n\npub struct Gadget;\nimpl Gadget { }",
+            instead: "// widget.rs\npub struct Widget;\nimpl Widget { }\n\n// gadget.rs\npub struct Gadget;\nimpl Gadget { }",
+        }
     }
 }

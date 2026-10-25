@@ -122,11 +122,11 @@ impl Rule for PureTraitsRule {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(
-            self.name(),
-            "A trait declares; it does not implement.",
-            "trait Store {\n    fn commit(&self) -> bool {\n        true\n    }\n}",
-            "trait Store {\n    fn commit(&self) -> bool;\n}",
-        )
+        RuleExplanation {
+            name: self.name(),
+            summary: "A trait declares; it does not implement.",
+            breaks: "trait Store {\n    fn commit(&self) -> bool {\n        true\n    }\n}",
+            instead: "trait Store {\n    fn commit(&self) -> bool;\n}",
+        }
     }
 }

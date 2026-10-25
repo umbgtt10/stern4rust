@@ -292,8 +292,8 @@ fn explanation_breaks_the_rule_it_explains() {
     let explanation = InjectedTimeRule::new().explanation();
 
     // Act
-    let broken = check(&[("src/lib.rs", explanation.breaks())]);
-    let mended = check(&[("src/lib.rs", explanation.instead())]);
+    let broken = check(&[("src/lib.rs", explanation.breaks)]);
+    let mended = check(&[("src/lib.rs", explanation.instead)]);
 
     // Assert
     assert_eq!(broken.len(), 1, "{broken:?}");

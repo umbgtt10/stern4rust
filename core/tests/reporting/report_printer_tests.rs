@@ -165,10 +165,10 @@ fn render_of_a_package_whose_rule_could_not_run_names_the_requirement() {
             "fixture",
             vec!["header".to_string()],
             Vec::new(),
-            vec![UnconfiguredRule::new(
-                "spdx-matches-manifest",
-                "needs a `license` field in Cargo.toml",
-            )],
+            vec![UnconfiguredRule {
+                name: "spdx-matches-manifest",
+                requirement: "needs a `license` field in Cargo.toml",
+            }],
         ),
     ]);
 

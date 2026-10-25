@@ -82,11 +82,11 @@ impl Rule for ReadableSourceRule {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(
-            self.name(),
-            "Every .rs file can be read and parsed.",
-            "fn broken( {",
-            "fn broken() {}",
-        )
+        RuleExplanation {
+            name: self.name(),
+            summary: "Every .rs file can be read and parsed.",
+            breaks: "fn broken( {",
+            instead: "fn broken() {}",
+        }
     }
 }

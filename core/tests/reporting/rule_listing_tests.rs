@@ -16,12 +16,12 @@ use stern4rust::reporting::rule_explanation::RuleExplanation;
 use stern4rust::reporting::rule_listing::RuleListing;
 
 fn explanations() -> [RuleExplanation; 1] {
-    [RuleExplanation::new(
-        "pure-traits",
-        "A trait declares; it does not implement.",
-        "trait Store {\n    fn commit(&self) -> bool {\n        true\n    }\n}",
-        "trait Store {\n    fn commit(&self) -> bool;\n}",
-    )]
+    [RuleExplanation {
+        name: "pure-traits",
+        summary: "A trait declares; it does not implement.",
+        breaks: "trait Store {\n    fn commit(&self) -> bool {\n        true\n    }\n}",
+        instead: "trait Store {\n    fn commit(&self) -> bool;\n}",
+    }]
 }
 
 // Same four fields the table shows, named rather than laid out, so an agent

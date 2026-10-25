@@ -49,12 +49,11 @@ impl DistinctTupleElementsRule {
             Self::NAME,
             format!(
                 "`{function}` returns `{}`, whose `{}`s only their position tells apart",
-                found.tuple(),
-                found.element()
+                found.tuple, found.element
             ),
             format!(
                 "return a struct whose fields say which `{}` is which",
-                found.element()
+                found.element
             ),
         )
         .with_subject(&function)
@@ -95,12 +94,12 @@ impl Rule for DistinctTupleElementsRule {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(
-            self.name(),
-            "A tuple in a return type repeats no element type.",
-            "fn bounds(values: &[u64]) -> (u64, u64) {\n    (values[0], values[1])\n}",
-            "struct Bounds {\n    low: u64,\n    high: u64,\n}\n\nfn bounds(values: &[u64]) -> Bounds {\n    \
+        RuleExplanation {
+            name: self.name(),
+            summary: "A tuple in a return type repeats no element type.",
+            breaks: "fn bounds(values: &[u64]) -> (u64, u64) {\n    (values[0], values[1])\n}",
+            instead: "struct Bounds {\n    low: u64,\n    high: u64,\n}\n\nfn bounds(values: &[u64]) -> Bounds {\n    \
              Bounds { low: values[0], high: values[1] }\n}",
-        )
+        }
     }
 }

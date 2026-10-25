@@ -27,7 +27,7 @@ impl<'a> Stage2<'a> {
             println!("{label}...");
 
             if let Err(failure) = gate.run() {
-                return Err(StageFailure::new(label, failure));
+                return Err(StageFailure { label, failure });
             }
         }
 

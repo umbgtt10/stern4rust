@@ -96,11 +96,11 @@ impl Rule for ModuleRegistryRule {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(
-            self.name(),
-            "A lib.rs or mod.rs outside tests/ lists the modules beneath it and nothing else.",
-            "pub mod alpha;\n\npub struct Shared;",
-            "pub mod alpha;\npub mod shared;",
-        )
+        RuleExplanation {
+            name: self.name(),
+            summary: "A lib.rs or mod.rs outside tests/ lists the modules beneath it and nothing else.",
+            breaks: "pub mod alpha;\n\npub struct Shared;",
+            instead: "pub mod alpha;\npub mod shared;",
+        }
     }
 }

@@ -120,11 +120,11 @@ impl Rule for TestedPublicApiRule {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(
-            self.name(),
-            "Every public entry point is called by at least one test.",
-            "pub fn commit(&self) -> bool   -- no test calls it",
-            "#[test]\nfn commit_without_a_quorum_returns_false() {\n    assert!(!store.commit());\n}",
-        )
+        RuleExplanation {
+            name: self.name(),
+            summary: "Every public entry point is called by at least one test.",
+            breaks: "pub fn commit(&self) -> bool   -- no test calls it",
+            instead: "#[test]\nfn commit_without_a_quorum_returns_false() {\n    assert!(!store.commit());\n}",
+        }
     }
 }

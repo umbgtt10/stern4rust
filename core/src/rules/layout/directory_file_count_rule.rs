@@ -126,11 +126,11 @@ impl Rule for DirectoryFileCountRule {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(
-            self.name(),
-            "A directory holds a number of files a reader can hold in their head.",
-            "src/parsing/  -- 24 files",
-            "src/parsing/  -- 12 files\nsrc/parsing/naming/  -- 12 files",
-        )
+        RuleExplanation {
+            name: self.name(),
+            summary: "A directory holds a number of files a reader can hold in their head.",
+            breaks: "src/parsing/  -- 24 files",
+            instead: "src/parsing/  -- 12 files\nsrc/parsing/naming/  -- 12 files",
+        }
     }
 }

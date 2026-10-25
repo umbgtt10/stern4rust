@@ -276,11 +276,11 @@ impl Rule for RecordsAndObjectsRule {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(
-            self.name(),
-            "A record's fields are public and it has no accessors; an object's fields are private.",
-            "pub struct Term {\n    number: u64,\n}\n\nimpl Term {\n    pub fn number(&self) -> u64 {\n        self.number\n    }\n}",
-            "pub struct Term {\n    pub number: u64,\n}",
-        )
+        RuleExplanation {
+            name: self.name(),
+            summary: "A record's fields are public and it has no accessors; an object's fields are private.",
+            breaks: "pub struct Term {\n    number: u64,\n}\n\nimpl Term {\n    pub fn number(&self) -> u64 {\n        self.number\n    }\n}",
+            instead: "pub struct Term {\n    pub number: u64,\n}",
+        }
     }
 }

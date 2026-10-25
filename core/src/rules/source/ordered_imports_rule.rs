@@ -151,11 +151,11 @@ impl Rule for OrderedImportsRule {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(
-            self.name(),
-            "Imports in src/ run in alphabetic order.",
-            "use zzz::Zed;\nuse aaa::Alpha;",
-            "use aaa::Alpha;\nuse zzz::Zed;",
-        )
+        RuleExplanation {
+            name: self.name(),
+            summary: "Imports in src/ run in alphabetic order.",
+            breaks: "use zzz::Zed;\nuse aaa::Alpha;",
+            instead: "use aaa::Alpha;\nuse zzz::Zed;",
+        }
     }
 }

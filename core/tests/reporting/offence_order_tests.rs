@@ -9,21 +9,18 @@
 use stern4rust::reporting::offence_order::OffenceOrder;
 
 #[test]
-fn new_keeps_the_file_the_line_and_the_rule() {
-    // Arrange & Act
-    let order = OffenceOrder::new("src/a.rs", 3, "header");
-
-    // Assert
-    assert_eq!(order.file(), "src/a.rs");
-    assert_eq!(order.line(), 3);
-    assert_eq!(order.rule(), "header");
-}
-
-#[test]
-fn new_orders_by_file_before_line() {
+fn lt_orders_by_file_before_line() {
     // Arrange
-    let earlier_file = OffenceOrder::new("src/a.rs", 9, "header");
-    let later_file = OffenceOrder::new("src/b.rs", 1, "header");
+    let earlier_file = OffenceOrder {
+        file: "src/a.rs",
+        line: 9,
+        rule: "header",
+    };
+    let later_file = OffenceOrder {
+        file: "src/b.rs",
+        line: 1,
+        rule: "header",
+    };
 
     // Act
     let ordered = earlier_file < later_file;
@@ -33,10 +30,18 @@ fn new_orders_by_file_before_line() {
 }
 
 #[test]
-fn new_orders_by_rule_when_the_file_and_line_agree() {
+fn lt_orders_by_rule_when_the_file_and_line_agree() {
     // Arrange
-    let first = OffenceOrder::new("src/a.rs", 3, "header");
-    let second = OffenceOrder::new("src/a.rs", 3, "imported-paths");
+    let first = OffenceOrder {
+        file: "src/a.rs",
+        line: 3,
+        rule: "header",
+    };
+    let second = OffenceOrder {
+        file: "src/a.rs",
+        line: 3,
+        rule: "imported-paths",
+    };
 
     // Act
     let ordered = first < second;

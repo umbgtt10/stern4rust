@@ -35,9 +35,9 @@ impl RepeatedTupleFinder {
             .enumerate()
             .find(|(at, element)| elements[..*at].contains(element))
             .map(|(_, element)| element.clone())?;
-        Some(RepeatedTuple::new(
-            format!("({})", elements.join(", ")),
+        Some(RepeatedTuple {
+            tuple: format!("({})", elements.join(", ")),
             element,
-        ))
+        })
     }
 }

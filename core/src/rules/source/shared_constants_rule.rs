@@ -194,11 +194,11 @@ impl Rule for SharedConstantsRule {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(
-            self.name(),
-            "A module-level constant is private, or public and shared from a constants file.",
-            "pub const LIMIT: u8 = 3;\n\npub struct Pool;",
-            "const LIMIT: u8 = 3;\n\npub struct Pool;",
-        )
+        RuleExplanation {
+            name: self.name(),
+            summary: "A module-level constant is private, or public and shared from a constants file.",
+            breaks: "pub const LIMIT: u8 = 3;\n\npub struct Pool;",
+            instead: "const LIMIT: u8 = 3;\n\npub struct Pool;",
+        }
     }
 }

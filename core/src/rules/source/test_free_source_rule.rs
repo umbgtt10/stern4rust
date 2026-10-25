@@ -83,11 +83,11 @@ impl Rule for TestFreeSourceRule {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(
-            self.name(),
-            "Tests live in tests/, and the production source tree carries none of them.",
-            "// src/widget.rs\n#[test]\nfn widget_works() {}",
-            "// tests/widget_tests.rs\n#[test]\nfn widget_works() {}",
-        )
+        RuleExplanation {
+            name: self.name(),
+            summary: "Tests live in tests/, and the production source tree carries none of them.",
+            breaks: "// src/widget.rs\n#[test]\nfn widget_works() {}",
+            instead: "// tests/widget_tests.rs\n#[test]\nfn widget_works() {}",
+        }
     }
 }

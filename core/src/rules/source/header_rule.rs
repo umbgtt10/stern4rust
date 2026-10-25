@@ -133,14 +133,14 @@ impl Rule for HeaderRule {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(
-            self.name(),
-            "Every .rs file opens with the repository's header.",
-            "pub struct Widget;",
-            "// Copyright 2026 ...
+        RuleExplanation {
+            name: self.name(),
+            summary: "Every .rs file opens with the repository's header.",
+            breaks: "pub struct Widget;",
+            instead: "// Copyright 2026 ...
 // SPDX-License-Identifier: MIT
 
 pub struct Widget;",
-        )
+        }
     }
 }

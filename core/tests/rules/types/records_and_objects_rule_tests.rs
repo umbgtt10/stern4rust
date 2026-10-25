@@ -403,9 +403,9 @@ fn explanation_shows_a_getter_only_record_and_the_record_it_should_be() {
     let explanation = RecordsAndObjectsRule::new().explanation();
 
     // Assert
-    assert_eq!(explanation.name(), RULE);
-    assert!(explanation.breaks().contains("pub fn number(&self) -> u64"));
-    assert!(explanation.instead().contains("pub number: u64"));
+    assert_eq!(explanation.name, RULE);
+    assert!(explanation.breaks.contains("pub fn number(&self) -> u64"));
+    assert!(explanation.instead.contains("pub number: u64"));
 }
 
 #[test]

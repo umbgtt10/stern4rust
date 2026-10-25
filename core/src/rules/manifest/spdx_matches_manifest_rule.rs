@@ -132,11 +132,11 @@ impl Rule for SpdxMatchesManifestRule {
     }
 
     fn explanation(&self) -> RuleExplanation {
-        RuleExplanation::new(
-            self.name(),
-            "Every file's SPDX identifier says what the manifest says.",
-            "// SPDX-License-Identifier: Apache-2.0   -- manifest says MIT",
-            "// SPDX-License-Identifier: MIT",
-        )
+        RuleExplanation {
+            name: self.name(),
+            summary: "Every file's SPDX identifier says what the manifest says.",
+            breaks: "// SPDX-License-Identifier: Apache-2.0   -- manifest says MIT",
+            instead: "// SPDX-License-Identifier: MIT",
+        }
     }
 }
