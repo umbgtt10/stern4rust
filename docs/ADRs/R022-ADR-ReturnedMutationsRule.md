@@ -1,6 +1,6 @@
 # R022-ADR-ReturnedMutationsRule
 
-- **Status:** Accepted
+- **Status:** Accepted; amended 2026-10-25 (below)
 - **Date:** 2026-10-09
 
 ## Context
@@ -167,6 +167,29 @@ four failures.
 stage 2 both run the tool against this crate and require zero offences, so a
 `&mut` parameter cannot enter `src/` here without failing the build that
 introduces it.
+
+## Amendment, 2026-10-25: a plain constructor storing a `&mut` is not reported
+
+The decision reports a constructor that stores the borrow -- *"the type can own the value instead, or the mutation
+can become a method on the type it borrows"*. [R035](R035-ADR-RecordsAndObjectsRule.md) removes the restricted fields
+that let such a type be built by a literal elsewhere in its crate, and one case shows neither correction fits:
+`etheram-raft`'s `PeerMessageRouter`, a component of its protocol, holds `&'a mut RaftProtocol` for the length of one
+message. Its `pub(crate)` fields go private, so it needs a constructor, and the constructor takes the `&mut`. It
+cannot own the protocol -- it hands it back the moment the message is routed -- and folding `route` back into
+`RaftProtocol` would undo the split that made the router a component: 222 lines and sixteen tests of its own, the
+protocol growing from 323 lines to about 545.
+
+**A plain constructor -- R035's definition, its whole body `Self { params }` -- whose `&mut` parameter is stored
+unchanged in a field is not reported.** Any other use of a `&mut` parameter, in a constructor or anywhere else, still
+is. A plain constructor writes nothing through its argument; the writes come later, through `&mut self`, which this
+rule has never counted.
+
+`check_a_constructor_storing_a_mut_borrow_reports_it` becomes
+`check_a_plain_constructor_storing_a_mut_borrow_reports_nothing` -- the decision of 2026-10-09 reversed, with the
+owner's agreement on 2026-10-25 -- and a new test keeps a constructor that does more than store its `&mut` reported.
+
+**Newly not caught:** an adapter whose writes through the stored borrow are its real output. Those writes live in
+the `&mut self` methods it offers, where a reader looks for them.
 
 ## Related
 

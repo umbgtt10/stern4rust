@@ -1,6 +1,6 @@
 # R007-ADR-SingleImplementedTypeRule
 
-- **Status:** Accepted
+- **Status:** Accepted; amended 2026-10-25 (below)
 - **Date:** 2026-08-19
 
 ## Context
@@ -170,6 +170,18 @@ fingerprint, so no baseline changes.
 R023 also closes the gap above: a file named after a data type, with its
 behaviour in a companion, is named after none of the types it implements. Since
 0.16.0.
+
+## Amendment, 2026-10-25: a subject is an object
+
+**A subject is a struct or an enum declared in the file that has behaviour**, by
+[R035](R035-ADR-RecordsAndObjectsRule.md)'s definition: an inherent method other than a getter, a plain constructor or
+a `with_` step, or an impl of a trait outside the value traits. A record or a data enum whose only impls are value
+traits -- `Display`, `From`, `Default` and the rest of R035's list -- is not a subject, however many of them it has.
+
+[R037](R037-ADR-RecordHomeRule.md) puts a record with one consumer inside that consumer's file. With a `Display` impl,
+the record would be the file's second implemented type under the reading above, and the two rules would contradict
+each other. The classifier is R035's, shared, so every rule reads a type the same way. The correction and the
+choice of subject -- the type the file is named after -- are unchanged.
 
 ## Related
 

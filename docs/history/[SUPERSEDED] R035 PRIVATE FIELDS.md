@@ -1,3 +1,9 @@
+> **[SUPERSEDED] 2026-10-25.** The first decision behind R035, kept verbatim. Built on 2026-10-23
+> (`7bb2007`..`1be25a3` this repository's structs, `a85d7ae` the rule) and never released. Replaced, under the same
+> number, by [`records-and-objects`](../ADRs/R035-ADR-RecordsAndObjectsRule.md): plain data has public fields and no
+> accessors, and only types with behaviour keep their fields private. Links below are as they stood, relative to
+> `docs/ADRs/`.
+
 # R035-ADR-PrivateFieldsRule
 
 - **Status:** Accepted

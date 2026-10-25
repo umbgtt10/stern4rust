@@ -151,7 +151,7 @@ where `test-file-structure` is skipped or not selected.
   constructor, or past seven fields a `Default` and `with_<field>` steps.
   `pub(self)`, enum variants' fields, `tests/`, `benches/` and `#[cfg(test)]`
   code are left alone. The rule is the first in `rules/types/`.
-  [R035](docs/ADRs/R035-ADR-PrivateFieldsRule.md)
+  [R035](<docs/history/[SUPERSEDED] R035 PRIVATE FIELDS.md>)
 
   The rule reports 1,793 fields in 421 structs across the sixteen repositories
   of the family, 547 of them in 127 structs of `etheram-ibft`. This repository

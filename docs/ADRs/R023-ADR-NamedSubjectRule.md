@@ -1,6 +1,6 @@
 # R023-ADR-NamedSubjectRule
 
-- **Status:** Accepted
+- **Status:** Accepted; amended 2026-10-25 (below)
 - **Date:** 2026-10-19
 
 ## Context
@@ -157,6 +157,14 @@ pin the match, the word split and the declarations on their own.
 
 `tests/runner_tests.rs::run_against_this_crate_with_its_own_header_is_clean` and
 stage 2 both run the tool against this crate and require zero offences.
+
+## Amendment, 2026-10-25: the candidates are R007's subjects
+
+The candidates follow [R007](R007-ADR-SingleImplementedTypeRule.md)'s amended reading: the objects the file
+implements. A record or a data enum with value-trait impls is no longer an implemented-type candidate but a declared
+one, so a file holding only a `pub` record -- the file of its own that [R037](R037-ADR-RecordHomeRule.md) gives a
+shared record -- is named after the record, and a file whose object holds private records is named after the object.
+Nothing else changes.
 
 ## Related
 

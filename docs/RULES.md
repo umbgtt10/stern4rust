@@ -22,7 +22,7 @@ that breaks it and the same scrap put right — and that field is required too.
 | `directory-subfolder-count` | [R011](ADRs/R011-ADR-DirectorySubfolderCountRule.md) | optional, default 5 |
 | `imported-paths` | [R008](ADRs/R008-ADR-ImportedPathsRule.md) | no |
 | `injected-time` | [R034](ADRs/R034-ADR-InjectedTimeRule.md) | no |
-| `private-fields` | [R035](ADRs/R035-ADR-PrivateFieldsRule.md) | no |
+| `private-fields` | [R035](<history/[SUPERSEDED] R035 PRIVATE FIELDS.md>) | no |
 | `registry-completeness` | [R009](ADRs/R009-ADR-RegistryCompletenessRule.md) | no |
 | `paired-test-file` | [R016](ADRs/R016-ADR-PairedTestFileRule.md) | no |
 | `test-file-name-postfix` | [R015](ADRs/R015-ADR-TestFileNamePostfixRule.md) | no |

@@ -836,7 +836,7 @@ the fields -- a newtype's included. Reading goes through a getter, building
 through a constructor, or a `Default` and `with_<field>` steps past seven
 fields; there are no setters. `tests/` and `#[cfg(test)]` code are exempt, and
 enum variants' fields are the language's.
-[R035](docs/ADRs/R035-ADR-PrivateFieldsRule.md)
+[R035](<docs/history/[SUPERSEDED] R035 PRIVATE FIELDS.md>)
 
 ## Output
 

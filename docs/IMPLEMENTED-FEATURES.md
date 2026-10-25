@@ -101,7 +101,7 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
   this repository's 36 structs were made private first, each read through a
   getter, `Config` built over its `Default` with a `with_` step per field. On by
   default.
-  [R035](ADRs/R035-ADR-PrivateFieldsRule.md)
+  [R035](<history/[SUPERSEDED] R035 PRIVATE FIELDS.md>)
 
 ### Autofix
 
