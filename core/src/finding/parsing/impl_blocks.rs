@@ -58,6 +58,17 @@ impl ImplBlocks {
         self.uses.contains(identifier)
     }
 
+    pub fn target(self_ty: &Type) -> Option<String> {
+        match self_ty {
+            Type::Path(path) => path
+                .path
+                .segments
+                .last()
+                .map(|segment| segment.ident.to_string()),
+            _ => None,
+        }
+    }
+
     pub fn targets(&self) -> &[String] {
         &self.targets
     }
@@ -74,16 +85,5 @@ impl ImplBlocks {
             .into_iter()
             .filter_map(Self::as_impl)
             .collect()
-    }
-
-    fn target(self_ty: &Type) -> Option<String> {
-        match self_ty {
-            Type::Path(path) => path
-                .path
-                .segments
-                .last()
-                .map(|segment| segment.ident.to_string()),
-            _ => None,
-        }
     }
 }

@@ -18,6 +18,7 @@ pub mod qualified_call_finder;
 pub mod read_names;
 pub mod registry_parser;
 pub mod restricted_method_finder;
+pub mod shapes;
 pub mod signatures;
 pub mod source_items;
 pub mod test_file_parser;

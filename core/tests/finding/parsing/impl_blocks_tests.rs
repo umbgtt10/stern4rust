@@ -8,7 +8,9 @@
 use stern4rust::finding::parsing::impl_blocks::ImplBlocks;
 use stern4rust::finding::parsing::item_naming::ItemNaming;
 use syn::Item;
+use syn::Type;
 use syn::parse_file;
+use syn::parse_str;
 
 fn items(source: &str) -> Vec<Item> {
     parse_file(source).expect("parses").items
@@ -59,6 +61,30 @@ fn names_an_identifier_used_only_outside_every_impl_is_false() {
 
     // Assert
     assert!(!named);
+}
+
+#[test]
+fn target_of_a_generic_impl_is_the_last_segment_of_its_type() {
+    // Arrange
+    let self_ty: Type = parse_str("crate::store::Store<u8>").expect("parses");
+
+    // Act
+    let target = ImplBlocks::target(&self_ty);
+
+    // Assert
+    assert_eq!(target.as_deref(), Some("Store"));
+}
+
+#[test]
+fn target_of_a_reference_type_is_none() {
+    // Arrange
+    let self_ty: Type = parse_str("&Store").expect("parses");
+
+    // Act
+    let target = ImplBlocks::target(&self_ty);
+
+    // Assert
+    assert_eq!(target, None);
 }
 
 #[test]
