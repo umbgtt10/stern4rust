@@ -45,7 +45,12 @@ code not yet written.
 field is passed in, a part handed over inside a bundle of them; and a type parameter bounded only by value traits --
 `T: Clone + Debug` -- is data the type carries, not a seam. A local is what it was bound to, by name or by
 destructuring (`let Parts { wal, .. } = parts`), and a name rebound from itself reads its earlier binding: the census
-of 2026-10-25 found `etheram-ibft`'s `IbftProtocol::new` unpacking the caller's parts that way.
+of 2026-10-25 found `etheram-ibft`'s `IbftProtocol::new` unpacking the caller's parts that way. What only
+repackages passed-in values is passed in: `p?`, an `into_*` conversion of one -- Rust's naming for a conversion of what
+it is given -- and a function of the type's own handed nothing else, `Self::require_components(a, b)?`, as
+`EtheramNodeInfrastructureInputs::new` validates its parameters. Accepted by the owner with its loophole: such a helper
+building a part from its arguments passes, and grip4rust's hidden dependencies still see it. Any other method on a
+parameter -- `format.reporter()` -- builds.
 
 One offence per field and method, at the field's initialiser:
 

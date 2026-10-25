@@ -186,7 +186,9 @@ where `test-file-structure` is skipped or not selected.
   reference -- receives only what the caller passed in: a parameter, as it is
   or as `Some`, `Box::new`, `Rc::new`, `Arc::new`, `clone`, `Rc::clone`,
   `Arc::clone` or `into` of it, or its field; `None` or an empty vector; or a
-  local bound to one of these, by name or by destructuring. Judged in every constructor and `Default`,
+  local bound to one of these, by name or by destructuring; or what only
+  repackages them -- `?`, an `into_*` conversion, a function of the type's own
+  handed nothing else. Judged in every constructor and `Default`,
   `From` and `TryFrom` impl, in what a constructor hands another constructor
   of its type, and in every `self.field = ...` elsewhere, once per field and
   method. A builder is left alone. [R038](docs/ADRs/R038-ADR-InjectedDependenciesRule.md)

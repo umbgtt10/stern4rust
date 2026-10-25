@@ -1497,7 +1497,10 @@ a builder, a test.
   or `p.into()`, or a parameter's field; `None`, `Vec::new()` or `vec![]`; or a
   local bound to any of these, by name or by destructuring -- a local shadows
   the parameter it is named after, and a name rebound from itself reads its
-  earlier binding.
+  earlier binding; or what only repackages these: `p?`, an `into_*`
+  conversion of one, or a function of the type's own -- `Self::validated(p)`
+  -- handed nothing else. Any other method on a parameter, `settings.reporter()`,
+  builds.
 - **Judged:** every constructor -- no receiver, a return type naming `Self` --
   and every `Default`, `From` and `TryFrom` impl, for the fields it fills and
   for what it hands another constructor of its type; and every

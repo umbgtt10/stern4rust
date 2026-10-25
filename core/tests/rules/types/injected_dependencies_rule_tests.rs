@@ -180,6 +180,20 @@ fn check_workspace_of_a_constructor_handing_built_parts_over_twice_reports_each_
 }
 
 #[test]
+fn check_workspace_of_a_constructor_repackaging_its_parameters_reports_nothing() {
+    // Arrange & Act
+    let offences = check(&[(
+        "src/app.rs",
+        &app(
+            "impl App {\n    pub fn new(reporter: Option<Box<dyn Reporter>>, deps: Deps) -> Result<Self, Error> {\n        let parts = Self::required(reporter)?;\n        let parts = parts.into_parts();\n        let AppParts { size, .. } = deps.into_parts(3);\n        Ok(Self { reporter: parts.reporter, size })\n    }\n}\n",
+        ),
+    )]);
+
+    // Assert
+    assert!(offences.is_empty(), "expected none, got {offences:?}");
+}
+
+#[test]
 fn check_workspace_of_a_constructor_taking_every_part_in_each_passed_in_shape_reports_nothing() {
     // Arrange & Act
     let offences = check(&[(

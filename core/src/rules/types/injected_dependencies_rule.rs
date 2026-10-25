@@ -68,13 +68,9 @@ impl InjectedDependenciesRule {
         Self
     }
 
-    fn assigned(
-        path: &str,
-        subject: &str,
-        method: &ImplItemFn,
-        seamed: &SeamedType,
-    ) -> Vec<Offence> {
-        let passed = PassedIn::of(&method.sig, &method.block);
+    fn assigned(path: &str, owner: &str, method: &ImplItemFn, seamed: &SeamedType) -> Vec<Offence> {
+        let subject = format!("{owner}::{}", method.sig.ident);
+        let passed = PassedIn::of(&method.sig, &method.block, owner);
         let mut reported = BTreeSet::new();
         DependencyFills::assignments(&method.block)
             .into_iter()
@@ -84,7 +80,7 @@ impl InjectedDependenciesRule {
                 Self::reported(
                     path,
                     fill.line,
-                    subject,
+                    &subject,
                     format!(
                         "`{subject}` assigns `{}` to `{}`, a field declared as a trait",
                         BuiltText::of(passed.origin(&fill.value)),
@@ -103,7 +99,7 @@ impl InjectedDependenciesRule {
         seamed: &SeamedType,
     ) -> Vec<Offence> {
         let subject = format!("{owner}::{}", method.sig.ident);
-        let passed = PassedIn::of(&method.sig, &method.block);
+        let passed = PassedIn::of(&method.sig, &method.block, owner);
         let mut filled = BTreeSet::new();
         let mut handed_over = BTreeSet::new();
         let built = DependencyFills::fills(&method.block, owner)
@@ -216,12 +212,7 @@ impl InjectedDependenciesRule {
                 if composing || constructor {
                     Self::constructed(path, &owner, method, seamed_type)
                 } else if method.sig.receiver().is_some() {
-                    Self::assigned(
-                        path,
-                        &format!("{owner}::{}", method.sig.ident),
-                        method,
-                        seamed_type,
-                    )
+                    Self::assigned(path, &owner, method, seamed_type)
                 } else {
                     Vec::new()
                 }

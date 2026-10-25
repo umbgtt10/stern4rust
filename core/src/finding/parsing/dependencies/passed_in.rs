@@ -6,9 +6,12 @@ use std::collections::BTreeSet;
 
 use syn::Block;
 use syn::Expr;
+use syn::ExprCall;
+use syn::ExprMethodCall;
 use syn::FnArg;
 use syn::Local;
 use syn::Pat;
+use syn::Path;
 use syn::Signature;
 use syn::visit::Visit;
 use syn::visit::visit_local;
@@ -21,12 +24,17 @@ use crate::finding::parsing::dependencies::built_text::BuiltText;
 // `Rc::new(p)`, `Arc::new(p)`, `p.clone()`, `Rc::clone(&p)`, `Arc::clone(&p)` or
 // `p.into()`, or a parameter's field -- a part handed over inside a bundle of
 // them. `None`, `Vec::new()` and `vec![]` hold nothing, so they build nothing.
+// What only repackages passed-in values is passed in too: `p?`, an `into_*`
+// conversion of one -- Rust's name for a conversion of what it is given -- and a
+// function of the type's own, `Self::validated(p, q)`, handed nothing else. Any
+// other method on a parameter, `settings.reporter()`, builds.
 // A local counts as what it was bound to, by name or by destructuring -- a tuple
 // pattern over a tuple by position, any other pattern each of its names to the
 // whole value -- and a local shadows a parameter of its name. A name rebound in
 // its own initialiser reads the binding before, so `let parts = parts.into()`
 // follows the earlier `parts`; a chain of locals is followed only so far.
 pub struct PassedIn {
+    owner: String,
     parameters: BTreeSet<String>,
     locals: Vec<(String, Expr)>,
 }
@@ -40,11 +48,12 @@ impl PassedIn {
         "Rc::clone",
         "Arc::clone",
     ];
+    const CONVERSION: &'static str = "into_";
     const EMPTY: [&'static str; 2] = ["None", "Vec::new"];
     const FOLLOWED: usize = 8;
     const RELAYS: [&'static str; 2] = ["clone", "into"];
 
-    pub fn of(signature: &Signature, body: &Block) -> Self {
+    pub fn of(signature: &Signature, body: &Block, owner: &str) -> Self {
         let parameters = signature
             .inputs
             .iter()
@@ -57,6 +66,7 @@ impl PassedIn {
             })
             .collect();
         let mut found = Self {
+            owner: owner.to_string(),
             parameters,
             locals: Vec::new(),
         };
@@ -107,6 +117,37 @@ impl PassedIn {
         Some((at, &self.locals[at].1))
     }
 
+    // A call holds a passed-in value when it only carries one, when it is a
+    // function of the type's own handed nothing else, or when it makes an empty
+    // vector.
+    fn holds_call(&self, call: &ExprCall, before: usize, left: usize) -> bool {
+        let Expr::Path(function) = call.func.as_ref() else {
+            return false;
+        };
+        let named = BuiltText::of(&call.func);
+        let Some(carried) = call.args.first() else {
+            return Self::EMPTY.contains(&named.as_str());
+        };
+        let carries = call.args.len() == 1
+            && Self::CARRIERS.contains(&named.as_str())
+            && self.holds_within(carried, before, left);
+        carries
+            || (self.is_own(&function.path)
+                && call
+                    .args
+                    .iter()
+                    .all(|argument| self.holds_within(argument, before, left)))
+    }
+
+    // A method call relays its receiver when it clones it, converts it with
+    // `into`, or is an `into_*` conversion of it.
+    fn holds_relayed(&self, call: &ExprMethodCall, before: usize, left: usize) -> bool {
+        let method = call.method.to_string();
+        let relays = (call.args.is_empty() && Self::RELAYS.contains(&method.as_str()))
+            || method.starts_with(Self::CONVERSION);
+        relays && self.holds_within(&call.receiver, before, left)
+    }
+
     fn holds_within(&self, value: &Expr, before: usize, left: usize) -> bool {
         if left == 0 {
             return false;
@@ -119,26 +160,22 @@ impl PassedIn {
                     self.parameters.contains(&named) || Self::EMPTY.contains(&named.as_str())
                 }
             },
-            Expr::Call(call) => match (call.func.as_ref(), call.args.first()) {
-                (Expr::Path(_), None) => Self::EMPTY.contains(&BuiltText::of(&call.func).as_str()),
-                (Expr::Path(_), Some(carried)) => {
-                    call.args.len() == 1
-                        && Self::CARRIERS.contains(&BuiltText::of(&call.func).as_str())
-                        && self.holds_within(carried, before, left - 1)
-                }
-                _ => false,
-            },
-            Expr::MethodCall(call) => {
-                call.args.is_empty()
-                    && Self::RELAYS.contains(&call.method.to_string().as_str())
-                    && self.holds_within(&call.receiver, before, left - 1)
-            }
+            Expr::Call(call) => self.holds_call(call, before, left - 1),
+            Expr::MethodCall(call) => self.holds_relayed(call, before, left - 1),
+            Expr::Try(attempt) => self.holds_within(&attempt.expr, before, left - 1),
             Expr::Field(field) => self.holds_within(&field.base, before, left - 1),
             Expr::Reference(reference) => self.holds_within(&reference.expr, before, left - 1),
             Expr::Paren(inner) => self.holds_within(&inner.expr, before, left - 1),
             Expr::Macro(invocation) => {
                 invocation.mac.path.is_ident("vec") && invocation.mac.tokens.is_empty()
             }
+            _ => false,
+        }
+    }
+
+    fn is_own(&self, path: &Path) -> bool {
+        match path.segments.iter().collect::<Vec<_>>().as_slice() {
+            [owner, _] => owner.ident == "Self" || owner.ident == self.owner,
             _ => false,
         }
     }
