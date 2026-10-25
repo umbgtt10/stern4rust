@@ -96,6 +96,20 @@ fn check_workspace_of_a_constructor_building_a_trait_field_says_what_to_do() {
 }
 
 #[test]
+fn check_workspace_of_a_constructor_destructuring_its_parts_from_a_parameter_reports_nothing() {
+    // Arrange & Act
+    let offences = check(&[(
+        "src/app.rs",
+        &app(
+            "impl App {\n    pub fn new(parts: AppParts) -> Self {\n        let AppParts { reporter, size } = parts;\n        Self { reporter, size }\n    }\n}\n",
+        ),
+    )]);
+
+    // Assert
+    assert!(offences.is_empty(), "expected none, got {offences:?}");
+}
+
+#[test]
 fn check_workspace_of_a_constructor_filling_a_trait_field_from_a_built_local_names_what_it_built() {
     // Arrange & Act
     let offences = check(&[(

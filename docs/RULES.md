@@ -1495,7 +1495,9 @@ a builder, a test.
 - **Passed in** is a parameter, as it is or as `Some(p)`, `Box::new(p)`,
   `Rc::new(p)`, `Arc::new(p)`, `p.clone()`, `Rc::clone(&p)`, `Arc::clone(&p)`
   or `p.into()`, or a parameter's field; `None`, `Vec::new()` or `vec![]`; or a
-  local bound to any of these.
+  local bound to any of these, by name or by destructuring -- a local shadows
+  the parameter it is named after, and a name rebound from itself reads its
+  earlier binding.
 - **Judged:** every constructor -- no receiver, a return type naming `Self` --
   and every `Default`, `From` and `TryFrom` impl, for the fields it fills and
   for what it hands another constructor of its type; and every
