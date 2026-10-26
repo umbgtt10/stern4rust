@@ -338,6 +338,17 @@ where `test-file-structure` is skipped or not selected.
   rules asked for it above `use yak::Y;`, where `cargo fmt` leaves it below; any
   visibility, and an attribute sharing the `use` line, is now ignored, as `pub`
   was. [R019](docs/ADRs/R019-ADR-OrderedImportsRule.md)
+- **Both import rules stand down where the style editions order a pair apart.**
+  Segments of one case shape were taken to sort alike under 2021, 2024 and a
+  plain sort; with digits, an underscore or a raw identifier they do not --
+  2024 sorts by version (`item2` before `item10`, `x_9` before `x_10`, `a_b`
+  before `aB`, `rad` before `r#ref`) where 2021 compares bytes. Such a pair now
+  stands down like a case divergence; one the editions order alike, as `select`
+  against `select4`, is still judged.
+  [R019](docs/ADRs/R019-ADR-OrderedImportsRule.md)
+
+  No repository in the family changes with any of these four: the ten measured
+  were clean before and after, the one known case having been worked around.
 
 ## [0.17.0] - 2026-10-19
 

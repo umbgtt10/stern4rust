@@ -140,6 +140,10 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 - Both import rules read an import's path as what follows its `use` keyword, so
   a restricted visibility -- `pub(crate) use` -- and an attribute sharing the
   line are ignored, as `pub` was. [R019](ADRs/R019-ADR-OrderedImportsRule.md)
+- Both import rules stand down on a pair the style editions order apart, judged
+  by `VersionSort`, the style guide's version sorting, against a byte compare:
+  `item2` against `item10`, `a_b` against `aB`, `rad` against `r#ref`.
+  [R019](ADRs/R019-ADR-OrderedImportsRule.md)
 
 ### Autofix
 

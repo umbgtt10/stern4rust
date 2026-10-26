@@ -179,6 +179,31 @@ rules read it through `ImportPath`, so both changed: `ordered-imports` and
 and `import_path_tests.rs` the two directions, a `pub(in ...)` and an attribute
 sharing the line.
 
+## Amendment, 2026-10-26: a pair the style editions order apart stands down
+
+The stand-down for case was measured on letters, and segments of one case shape
+were taken to sort alike under 2021, 2024 and a plain sort. With digits, an
+underscore or a raw identifier they do not. Measured with `cargo fmt` on the
+pinned toolchain: 2021 compares bytes and leaves `item10` above `item2`, `x_10`
+above `x_9`, `aB` above `a_b` and `r#ref` above `rad`; 2024 version-sorts and
+leaves each the other way. A rule comparing bytes demanded the 2021 order of a
+2024 crate -- the edition most of the family is on -- and the formatter wrote
+the other back.
+
+**Where the first differing segments are ordered one way by a byte compare and
+the other by version sorting, `cargo fmt` decides.** `VersionSort` is the style
+guide's version sorting -- a lone underscore before every other chunk, numbers
+by value, then by leading zeros -- and orders 1,200 generated names exactly as
+`cargo fmt` does on an edition 2024 crate. Where the two comparators agree the
+pair is still judged: `select` against `select4` stays reported the wrong way
+round, and `alpha2` against `zeta2` too.
+
+`decides_order_of_numbered_segments_is_true`, `..._of_a_pair_split_by_an_underscore_against_a_capital_is_true`
+and `..._of_a_pair_split_by_a_raw_identifier_is_true` hold the three;
+`decides_order_of_a_prefix_extended_by_a_digit_is_false` the case that must stay
+judged; `version_sort_tests.rs` the comparator; and each import rule
+`check_numbered_imports_in_version_order_reports_nothing`.
+
 ## Related
 
 - [R002-ADR-TestFileStructureRule](R002-ADR-TestFileStructureRule.md) — asks the

@@ -265,6 +265,21 @@ fn check_blocks_separated_by_a_blank_line_are_ordered_apart() {
     assert!(offences.is_empty(), "expected none, got {offences:?}");
 }
 
+// The order `cargo fmt` leaves on an edition 2024 crate, which a byte compare
+// -- and the 2021 edition -- reverses. The editions disagree, so the rule
+// stands down rather than demand one.
+#[test]
+fn check_numbered_imports_in_version_order_reports_nothing() {
+    // Arrange & Act
+    let offences = check(
+        "src/widget.rs",
+        "use baz::item2;\nuse baz::item10;\n\npub struct W;\n",
+    );
+
+    // Assert
+    assert!(offences.is_empty(), "expected none, got {offences:?}");
+}
+
 #[test]
 fn check_reports_every_unordered_pair() {
     // Arrange & Act

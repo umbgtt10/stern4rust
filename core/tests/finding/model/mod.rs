@@ -20,3 +20,4 @@ pub mod test_marker_tests;
 pub mod time;
 pub mod type_name_tests;
 pub mod unit_test_site_tests;
+pub mod version_sort_tests;

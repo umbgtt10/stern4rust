@@ -98,6 +98,28 @@ fn decides_order_of_a_pair_of_uppercase_segments_is_false() {
     assert!(!decides);
 }
 
+// The 2021 style edition compares a raw identifier as written, so `r#ref`
+// sorts before `rad`; 2024 reads it without its `r#` and puts `rad` first.
+#[test]
+fn decides_order_of_a_pair_split_by_a_raw_identifier_is_true() {
+    // Arrange & Act
+    let decides = ImportPath::decides_order("use rad::Shown;", "use r#ref::Hidden;");
+
+    // Assert
+    assert!(decides);
+}
+
+// One case shape, and still the editions disagree: 2021 compares bytes and puts
+// `aB` first, 2024 puts the underscore before everything and `a_b` first.
+#[test]
+fn decides_order_of_a_pair_split_by_an_underscore_against_a_capital_is_true() {
+    // Arrange & Act
+    let decides = ImportPath::decides_order("use foo::a_b;", "use foo::aB;");
+
+    // Assert
+    assert!(decides);
+}
+
 #[test]
 fn decides_order_of_a_pair_with_a_crate_path_is_true() {
     // Arrange & Act
@@ -167,6 +189,18 @@ fn decides_order_of_a_path_extended_by_an_uppercase_segment_is_true() {
     assert!(decides);
 }
 
+// A digit after a shared prefix is where the editions agree: the shorter name
+// first, under a byte compare and a version sort alike. So the pair is judged,
+// and `select4` above `select` is still reported.
+#[test]
+fn decides_order_of_a_prefix_extended_by_a_digit_is_false() {
+    // Arrange & Act
+    let decides = ImportPath::decides_order("use aaa::select;", "use aaa::select4;");
+
+    // Assert
+    assert!(!decides);
+}
+
 #[test]
 fn decides_order_of_a_renamed_path_beside_a_longer_one_is_false() {
     // Arrange & Act
@@ -199,6 +233,17 @@ fn decides_order_of_a_screaming_case_segment_beside_a_camel_case_one_is_true() {
         "use wal_record::WAL_V2_MAGIC;",
         "use wal_record::WalRecord;",
     );
+
+    // Assert
+    assert!(decides);
+}
+
+// 2021 compares bytes, so `item10` sorts before `item2`; 2024 version-sorts
+// and compares the numbers. Measured with `cargo fmt` on both editions.
+#[test]
+fn decides_order_of_numbered_segments_is_true() {
+    // Arrange & Act
+    let decides = ImportPath::decides_order("use baz::item2;", "use baz::item10;");
 
     // Assert
     assert!(decides);

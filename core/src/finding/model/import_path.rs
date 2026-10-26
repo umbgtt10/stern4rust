@@ -2,6 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::finding::model::version_sort::VersionSort;
+
 // The imports whose order rustfmt decides rather than the alphabet.
 //
 // rustfmt sorts `self`, `super` and `crate` ahead of every other path. It also
@@ -46,6 +48,7 @@ impl ImportPath {
             || Self::is_specially_ordered(item)
             || Self::diverges_by_case(previous, item)
             || Self::one_extends_the_other(previous, item)
+            || Self::editions_disagree(previous, item)
     }
 
     // Whether the pair may stand: rustfmt decides its order, or its paths are in
@@ -82,15 +85,41 @@ impl ImportPath {
             || first.chars().next().is_some_and(char::is_uppercase)
     }
 
-    // Where two paths first differ, and whether the segments there are of
-    // different case. That is the one place the two comparators can disagree:
-    // before it the paths are identical, and after it nothing is compared.
-    fn diverges_by_case(previous: &str, item: &str) -> bool {
+    // The first pair of segments at which two paths differ, judged. Before it the
+    // paths are identical, and after it nothing is compared, so it is the one
+    // place two comparators can disagree. False where the paths do not differ.
+    fn at_divergence(previous: &str, item: &str, judge: fn(&str, &str) -> bool) -> bool {
         Self::segments(previous)
             .into_iter()
             .zip(Self::segments(item))
             .find(|(left, right)| left != right)
-            .is_some_and(|(left, right)| !Self::share_a_case_shape(left, right))
+            .is_some_and(|(left, right)| judge(left, right))
+    }
+
+    // Where two paths first differ, whether the segments there are of
+    // different case shape.
+    fn diverges_by_case(previous: &str, item: &str) -> bool {
+        Self::at_divergence(previous, item, |left, right| {
+            !Self::share_a_case_shape(left, right)
+        })
+    }
+
+    // Where two paths first differ, whether the style editions order the
+    // segments apart. Among segments of one case shape the 2021 edition
+    // compares bytes, as `is_ordered` does; 2024 version-sorts, reading a raw
+    // identifier without its `r#`. They part on digits -- `item2` against
+    // `item10` --, on an underscore against a capital -- `a_b` against `aB` --
+    // and on a raw identifier -- `r#ref` against `rad`. Measured with
+    // `cargo fmt` under both editions; the letters `share_a_case_shape` was
+    // measured on agree, and so does a name against its own extension.
+    fn editions_disagree(previous: &str, item: &str) -> bool {
+        Self::at_divergence(previous, item, |left, right| {
+            left.cmp(right)
+                != VersionSort::compare(
+                    left.trim_start_matches("r#"),
+                    right.trim_start_matches("r#"),
+                )
+        })
     }
 
     // The first segment, not a prefix: a crate genuinely named `crateful` sorts

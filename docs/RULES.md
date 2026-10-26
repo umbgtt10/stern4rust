@@ -168,7 +168,8 @@ else is still ordered.
 
 Two shapes trigger it: a shared helper inside the tests tree, reached as
 `use crate::support::builders::a_widget;`, and a same-crate pair diverging by
-case.
+case. A pair the style editions order apart -- `item2` against `item10`, `a_b`
+against `aB` -- stands down for the same reason; `ordered-imports` describes it.
 
 **An attributed import is named, sorted and quoted by its `use` line.** An
 item's span opens at its first attribute, so `#[cfg(unix)]` above
@@ -1004,6 +1005,14 @@ camel-case one stands down like any other case divergence. Segments sharing a
 shape are still judged, because `ALPHA_TWO` against `ZETA_ONE`, `Alpha` against
 `Zeta` and `alpha` against `zeta` were each measured to sort identically under
 2021, 2024 and a plain sort.
+
+**Within one shape, a pair the editions order apart stands down too.** 2021
+compares bytes; 2024 version-sorts, comparing numbers by value, putting an
+underscore before everything and reading a raw identifier without its `r#`. So
+`item2` against `item10`, `x_9` against `x_10`, `a_b` against `aB` and `rad`
+against `r#ref` each sort one way under one edition and the other under the
+other, and are left to `cargo fmt`. A pair the two order alike -- `select`
+against `select4` -- is still judged.
 
 A block ends where lines stop being consecutive, so a blank line or a comment
 separates two imports and the first of a block is compared with nothing.

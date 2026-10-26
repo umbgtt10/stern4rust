@@ -588,6 +588,22 @@ fn check_names_the_file_it_judged() {
     assert_eq!(files.len(), 1);
 }
 
+// The order `cargo fmt` leaves on an edition 2024 crate, which a byte compare
+// -- and the 2021 edition -- reverses. The editions disagree, so the rule
+// stands down rather than demand one.
+#[test]
+fn check_numbered_imports_in_version_order_reports_nothing() {
+    // Arrange
+    let contents = "use baz::item2;\n\
+                    use baz::item10;\n";
+
+    // Act
+    let offences = check(contents);
+
+    // Assert
+    assert!(offences.is_empty(), "expected none, got {offences:?}");
+}
+
 #[test]
 fn check_reports_every_offence_in_a_file_rather_than_only_the_first() {
     // Arrange

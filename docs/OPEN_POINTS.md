@@ -160,6 +160,25 @@ first -- which is why that case could be settled rather than merely reported.
 Also, `cargo fmt` and a standalone `rustfmt <file>` disagree here -- only
 `cargo fmt` matters, since that is what the gate runs.
 
+The letters were not the whole of it. Segments of one case shape still part
+company where 2024's version sorting and 2021's byte compare do -- on digits, on
+an underscore against a capital, and on a raw identifier -- measured on the
+pinned toolchain, 2026-10-26:
+
+|                          | 2021            | 2024            |
+|--------------------------|-----------------|-----------------|
+| `item2` against `item10` | `item10`        | `item2`         |
+| `x_9` against `x_10`     | `x_10`          | `x_9`           |
+| `a_b` against `aB`       | `aB`            | `a_b`           |
+| `rad` against `r#ref`    | `r#ref`         | `rad`           |
+
+Each was a file no edit could make green on an edition 2024 crate, the edition
+most of the family is on. `VersionSort` is the style guide's version sorting --
+it orders 1,200 generated names exactly as `cargo fmt` does on an edition 2024
+crate -- and a pair whose first differing segments it orders unlike a byte
+compare stands down like a case divergence. Where the two agree, as on `select`
+against `select4` or `alpha2` against `zeta2`, the pair is still judged.
+
 ## `returned-mutations` is skipped outside the `*4rust` tools and `slotgate`
 
 The rule this section used to argue for shipped in 0.14.0 as R022, and the
