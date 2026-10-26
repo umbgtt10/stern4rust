@@ -48,6 +48,14 @@ impl ImportPath {
             || Self::one_extends_the_other(previous, item)
     }
 
+    // Whether the pair may stand: rustfmt decides its order, or its paths are in
+    // order. The one judgement both import rules make, asked here so that
+    // neither can make it differently -- `test-file-structure` compared the line
+    // as written long after `ordered-imports` stopped.
+    pub fn in_order(previous: &str, item: &str) -> bool {
+        Self::decides_order(previous, item) || Self::is_ordered(previous, item)
+    }
+
     // Whether the pair is already in order, compared the way rustfmt compares:
     // segment by segment, on the path alone.
     //

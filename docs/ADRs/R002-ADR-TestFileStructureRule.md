@@ -223,6 +223,16 @@ the two directions. `--fix` needed no change: it never orders imports, and
 `rewrite_moves_an_attributed_import_up_with_its_attribute` pins that it moves
 one whole.
 
+**Imports are compared as `ordered-imports` compares them**, through
+`ImportPath::in_order`: rustfmt decides the pair, or its parsed paths are in
+order. The rule compared the lowercased line as written, the bug `ordered-imports`
+shed in 0.10.4 -- a trailing `;` sorts after any digit, so `aaa::select4` was
+demanded above `aaa::select`, and a leading `pub ` sorted every re-export first.
+`check_a_path_that_prefixes_the_next_one_reports_nothing`,
+`check_a_path_prefixed_by_the_next_one_reports_it` and the two re-export tests
+mirror that rule's. Constants, helpers and tests still sort case-insensitively;
+rustfmt never reorders them.
+
 ## Related
 
 - [R001-ADR-HeaderRule](R001-ADR-HeaderRule.md) — takes the opposite decision on

@@ -215,6 +215,65 @@ fn check_a_nested_registry_file_reports_nothing() {
     assert!(offences.is_empty(), "expected none, got {offences:?}");
 }
 
+// Compared as written, the shorter line ends in `;` (0x3B), which sorts after
+// the `4` of the longer, so `select4` was demanded first. rustfmt compares the
+// paths and puts the prefix first -- the 0.10.4 fix to `ordered-imports`.
+#[test]
+fn check_a_path_prefixed_by_the_next_one_reports_it() {
+    // Arrange
+    let contents = "use aaa::select4;\n\
+                    use aaa::select;\n";
+
+    // Act
+    let offences = check(contents);
+
+    // Assert
+    assert_eq!(offences.len(), 1);
+    assert_eq!(offences[0].subject(), Some("use aaa::select;"));
+}
+
+#[test]
+fn check_a_path_that_prefixes_the_next_one_reports_nothing() {
+    // Arrange
+    let contents = "use aaa::select;\n\
+                    use aaa::select4;\n";
+
+    // Act
+    let offences = check(contents);
+
+    // Assert
+    assert!(offences.is_empty(), "expected none, got {offences:?}");
+}
+
+// A `pub use` sorts among plain ones by its path. Compared as written, the `p`
+// of `pub` beat the `u` of `use`, and every re-export was asked to lead.
+#[test]
+fn check_a_public_re_export_is_ordered_by_its_path_not_its_visibility() {
+    // Arrange
+    let contents = "use aaa::Alpha;\n\
+                    pub use zzz::Zed;\n";
+
+    // Act
+    let offences = check(contents);
+
+    // Assert
+    assert!(offences.is_empty(), "expected none, got {offences:?}");
+}
+
+#[test]
+fn check_a_public_re_export_out_of_order_by_path_reports_it() {
+    // Arrange
+    let contents = "use zzz::Zed;\n\
+                    pub use aaa::Alpha;\n";
+
+    // Act
+    let offences = check(contents);
+
+    // Assert
+    assert_eq!(offences.len(), 1);
+    assert_eq!(offences[0].subject(), Some("pub use aaa::Alpha;"));
+}
+
 // A registry holds nothing but `pub mod` lines and reads as a list. Demanding a
 // blank line between each entry would make the one file whose whole job is to be
 // scannable the hardest one to scan.

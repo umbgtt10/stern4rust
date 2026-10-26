@@ -327,6 +327,12 @@ where `test-file-structure` is skipped or not selected.
   by the same function `ordered-imports` uses, which has read it so since
   0.10.3. A baselined offence keyed on an attribute goes stale.
   [R002](docs/ADRs/R002-ADR-TestFileStructureRule.md)
+- **`test-file-structure` compares imports on their parsed path, as
+  `ordered-imports` does.** It compared the line as written, lowercased, so the
+  trailing `;` put `aaa::select4` above `aaa::select` and a leading `pub ` put a
+  re-export above every `use` -- the 0.10.4 fix to `ordered-imports`, which never
+  reached `tests/`. Both rules now judge a pair through `ImportPath::in_order`.
+  [R002](docs/ADRs/R002-ADR-TestFileStructureRule.md)
 
 ## [0.17.0] - 2026-10-19
 

@@ -133,6 +133,10 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
   `use` line rather than by the attribute its span opens on, read by
   `ItemNaming::import_line`, which `ordered-imports` now shares.
   [R002](ADRs/R002-ADR-TestFileStructureRule.md)
+- `test-file-structure` compares imports on their parsed path, through
+  `ImportPath::in_order`, the judgement `ordered-imports` makes: a trailing `;`
+  and a leading `pub ` no longer decide a pair.
+  [R002](ADRs/R002-ADR-TestFileStructureRule.md)
 
 ### Autofix
 

@@ -215,6 +215,35 @@ fn decides_order_of_two_identical_paths_is_false() {
     assert!(!decides);
 }
 
+// The judgement both import rules ask for: a pair stands where rustfmt decides
+// its order, and otherwise where its paths are in order.
+#[test]
+fn in_order_of_a_pair_out_of_alphabetic_order_is_false() {
+    // Arrange & Act
+    let in_order = ImportPath::in_order("use zzz::Zed;", "use aaa::Alpha;");
+
+    // Assert
+    assert!(!in_order);
+}
+
+#[test]
+fn in_order_of_a_pair_rustfmt_decides_is_true() {
+    // Arrange & Act
+    let in_order = ImportPath::in_order("use zzz::Zed;", "use crate::alpha::Alpha;");
+
+    // Assert
+    assert!(in_order);
+}
+
+#[test]
+fn in_order_of_a_sorted_pair_is_true() {
+    // Arrange & Act
+    let in_order = ImportPath::in_order("use aaa::select;", "use aaa::select4;");
+
+    // Assert
+    assert!(in_order);
+}
+
 // Compared the way rustfmt compares: on the path, segment by segment.
 //
 // The line as written misleads twice. It ends in `;` (0x3B), which loses to any

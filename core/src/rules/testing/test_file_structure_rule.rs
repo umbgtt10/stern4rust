@@ -30,10 +30,7 @@ impl TestFileStructureRule {
     }
 
     fn alphabetic_order(&self, previous: &TestFileItem, item: &TestFileItem) -> Option<Offence> {
-        if previous.section() != item.section() || item.sort_key() >= previous.sort_key() {
-            return None;
-        }
-        if Self::ordered_by_rustfmt(previous, item) {
+        if previous.section() != item.section() || Self::in_order(previous, item) {
             return None;
         }
         Some(self.offence(
@@ -61,6 +58,18 @@ impl TestFileStructureRule {
             .count()
     }
 
+    // Imports are judged as `ordered-imports` judges them: on the path, and not
+    // at all where rustfmt decides the pair. Demanding the alphabet there would
+    // make the file unsatisfiable rather than merely wrong, since the formatter
+    // runs first and writes the other order back. The other sections are
+    // rustfmt's to leave alone, so they sort by the alphabet, case aside.
+    fn in_order(previous: &TestFileItem, item: &TestFileItem) -> bool {
+        if item.section() == Section::Imports {
+            return ImportPath::in_order(previous.name(), item.name());
+        }
+        item.sort_key() >= previous.sort_key()
+    }
+
     // all_tests.rs and mod.rs are registries, not test files. They hold nothing
     // but `pub mod` lines, and a registry reads as a list -- demanding a blank
     // line between each entry would make the one file whose whole job is to be
@@ -75,14 +84,6 @@ impl TestFileStructureRule {
     fn offence(&self, item: &TestFileItem, description: String, correction: String) -> Offence {
         Offence::new("", item.first_line(), self.name(), description, correction)
             .with_subject(item.name())
-    }
-
-    // A pair whose order rustfmt decides is not this rule's to judge. Demanding
-    // the alphabet there would make the file unsatisfiable rather than merely
-    // wrong: the formatter runs first and writes the other order back.
-    fn ordered_by_rustfmt(previous: &TestFileItem, item: &TestFileItem) -> bool {
-        item.section() == Section::Imports
-            && ImportPath::decides_order(previous.name(), item.name())
     }
 
     fn section_order(&self, previous: &TestFileItem, item: &TestFileItem) -> Option<Offence> {

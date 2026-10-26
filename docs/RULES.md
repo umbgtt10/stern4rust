@@ -116,9 +116,10 @@ together, and does so without needing `--header-file`.
 ## `test-file-structure`
 
 A test file reads top to bottom in one order: header, imports, constants,
-helpers, tests. Each group alphabetical, case-insensitively. Imports and
-constants run together; helpers and tests are separated by exactly one blank
-line.
+helpers, tests. Each group alphabetical -- constants, helpers and tests
+case-insensitively, imports on their path, as `ordered-imports` compares them.
+Imports and constants run together; helpers and tests are separated by exactly
+one blank line.
 
 The split is between lists and bodies rather than between imports and the rest.
 Imports and constants are both runs of one-line declarations, read by scanning
@@ -177,6 +178,12 @@ attribute text, above every plain `use`, and the offence quoted the attribute.
 attributes -- however many -- carried with it, so the two could never agree. The
 import is read by the same function `ordered-imports` uses; its block still
 starts at the attribute, so spacing and the reported line are unchanged.
+
+**Imports are compared on their parsed path, not on the line as written** --
+the 0.10.4 fix to `ordered-imports`, which this rule now shares through
+`ImportPath::in_order`. As text, the trailing `;` (0x3B) put `aaa::select4`
+above `aaa::select`, and the `p` of a leading `pub ` put every re-export above
+every `use`; rustfmt compares segments and does neither.
 
 | offence | correction |
 |---|---|
