@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-Thirteen rules added, all on by default, so they move what this tool reports
+Fourteen rules added, all on by default, so they move what this tool reports
 about your code once it is released. A function returning a mutable reference, one
 returning a tuple that repeats an element type, a module-level constant declared
 after another item, a public one without a constants file and readers to share
@@ -15,13 +15,14 @@ nor private, an impl block out of order, a library function failing with a
 string, a test reading a clock or waiting on a timer, and library code doing
 either outside a port, a struct that is neither a record with public fields
 nor an object with private ones, a record or data enum away from where its
-users put it, and a type building a part it declared as a trait become
-offences;
+users put it, a type building a part it declared as a trait, and a
+dev-dependency repeating a dependency with nothing added become offences;
 to adopt one later, add its name --
 `immutable-returns`, `distinct-tuple-elements`, `leading-constants`,
 `shared-constants`, `implemented-in-one-file`, `public-or-private`,
 `ordered-impl-functions`, `typed-errors`, `timeless-tests`, `injected-time`,
-`records-and-objects`, `record-home` or `injected-dependencies` -- to `skip` in your `stern4rust.toml` once you install a version that knows
+`records-and-objects`, `record-home`, `injected-dependencies` or
+`distinct-dev-dependencies` -- to `skip` in your `stern4rust.toml` once you install a version that knows
 it. Two are fixable: `--fix` moves the constants and
 reorders the impls.
 And `--fix` now repairs only what the run applies: test files are left alone
@@ -225,6 +226,24 @@ where `test-file-structure` is skipped or not selected.
   The rule reports 171 functions across the sixteen repositories of the family,
   127 tests and 44 helpers: 116 read a clock first, 50 wait on a timer and five
   race one. This repository has none.
+
+- **`distinct-dev-dependencies`: a dev-dependency adds to the dependencies.** A
+  `[dev-dependencies]` entry naming a crate `[dependencies]` already gives the
+  tests, written the same way and adding nothing to it -- no feature it does not
+  list, no default features it turns off, not a crate that is optional there --
+  is reported once, against the manifest, with the correction to remove it. A
+  `[target.'cfg(...)'.dev-dependencies]` entry is judged against `[dependencies]`
+  and that target's dependencies, the target compared as written; an untargeted
+  one beside a targeted dependency is left alone. A renamed dependency is matched
+  on its key, which cargo requires both tables to share. A pair written unlike --
+  one taken from the workspace, one spelled out, or two version requirements --
+  is left alone. Read from the TOML, in every package, workspace or not; build
+  dependencies are not judged. [R039](docs/ADRs/R039-ADR-DistinctDevDependenciesRule.md)
+
+  The rule reports four entries across the ten repositories measured: `clap` and
+  `syn` in `twin4rust`'s core, `clap` in `dry4rust`'s, and `clap` in this
+  repository's, which the change before it removed. `slotgate`'s `tokio`,
+  repeated to turn on `test-util`, adds a feature and is left alone.
 
 ### Changed
 - **`RuleCatalog` composes the rule set; the registries take their parts.**

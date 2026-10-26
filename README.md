@@ -16,7 +16,7 @@ already own correctness. These are the things a reviewer would otherwise have to
 say by hand, every time, forever — and the ones that quietly stop being true
 across a codebase the moment nobody is checking.
 
-> **Status: thirty-seven rules.** The set below is what is implemented and
+> **Status: thirty-eight rules.** The set below is what is implemented and
 > gated. `stern4rust` runs against its own tree on every build, so a rule that
 > would fail this repository cannot be merged into it.
 
@@ -640,6 +640,18 @@ refuses to build a `workspace = true` the root does not declare. Read from the
 TOML, since resolution erases how a dependency was written. A package that is
 not a workspace is silently skipped.
 [R021](docs/ADRs/R021-ADR-WorkspaceDependenciesRule.md)
+
+### `distinct-dev-dependencies`
+
+A `[dev-dependencies]` entry gives the tests something `[dependencies]` does
+not. One that repeats a dependency, written the same way, and adds no feature,
+no default features and no optional crate to it is reported, with the
+correction to delete it -- cargo accepts the line and cargo-shear does not look
+for it. A repeat that adds a feature, such as `tokio` with `test-util`, is the
+only way cargo gives the tests one and is left alone; so is a pair written
+unlike, one inherited from the workspace and one spelled out. Target tables are
+read, and every package is judged, workspace or not.
+[R039](docs/ADRs/R039-ADR-DistinctDevDependenciesRule.md)
 
 ### `spdx-matches-manifest`
 

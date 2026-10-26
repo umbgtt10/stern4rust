@@ -94,8 +94,10 @@ impl Runner {
         let config = Self::config_from(&args, None)?;
         Self::validate_selection(&config)?;
         let workspace_dependencies = ManifestResolver::workspace_dependencies(&config);
+        let declared_dependencies = ManifestResolver::declared_dependencies(&config);
         let config = Config {
             workspace_dependencies,
+            declared_dependencies,
             ..config
         };
         let packages = ManifestResolver::packages(&config)?;
@@ -173,15 +175,21 @@ impl Runner {
             // finding about `alpha/Cargo.toml` belongs to `alpha` and to no
             // other package. Deduplication would have to guess that; the loop
             // already knows it.
+            let manifest = ManifestResolver::relative_to(
+                &workspace_root,
+                &package.root().join(ManifestResolver::MANIFEST),
+            );
             let package_config = Config {
                 manifest_license: package.license().map(str::to_string),
                 workspace_dependencies: ManifestDependency::in_manifest(
                     config.workspace_dependencies.as_deref(),
-                    &ManifestResolver::relative_to(
-                        &workspace_root,
-                        &package.root().join(ManifestResolver::MANIFEST),
-                    ),
+                    &manifest,
                 ),
+                declared_dependencies: ManifestDependency::in_manifest(
+                    Some(&config.declared_dependencies),
+                    &manifest,
+                )
+                .unwrap_or_default(),
                 name_readers: readers.in_package(&ManifestResolver::relative_to(
                     &workspace_root,
                     package.root(),

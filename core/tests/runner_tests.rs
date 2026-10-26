@@ -72,6 +72,24 @@ edition = \"2021\"
     path
 }
 
+// A package with no stern4rust.toml beside it, declaring the dependencies given.
+fn probe_package_declaring(name: &str, dependencies: &str) -> PathBuf {
+    let path = probe_package(name);
+    fs::write(
+        path.join("Cargo.toml"),
+        format!(
+            "[package]
+name = \"probe\"
+version = \"0.1.0\"
+edition = \"2021\"
+
+{dependencies}"
+        ),
+    )
+    .expect("write the manifest");
+    path
+}
+
 // Two members, the second reading the first's constants: `LIMIT` from two of
 // its files, `PAGE` from one. Whether a constant is shared is a question about
 // the workspace, so it is asked here, where a run reads one.
@@ -309,6 +327,45 @@ members = [{listed}]
     root
 }
 
+// A workspace whose first member repeats a dependency in its dev-dependencies,
+// and whose others declare nothing.
+fn probe_workspace_with_a_repeated_dev_dependency(name: &str, members: usize) -> PathBuf {
+    let root = probe_workspace_with_a_direct_dependency(name, members);
+    fs::write(
+        root.join("member0/Cargo.toml"),
+        "[package]
+name = \"member0\"
+version = \"0.1.0\"
+edition = \"2021\"
+
+[dependencies]
+serde = { workspace = true }
+
+[dev-dependencies]
+serde = { workspace = true }
+",
+    )
+    .expect("write the member manifest");
+    fs::write(
+        root.join("Cargo.toml"),
+        format!(
+            "[workspace]
+resolver = \"2\"
+members = [{}]
+
+[workspace.dependencies]
+serde = \"1\"
+",
+            (0..members)
+                .map(|index| format!("\"member{index}\""))
+                .collect::<Vec<_>>()
+                .join(", ")
+        ),
+    )
+    .expect("write the workspace manifest");
+    root
+}
+
 // The invariant both per-package bugs broke, in the shape they broke it: a run
 // must never name a rule as skipped that its own roster lists as applied.
 //
@@ -527,6 +584,36 @@ fn run_reporting_in_json_names_the_member_that_stood_a_rule_down() {
     assert_eq!(alpha["rules_skipped"].as_array().expect("array").len(), 0);
 }
 
+// `workspace-dependencies` stands down outside a workspace, and this rule must
+// not: a single package repeats a dependency as easily as a member does.
+#[test]
+fn run_reporting_of_a_package_repeating_a_dev_dependency_reports_it_against_its_manifest() {
+    // Arrange
+    let path = probe_package_declaring(
+        "repeated_dev",
+        "[dependencies]\nserde = \"1\"\n\n[dev-dependencies]\nserde = \"1\"\n",
+    );
+
+    // Act
+    let (_, report) = Runner::run_reporting(args_from(&[
+        "cargo-stern4rust",
+        "--manifest-path",
+        &path.join("Cargo.toml").to_string_lossy(),
+        "--format",
+        "json",
+        "--rule",
+        "distinct-dev-dependencies",
+    ]))
+    .expect("the run itself should succeed");
+
+    // Assert
+    let document: Value = from_str(&report).expect("valid json");
+    let offences = document["offences"].as_array().expect("an offences array");
+    assert_eq!(offences.len(), 1, "{report}");
+    assert_eq!(offences[0]["file"], "Cargo.toml", "{report}");
+    assert_eq!(offences[0]["subject"], "serde", "{report}");
+}
+
 // The count must not track the member count, which is the shape the bug had.
 #[test]
 fn run_reporting_over_a_larger_workspace_states_the_same_manifest_finding_once() {
@@ -658,6 +745,34 @@ fn run_reporting_over_a_workspace_states_a_manifest_finding_once() {
     assert_eq!(document["offences_found"], 1);
 }
 
+// One member repeats it, so the report says so once, against that member's
+// manifest -- the per-package filter `workspace-dependencies` needed from the
+// start, applied to the new rule's declarations as well.
+#[test]
+fn run_reporting_over_a_workspace_states_a_repeated_dev_dependency_once() {
+    // Arrange
+    let root = probe_workspace_with_a_repeated_dev_dependency("repeated_once", 6);
+
+    // Act
+    let (_, report) = Runner::run_reporting(args_from(&[
+        "cargo-stern4rust",
+        "--manifest-path",
+        &root.join("Cargo.toml").to_string_lossy(),
+        "--format",
+        "json",
+        "--rule",
+        "distinct-dev-dependencies",
+    ]))
+    .expect("the run itself should succeed");
+
+    // Assert
+    let document: Value = from_str(&report).expect("valid json");
+    let offences = document["offences"].as_array().expect("an offences array");
+    assert_eq!(offences.len(), 1, "{report}");
+    assert_eq!(offences[0]["file"], "member0/Cargo.toml", "{report}");
+    assert_eq!(document["offences_found"], 1, "{report}");
+}
+
 // Two packages, two real files, one string. Deduplicating the report by offence
 // content alone collapsed them into one finding and the summary counted one --
 // silently, which is the failure this whole tool exists to refuse. Measured on
@@ -725,7 +840,7 @@ fn run_reporting_with_rules_in_json_carries_the_same_rules_as_the_text() {
     // Assert
     let parsed: Value = from_str(&report).expect("valid json");
     let rules = parsed["rules"].as_array().expect("a rules array");
-    assert_eq!(rules.len(), 37);
+    assert_eq!(rules.len(), 38);
     assert!(rules.iter().all(|entry| {
         !entry["name"].as_str().unwrap_or_default().is_empty()
             && !entry["breaks"].as_str().unwrap_or_default().is_empty()

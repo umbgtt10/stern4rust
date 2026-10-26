@@ -26,6 +26,7 @@ pub struct Config {
     pub write_baseline: bool,
     pub manifest_license: Option<String>,
     pub workspace_dependencies: Option<Vec<ManifestDependency>>,
+    pub declared_dependencies: Vec<ManifestDependency>,
     pub manifest_path: Option<PathBuf>,
     pub max_files_per_directory: Option<usize>,
     pub max_subfolders_per_directory: Option<usize>,

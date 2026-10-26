@@ -14,6 +14,7 @@ use crate::rules::layout::paired_test_file_rule::PairedTestFileRule;
 use crate::rules::layout::registry_completeness_rule::RegistryCompletenessRule;
 use crate::rules::layout::test_file_name_postfix_rule::TestFileNamePostfixRule;
 use crate::rules::layout::tests_layout_rule::TestsLayoutRule;
+use crate::rules::manifest::distinct_dev_dependencies_rule::DistinctDevDependenciesRule;
 use crate::rules::manifest::spdx_matches_manifest_rule::SpdxMatchesManifestRule;
 use crate::rules::manifest::workspace_dependencies_rule::WorkspaceDependenciesRule;
 use crate::rules::source::declared_by_name_rule::DeclaredByNameRule;
@@ -145,6 +146,9 @@ impl RuleCatalog {
                 config
                     .max_subfolders_per_directory
                     .unwrap_or(DirectorySubfolderCountRule::DEFAULT_LIMIT),
+            )),
+            Box::new(DistinctDevDependenciesRule::new(
+                config.declared_dependencies.clone(),
             )),
             Box::new(DistinctTupleElementsRule::new()),
             Box::new(ImmutableReturnsRule::new()),

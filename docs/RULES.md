@@ -1,6 +1,6 @@
 # Rules
 
-Thirty-seven rules, each independent, each naming itself in the report. This is the
+Thirty-eight rules, each independent, each naming itself in the report. This is the
 reference; the reasoning behind each one is in its ADR.
 
 Every offence carries a **correction** as well as a description — what to do,
@@ -9,7 +9,7 @@ without answering it.
 
 Each rule also carries an **explanation** — what it wants, a scrap of source
 that breaks it and the same scrap put right — and that field is required too.
-`cargo stern4rust --rules` prints all thirty-seven, in text or with
+`cargo stern4rust --rules` prints all thirty-eight, in text or with
 `--format json`, without scanning anything. See
 [ADR-RulesExplainThemselves](ADRs/ADR-RulesExplainThemselves.md).
 
@@ -36,6 +36,7 @@ that breaks it and the same scrap put right — and that field is required too.
 | `ordered-imports` | [R019](ADRs/R019-ADR-OrderedImportsRule.md) | no |
 | `spdx-matches-manifest` | [R020](ADRs/R020-ADR-SpdxMatchesManifestRule.md) | `license` in the manifest |
 | `workspace-dependencies` | [R021](ADRs/R021-ADR-WorkspaceDependenciesRule.md) | no |
+| `distinct-dev-dependencies` | [R039](ADRs/R039-ADR-DistinctDevDependenciesRule.md) | no |
 | `single-implemented-type` | [R007](ADRs/R007-ADR-SingleImplementedTypeRule.md) | no |
 | `named-subject` | [R023](ADRs/R023-ADR-NamedSubjectRule.md) | no |
 | `owned-functions` | [R024](ADRs/R024-ADR-OwnedFunctionsRule.md) | no |
@@ -1063,6 +1064,47 @@ entry nothing references is invisible. Nor version drift within the root, nor
 dependency at all.
 
 See [R021](ADRs/R021-ADR-WorkspaceDependenciesRule.md).
+
+## `distinct-dev-dependencies`
+
+A `[dev-dependencies]` entry gives the tests something `[dependencies]` does
+not: a crate, a feature, or a crate that is optional there.
+
+The tests already have every crate `[dependencies]` names, so an entry naming
+one again, written the same way and asking for nothing more, does nothing --
+and nothing else says so: cargo accepts it, and cargo-shear looks for unused
+dependencies, not repeated ones. Read from the TOML, in every package,
+workspace or not.
+
+**A repeat that adds something is left alone**, because a dev-dependency is the
+only way cargo gives the tests it: a feature production must not ship -- a
+`tokio` repeated with `test-util` -- the default features the dependency turns
+off, or a crate that is optional there. Turning default features *off* in the
+dev entry adds nothing; features unify.
+
+**Matched on the key.** Cargo refuses one package under two keys and one key for
+two sources, so a renamed dependency repeats under its own key like any other.
+A `[target.'cfg(...)'.dev-dependencies]` entry is judged against
+`[dependencies]`, which covers every target, and against that target's own
+dependencies, compared as written; an untargeted dev entry beside a targeted
+dependency gives the tests the crate everywhere else, and is left alone.
+
+**A pair written unlike is left alone**: one taken from the workspace and one
+spelled out, or two version requirements. In a workspace,
+`workspace-dependencies` reports the spelled-out one; once it is fixed, the
+pair is judged.
+
+| offence | correction |
+|---|---|
+| `` core/Cargo.toml declares `clap` in [dev-dependencies] as well as in [dependencies], and adds nothing to it `` | remove `clap` from [dev-dependencies]: the tests already have it from [dependencies] |
+
+Reported at line 1 of the manifest, as `workspace-dependencies` is.
+
+**Does not catch:** a pair written unlike, by decision; two spellings of one
+target, compared as written; a build dependency repeating a dependency, a graph
+of its own; a dev-dependency nothing uses, which is cargo-shear's.
+
+See [R039](ADRs/R039-ADR-DistinctDevDependenciesRule.md).
 
 ## `spdx-matches-manifest`
 

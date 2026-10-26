@@ -129,6 +129,14 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
   `RuleRegistry::from_config` and `RewriterRegistry::all`, gave way to
   `RuleCatalog`, which composes the rules and fixers both registries take.
   On by default. [R038](ADRs/R038-ADR-InjectedDependenciesRule.md)
+- **`distinct-dev-dependencies`** -- a `[dev-dependencies]` entry repeating a
+  `[dependencies]` entry of its manifest, written alike and adding nothing to
+  it, is reported against the manifest. `DependencyTables` reads every table,
+  `[target.<cfg>]` ones included, with each entry's version, features, default
+  features and optional; `ManifestDependency::repeats` decides; every package is
+  judged, workspace or not. By the census of 2026-10-26, four entries in three
+  of ten repositories, this repository's `clap` removed first. On by default.
+  [R039](ADRs/R039-ADR-DistinctDevDependenciesRule.md)
 - `test-file-structure` names, sorts and quotes an attributed import by its
   `use` line rather than by the attribute its span opens on, read by
   `ItemNaming::import_line`, which `ordered-imports` now shares.
