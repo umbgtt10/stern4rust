@@ -298,6 +298,15 @@ where `test-file-structure` is skipped or not selected.
 - `FixRefusal` gains `FreeComment` and `MacroInvocation`, and its `SharedLine`
   reads for any item, not only a constant. Where moved lines meet the lines that
   stay, both fixers drop the blank lines through `BlankLines`.
+- **A manifest's dependencies are read in every table, with what each entry
+  asks for.** `DependencyTables` reads one manifest: the three plain tables and
+  each under `[target.<cfg>]`, and for every entry whether it takes from the
+  workspace, its version requirement, its features, whether it keeps default
+  features -- spelled `default-features` or `default_features` -- and whether it
+  is optional, all carried by `ManifestDependency`, which gains `with_` steps
+  for each and `table`. `ManifestResolver::declared_dependencies` reads every
+  package's manifest, in a workspace or not. `workspace-dependencies` is handed
+  the plain tables only, as before, so nothing it reports changed.
 - The layout models -- `Section`, `TestFileItem`, `ConstantLayout`,
   `MisplacedConstant`, `FixRefusal` -- moved to `finding::model::layout`, to leave
   `finding/model/` room under `directory-file-count`.

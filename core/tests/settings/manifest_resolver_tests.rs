@@ -9,7 +9,10 @@
 // success, which is the failure mode that makes a green gate meaningless -- so
 // it is an error instead.
 
+use std::env;
+use std::fs;
 use std::path::Path;
+use std::path::PathBuf;
 use stern4rust::settings::config::Config;
 use stern4rust::settings::manifest_resolver::ManifestResolver;
 
@@ -19,6 +22,116 @@ fn config_for(packages: &[&str]) -> Config {
         packages: packages.iter().map(|name| (*name).to_string()).collect(),
         ..Config::default()
     }
+}
+
+fn config_of(manifest: &Path) -> Config {
+    Config {
+        manifest_path: Some(manifest.to_path_buf()),
+        ..Config::default()
+    }
+}
+
+// A package alone in a directory of its own, outside this repository's
+// workspace.
+fn probe_package(name: &str, dependencies: &str) -> PathBuf {
+    let path = env::temp_dir().join(format!("stern4rust_resolver_{name}"));
+    let _ = fs::remove_dir_all(&path);
+    fs::create_dir_all(path.join("src")).expect("create the package");
+    fs::write(
+        path.join("Cargo.toml"),
+        format!(
+            "[package]\nname = \"probe\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n{dependencies}"
+        ),
+    )
+    .expect("write the manifest");
+    fs::write(path.join("src/lib.rs"), "").expect("write the library");
+    path
+}
+
+// A workspace of one member declaring a plain and a target-specific dependency.
+fn probe_workspace(name: &str) -> PathBuf {
+    let root = env::temp_dir().join(format!("stern4rust_resolver_{name}"));
+    let _ = fs::remove_dir_all(&root);
+    fs::create_dir_all(root.join("member/src")).expect("create the member");
+    fs::write(
+        root.join("Cargo.toml"),
+        "[workspace]\nmembers = [\"member\"]\nresolver = \"2\"\n",
+    )
+    .expect("write the root manifest");
+    fs::write(
+        root.join("member/Cargo.toml"),
+        "[package]\nname = \"member\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\nanyhow = \"1\"\n\n[target.'cfg(unix)'.dependencies]\nnix = \"0.29\"\n",
+    )
+    .expect("write the member manifest");
+    fs::write(root.join("member/src/lib.rs"), "").expect("write the library");
+    root
+}
+
+#[test]
+fn declared_dependencies_of_a_member_reads_its_target_tables() {
+    // Arrange
+    let root = probe_workspace("declared_targets");
+
+    // Act
+    let declared = ManifestResolver::declared_dependencies(&config_of(&root.join("Cargo.toml")));
+
+    // Assert
+    let found: Vec<(&str, Option<&str>)> = declared
+        .iter()
+        .map(|dependency| (dependency.name(), dependency.target()))
+        .collect();
+    assert_eq!(found, [("anyhow", None), ("nix", Some("cfg(unix)"))]);
+}
+
+// A single package is no workspace, and still declares what it declares: a
+// rule about the package's own manifest must not stand down outside one.
+#[test]
+fn declared_dependencies_of_a_package_outside_a_workspace_names_its_entries() {
+    // Arrange
+    let root = probe_package(
+        "outside",
+        "[dependencies]\nserde = \"1\"\n\n[dev-dependencies]\nserde = \"1\"\n",
+    );
+
+    // Act
+    let declared = ManifestResolver::declared_dependencies(&config_of(&root.join("Cargo.toml")));
+
+    // Assert
+    let found: Vec<(&str, &str, &str)> = declared
+        .iter()
+        .map(|dependency| {
+            (
+                dependency.manifest(),
+                dependency.section(),
+                dependency.name(),
+            )
+        })
+        .collect();
+    assert_eq!(
+        found,
+        [
+            ("Cargo.toml", "dependencies", "serde"),
+            ("Cargo.toml", "dev-dependencies", "serde"),
+        ]
+    );
+}
+
+#[test]
+fn declared_dependencies_of_this_workspace_names_each_members_manifest() {
+    // Arrange
+    let config = config_for(&[]);
+
+    // Act
+    let declared = ManifestResolver::declared_dependencies(&config);
+
+    // Assert
+    assert!(
+        declared
+            .iter()
+            .any(|dependency| dependency.manifest() == "core/Cargo.toml"
+                && dependency.name() == "syn"),
+        "{declared:?}"
+    );
 }
 
 #[test]
@@ -150,6 +263,25 @@ fn relative_to_strips_the_root_prefix() {
 
     // Assert
     assert_eq!(relative, "src/a.rs");
+}
+
+// `workspace-dependencies` has never judged a target table, and reading them
+// for another rule leaves it so.
+#[test]
+fn workspace_dependencies_leaves_target_tables_out() {
+    // Arrange
+    let root = probe_workspace("workspace_targets");
+
+    // Act
+    let declared = ManifestResolver::workspace_dependencies(&config_of(&root.join("Cargo.toml")));
+
+    // Assert
+    let declared = declared.expect("the probe is a workspace");
+    let names: Vec<&str> = declared
+        .iter()
+        .map(|dependency| dependency.name())
+        .collect();
+    assert_eq!(names, ["anyhow"]);
 }
 
 // This repository is a workspace and centralises its versions in

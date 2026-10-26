@@ -46,6 +46,7 @@ happened to return files in.
 | `Args` | clap surface, plus the argv fixup every cargo subcommand needs |
 | `Config` | what a run was asked to do, decoupled from how it was asked |
 | `ManifestResolver` | package name → source root, via `cargo_metadata`; also relativises paths |
+| `DependencyTables` | one manifest's dependency entries as written -- plain and `[target.<cfg>]` tables, with each entry's workspace, version, features, default features and optional |
 | `SourceWalker` | every `.rs` path under a root, minus `target/` and `.git/` |
 | `SourceReader` | path → `SourceFile`, or an `Offence` if it cannot be read |
 | `SourceFile` | normalised contents: BOM stripped, `\r` stripped, path forward-slashed |

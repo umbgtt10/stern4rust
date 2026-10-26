@@ -12,10 +12,10 @@ use cargo_metadata::Metadata;
 use cargo_metadata::MetadataCommand;
 use cargo_metadata::Package;
 use toml::Table;
-use toml::Value;
 
 use crate::finding::model::manifest_dependency::ManifestDependency;
 use crate::settings::config::Config;
+use crate::settings::dependency_tables::DependencyTables;
 use crate::settings::scanned_package::ScannedPackage;
 
 // Turns the requested packages into the directories to walk.
@@ -38,6 +38,16 @@ impl ManifestResolver {
     // package, so four members all declaring Apache-2.0 read as none declaring
     // it. See
     // [ADR-ManifestDataIsPerPackage](../../docs/ADRs/ADR-ManifestDataIsPerPackage.md).
+    // Every dependency each package's manifest declares, as written, in every
+    // table -- the plain three and each under `[target.<cfg>]` -- whether or not
+    // the package sits in a workspace. Empty when the metadata cannot be read,
+    // which `packages` reports on its own.
+    pub fn declared_dependencies(config: &Config) -> Vec<ManifestDependency> {
+        Self::metadata(config)
+            .map(|metadata| Self::declared_by_members(&metadata))
+            .unwrap_or_default()
+    }
+
     pub fn packages(config: &Config) -> Result<Vec<ScannedPackage>> {
         let metadata = Self::metadata(config)?;
         Ok(Self::selected(&metadata, config)?
@@ -59,28 +69,24 @@ impl ManifestResolver {
             .replace('\\', "/")
     }
 
-    // Every dependency each member manifest declares, as written. None when the
-    // package is not a workspace, which is not the same as a workspace with
-    // nothing to report.
+    // Every dependency each member manifest declares, as written, in the three
+    // plain tables. None when the package is not a workspace, which is not the
+    // same as a workspace with nothing to report.
     //
     // Read from the TOML rather than from `cargo metadata`, because the question
     // is *how* a dependency was declared and resolution erases that: a
     // `{ workspace = true }` and a spelled-out version look identical once
-    // resolved.
+    // resolved. Target tables are left out: `workspace-dependencies` has never
+    // judged them.
     pub fn workspace_dependencies(config: &Config) -> Option<Vec<ManifestDependency>> {
         let metadata = Self::metadata(config).ok()?;
-        let root = metadata.workspace_root.as_std_path();
-        if !Self::is_workspace(&root.join(Self::MANIFEST)) {
+        if !Self::is_workspace(&metadata.workspace_root.as_std_path().join(Self::MANIFEST)) {
             return None;
         }
         Some(
-            metadata
-                .packages
-                .iter()
-                .flat_map(|package| {
-                    let path = package.manifest_path.as_std_path();
-                    Self::declared_in(path, &Self::relative_to(root, path))
-                })
+            Self::declared_by_members(&metadata)
+                .into_iter()
+                .filter(|dependency| dependency.target().is_none())
                 .collect(),
         )
     }
@@ -110,35 +116,23 @@ impl ManifestResolver {
             .map(|metadata| metadata.workspace_root.as_std_path().to_path_buf())
     }
 
-    fn declared_in(manifest: &Path, shown: &str) -> Vec<ManifestDependency> {
-        let Some(table) = Self::parsed(manifest) else {
-            return Vec::new();
-        };
-        ManifestDependency::SECTIONS
-            .into_iter()
-            .flat_map(|section| Self::in_section(&table, section, shown))
+    // Every member's declarations, each manifest named relative to the
+    // workspace root.
+    fn declared_by_members(metadata: &Metadata) -> Vec<ManifestDependency> {
+        let root = metadata.workspace_root.as_std_path();
+        metadata
+            .packages
+            .iter()
+            .flat_map(|package| {
+                let path = package.manifest_path.as_std_path();
+                Self::declared_in(path, &Self::relative_to(root, path))
+            })
             .collect()
     }
 
-    // A dependency takes from the workspace when it is a table saying so. A
-    // string version, or a table with a version of its own, does not.
-    fn in_section(table: &Table, section: &str, shown: &str) -> Vec<ManifestDependency> {
-        table
-            .get(section)
-            .and_then(Value::as_table)
-            .map(|declared| {
-                declared
-                    .iter()
-                    .map(|(name, value)| {
-                        let takes = value
-                            .as_table()
-                            .and_then(|entry| entry.get("workspace"))
-                            .and_then(Value::as_bool)
-                            .unwrap_or(false);
-                        ManifestDependency::new(shown, name, section, takes)
-                    })
-                    .collect()
-            })
+    fn declared_in(manifest: &Path, shown: &str) -> Vec<ManifestDependency> {
+        Self::parsed(manifest)
+            .map(|table| DependencyTables::declared(&table, shown))
             .unwrap_or_default()
     }
 

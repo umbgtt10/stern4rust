@@ -5,6 +5,7 @@
 pub mod args;
 pub mod config;
 pub mod config_file;
+pub mod dependency_tables;
 pub mod header_source;
 pub mod manifest_resolver;
 pub mod package_config;
