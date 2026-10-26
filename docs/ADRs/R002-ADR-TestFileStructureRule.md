@@ -1,6 +1,6 @@
 # R002-ADR-TestFileStructureRule
 
-- **Status:** Accepted
+- **Status:** Accepted; amended 2026-10-26 (below)
 - **Date:** 2026-08-18
 
 ## Context
@@ -194,6 +194,34 @@ rule can be wrong are ways the parser can be wrong:
 Dogfooded through the compiled binary in `just stage2`, which is what
 caught this crate's own new test file breaking the rule while the rule for
 `003-ADR-TestsLayoutRule` was being written.
+
+## Amendment, 2026-10-26: an attributed import is ordered by its path
+
+An import declares no name, so the parser named it by the line its item began
+on -- and an item's span begins at its first attribute. A gated import was
+therefore named `#[cfg(unix)]`: it sorted by attribute text, which puts it above
+every plain `use`, and the offence quoted the attribute.
+
+`cargo fmt` does otherwise, and measured on the pinned toolchain it does the same
+under the 2021 and 2024 style editions: within a run of consecutive imports it
+sorts on the path alone, carries every attribute with its import, and moves an
+attribute written on the `use` line onto a line of its own. Moving a gated
+import to the top, as the correction asked, is undone on the next run. A file
+holding one could satisfy the formatter or this rule, never both --
+iceberg4rust moved two gated imports into a gated inline module to keep its
+gates green.
+
+**An import is named by its `use` line**, read by `ItemNaming::import_line`, the
+function `ordered-imports` uses; that rule has read imports so since 0.10.3, and
+this one never followed. The item's block still starts at its attribute, so the
+spacing check and the line an offence reports are unchanged.
+
+`check_an_attributed_import_in_rustfmt_order_reports_nothing` holds the shape
+iceberg4rust hit; `check_an_attributed_import_out_of_order_names_the_import_not_the_attribute`
+and `check_imports_whose_attributes_sort_against_their_paths_reports_nothing`
+the two directions. `--fix` needed no change: it never orders imports, and
+`rewrite_moves_an_attributed_import_up_with_its_attribute` pins that it moves
+one whole.
 
 ## Related
 

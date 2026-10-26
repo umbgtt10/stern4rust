@@ -13,6 +13,7 @@
 use stern4rust::finding::parsing::item_naming::ItemNaming;
 use stern4rust::source_file::SourceFile;
 use syn::Item;
+use syn::ItemUse;
 use syn::Type;
 use syn::parse_file;
 
@@ -23,6 +24,13 @@ fn first_item(source: &str) -> Item {
         .into_iter()
         .next()
         .expect("one item")
+}
+
+fn import(source: &str) -> ItemUse {
+    match first_item(source) {
+        Item::Use(inner) => inner,
+        _ => panic!("expected an import"),
+    }
 }
 
 fn self_type(source: &str) -> Type {
@@ -141,6 +149,36 @@ fn implemented_type_of_a_reference_is_empty() {
 
     // Assert
     assert!(name.is_empty());
+}
+
+// An item's span opens at its first attribute, so the line it starts on is the
+// attribute's; the import is the line its `use` keyword is on.
+#[test]
+fn import_line_of_an_attributed_import_is_its_use_line() {
+    // Arrange
+    let source = "#[cfg(unix)]\n#[allow(unused_imports)]\n    use std::os::unix::ffi::OsStrExt;\n";
+    let file = SourceFile::new("tests/a_tests.rs", source);
+
+    // Act
+    let line = ItemNaming::import_line(&file, &import(source));
+
+    // Assert
+    assert_eq!(line, "use std::os::unix::ffi::OsStrExt;");
+}
+
+// rustfmt moves the attribute onto a line of its own; until it has, the line
+// the `use` is on is the whole of it.
+#[test]
+fn import_line_of_an_import_sharing_a_line_with_its_attribute_is_that_line() {
+    // Arrange
+    let source = "#[cfg(unix)] pub use alpha::One;\n";
+    let file = SourceFile::new("tests/a_tests.rs", source);
+
+    // Act
+    let line = ItemNaming::import_line(&file, &import(source));
+
+    // Assert
+    assert_eq!(line, "#[cfg(unix)] pub use alpha::One;");
 }
 
 #[test]

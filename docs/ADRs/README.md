@@ -30,7 +30,7 @@ rule; anything without is the machinery the rules run on.
 | ADR | Rule | Decision |
 |---|---|---|
 | [R001](R001-ADR-HeaderRule.md) | `header` | The expected header is data supplied by `--header-file`, not a constant; a file satisfies the rule when its first N lines match exactly after normalisation, and exactly one offence — the first divergence — is reported per file. |
-| [R002](R002-ADR-TestFileStructureRule.md) | `test-file-structure` | A test file is four sections in a fixed order, each alphabetical, with spacing as part of the shape — and `Helpers` is defined by exclusion so the set of item kinds stays closed. |
+| [R002](R002-ADR-TestFileStructureRule.md) | `test-file-structure` | A test file is four sections in a fixed order, each alphabetical, with spacing as part of the shape — and `Helpers` is defined by exclusion so the set of item kinds stays closed. *Amended 2026-10-26: an attributed import is named and ordered by its `use` line, as rustfmt orders it.* |
 | [R003](R003-ADR-TestsLayoutRule.md) | `tests-layout` | A tests folder is reached through exactly one `all_tests.rs` and a `mod.rs` in every subfolder on the way down. |
 | [R004](R004-ADR-ReadableSourceRule.md) | `readable-source` | Every `.rs` file must be readable and must parse, and failing either is an offence rather than a reason to say nothing — a file the tool cannot read otherwise reads as a file with nothing wrong with it. |
 | [R007](R007-ADR-SingleImplementedTypeRule.md) | `single-implemented-type` | A source file holds at most one type that is both declared there and carries an impl block. Plain data declarations are unlimited -- they are not subjects. *Amended 2026-10-25: a subject is an object -- a record or data enum with only value-trait impls is not one.* |

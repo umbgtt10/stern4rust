@@ -3,12 +3,15 @@
 // SPDX-License-Identifier: MIT
 
 use syn::Item;
+use syn::ItemUse;
 use syn::Type;
+use syn::spanned::Spanned;
 
 use crate::source_file::SourceFile;
 
 // The identifier an item declares, and the source line to fall back on when it
-// declares none.
+// declares none -- for an import, the line its `use` is on, which both import
+// rules read.
 //
 // `TestFileParser::name`, `RegistryParser::label` and `UnitTestFinder::describe`
 // each carried both, with the same arms and the same fallback --
@@ -53,6 +56,26 @@ impl ItemNaming {
                 .map_or_else(String::new, |segment| segment.ident.to_string()),
             _ => String::new(),
         }
+    }
+
+    // An import as written, taken from the line rather than rebuilt from the
+    // syntax tree, so an offence quotes what the reader will search for.
+    //
+    // Anchored on the `use` keyword, not on the item. An item's span begins at
+    // its first attribute, so a gated import read from `span().start()` was
+    // judged -- and quoted -- by its `#[cfg(...)]` line instead of its path.
+    //
+    // The corrections that produced were not merely noisy, they were wrong.
+    // `embassy-logging` gates four imports on three features, and following
+    // every correction would have ordered them by feature name: `rtt_sink`
+    // above `qemu_sink` above `host_sink`, the paths in reverse, by the rule
+    // that exists to alphabetise them. It cut both ways -- two imports genuinely
+    // out of order went unreported because their attributes happened to sort.
+    // `ordered-imports` was fixed for it in 0.10.3; `test-file-structure` kept
+    // reading the attribute until iceberg4rust's gated imports met `cargo fmt`,
+    // which sorts them by path, and no order could satisfy both.
+    pub fn import_line(file: &SourceFile, import: &ItemUse) -> String {
+        Self::source_line(file, import.use_token.span().start().line)
     }
 
     // The line as written, because that is what a reader would point at.

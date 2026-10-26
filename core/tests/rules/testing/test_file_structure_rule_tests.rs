@@ -282,6 +282,52 @@ fn check_a_struct_helper_sorts_among_the_helper_functions() {
     assert!(offences.is_empty(), "expected none, got {offences:?}");
 }
 
+// The shape `cargo fmt` leaves under both style editions: a gated import sits
+// among the others by its path, its attribute carried with it. Sorted by its
+// attribute text, it was asked to move above every plain import -- an order the
+// formatter writes back on its next run. Found in iceberg4rust, where the
+// imports had to move into a gated module to keep both green.
+#[test]
+fn check_an_attributed_import_in_rustfmt_order_reports_nothing() {
+    // Arrange
+    let contents = "use iceberg4rust::workspace::source_path::SourcePath;\n\
+                    #[cfg(unix)]\n\
+                    use std::ffi::OsStr;\n\
+                    use std::fs;\n\
+                    #[cfg(unix)]\n\
+                    use std::os::unix::ffi::OsStrExt;\n\
+                    use std::path::{Path, PathBuf};\n\
+                    use tempfile::TempDir;\n";
+
+    // Act
+    let offences = check(contents);
+
+    // Assert
+    assert!(offences.is_empty(), "expected none, got {offences:?}");
+}
+
+// An attributed import genuinely out of place is still reported, by the import
+// a reader would search for rather than the attribute above it.
+#[test]
+fn check_an_attributed_import_out_of_order_names_the_import_not_the_attribute() {
+    // Arrange
+    let contents = "use zeta::Two;\n\
+                    #[cfg(unix)]\n\
+                    use alpha::One;\n";
+
+    // Act
+    let offences = check(contents);
+
+    // Assert
+    assert_eq!(offences.len(), 1);
+    assert_eq!(offences[0].subject(), Some("use alpha::One;"));
+    assert_eq!(
+        offences[0].description(),
+        "use alpha::One; is out of alphabetic order; it follows use zeta::Two;"
+    );
+    assert_eq!(offences[0].line(), 6);
+}
+
 // An impl block belongs to the type it implements, so it sorts under that name
 // and sits next to the struct rather than drifting to the end of the section.
 #[test]
@@ -431,6 +477,28 @@ fn check_imports_out_of_alphabetic_order_reports_the_later_one() {
     assert_eq!(offences.len(), 1);
     assert_eq!(offences[0].rule(), RULE);
     assert!(offences[0].description().contains("alpha::One"));
+}
+
+// Attributes decide nothing, however many an import carries: these sort by
+// path, which is the order `cargo fmt` leaves, while their attributes run the
+// other way.
+#[test]
+fn check_imports_whose_attributes_sort_against_their_paths_reports_nothing() {
+    // Arrange
+    let contents = "use alpha::One;\n\
+                    #[cfg(feature = \"zzz\")]\n\
+                    use beta::Two;\n\
+                    #[cfg(unix)]\n\
+                    #[allow(unused_imports)]\n\
+                    use delta::Four;\n\
+                    #[cfg(feature = \"aaa\")]\n\
+                    use gamma::Three;\n";
+
+    // Act
+    let offences = check(contents);
+
+    // Assert
+    assert!(offences.is_empty(), "expected none, got {offences:?}");
 }
 
 #[test]

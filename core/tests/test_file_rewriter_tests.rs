@@ -93,6 +93,24 @@ fn rewrite_leaves_the_order_of_imports_to_rustfmt() {
     );
 }
 
+// A gated import below a helper moves up as a block, its attribute with it, and
+// lands where it was written among the imports: ordering them is rustfmt's,
+// which sorts a gated import by its path.
+#[test]
+fn rewrite_moves_an_attributed_import_up_with_its_attribute() {
+    // Arrange
+    let contents = "use std::fs;\nuse tempfile::TempDir;\n\nfn helper() {}\n\n#[cfg(unix)]\nuse std::os::unix::fs::PermissionsExt;\n";
+
+    // Act
+    let rewritten = rewrite(contents).expect("reordered");
+
+    // Assert
+    assert_eq!(
+        rewritten,
+        "use std::fs;\nuse tempfile::TempDir;\n#[cfg(unix)]\nuse std::os::unix::fs::PermissionsExt;\n\nfn helper() {}\n"
+    );
+}
+
 // The shape that duplicated lines in every test file sharing the HEADER fixture:
 // the constant below a multi-line string whose lines start with `//`.
 #[test]

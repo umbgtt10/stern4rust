@@ -317,6 +317,17 @@ where `test-file-structure` is skipped or not selected.
   constraint. None of the family's repositories skips the rule or runs `--fix`
   from a script, so only a hand run with `--rule` sees the difference.
 
+### Fixed
+- **`test-file-structure` orders an attributed import by its path, not by its
+  first attribute.** An import was named by the line its item began on, which
+  for a gated import is its `#[cfg(...)]`, so it sorted by attribute text --
+  above every plain `use` -- and the offence quoted the attribute. `cargo fmt`
+  orders gated imports by path, under both style editions, so a file could
+  satisfy one or the other but never both. The name is now the `use` line, read
+  by the same function `ordered-imports` uses, which has read it so since
+  0.10.3. A baselined offence keyed on an attribute goes stale.
+  [R002](docs/ADRs/R002-ADR-TestFileStructureRule.md)
+
 ## [0.17.0] - 2026-10-19
 
 One rule added, and it is on by default, so it moves what this tool reports

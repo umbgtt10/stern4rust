@@ -73,6 +73,11 @@ impl TestFileParser {
         if let Item::Impl(inner) = item {
             return ItemNaming::implemented_type(&inner.self_ty);
         }
+        // An import by its `use` line, as rustfmt sorts it and a reader looks
+        // for it -- not by the attribute its span opens on.
+        if let Item::Use(import) = item {
+            return ItemNaming::import_line(file, import);
+        }
         ItemNaming::identifier(item).unwrap_or_else(|| ItemNaming::source_line(file, start_line))
     }
 
@@ -84,7 +89,4 @@ impl TestFileParser {
             _ => Section::Helpers,
         }
     }
-
-    // An import sorts and reports as it was written, which is how rustfmt orders
-    // them and how a reader would look for one.
 }

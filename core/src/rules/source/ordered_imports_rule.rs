@@ -8,6 +8,7 @@ use syn::parse_file;
 use syn::spanned::Spanned;
 
 use crate::finding::model::import_path::ImportPath;
+use crate::finding::parsing::item_naming::ItemNaming;
 use crate::reporting::offence::Offence;
 use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;
@@ -77,29 +78,14 @@ impl OrderedImportsRule {
         .with_subject(import)
     }
 
-    // The text as written, taken from the line rather than rebuilt from the
-    // syntax tree, so the offence quotes what the reader will search for.
-    //
-    // Anchored on the `use` keyword, not on the item. An item's span begins at
-    // its first attribute, so a gated import read from `span().start()` was
-    // judged -- and quoted -- by its `#[cfg(...)]` line instead of its path.
-    //
-    // The corrections that produced were not merely noisy, they were wrong.
-    // `embassy-logging` gates four imports on three features, and following
-    // every correction would have ordered them by feature name: `rtt_sink`
-    // above `qemu_sink` above `host_sink`, the paths in reverse, by the rule
-    // that exists to alphabetise them. It cut both ways -- two imports genuinely
-    // out of order went unreported because their attributes happened to sort.
+    // The import as `ItemNaming` reads it, from its `use` line.
     //
     // `follows` deliberately keeps the item span. An attributed import sitting
     // directly beneath another is consecutive, and anchoring that on the `use`
     // line too would put the attribute in the gap and stop the pair being
     // compared at all.
     fn text_of(file: &SourceFile, import: &ItemUse) -> String {
-        file.lines()
-            .get(import.use_token.span().start().line - 1)
-            .map(|line| line.trim().to_string())
-            .unwrap_or_default()
+        ItemNaming::import_line(file, import)
     }
 }
 

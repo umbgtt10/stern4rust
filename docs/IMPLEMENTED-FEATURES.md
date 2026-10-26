@@ -129,6 +129,10 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
   `RuleRegistry::from_config` and `RewriterRegistry::all`, gave way to
   `RuleCatalog`, which composes the rules and fixers both registries take.
   On by default. [R038](ADRs/R038-ADR-InjectedDependenciesRule.md)
+- `test-file-structure` names, sorts and quotes an attributed import by its
+  `use` line rather than by the attribute its span opens on, read by
+  `ItemNaming::import_line`, which `ordered-imports` now shares.
+  [R002](ADRs/R002-ADR-TestFileStructureRule.md)
 
 ### Autofix
 

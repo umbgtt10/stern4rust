@@ -125,6 +125,18 @@ fn parse_names_a_function_by_its_identifier() {
     assert_eq!(found[0].name(), "helper_name");
 }
 
+// An item's span opens at its first attribute, which is not the import: a gated
+// import is named by its `use` line, as rustfmt sorts it.
+#[test]
+fn parse_names_an_attributed_import_by_its_use_line() {
+    // Arrange & Act
+    let found = items("#[cfg(unix)]\n#[allow(unused_imports)]\nuse alpha::One;\n");
+
+    // Assert
+    assert_eq!(found[0].name(), "use alpha::One;");
+    assert_eq!(found[0].first_line(), 1);
+}
+
 // An impl block has no name of its own, so it borrows the type's and sits beside
 // the struct rather than drifting to the top of the section.
 #[test]

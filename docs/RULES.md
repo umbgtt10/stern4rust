@@ -169,6 +169,15 @@ Two shapes trigger it: a shared helper inside the tests tree, reached as
 `use crate::support::builders::a_widget;`, and a same-crate pair diverging by
 case.
 
+**An attributed import is named, sorted and quoted by its `use` line.** An
+item's span opens at its first attribute, so `#[cfg(unix)]` above
+`use std::os::unix::ffi::OsStrExt;` used to be the import's name: it sorted by
+attribute text, above every plain `use`, and the offence quoted the attribute.
+`cargo fmt` sorts a gated import by its path under both style editions, its
+attributes -- however many -- carried with it, so the two could never agree. The
+import is read by the same function `ordered-imports` uses; its block still
+starts at the attribute, so spacing and the reported line are unchanged.
+
 | offence | correction |
 |---|---|
 | a `constant` follows a `helper` | move \`X\` up above the helpers |
