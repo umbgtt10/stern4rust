@@ -52,6 +52,21 @@ fn check_a_crate_import_before_an_external_one_reports_nothing() {
     assert!(offences.is_empty(), "expected none, got {offences:?}");
 }
 
+// A restricted visibility sorts by its path too: rustfmt leaves
+// `pub(crate) use zed::Z;` below `use yak::Y;` under both style editions, and
+// read as written it was asked to move above it.
+#[test]
+fn check_a_crate_visible_re_export_is_ordered_by_its_path() {
+    // Arrange & Act
+    let offences = check(
+        "src/widget.rs",
+        "use yak::Y;\npub(crate) use zed::Z;\n\npub struct W;\n",
+    );
+
+    // Assert
+    assert!(offences.is_empty(), "expected none, got {offences:?}");
+}
+
 #[test]
 fn check_a_file_that_does_not_parse_reports_nothing() {
     // Arrange & Act

@@ -128,11 +128,16 @@ impl ImportPath {
         left.len() != right.len() && left[..shared] == right[..shared]
     }
 
+    // The path is what follows the `use` keyword. Everything before it decides
+    // nothing to rustfmt -- `pub`, a restricted visibility such as `pub(crate)`,
+    // an attribute not yet moved to a line of its own -- and trimming `pub `
+    // alone left `pub(crate) use zed` standing as a first segment. A bare path,
+    // with no keyword, is read whole.
     fn segments(import: &str) -> Vec<&str> {
+        let import = import.trim();
         import
-            .trim()
-            .trim_start_matches("pub ")
-            .trim_start_matches("use ")
+            .split_once("use ")
+            .map_or(import, |(_, path)| path)
             .trim_start()
             .trim_end_matches(';')
             .trim_start_matches("::")

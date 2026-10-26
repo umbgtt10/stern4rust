@@ -250,6 +250,26 @@ fn in_order_of_a_sorted_pair_is_true() {
 // digit or letter, so one path being a prefix of another at the last segment
 // inverted the pair. And it may open with `pub `, whose `p` beats the `u` of
 // `use`, so a re-export sorted above everything.
+// A restricted visibility is no more a segment than `pub` is: rustfmt sorts
+// `pub(crate) use zed::Z;` by `zed::Z` under both style editions.
+#[test]
+fn is_ordered_of_a_crate_visible_re_export_after_an_import_it_sorts_behind_is_true() {
+    // Arrange & Act
+    let ordered = ImportPath::is_ordered("use yak::Y;", "pub(crate) use zed::Z;");
+
+    // Assert
+    assert!(ordered);
+}
+
+#[test]
+fn is_ordered_of_a_crate_visible_re_export_before_an_import_it_sorts_behind_is_false() {
+    // Arrange & Act
+    let ordered = ImportPath::is_ordered("pub(crate) use zed::Z;", "use yak::Y;");
+
+    // Assert
+    assert!(!ordered);
+}
+
 #[test]
 fn is_ordered_of_a_pair_whose_first_path_prefixes_the_second_is_true() {
     // Arrange & Act
@@ -295,6 +315,17 @@ fn is_ordered_of_an_identical_pair_is_true() {
     assert!(ordered);
 }
 
+// rustfmt moves an attribute off the `use` line, but a file not yet formatted
+// may hold one there, and the path is still what is compared.
+#[test]
+fn is_ordered_of_an_import_sharing_a_line_with_its_attribute_reads_its_path() {
+    // Arrange & Act
+    let ordered = ImportPath::is_ordered("use alpha::One;", "#[cfg(unix)] use beta::Two;");
+
+    // Assert
+    assert!(ordered);
+}
+
 #[test]
 fn is_specially_ordered_of_a_crate_path_is_true() {
     // Arrange & Act
@@ -319,6 +350,15 @@ fn is_specially_ordered_of_a_path_named_crateful_is_false() {
 fn is_specially_ordered_of_a_pub_use_is_judged_on_its_path() {
     // Arrange & Act
     let special = ImportPath::is_specially_ordered("pub use crate::support::Thing;");
+
+    // Assert
+    assert!(special);
+}
+
+#[test]
+fn is_specially_ordered_of_a_restricted_use_is_judged_on_its_path() {
+    // Arrange & Act
+    let special = ImportPath::is_specially_ordered("pub(in crate::a) use crate::a::B;");
 
     // Assert
     assert!(special);

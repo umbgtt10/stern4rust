@@ -105,6 +105,21 @@ fn check_a_constant_after_a_helper_reports_the_section_order() {
     assert!(offences[0].description().contains("constant"));
 }
 
+// A restricted visibility sorts by its path, as `pub` does: rustfmt leaves
+// `pub(crate) use zed::Z;` below `use yak::Y;` under both style editions.
+#[test]
+fn check_a_crate_visible_re_export_is_ordered_by_its_path() {
+    // Arrange
+    let contents = "use yak::Y;\n\
+                    pub(crate) use zed::Z;\n";
+
+    // Act
+    let offences = check(contents);
+
+    // Assert
+    assert!(offences.is_empty(), "expected none, got {offences:?}");
+}
+
 #[test]
 fn check_a_file_holding_only_a_header_reports_nothing() {
     // Arrange & Act

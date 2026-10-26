@@ -333,6 +333,11 @@ where `test-file-structure` is skipped or not selected.
   re-export above every `use` -- the 0.10.4 fix to `ordered-imports`, which never
   reached `tests/`. Both rules now judge a pair through `ImportPath::in_order`.
   [R002](docs/ADRs/R002-ADR-TestFileStructureRule.md)
+- **An import's visibility is read off its path.** `pub(crate) use zed::Z;`
+  was compared with `pub(crate) use zed` as its first segment, so both import
+  rules asked for it above `use yak::Y;`, where `cargo fmt` leaves it below; any
+  visibility, and an attribute sharing the `use` line, is now ignored, as `pub`
+  was. [R019](docs/ADRs/R019-ADR-OrderedImportsRule.md)
 
 ## [0.17.0] - 2026-10-19
 

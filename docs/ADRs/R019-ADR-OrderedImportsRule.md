@@ -1,6 +1,6 @@
 # R019-ADR-OrderedImportsRule
 
-- **Status:** Accepted
+- **Status:** Accepted; amended 2026-10-26 (below)
 - **Date:** 2026-08-20
 
 ## Context
@@ -163,6 +163,21 @@ by a blank line, a test file, an unparseable file, `check_workspace`,
 already covered by `test-file-structure`.
 
 Stage 2 runs the tool against this crate at zero offences.
+
+## Amendment, 2026-10-26: the path is what follows `use`
+
+`ImportPath` read an import's path by trimming a leading `pub ` and `use `, so
+anything else before the keyword became part of the first segment. A restricted
+visibility did: `pub(crate) use zed::Z;` was compared as `pub(crate) use zed`,
+and asked to move above `use yak::Y;` -- under both style editions `cargo fmt`
+leaves it below, sorted by `zed::Z`. So did an attribute on the `use` line,
+before the formatter moves it to one of its own.
+
+**The path is what follows the `use` keyword**, whatever precedes it. Both import
+rules read it through `ImportPath`, so both changed: `ordered-imports` and
+`test-file-structure` each gained `check_a_crate_visible_re_export_is_ordered_by_its_path`,
+and `import_path_tests.rs` the two directions, a `pub(in ...)` and an attribute
+sharing the line.
 
 ## Related
 

@@ -137,6 +137,9 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
   `ImportPath::in_order`, the judgement `ordered-imports` makes: a trailing `;`
   and a leading `pub ` no longer decide a pair.
   [R002](ADRs/R002-ADR-TestFileStructureRule.md)
+- Both import rules read an import's path as what follows its `use` keyword, so
+  a restricted visibility -- `pub(crate) use` -- and an attribute sharing the
+  line are ignored, as `pub` was. [R019](ADRs/R019-ADR-OrderedImportsRule.md)
 
 ### Autofix
 

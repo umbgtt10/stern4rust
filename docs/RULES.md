@@ -992,7 +992,9 @@ undoes the last. The rule asks `ImportPath` -- the same seam
 written.** A line ends in `;` (0x3B), which loses to any digit or letter, so
 `aaa::select` compared as text sorts after `aaa::select4`; a line may open with
 `pub `, whose `p` beats the `u` of `use`, so every re-export sorted above every
-import. rustfmt compares segments and does neither.
+import. rustfmt compares segments and does neither. The path is what follows
+the `use` keyword: a visibility -- `pub`, `pub(crate)`, `pub(in ...)` -- and an
+attribute sharing the line decide nothing, as they decide nothing to rustfmt.
 
 Case is read as a *shape* rather than as a first letter: the initial, and
 whether the segment is all capitals. `WAL_V2_MAGIC` and `WalRecord` both open
