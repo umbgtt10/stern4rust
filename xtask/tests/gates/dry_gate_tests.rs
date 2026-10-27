@@ -10,6 +10,7 @@ fn gate(runner: &FakeCommandRunner) -> DryGate<'_> {
     DryGate::new(
         runner,
         String::from("/repo/core/src"),
+        vec![],
         String::from("/repo/dry4rust-baseline.json"),
         String::from("20"),
     )
@@ -46,6 +47,51 @@ fn run_checks_the_path_above_the_floor_against_the_baseline_with_zero_ceilings()
             String::from("dry4rust"),
             String::from("--path"),
             String::from("/repo/core/src"),
+            String::from("--baseline"),
+            String::from("/repo/dry4rust-baseline.json"),
+            String::from("--min-nodes"),
+            String::from("20"),
+            String::from("check"),
+            String::from("--max-exact"),
+            String::from("0"),
+            String::from("--max-near"),
+            String::from("0"),
+        ]
+    );
+}
+
+// One run over the workspace with the trees it must not judge left out, each
+// named by its full path, so a checkout under a directory called `tests` is not
+// excluded whole.
+#[test]
+fn run_passes_each_exclusion_between_the_path_and_the_baseline() {
+    // Arrange
+    let runner = FakeCommandRunner::new();
+    let gate = DryGate::new(
+        &runner,
+        String::from("/repo"),
+        vec![
+            String::from("/repo/xtask"),
+            String::from("/repo/core/tests"),
+        ],
+        String::from("/repo/dry4rust-baseline.json"),
+        String::from("20"),
+    );
+
+    // Act
+    let _ = gate.run();
+
+    // Assert
+    assert_eq!(
+        runner.calls()[0],
+        vec![
+            String::from("dry4rust"),
+            String::from("--path"),
+            String::from("/repo"),
+            String::from("--exclude"),
+            String::from("/repo/xtask"),
+            String::from("--exclude"),
+            String::from("/repo/core/tests"),
             String::from("--baseline"),
             String::from("/repo/dry4rust-baseline.json"),
             String::from("--min-nodes"),

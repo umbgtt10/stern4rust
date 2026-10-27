@@ -74,7 +74,7 @@ core's tests only.
 | # | slice | status |
 |---|---|---|
 | S0 | this record | done |
-| S1 | `DryGate`: one run from the workspace root, the trees it must not judge excluded by full path; the ignore file dry4rust no longer reads goes | |
+| S1 | `DryGate`: one run from the workspace root, the trees it must not judge excluded by full path; the ignore file dry4rust no longer reads goes | done |
 | S2 | `adoption/` moves under `settings/`, sources and tests, paths only, so `traits/` can be core's fifth folder | |
 | S3 | the split: `cli` takes `main.rs`, `Args` and a new `EntryPoint`; core is renamed; `Runner` reads an `Invocation`; `[workspace.lints]` forbids unsafe code | |
 | S4 | the `SourceTree` port and `SourcePath`; `SourceReader` and `WorkspaceSources` read through it, `--fix` writes through it; the walker becomes cli's `WalkdirSourceTree` | |

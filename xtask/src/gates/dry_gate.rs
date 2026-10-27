@@ -12,6 +12,7 @@ const CEILING_EXCEEDED: i32 = 1;
 pub struct DryGate<'a> {
     runner: &'a dyn CommandRunner,
     path: String,
+    excludes: Vec<String>,
     baseline: String,
     min_nodes: String,
 }
@@ -20,12 +21,14 @@ impl<'a> DryGate<'a> {
     pub fn new(
         runner: &'a dyn CommandRunner,
         path: String,
+        excludes: Vec<String>,
         baseline: String,
         min_nodes: String,
     ) -> Self {
         Self {
             runner,
             path,
+            excludes,
             baseline,
             min_nodes,
         }
@@ -42,13 +45,23 @@ impl Gate for DryGate<'_> {
             return Err(GateFailure::NotInstalled(String::from(BINARY)));
         }
 
-        // Zero ceilings against the baseline: what the baseline records was here
-        // before the gate was, and anything beyond it is what a change added. The
-        // baseline was recorded at this floor and only matches at this floor.
-        let args = vec![
+        // dry4rust matches an exclusion as a substring of each file's path, so
+        // every exclusion is an absolute directory under the scanned path: a
+        // bare word such as `tests` would also match a checkout that happens to
+        // sit under a directory of that name, and exclude everything.
+        let mut args = vec![
             String::from("dry4rust"),
             String::from("--path"),
             self.path.clone(),
+        ];
+        for exclude in &self.excludes {
+            args.push(String::from("--exclude"));
+            args.push(exclude.clone());
+        }
+        // Zero ceilings against the baseline: what the baseline records was here
+        // before the gate was, and anything beyond it is what a change added. The
+        // baseline was recorded at this floor and only matches at this floor.
+        args.extend([
             String::from("--baseline"),
             self.baseline.clone(),
             String::from("--min-nodes"),
@@ -58,7 +71,7 @@ impl Gate for DryGate<'_> {
             String::from("0"),
             String::from("--max-near"),
             String::from("0"),
-        ];
+        ]);
 
         // 1 is the tool's own "a ceiling was exceeded"; 2 is a configuration or a
         // baseline it refused, which means it measured nothing.
