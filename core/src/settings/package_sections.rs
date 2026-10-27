@@ -2,12 +2,14 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use anyhow::Result;
 use std::collections::BTreeMap;
-use std::path::Path;
+
+use anyhow::Result;
 
 use crate::settings::config_file::ConfigFile;
 use crate::settings::package_config::PackageConfig;
+use crate::source_path::SourcePath;
+use crate::traits::config_source::ConfigSource;
 
 // The `[package.<name>]` sections of the root `stern4rust.toml`, and the two
 // questions asked of them: which section applies to the package about to be
@@ -23,19 +25,20 @@ pub struct PackageSections {
 }
 
 impl PackageSections {
+    pub fn new(sections: BTreeMap<String, PackageConfig>) -> Self {
+        Self { sections }
+    }
+
     // No file and a file with no sections are the same answer here. They differ
-    // only for `ConfigFile::load`, which has to tell a missing file from an
+    // only for `ConfigSource::load`, which has to tell a missing file from an
     // unreadable one.
-    pub fn load(directory: &Path) -> Result<Self> {
+    pub fn load(config_source: &dyn ConfigSource, directory: &SourcePath) -> Result<Self> {
         Ok(Self::new(
-            ConfigFile::load(directory)?
+            config_source
+                .load(directory)?
                 .map(ConfigFile::into_packages)
                 .unwrap_or_default(),
         ))
-    }
-
-    pub fn new(sections: BTreeMap<String, PackageConfig>) -> Self {
-        Self { sections }
     }
 
     pub fn is_empty(&self) -> bool {

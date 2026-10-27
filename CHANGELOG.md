@@ -40,8 +40,8 @@ of its API.
   `write_source`) is implemented on disk by
   `stern4rust_cli::system::walkdir_source_tree::WalkdirSourceTree`, and
   `--fix` writes its repairs through it. `Runner` is built over its ports,
-  `Runner::new(&dyn WorkspaceReader, &dyn SourceTree)`, and `run_reporting`
-  takes `&self`.
+  `Runner::new(&dyn WorkspaceReader, &dyn SourceTree, &dyn ConfigSource,
+  &dyn BaselineStore)`, and `run_reporting` takes `&self`.
 - `source_reader::SourceReader` and `workspace_sources::WorkspaceSources` are
   objects over the tree, `new(&dyn SourceTree)` then `read`, and
   `settings::header_source::HeaderSource::read` takes the tree and the path.
@@ -69,6 +69,24 @@ of its API.
   words. `settings::dependency_tables` moves to
   `stern4rust_cli::system::dependency_tables`. The library no longer depends on
   cargo_metadata.
+- `settings::config_file::ConfigFile` and `settings::package_config::PackageConfig`
+  are plain objects, built by the new `ConfigFile::new` and
+  `PackageConfig::new`, their paths `SourcePath`s, and no longer implement
+  serde's `Deserialize`. `ConfigFile::load` is gone: the new port
+  `traits::config_source::ConfigSource` (`load`) hands the core the file, read
+  and parsed by `stern4rust_cli::system::toml_config_source::TomlConfigSource`,
+  and one that cannot be read or understood fails with
+  `settings::config_failure::ConfigFailure`, worded as before.
+  `settings::package_sections::PackageSections::load` takes the source and the
+  directory.
+- `Baseline::{load, save}` are gone, and `Baseline::{new, counts}` are new: the
+  new port `traits::baseline_store::BaselineStore` (`load`, `save`) keeps a
+  baseline, as JSON on disk in
+  `stern4rust_cli::system::json_baseline_store::JsonBaselineStore`, and one that
+  cannot be read, understood, rendered or written fails with
+  `settings::adoption::baseline_failure::BaselineFailure`, worded as before.
+  `Baseline` no longer implements serde's traits. The library no longer depends
+  on toml.
 
 ### Changed
 - `adoption` moves under `settings`: the baseline and the exclusions are

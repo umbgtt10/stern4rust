@@ -10,7 +10,10 @@
 // silence this tool exists to refuse. `deny_unknown_fields` cannot catch it,
 // because the section name is data rather than a key.
 
+use crate::support::in_memory_config_source::InMemoryConfigSource;
+use crate::support::in_memory_source_tree::path_of;
 use std::collections::BTreeMap;
+use stern4rust::settings::config_file::ConfigFile;
 use stern4rust::settings::package_config::PackageConfig;
 use stern4rust::settings::package_sections::PackageSections;
 
@@ -42,6 +45,54 @@ fn skipping(entries: &[(&str, &[&str])]) -> PackageSections {
 fn is_empty_without_any_section_is_true() {
     // Arrange & Act
     let sections = sections(&[]);
+
+    // Assert
+    assert!(sections.is_empty());
+}
+
+#[test]
+fn load_of_a_config_that_cannot_be_read_names_it() {
+    // Arrange
+    let config = InMemoryConfigSource::unreadable();
+
+    // Act
+    let failure = PackageSections::load(&config, &path_of("/repo"))
+        .err()
+        .expect("unreadable");
+
+    // Assert
+    assert_eq!(
+        failure.to_string(),
+        "/repo/stern4rust.toml could not be read"
+    );
+}
+
+#[test]
+fn load_of_a_config_with_sections_holds_each_of_them() {
+    // Arrange
+    let config = InMemoryConfigSource::holding(ConfigFile::new(
+        None,
+        None,
+        PackageConfig::default(),
+        BTreeMap::from([(String::from("node"), PackageConfig::default())]),
+    ));
+
+    // Act
+    let sections = PackageSections::load(&config, &path_of("/repo")).expect("loads");
+
+    // Assert
+    assert!(sections.of("node").is_some());
+    assert!(sections.of("other").is_none());
+}
+
+// No file and a file with no sections are the same answer here.
+#[test]
+fn load_without_a_config_holds_no_section() {
+    // Arrange
+    let config = InMemoryConfigSource::absent();
+
+    // Act
+    let sections = PackageSections::load(&config, &path_of("/repo")).expect("loads");
 
     // Assert
     assert!(sections.is_empty());

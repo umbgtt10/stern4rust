@@ -2,6 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+pub mod baseline_failure_tests;
 pub mod baseline_outcome_tests;
 pub mod baseline_tests;
 pub mod exclusion_outcome_tests;

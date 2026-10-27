@@ -32,5 +32,4 @@ proc-macro2 = { workspace = true }
 quote = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-toml = { workspace = true }
 syn = { workspace = true }

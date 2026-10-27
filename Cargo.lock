@@ -102,6 +102,7 @@ dependencies = [
  "anyhow",
  "cargo_metadata",
  "clap",
+ "serde",
  "serde_json",
  "stern4rust-core",
  "toml",
@@ -357,7 +358,6 @@ dependencies = [
  "serde",
  "serde_json",
  "syn 2.0.119",
- "toml",
 ]
 
 [[package]]

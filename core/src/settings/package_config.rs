@@ -2,9 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use serde::Deserialize;
-use std::path::Path;
-use std::path::PathBuf;
+use crate::source_path::SourcePath;
 
 // What one package in a workspace says about itself, in a `[package.<name>]`
 // section of the root `stern4rust.toml`.
@@ -17,41 +15,54 @@ use std::path::PathBuf;
 // gives a misspelled key -- no separate check, and nothing to keep in step.
 //
 // See [ADR-PerPackageConfiguration](../../docs/ADRs/ADR-PerPackageConfiguration.md).
-#[derive(Debug, Default, Deserialize, PartialEq, Eq)]
-#[serde(deny_unknown_fields, rename_all = "kebab-case")]
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct PackageConfig {
-    #[serde(default)]
-    header_file: Option<PathBuf>,
-    #[serde(default)]
+    header_file: Option<SourcePath>,
     max_files_per_directory: Option<usize>,
-    #[serde(default)]
     max_subfolders_per_directory: Option<usize>,
-    #[serde(default)]
     rules: Vec<String>,
     // None where the section says nothing, which inherits the root's list. A
     // stated list is the package's whole list, an empty one included -- which is
     // how a package takes back a rule its root skips; with a bare Vec the two
     // read alike and `skip = []` fell back to the root's.
-    #[serde(default)]
     skip: Option<Vec<String>>,
-    #[serde(default)]
     exclude: Vec<String>,
 }
 
 impl PackageConfig {
+    pub fn new(
+        header_file: Option<SourcePath>,
+        max_files_per_directory: Option<usize>,
+        max_subfolders_per_directory: Option<usize>,
+        rules: Vec<String>,
+        skip: Option<Vec<String>>,
+        exclude: Vec<String>,
+    ) -> Self {
+        Self {
+            header_file,
+            max_files_per_directory,
+            max_subfolders_per_directory,
+            rules,
+            skip,
+            exclude,
+        }
+    }
+
     pub fn exclude(&self) -> &[String] {
         &self.exclude
     }
 
-    pub fn header_file(&self) -> Option<&Path> {
-        self.header_file.as_deref()
+    pub fn header_file(&self) -> Option<&SourcePath> {
+        self.header_file.as_ref()
     }
 
     // Resolved against the directory the config file sits in, which for a root
     // file is the workspace root -- so a section writes `docs/header.txt` and
     // not the `../docs/header.txt` that a file beside a member manifest needed.
-    pub fn header_file_from(&self, directory: &Path) -> Option<PathBuf> {
-        self.header_file.as_ref().map(|path| directory.join(path))
+    pub fn header_file_from(&self, directory: &SourcePath) -> Option<SourcePath> {
+        self.header_file
+            .as_ref()
+            .map(|path| directory.join(path.as_str()))
     }
 
     pub fn max_files_per_directory(&self) -> Option<usize> {
@@ -70,7 +81,7 @@ impl PackageConfig {
         self.skip.as_deref()
     }
 
-    pub fn with_header_file(self, header_file: PathBuf) -> Self {
+    pub fn with_header_file(self, header_file: SourcePath) -> Self {
         Self {
             header_file: Some(header_file),
             ..self

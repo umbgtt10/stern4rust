@@ -12,9 +12,12 @@
 // Here the question is the one thing this type does on its own: resolve a header
 // path against the directory the config file sits in.
 
-use std::path::Path;
-use std::path::PathBuf;
 use stern4rust::settings::package_config::PackageConfig;
+use stern4rust::source_path::SourcePath;
+
+fn path(text: &str) -> SourcePath {
+    SourcePath::new(text.to_string())
+}
 
 #[test]
 fn default_carries_no_header_file() {
@@ -22,7 +25,7 @@ fn default_carries_no_header_file() {
     let config = PackageConfig::default();
 
     // Assert
-    assert!(config.header_file_from(Path::new("/repo")).is_none());
+    assert!(config.header_file_from(&path("/repo")).is_none());
 }
 
 #[test]
@@ -40,11 +43,11 @@ fn default_selects_and_skips_nothing() {
 #[test]
 fn header_file_from_leaves_an_absolute_path_alone() {
     // Arrange
-    let absolute = Path::new("/etc").join("header.txt");
+    let absolute = path("/etc").join("header.txt");
     let config = PackageConfig::default().with_header_file(absolute.clone());
 
     // Act
-    let resolved = config.header_file_from(Path::new("/repo"));
+    let resolved = config.header_file_from(&path("/repo"));
 
     // Assert
     assert_eq!(resolved, Some(absolute));
@@ -56,22 +59,22 @@ fn header_file_from_leaves_an_absolute_path_alone() {
 #[test]
 fn header_file_from_resolves_against_the_directory_it_is_given() {
     // Arrange
-    let config = PackageConfig::default().with_header_file(PathBuf::from("docs/header.txt"));
+    let config = PackageConfig::default().with_header_file(path("docs/header.txt"));
 
     // Act
-    let resolved = config.header_file_from(Path::new("/repo"));
+    let resolved = config.header_file_from(&path("/repo"));
 
     // Assert
-    assert_eq!(resolved, Some(Path::new("/repo").join("docs/header.txt")));
+    assert_eq!(resolved, Some(path("/repo").join("docs/header.txt")));
 }
 
 #[test]
 fn with_header_file_names_the_header_and_keeps_the_rest() {
     // Arrange & Act
-    let config = PackageConfig::default().with_header_file(PathBuf::from("docs/header.txt"));
+    let config = PackageConfig::default().with_header_file(path("docs/header.txt"));
 
     // Assert
-    assert_eq!(config.header_file(), Some(Path::new("docs/header.txt")));
+    assert_eq!(config.header_file(), Some(&path("docs/header.txt")));
     assert!(config.skip().is_none());
 }
 

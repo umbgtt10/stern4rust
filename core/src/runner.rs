@@ -33,13 +33,13 @@ use crate::settings::scanned_package::ScannedPackage;
 use crate::source_file::SourceFile;
 use crate::source_path::SourcePath;
 use crate::source_reader::SourceReader;
+use crate::traits::baseline_store::BaselineStore;
+use crate::traits::config_source::ConfigSource;
 use crate::traits::source_tree::SourceTree;
 use crate::traits::workspace_reader::WorkspaceReader;
 use crate::workspace_sources::WorkspaceSources;
 use anyhow::Result;
 use std::collections::HashSet;
-use std::path::MAIN_SEPARATOR;
-use std::path::Path;
 
 // What a scan did, as opposed to what it found.
 //
@@ -70,15 +70,24 @@ struct ScanTotals {
 pub struct Runner<'a> {
     workspace_reader: &'a dyn WorkspaceReader,
     source_tree: &'a dyn SourceTree,
+    config_source: &'a dyn ConfigSource,
+    baseline_store: &'a dyn BaselineStore,
 }
 
 impl<'a> Runner<'a> {
     pub const BASELINE_NAME: &'static str = "stern4rust-baseline.json";
 
-    pub fn new(workspace_reader: &'a dyn WorkspaceReader, source_tree: &'a dyn SourceTree) -> Self {
+    pub fn new(
+        workspace_reader: &'a dyn WorkspaceReader,
+        source_tree: &'a dyn SourceTree,
+        config_source: &'a dyn ConfigSource,
+        baseline_store: &'a dyn BaselineStore,
+    ) -> Self {
         Self {
             workspace_reader,
             source_tree,
+            config_source,
+            baseline_store,
         }
     }
 
@@ -95,7 +104,8 @@ impl<'a> Runner<'a> {
         if invocation.list_rules {
             return Ok((RunOutcome::Clean, Self::rule_listing(invocation)));
         }
-        let sections = PackageSections::load(Path::new(invocation.manifest_directory.as_str()))?;
+        let directory = &invocation.manifest_directory;
+        let sections = PackageSections::load(self.config_source, directory)?;
         let config = self.config_from(invocation, None)?;
         Self::validate_selection(&config)?;
         let workspace = self.workspace_reader.describe()?;
@@ -272,9 +282,11 @@ impl<'a> Runner<'a> {
         offences.sort_by(|left, right| left.sort_key().cmp(&right.sort_key()));
 
         if config.write_baseline {
-            return Self::record(&config, offences).map(|outcome| (outcome, String::new()));
+            return self
+                .record(&config, offences)
+                .map(|outcome| (outcome, String::new()));
         }
-        let baselined = Self::baselined(&config, offences)?;
+        let baselined = self.baselined(&config, offences)?;
         let summary = BaselineOutcome::new(Vec::new(), baselined.suppressed(), baselined.stale());
         let offences = baselined.into_kept();
         let report = Self::report(
@@ -295,11 +307,11 @@ impl<'a> Runner<'a> {
     // A baseline that was asked for and is not there is an error rather than an
     // empty one. A gate whose baseline path has a typo would otherwise report
     // every existing offence and look like a regression.
-    fn baselined(config: &Config, offences: Vec<Offence>) -> Result<BaselineOutcome> {
+    fn baselined(&self, config: &Config, offences: Vec<Offence>) -> Result<BaselineOutcome> {
         let Some(path) = &config.baseline else {
             return Ok(BaselineOutcome::new(offences, 0, 0));
         };
-        Ok(Baseline::load(Path::new(path.as_str()))?.apply(offences))
+        Ok(self.baseline_store.load(path)?.apply(offences))
     }
 
     // The command line wins over the file, every time and per setting. A
@@ -316,22 +328,13 @@ impl<'a> Runner<'a> {
         section: Option<&PackageConfig>,
     ) -> Result<Config> {
         let directory = &invocation.manifest_directory;
-        let on_disk = Path::new(directory.as_str());
-        let file = ConfigFile::load(on_disk)?;
+        let file = self.config_source.load(directory)?;
         let found = file.as_ref();
         let header_file = invocation
             .header_file
             .clone()
-            .or_else(|| {
-                section
-                    .and_then(|s| s.header_file_from(on_disk))
-                    .map(|path| Self::source_path(&path))
-            })
-            .or_else(|| {
-                found
-                    .and_then(|file| file.header_file_from(on_disk))
-                    .map(|path| Self::source_path(&path))
-            });
+            .or_else(|| section.and_then(|s| s.header_file_from(directory)))
+            .or_else(|| found.and_then(|file| file.header_file_from(directory)));
         let expected_header = match &header_file {
             Some(path) => HeaderSource::read(self.source_tree, path)?,
             None => Vec::new(),
@@ -352,11 +355,7 @@ impl<'a> Runner<'a> {
             baseline: invocation
                 .baseline
                 .clone()
-                .or_else(|| {
-                    found
-                        .and_then(|file| file.baseline_from(on_disk))
-                        .map(|path| Self::source_path(&path))
-                })
+                .or_else(|| found.and_then(|file| file.baseline_from(directory)))
                 .or_else(|| self.discovered_baseline(directory, invocation.write_baseline)),
             write_baseline: invocation.write_baseline,
             fix: invocation.fix,
@@ -435,13 +434,13 @@ impl<'a> Runner<'a> {
 
     // Recording is not judging. The run exits clean because nothing was
     // assessed -- the offences were written down, which is what was asked for.
-    fn record(config: &Config, offences: Vec<Offence>) -> Result<RunOutcome> {
+    fn record(&self, config: &Config, offences: Vec<Offence>) -> Result<RunOutcome> {
         let path = config
             .baseline
             .as_ref()
             .ok_or_else(|| anyhow::anyhow!("--write-baseline needs a path to write to"))?;
         let baseline = Baseline::of(&offences);
-        baseline.save(Path::new(path.as_str()))?;
+        self.baseline_store.save(path, &baseline)?;
         println!("stern4rust wrote {} offence(s) to {}", baseline.len(), path);
         Ok(RunOutcome::Clean)
     }
@@ -559,12 +558,6 @@ impl<'a> Runner<'a> {
 
     fn shown(path: Option<&SourcePath>) -> Option<String> {
         path.map(|path| path.as_str().replace('\\', "/"))
-    }
-
-    // Where a path the config file handed over becomes the core's, until the
-    // config reaches the core in its own paths.
-    fn source_path(path: &Path) -> SourcePath {
-        SourcePath::new(path.to_string_lossy().replace(MAIN_SEPARATOR, "/"))
     }
 
     // A misspelled rule name is an error rather than a switch that quietly

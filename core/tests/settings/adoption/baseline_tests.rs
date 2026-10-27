@@ -12,20 +12,12 @@
 // Counts, not a set: fixing one of two identical offences and introducing
 // another must still pass, while introducing a third must not.
 
-use std::env;
-use std::fs;
-use std::path::PathBuf;
+use std::collections::BTreeMap;
 use stern4rust::reporting::offence::Offence;
 use stern4rust::settings::adoption::baseline::Baseline;
 
 fn offence(file: &str, line: usize, rule: &'static str, description: &str) -> Offence {
     Offence::new(file, line, rule, description.to_string(), "fix".to_string())
-}
-
-fn temporary(name: &str) -> PathBuf {
-    let path = env::temp_dir().join(format!("stern4rust_baseline_{name}.json"));
-    let _ = fs::remove_file(&path);
-    path
 }
 
 #[test]
@@ -107,6 +99,21 @@ fn apply_reports_how_many_entries_matched_nothing() {
 }
 
 #[test]
+fn counts_names_each_fingerprint_with_how_often_it_was_recorded() {
+    // Arrange
+    let baseline = Baseline::of(&[
+        offence("src/a.rs", 1, "header", "wrong"),
+        offence("src/a.rs", 2, "header", "wrong"),
+    ]);
+
+    // Act
+    let counts = baseline.counts();
+
+    // Assert
+    assert_eq!(counts.values().copied().collect::<Vec<_>>(), [2]);
+}
+
+#[test]
 fn len_counts_every_recorded_occurrence() {
     // Arrange & Act
     let baseline = Baseline::of(&[
@@ -121,43 +128,14 @@ fn len_counts_every_recorded_occurrence() {
 }
 
 #[test]
-fn load_of_a_file_that_is_not_a_baseline_is_an_error() {
+fn new_holds_the_counts_it_was_given() {
     // Arrange
-    let path = temporary("invalid");
-    fs::write(&path, "not json at all").expect("write");
+    let counts = BTreeMap::from([(String::from("src/a.rs\u{1f}header\u{1f}wrong"), 2)]);
 
     // Act
-    let loaded = Baseline::load(&path);
+    let baseline = Baseline::new(counts.clone());
 
     // Assert
-    assert!(loaded.is_err());
-}
-
-#[test]
-fn load_of_a_missing_file_is_an_error() {
-    // Arrange
-    let path = temporary("absent");
-
-    // Act
-    let loaded = Baseline::load(&path);
-
-    // Assert
-    assert!(loaded.is_err());
-}
-
-// Written and read back unchanged, because the file is checked in and reviewed.
-#[test]
-fn save_then_load_round_trips() {
-    // Arrange
-    let path = temporary("roundtrip");
-    let baseline = Baseline::of(&[
-        offence("src/a.rs", 1, "header", "wrong"),
-        offence("src/a.rs", 2, "header", "wrong"),
-    ]);
-
-    // Act
-    baseline.save(&path).expect("saves");
-
-    // Assert
-    assert_eq!(Baseline::load(&path).expect("loads"), baseline);
+    assert_eq!(baseline.counts(), &counts);
+    assert_eq!(baseline.len(), 2);
 }

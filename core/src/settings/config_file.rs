@@ -2,15 +2,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::settings::package_config::PackageConfig;
-use anyhow::Context;
-use anyhow::Result;
-use serde::Deserialize;
 use std::collections::BTreeMap;
-use std::fs::read_to_string;
-use std::path::Path;
-use std::path::PathBuf;
-use toml::from_str;
+
+use crate::settings::package_config::PackageConfig;
+use crate::source_path::SourcePath;
 
 // `stern4rust.toml`, beside the manifest it configures.
 //
@@ -24,74 +19,70 @@ use toml::from_str;
 // would look exactly like an exclude that worked, which is the failure this
 // tool exists to refuse -- and it is the same reason an unknown `--rule` name
 // is an error rather than a switch matching nothing.
-#[derive(Debug, Default, Deserialize, PartialEq, Eq)]
-#[serde(deny_unknown_fields, rename_all = "kebab-case")]
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct ConfigFile {
-    #[serde(default)]
-    baseline: Option<PathBuf>,
-    #[serde(default)]
-    header_file: Option<PathBuf>,
-    #[serde(default)]
+    baseline: Option<SourcePath>,
+    header_file: Option<SourcePath>,
     max_files_per_directory: Option<usize>,
-    #[serde(default)]
     max_subfolders_per_directory: Option<usize>,
-    #[serde(default)]
     offence_threshold: Option<usize>,
-    #[serde(default)]
     rules: Vec<String>,
-    #[serde(default)]
     skip: Vec<String>,
-    #[serde(default)]
     exclude: Vec<String>,
     // A section per package, keyed by the name its manifest declares. Absent
     // for the packages that apply everything, which is most of them.
-    #[serde(default, rename = "package")]
     packages: BTreeMap<String, PackageConfig>,
 }
 
 impl ConfigFile {
     pub const NAME: &'static str = "stern4rust.toml";
 
-    // Ok(None) when there is no file, which is the ordinary case and not a
-    // failure. A file that exists and cannot be read or parsed is an error: it
-    // was written on purpose, and running as though it were absent would apply
-    // a configuration nobody chose.
-    pub fn load(directory: &Path) -> Result<Option<Self>> {
-        let path = directory.join(Self::NAME);
-        if !path.exists() {
-            return Ok(None);
+    // The root keys a package section may also set come as one, from `root`;
+    // the root's `skip` is its whole list, so a root that states none skips
+    // nothing.
+    pub fn new(
+        baseline: Option<SourcePath>,
+        offence_threshold: Option<usize>,
+        root: PackageConfig,
+        packages: BTreeMap<String, PackageConfig>,
+    ) -> Self {
+        Self {
+            baseline,
+            header_file: root.header_file().cloned(),
+            max_files_per_directory: root.max_files_per_directory(),
+            max_subfolders_per_directory: root.max_subfolders_per_directory(),
+            offence_threshold,
+            rules: root.rules().to_vec(),
+            skip: root.skip().map(<[String]>::to_vec).unwrap_or_default(),
+            exclude: root.exclude().to_vec(),
+            packages,
         }
-        let text = read_to_string(&path)
-            .with_context(|| format!("{} could not be read", path.display()))?;
-        let parsed = from_str(&text)
-            .with_context(|| format!("{} is not valid stern4rust configuration", path.display()))?;
-        Ok(Some(parsed))
     }
 
-    pub fn baseline(&self) -> Option<&Path> {
-        self.baseline.as_deref()
+    pub fn baseline(&self) -> Option<&SourcePath> {
+        self.baseline.as_ref()
     }
 
     // Paths in the file are relative to the file, so a repository can be checked
     // out anywhere and cloned into any directory name.
-    pub fn baseline_from(&self, directory: &Path) -> Option<PathBuf> {
+    pub fn baseline_from(&self, directory: &SourcePath) -> Option<SourcePath> {
         self.baseline
             .as_ref()
-            .map(|relative| directory.join(relative))
+            .map(|relative| directory.join(relative.as_str()))
     }
 
     pub fn exclude(&self) -> &[String] {
         &self.exclude
     }
 
-    pub fn header_file(&self) -> Option<&Path> {
-        self.header_file.as_deref()
+    pub fn header_file(&self) -> Option<&SourcePath> {
+        self.header_file.as_ref()
     }
 
-    pub fn header_file_from(&self, directory: &Path) -> Option<PathBuf> {
+    pub fn header_file_from(&self, directory: &SourcePath) -> Option<SourcePath> {
         self.header_file
             .as_ref()
-            .map(|relative| directory.join(relative))
+            .map(|relative| directory.join(relative.as_str()))
     }
 
     pub fn into_packages(self) -> BTreeMap<String, PackageConfig> {

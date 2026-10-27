@@ -4,6 +4,7 @@
 
 pub mod adoption;
 pub mod config;
+pub mod config_failure;
 pub mod config_file;
 pub mod header_source;
 pub mod invocation;

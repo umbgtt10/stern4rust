@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 pub mod baseline;
+pub mod baseline_failure;
 pub mod baseline_outcome;
 pub mod exclusion;
 pub mod exclusion_outcome;

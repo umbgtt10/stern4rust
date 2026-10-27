@@ -6,6 +6,8 @@
 // line's to test, end to end; what the core owes it is a run that could not
 // judge anything coming back as an Err rather than as a verdict.
 
+use crate::support::in_memory_baseline_store::InMemoryBaselineStore;
+use crate::support::in_memory_config_source::InMemoryConfigSource;
 use crate::support::in_memory_source_tree::InMemorySourceTree;
 use crate::support::in_memory_source_tree::path_of;
 use crate::support::in_memory_workspace_reader::InMemoryWorkspaceReader;
@@ -22,9 +24,14 @@ fn run_reporting_with_a_workspace_that_cannot_be_read_fails() {
     };
 
     // Act
-    let failure = Runner::new(&workspace, &InMemorySourceTree::new())
-        .run_reporting(&invocation)
-        .expect_err("an unreadable workspace");
+    let failure = Runner::new(
+        &workspace,
+        &InMemorySourceTree::new(),
+        &InMemoryConfigSource::absent(),
+        &InMemoryBaselineStore::new(),
+    )
+    .run_reporting(&invocation)
+    .expect_err("an unreadable workspace");
 
     // Assert
     assert_eq!(failure.to_string(), "not held");

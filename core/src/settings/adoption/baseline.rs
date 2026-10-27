@@ -2,16 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use anyhow::Context;
-use anyhow::Result;
-use serde::Deserialize;
-use serde::Serialize;
-use serde_json::from_str;
-use serde_json::to_string_pretty;
 use std::collections::BTreeMap;
-use std::fs::read_to_string;
-use std::fs::write;
-use std::path::Path;
 
 use crate::reporting::offence::Offence;
 use crate::reporting::offence_fingerprint::OffenceFingerprint;
@@ -31,16 +22,14 @@ use crate::settings::adoption::baseline_outcome::BaselineOutcome;
 //
 // Sorted on the way out, because this file is checked in and a diff that
 // reorders itself between runs is a diff nobody reviews.
-#[derive(Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Debug, Default, PartialEq, Eq)]
 pub struct Baseline {
     offences: BTreeMap<String, usize>,
 }
 
 impl Baseline {
-    pub fn load(path: &Path) -> Result<Self> {
-        let text = read_to_string(path)
-            .with_context(|| format!("{} could not be read", path.display()))?;
-        from_str(&text).with_context(|| format!("{} is not a valid baseline", path.display()))
+    pub fn new(offences: BTreeMap<String, usize>) -> Self {
+        Self { offences }
     }
 
     pub fn of(offences: &[Offence]) -> Self {
@@ -72,17 +61,17 @@ impl Baseline {
         BaselineOutcome::new(kept, suppressed, remaining.values().sum())
     }
 
+    // Each fingerprint with the number of times it was recorded, in the order a
+    // stored baseline lists them.
+    pub fn counts(&self) -> &BTreeMap<String, usize> {
+        &self.offences
+    }
+
     pub fn is_empty(&self) -> bool {
         self.offences.is_empty()
     }
 
     pub fn len(&self) -> usize {
         self.offences.values().sum()
-    }
-
-    pub fn save(&self, path: &Path) -> Result<()> {
-        let text = to_string_pretty(self)
-            .with_context(|| format!("{} could not be rendered", path.display()))?;
-        write(path, text).with_context(|| format!("{} could not be written", path.display()))
     }
 }

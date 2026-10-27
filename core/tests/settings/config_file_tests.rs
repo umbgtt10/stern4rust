@@ -2,306 +2,106 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-// `stern4rust.toml`, beside the manifest it configures.
-//
-// Two absences must not look alike. No file at all is the ordinary case and
-// means "use the defaults". A file that exists and cannot be parsed is an
-// error, because it was written on purpose and running as though it were absent
-// would apply a configuration nobody chose.
-//
-// Unknown keys are rejected for the same reason an unknown `--rule` name is: a
-// misspelled `exclude` that silently did nothing would look exactly like one
-// that worked.
+// `stern4rust.toml` as the core holds it, once read. Reading and parsing the
+// file is the command line's `TomlConfigSource`, tested there.
 
-use std::env;
-use std::fs;
-use std::path::PathBuf;
+use std::collections::BTreeMap;
 use stern4rust::settings::config_file::ConfigFile;
+use stern4rust::settings::package_config::PackageConfig;
+use stern4rust::source_path::SourcePath;
 
-fn directory(name: &str, contents: Option<&str>) -> PathBuf {
-    let path = env::temp_dir().join(format!("stern4rust_cfg_{name}"));
-    let _ = fs::remove_dir_all(&path);
-    fs::create_dir_all(&path).expect("create the directory");
-    if let Some(contents) = contents {
-        fs::write(path.join(ConfigFile::NAME), contents).expect("write the config");
-    }
-    path
+fn file() -> ConfigFile {
+    ConfigFile::new(
+        Some(path("stern4rust-baseline.json")),
+        Some(25),
+        PackageConfig::new(
+            Some(path("docs/header.txt")),
+            Some(30),
+            Some(8),
+            vec![String::from("header")],
+            Some(vec![String::from("test-file-structure")]),
+            vec![String::from("fixture/**")],
+        ),
+        BTreeMap::from([(String::from("node"), PackageConfig::default())]),
+    )
+}
+
+fn path(text: &str) -> SourcePath {
+    SourcePath::new(text.to_string())
 }
 
 #[test]
-fn baseline_from_resolves_against_the_directory_of_the_config() {
+fn baseline_from_resolves_against_the_directory_it_is_given() {
     // Arrange
-    let path = directory(
-        "baseline",
-        Some(
-            "baseline = \"stern4rust-baseline.json\"
-",
-        ),
-    );
-    let loaded = ConfigFile::load(&path).expect("loads").expect("present");
+    let file = file();
 
     // Act
-    let baseline = loaded.baseline_from(&path);
+    let baseline = file.baseline_from(&path("/repo"));
 
     // Assert
-    assert_eq!(baseline, Some(path.join("stern4rust-baseline.json")));
+    assert_eq!(baseline, Some(path("/repo/stern4rust-baseline.json")));
 }
 
 #[test]
 fn baseline_is_the_path_the_file_names() {
     // Arrange
-    let path = directory(
-        "baseline-as-named",
-        Some("baseline = \"stern4rust-baseline.json\"\n"),
-    );
-    let loaded = ConfigFile::load(&path).expect("loads").expect("present");
+    let file = file();
 
     // Act
-    let baseline = loaded.baseline();
+    let baseline = file.baseline();
 
     // Assert
-    assert_eq!(
-        baseline,
-        Some(PathBuf::from("stern4rust-baseline.json").as_path())
-    );
+    assert_eq!(baseline, Some(&path("stern4rust-baseline.json")));
 }
 
 #[test]
-fn header_file_from_resolves_against_the_directory_of_the_config() {
+fn header_file_from_resolves_against_the_directory_it_is_given() {
     // Arrange
-    let path = directory("header", Some("header-file = \"docs/header.txt\"\n"));
-    let loaded = ConfigFile::load(&path).expect("loads").expect("present");
+    let file = file();
 
     // Act
-    let header = loaded.header_file_from(&path);
+    let header = file.header_file_from(&path("/repo"));
 
     // Assert
-    assert_eq!(header, Some(path.join("docs/header.txt")));
+    assert_eq!(header, Some(path("/repo/docs/header.txt")));
 }
 
 #[test]
 fn into_packages_gives_up_every_section() {
     // Arrange
-    let path = directory("sections-given-up", Some("[package.node]\nskip = []\n"));
-    let loaded = ConfigFile::load(&path).expect("loads").expect("present");
+    let file = file();
 
     // Act
-    let sections = loaded.into_packages();
+    let sections = file.into_packages();
 
     // Assert
     assert_eq!(sections.keys().collect::<Vec<_>>(), ["node"]);
 }
 
 #[test]
-fn load_of_a_config_reads_every_field() {
-    // Arrange
-    let path = directory(
-        "full",
-        Some(
-            "header-file = \"docs/header.txt\"\n\
-             offence-threshold = 25\n\
-             rules = [\"header\", \"tests-layout\"]\n\
-             skip = [\"test-file-structure\"]\n\
-             exclude = [\"fixture/**\"]\n",
-        ),
-    );
-
-    // Act
-    let loaded = ConfigFile::load(&path).expect("loads").expect("present");
+fn new_of_a_root_stating_no_skip_skips_nothing() {
+    // Arrange & Act
+    let file = ConfigFile::new(None, None, PackageConfig::default(), BTreeMap::new());
 
     // Assert
-    assert_eq!(loaded.offence_threshold(), Some(25));
-    assert_eq!(loaded.rules(), ["header", "tests-layout"]);
-    assert_eq!(loaded.skip(), ["test-file-structure"]);
-    assert_eq!(loaded.exclude(), ["fixture/**"]);
+    assert!(file.skip().is_empty());
+    assert_eq!(file, ConfigFile::default());
 }
 
+// The keys a package section may also set are the root's own, so they come in
+// as one; the root's `skip` is its whole list.
 #[test]
-fn load_of_a_directory_without_a_config_is_none() {
-    // Arrange
-    let path = directory("absent", None);
-
-    // Act
-    let loaded = ConfigFile::load(&path).expect("no file is not a failure");
+fn new_takes_the_root_keys_from_the_root_section() {
+    // Arrange & Act
+    let file = file();
 
     // Assert
-    assert!(loaded.is_none());
-}
-
-// A package with nothing to say needs no section, which is the honest rendering
-// of "this one applies everything".
-#[test]
-fn load_of_a_file_with_no_sections_reads_no_packages() {
-    // Arrange
-    let path = directory("no_sections", Some("header-file = \"docs/header.txt\"\n"));
-
-    // Act
-    let file = ConfigFile::load(&path).expect("read").expect("a file");
-
-    // Assert
-    assert!(file.packages().is_empty());
-}
-
-// baseline is a set of fingerprints for one run and offence-threshold is about
-// how the report ends. Neither is a property of a package, so neither is a key
-// a section has -- and deny_unknown_fields says so without a check of its own.
-#[test]
-fn load_of_a_section_naming_a_run_level_key_is_an_error() {
-    // Arrange
-    let path = directory(
-        "section_baseline",
-        Some("[package.node]\nbaseline = \"stern4rust-baseline.json\"\n"),
-    );
-
-    // Act
-    let result = ConfigFile::load(&path);
-
-    // Assert
-    assert!(result.is_err());
-}
-
-#[test]
-fn load_of_a_section_naming_an_unknown_key_is_an_error() {
-    // Arrange
-    let path = directory(
-        "section_typo",
-        Some("[package.node]\nskkip = [\"header\"]\n"),
-    );
-
-    // Act
-    let result = ConfigFile::load(&path);
-
-    // Assert
-    assert!(result.is_err());
-}
-
-#[test]
-fn load_of_a_section_reads_every_key_a_package_may_set() {
-    // Arrange
-    let path = directory(
-        "section_full",
-        Some(
-            r#"
-[package.node]
-rules = ["header"]
-skip = ["paired-test-file"]
-exclude = ["vendor/**"]
-header-file = "docs/other.txt"
-max-files-per-directory = 30
-max-subfolders-per-directory = 8
-"#,
-        ),
-    );
-
-    // Act
-    let file = ConfigFile::load(&path).expect("read").expect("a file");
-
-    // Assert
-    let node = &file.packages()["node"];
-    assert_eq!(node.rules(), vec!["header"]);
-    assert_eq!(node.skip(), Some(&[String::from("paired-test-file")][..]));
-    assert_eq!(node.exclude(), vec!["vendor/**"]);
-    assert_eq!(node.max_files_per_directory(), Some(30));
-    assert_eq!(node.max_subfolders_per_directory(), Some(8));
-    assert!(node.header_file().is_some());
-}
-
-// Every key a section may carry, so that adding one to the struct without
-// meaning to is caught here rather than in a repository.
-// A stated list is the package's whole list, an empty one included: that is
-// how a package takes back a rule its root skips.
-#[test]
-fn load_of_a_section_stating_an_empty_skip_list_keeps_it_apart_from_saying_nothing() {
-    // Arrange
-    let path = directory(
-        "empty_skip",
-        Some(
-            "skip = [\"injected-time\"]\n\n[package.node]\nskip = []\n\n[package.types]\n\
-             rules = [\"header\"]\n",
-        ),
-    );
-
-    // Act
-    let loaded = ConfigFile::load(&path).expect("loads").expect("present");
-
-    // Assert
-    assert_eq!(loaded.packages()["node"].skip(), Some(&[][..]));
-    assert_eq!(loaded.packages()["types"].skip(), None);
-}
-
-// Every key is optional, so a repository can set one thing without restating
-// the defaults for everything else.
-#[test]
-fn load_of_an_empty_config_is_all_defaults() {
-    // Arrange
-    let path = directory("empty", Some("\n"));
-
-    // Act
-    let loaded = ConfigFile::load(&path).expect("loads").expect("present");
-
-    // Assert
-    assert_eq!(loaded, ConfigFile::default());
-}
-
-// A file written on purpose that cannot be understood must not be treated as
-// absent.
-#[test]
-fn load_of_an_invalid_config_is_an_error() {
-    // Arrange
-    let path = directory("invalid", Some("offence-threshold = \"not a number\"\n"));
-
-    // Act
-    let loaded = ConfigFile::load(&path);
-
-    // Assert
-    assert!(loaded.is_err());
-}
-
-// The misspelling that would otherwise be silent.
-#[test]
-fn load_of_an_unknown_key_is_an_error() {
-    // Arrange
-    let path = directory("unknown", Some("excludes = [\"fixture/**\"]\n"));
-
-    // Act
-    let loaded = ConfigFile::load(&path);
-
-    // Assert
-    assert!(loaded.is_err());
-}
-
-// A workspace whose members want different rules says so in one file, in a
-// section each, rather than in a stern4rust.toml beside every manifest.
-#[test]
-fn load_reads_a_section_for_each_named_package() {
-    // Arrange
-    let path = directory(
-        "sections",
-        Some(
-            r#"
-header-file = "docs/header.txt"
-
-[package.validation]
-skip = ["paired-test-file"]
-
-[package.system-tests]
-skip = ["paired-test-file"]
-exclude = ["**/generated/**"]
-"#,
-        ),
-    );
-
-    // Act
-    let file = ConfigFile::load(&path).expect("read").expect("a file");
-
-    // Assert
-    assert_eq!(file.packages().len(), 2);
-    assert_eq!(
-        file.packages()["validation"].skip(),
-        Some(&[String::from("paired-test-file")][..])
-    );
-    assert_eq!(
-        file.packages()["system-tests"].exclude(),
-        vec!["**/generated/**"]
-    );
+    assert_eq!(file.header_file(), Some(&path("docs/header.txt")));
+    assert_eq!(file.max_files_per_directory(), Some(30));
+    assert_eq!(file.max_subfolders_per_directory(), Some(8));
+    assert_eq!(file.offence_threshold(), Some(25));
+    assert_eq!(file.rules(), ["header"]);
+    assert_eq!(file.skip(), ["test-file-structure"]);
+    assert_eq!(file.exclude(), ["fixture/**"]);
+    assert_eq!(file.packages().len(), 1);
 }
