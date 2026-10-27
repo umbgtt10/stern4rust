@@ -39,8 +39,9 @@ of its API.
   `traits::source_tree::SourceTree` (`contains`, `read_source`, `rust_files`,
   `write_source`) is implemented on disk by
   `stern4rust_cli::system::walkdir_source_tree::WalkdirSourceTree`, and
-  `--fix` writes its repairs through it. `Runner` is built over the tree,
-  `Runner::new(&dyn SourceTree)`, and `run_reporting` takes `&self`.
+  `--fix` writes its repairs through it. `Runner` is built over its ports,
+  `Runner::new(&dyn WorkspaceReader, &dyn SourceTree)`, and `run_reporting`
+  takes `&self`.
 - `source_reader::SourceReader` and `workspace_sources::WorkspaceSources` are
   objects over the tree, `new(&dyn SourceTree)` then `read`, and
   `settings::header_source::HeaderSource::read` takes the tree and the path.
@@ -52,6 +53,22 @@ of its API.
   cannot list or read fails with `source_read_failure::SourceReadFailure`, one
   it cannot write back with `source_write_failure::SourceWriteFailure`, each
   worded as before. The library no longer depends on walkdir.
+- `settings::manifest_resolver::ManifestResolver` answers over the core's own
+  `settings::workspace_description::WorkspaceDescription`, its members
+  `settings::package_description::PackageDescription`s, which the new port
+  `traits::workspace_reader::WorkspaceReader` (`describe`) hands it.
+  `stern4rust_cli::system::cargo_workspace_reader::CargoWorkspaceReader`
+  implements it over one `cargo metadata --no-deps` a run, where a run used to
+  ask cargo six times, reading each member's manifest as written. `packages`,
+  `declared_dependencies`, `workspace_dependencies`, `workspace_package_names`
+  and `workspace_root` take the description where they took `Config`, the last
+  two no longer fail, `workspace_root` and `ScannedPackage::root` are
+  `SourcePath`s, and `relative_to` takes two. `Config::manifest_path` is gone:
+  the manifest is the reader's. A workspace that cannot be described fails with
+  `settings::workspace_read_failure::WorkspaceReadFailure`, in cargo's own
+  words. `settings::dependency_tables` moves to
+  `stern4rust_cli::system::dependency_tables`. The library no longer depends on
+  cargo_metadata.
 
 ### Changed
 - `adoption` moves under `settings`: the baseline and the exclusions are

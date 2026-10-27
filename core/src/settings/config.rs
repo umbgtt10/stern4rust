@@ -8,7 +8,6 @@ use crate::reporting::offence_threshold::OffenceThreshold;
 use crate::reporting::output_format::OutputFormat;
 use crate::settings::rule_selection::RuleSelection;
 use crate::source_path::SourcePath;
-use std::path::PathBuf;
 
 // The threshold is an OffenceThreshold rather than a bare usize precisely so
 // this can stay derived. A usize field would default to zero, which this tool
@@ -28,7 +27,6 @@ pub struct Config {
     pub manifest_license: Option<String>,
     pub workspace_dependencies: Option<Vec<ManifestDependency>>,
     pub declared_dependencies: Vec<ManifestDependency>,
-    pub manifest_path: Option<PathBuf>,
     pub max_files_per_directory: Option<usize>,
     pub max_subfolders_per_directory: Option<usize>,
     pub name_readers: NameReaders,

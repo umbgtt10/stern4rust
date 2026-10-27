@@ -2,8 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::path::Path;
-use std::path::PathBuf;
+use crate::source_path::SourcePath;
 
 // One package about to be walked, and what its manifest says about it.
 //
@@ -18,7 +17,7 @@ use std::path::PathBuf;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ScannedPackage {
     name: String,
-    root: PathBuf,
+    root: SourcePath,
     // None where the manifest declares no `license`, which is the one case
     // `spdx-matches-manifest` cannot judge and stands down on. A virtual
     // manifest has no package and so never reaches here at all.
@@ -26,7 +25,7 @@ pub struct ScannedPackage {
 }
 
 impl ScannedPackage {
-    pub fn new(name: &str, root: PathBuf, license: Option<String>) -> Self {
+    pub fn new(name: &str, root: SourcePath, license: Option<String>) -> Self {
         Self {
             name: name.to_string(),
             root,
@@ -57,7 +56,7 @@ impl ScannedPackage {
         &self.name
     }
 
-    pub fn root(&self) -> &Path {
+    pub fn root(&self) -> &SourcePath {
         &self.root
     }
 }

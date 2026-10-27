@@ -2,237 +2,135 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-// Turning the requested packages into directories to walk.
+// Turning the workspace cargo described into the packages a run walks.
 //
 // The case that matters most is a package name that does not exist. Returning an
 // empty result there would let a typo in a gate script scan nothing and report
 // success, which is the failure mode that makes a green gate meaningless -- so
-// it is an error instead.
+// it is an error instead. What cargo itself says about a real workspace is the
+// command line's `CargoWorkspaceReader`, tested there.
 
-use std::env;
-use std::fs;
-use std::path::Path;
-use std::path::PathBuf;
+use stern4rust::finding::model::manifest_dependency::ManifestDependency;
 use stern4rust::settings::config::Config;
 use stern4rust::settings::manifest_resolver::ManifestResolver;
+use stern4rust::settings::package_description::PackageDescription;
+use stern4rust::settings::workspace_description::WorkspaceDescription;
+use stern4rust::source_path::SourcePath;
 
 fn config_for(packages: &[&str]) -> Config {
     Config {
-        manifest_path: Some(Path::new("Cargo.toml").to_path_buf()),
         packages: packages.iter().map(|name| (*name).to_string()).collect(),
         ..Config::default()
     }
 }
 
-fn config_of(manifest: &Path) -> Config {
-    Config {
-        manifest_path: Some(manifest.to_path_buf()),
-        ..Config::default()
+fn member(name: &str, declared: Vec<ManifestDependency>) -> PackageDescription {
+    PackageDescription {
+        name: name.to_string(),
+        manifest_path: path(&format!("/repo/{name}/Cargo.toml")),
+        license: Some(String::from("MIT")),
+        declared,
     }
 }
 
-// A package alone in a directory of its own, outside this repository's
-// workspace.
-fn probe_package(name: &str, dependencies: &str) -> PathBuf {
-    let path = env::temp_dir().join(format!("stern4rust_resolver_{name}"));
-    let _ = fs::remove_dir_all(&path);
-    fs::create_dir_all(path.join("src")).expect("create the package");
-    fs::write(
-        path.join("Cargo.toml"),
-        format!(
-            "[package]\nname = \"probe\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n{dependencies}"
-        ),
-    )
-    .expect("write the manifest");
-    fs::write(path.join("src/lib.rs"), "").expect("write the library");
-    path
+fn path(text: &str) -> SourcePath {
+    SourcePath::new(text.to_string())
 }
 
-// A workspace of one member declaring a plain and a target-specific dependency.
-fn probe_workspace(name: &str) -> PathBuf {
-    let root = env::temp_dir().join(format!("stern4rust_resolver_{name}"));
-    let _ = fs::remove_dir_all(&root);
-    fs::create_dir_all(root.join("member/src")).expect("create the member");
-    fs::write(
-        root.join("Cargo.toml"),
-        "[workspace]\nmembers = [\"member\"]\nresolver = \"2\"\n",
-    )
-    .expect("write the root manifest");
-    fs::write(
-        root.join("member/Cargo.toml"),
-        "[package]\nname = \"member\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\nanyhow = \"1\"\n\n[target.'cfg(unix)'.dependencies]\nnix = \"0.29\"\n",
-    )
-    .expect("write the member manifest");
-    fs::write(root.join("member/src/lib.rs"), "").expect("write the library");
-    root
+fn workspace(declares_workspace: bool) -> WorkspaceDescription {
+    WorkspaceDescription {
+        root: path("/repo"),
+        declares_workspace,
+        packages: vec![
+            member(
+                "alpha",
+                vec![
+                    ManifestDependency::new("alpha/Cargo.toml", "anyhow", "dependencies", true),
+                    ManifestDependency::new("alpha/Cargo.toml", "nix", "dependencies", false)
+                        .with_target(Some("cfg(unix)")),
+                ],
+            ),
+            member(
+                "beta",
+                vec![ManifestDependency::new(
+                    "beta/Cargo.toml",
+                    "serde",
+                    "dev-dependencies",
+                    false,
+                )],
+            ),
+        ],
+    }
 }
 
 #[test]
-fn declared_dependencies_of_a_member_reads_its_target_tables() {
+fn declared_dependencies_names_what_every_member_declares_in_member_order() {
     // Arrange
-    let root = probe_workspace("declared_targets");
+    let workspace = workspace(true);
 
     // Act
-    let declared = ManifestResolver::declared_dependencies(&config_of(&root.join("Cargo.toml")));
+    let declared = ManifestResolver::declared_dependencies(&workspace);
 
     // Assert
-    let found: Vec<(&str, Option<&str>)> = declared
+    let names: Vec<&str> = declared
         .iter()
-        .map(|dependency| (dependency.name(), dependency.target()))
+        .map(|dependency| dependency.name())
         .collect();
-    assert_eq!(found, [("anyhow", None), ("nix", Some("cfg(unix)"))]);
-}
-
-// A single package is no workspace, and still declares what it declares: a
-// rule about the package's own manifest must not stand down outside one.
-#[test]
-fn declared_dependencies_of_a_package_outside_a_workspace_names_its_entries() {
-    // Arrange
-    let root = probe_package(
-        "outside",
-        "[dependencies]\nserde = \"1\"\n\n[dev-dependencies]\nserde = \"1\"\n",
-    );
-
-    // Act
-    let declared = ManifestResolver::declared_dependencies(&config_of(&root.join("Cargo.toml")));
-
-    // Assert
-    let found: Vec<(&str, &str, &str)> = declared
-        .iter()
-        .map(|dependency| {
-            (
-                dependency.manifest(),
-                dependency.section(),
-                dependency.name(),
-            )
-        })
-        .collect();
-    assert_eq!(
-        found,
-        [
-            ("Cargo.toml", "dependencies", "serde"),
-            ("Cargo.toml", "dev-dependencies", "serde"),
-        ]
-    );
+    assert_eq!(names, ["anyhow", "nix", "serde"]);
 }
 
 #[test]
-fn declared_dependencies_of_this_workspace_names_each_members_manifest() {
+fn packages_of_a_named_member_returns_it_rooted_at_its_manifest_directory() {
     // Arrange
-    let config = config_for(&[]);
+    let workspace = workspace(true);
 
     // Act
-    let declared = ManifestResolver::declared_dependencies(&config);
-
-    // Assert
-    assert!(
-        declared
-            .iter()
-            .any(|dependency| dependency.manifest() == "core/Cargo.toml"
-                && dependency.name() == "syn"),
-        "{declared:?}"
-    );
-}
-
-#[test]
-fn packages_names_the_package_it_could_not_find() {
-    // Arrange
-    let config = config_for(&["no-such-package"]);
-
-    // Act
-    let error = ManifestResolver::packages(&config).expect_err("an error");
-
-    // Assert
-    assert!(error.to_string().contains("no-such-package"));
-}
-
-// A typo must fail loudly rather than scan nothing and pass.
-#[test]
-fn packages_of_an_unknown_package_is_an_error() {
-    // Arrange
-    let config = config_for(&["no-such-package"]);
-
-    // Act
-    let result = ManifestResolver::packages(&config);
-
-    // Assert
-    assert!(result.is_err());
-}
-
-// A name that is not in the workspace is an error rather than an empty result,
-// so a typo in a gate script cannot scan nothing and report success.
-#[test]
-fn packages_of_an_unknown_package_returns_an_error() {
-    // Arrange
-    let config = config_for(&["no-such-package"]);
-
-    // Act
-    let result = ManifestResolver::packages(&config);
-
-    // Assert
-    assert!(result.is_err());
-}
-
-#[test]
-fn packages_of_this_crate_by_name_returns_its_directory() {
-    // Arrange
-    let config = config_for(&["stern4rust-core"]);
-
-    // Act
-    let roots = ManifestResolver::packages(&config).expect("resolve");
-
-    // Assert
-    assert_eq!(roots.len(), 1);
-    assert!(roots[0].root().join("Cargo.toml").exists());
-}
-
-// The expectation `spdx-matches-manifest` holds every header to, taken from the
-// package being judged rather than from a flag -- and carried on the package
-// rather than aggregated across the run.
-#[test]
-fn packages_of_this_crate_carries_the_licence_its_manifest_declares() {
-    // Arrange
-    let config = config_for(&["stern4rust-core"]);
-
-    // Act
-    let packages = ManifestResolver::packages(&config).expect("resolve packages");
+    let packages = ManifestResolver::packages(&workspace, &config_for(&["beta"])).expect("resolve");
 
     // Assert
     assert_eq!(packages.len(), 1);
-    assert_eq!(packages[0].name(), "stern4rust-core");
+    assert_eq!(packages[0].name(), "beta");
+    assert_eq!(packages[0].root(), &path("/repo/beta"));
     assert_eq!(packages[0].license(), Some("MIT"));
 }
 
-// This repository is a workspace of three members, so a scan naming no package
-// resolves to all three. Asserted by name rather than by count alone: a count
-// of three would still pass if the wrong three came back.
 #[test]
-fn packages_without_a_named_package_returns_every_workspace_member() {
+fn packages_of_an_unknown_package_names_it_in_the_error() {
     // Arrange
-    let config = config_for(&[]);
+    let workspace = workspace(true);
 
     // Act
-    let roots = ManifestResolver::packages(&config).expect("resolve");
+    let error = ManifestResolver::packages(&workspace, &config_for(&["gamma"]))
+        .expect_err("an unknown package");
 
     // Assert
-    let names: Vec<String> = roots
-        .iter()
-        .map(|package| package.name().to_string())
-        .collect();
-    assert_eq!(names.len(), 3);
-    assert!(names.contains(&String::from("cargo-stern4rust")));
-    assert!(names.contains(&String::from("stern4rust-core")));
-    assert!(names.contains(&String::from("xtask")));
+    assert_eq!(
+        error.to_string(),
+        "package `gamma` is not in this workspace"
+    );
+}
+
+#[test]
+fn packages_without_a_named_package_returns_every_member_in_order() {
+    // Arrange
+    let workspace = workspace(true);
+
+    // Act
+    let packages = ManifestResolver::packages(&workspace, &config_for(&[])).expect("resolve");
+
+    // Assert
+    let names: Vec<&str> = packages.iter().map(|package| package.name()).collect();
+    assert_eq!(names, ["alpha", "beta"]);
 }
 
 #[test]
 fn relative_to_a_path_outside_the_root_returns_the_whole_path() {
     // Arrange
-    let root = Path::new("/workspace/crate");
-    let path = Path::new("/elsewhere/a.rs");
+    let root = path("/workspace/crate");
+    let path = path("/elsewhere/a.rs");
 
     // Act
-    let relative = ManifestResolver::relative_to(root, path);
+    let relative = ManifestResolver::relative_to(&root, &path);
 
     // Assert
     assert!(relative.ends_with("a.rs"));
@@ -243,11 +141,11 @@ fn relative_to_a_path_outside_the_root_returns_the_whole_path() {
 #[test]
 fn relative_to_reports_forward_slashes() {
     // Arrange
-    let root = Path::new("/workspace");
-    let path = Path::new("/workspace/src/rules/header_rule.rs");
+    let root = path("/workspace");
+    let path = path("/workspace/src/rules/header_rule.rs");
 
     // Act
-    let relative = ManifestResolver::relative_to(root, path);
+    let relative = ManifestResolver::relative_to(&root, &path);
 
     // Assert
     assert!(!relative.contains('\\'));
@@ -256,109 +154,67 @@ fn relative_to_reports_forward_slashes() {
 #[test]
 fn relative_to_strips_the_root_prefix() {
     // Arrange
-    let root = Path::new("/workspace/crate");
-    let path = Path::new("/workspace/crate/src/a.rs");
+    let root = path("/workspace/crate");
+    let path = path("/workspace/crate/src/a.rs");
 
     // Act
-    let relative = ManifestResolver::relative_to(root, path);
+    let relative = ManifestResolver::relative_to(&root, &path);
 
     // Assert
     assert_eq!(relative, "src/a.rs");
 }
 
-// `workspace-dependencies` has never judged a target table, and reading them
-// for another rule leaves it so.
 #[test]
 fn workspace_dependencies_leaves_target_tables_out() {
     // Arrange
-    let root = probe_workspace("workspace_targets");
+    let workspace = workspace(true);
 
     // Act
-    let declared = ManifestResolver::workspace_dependencies(&config_of(&root.join("Cargo.toml")));
+    let declared = ManifestResolver::workspace_dependencies(&workspace);
 
     // Assert
-    let declared = declared.expect("the probe is a workspace");
+    let declared = declared.expect("a workspace");
     let names: Vec<&str> = declared
         .iter()
         .map(|dependency| dependency.name())
         .collect();
-    assert_eq!(names, ["anyhow"]);
+    assert_eq!(names, ["anyhow", "serde"]);
 }
 
-// This repository is a workspace and centralises its versions in
-// `[workspace.dependencies]`, so there is a root to compare members against and
-// the rule has something to report on. It returned `None` while the crate sat
-// alone at the root, which is a different codebase rather than a different
-// answer.
+// A single package is no workspace, which is not the same as a workspace with
+// nothing to report.
 #[test]
-fn workspace_dependencies_of_a_workspace_names_what_the_root_declares() {
+fn workspace_dependencies_of_a_root_declaring_no_workspace_is_none() {
     // Arrange
-    let config = config_for(&["cargo-stern4rust"]);
+    let workspace = workspace(false);
 
     // Act
-    let declared = ManifestResolver::workspace_dependencies(&config);
+    let declared = ManifestResolver::workspace_dependencies(&workspace);
 
     // Assert
-    let declared = declared.expect("the workspace root declares dependencies");
-    let names: Vec<&str> = declared
-        .iter()
-        .map(|dependency| dependency.name())
-        .collect();
-    assert!(names.contains(&"syn"));
-    assert!(names.contains(&"walkdir"));
+    assert!(declared.is_none());
 }
 
-// What a `[package.<name>]` section is checked against. The workspace rather
-// than the scan: a section for a member this run is not looking at is ordinary,
-// and only one for a member that does not exist is a typo.
 #[test]
-fn workspace_package_names_includes_this_crate() {
+fn workspace_package_names_names_every_member() {
     // Arrange
-    let config = config_for(&[]);
+    let workspace = workspace(true);
 
     // Act
-    let names = ManifestResolver::workspace_package_names(&config).expect("read the workspace");
+    let names = ManifestResolver::workspace_package_names(&workspace);
 
     // Assert
-    assert!(names.contains(&"cargo-stern4rust".to_string()));
+    assert_eq!(names, ["alpha", "beta"]);
 }
 
-// Scoping the run must not narrow the answer, or `--package X` would make every
-// section for another member look like a typo.
 #[test]
-fn workspace_package_names_is_unchanged_by_scoping_the_run() {
+fn workspace_root_is_the_root_cargo_described() {
     // Arrange
-    let scoped = config_for(&["cargo-stern4rust"]);
-    let unscoped = config_for(&[]);
+    let workspace = workspace(true);
 
     // Act
-    let from_scoped = ManifestResolver::workspace_package_names(&scoped).expect("scoped");
-    let from_unscoped = ManifestResolver::workspace_package_names(&unscoped).expect("unscoped");
+    let root = ManifestResolver::workspace_root(&workspace);
 
     // Assert
-    assert_eq!(from_scoped, from_unscoped);
-}
-
-// The directory every manifest path in `workspace_dependencies` is stated
-// relative to, so the two can be compared. Read from cargo rather than from
-// `--manifest-path`, which may name a member of a larger workspace.
-// The root is the repository, one directory above this crate, since the crate
-// moved into `core/`. Checked by reaching a file that only exists under the
-// real root: a bare `Cargo.toml` check would pass against `core/` too.
-#[test]
-fn workspace_root_of_this_crate_is_the_repository_root() {
-    // Arrange
-    let config = config_for(&[]);
-
-    // Act
-    let root = ManifestResolver::workspace_root(&config);
-
-    // Assert
-    let root = root.expect("this crate has a workspace root");
-    assert!(root.join("Cargo.toml").exists(), "{root:?}");
-    assert!(
-        root.join("core").join("src").join("rule.rs").exists(),
-        "{root:?}"
-    );
-    assert!(root.join("xtask").join("Cargo.toml").exists(), "{root:?}");
+    assert_eq!(root, path("/repo"));
 }

@@ -34,6 +34,7 @@ use crate::source_file::SourceFile;
 use crate::source_path::SourcePath;
 use crate::source_reader::SourceReader;
 use crate::traits::source_tree::SourceTree;
+use crate::traits::workspace_reader::WorkspaceReader;
 use crate::workspace_sources::WorkspaceSources;
 use anyhow::Result;
 use std::collections::HashSet;
@@ -67,14 +68,18 @@ struct ScanTotals {
 // finding -- it is a fact about the tree, and aborting on it would hide every
 // offence already found in every other file.
 pub struct Runner<'a> {
+    workspace_reader: &'a dyn WorkspaceReader,
     source_tree: &'a dyn SourceTree,
 }
 
 impl<'a> Runner<'a> {
     pub const BASELINE_NAME: &'static str = "stern4rust-baseline.json";
 
-    pub fn new(source_tree: &'a dyn SourceTree) -> Self {
-        Self { source_tree }
+    pub fn new(workspace_reader: &'a dyn WorkspaceReader, source_tree: &'a dyn SourceTree) -> Self {
+        Self {
+            workspace_reader,
+            source_tree,
+        }
     }
 
     // The run, handing back what it found and what it has to say. Printing it
@@ -93,16 +98,17 @@ impl<'a> Runner<'a> {
         let sections = PackageSections::load(Path::new(invocation.manifest_directory.as_str()))?;
         let config = self.config_from(invocation, None)?;
         Self::validate_selection(&config)?;
-        let workspace_dependencies = ManifestResolver::workspace_dependencies(&config);
-        let declared_dependencies = ManifestResolver::declared_dependencies(&config);
+        let workspace = self.workspace_reader.describe()?;
+        let workspace_dependencies = ManifestResolver::workspace_dependencies(&workspace);
+        let declared_dependencies = ManifestResolver::declared_dependencies(&workspace);
         let config = Config {
             workspace_dependencies,
             declared_dependencies,
             ..config
         };
-        let packages = ManifestResolver::packages(&config)?;
-        let workspace = ManifestResolver::workspace_package_names(&config)?;
-        sections.validate(&workspace.iter().map(String::as_str).collect::<Vec<_>>())?;
+        let packages = ManifestResolver::packages(&workspace, &config)?;
+        let names = ManifestResolver::workspace_package_names(&workspace);
+        sections.validate(&names.iter().map(String::as_str).collect::<Vec<_>>())?;
         // What the report answers for. A rule that stood down for any package
         // did not apply to this run, so the licence stated here is the one every
         // scanned package agrees on and nothing otherwise. Checking is per
@@ -138,18 +144,21 @@ impl<'a> Runner<'a> {
         let mut rosters: Vec<PackageRoster> = Vec::new();
         // Read once: every manifest path in `workspace_dependencies` is stated
         // relative to it.
-        let workspace_root = ManifestResolver::workspace_root(&config).unwrap_or_default();
+        let workspace_root = ManifestResolver::workspace_root(&workspace);
         // Every member, not only those this run walks: a constant one member
         // declares and only another reads is shared all the same, and a run
         // scoped to the first must still see the second.
-        let members = ManifestResolver::packages(&Config {
-            packages: Vec::new(),
-            ..config.clone()
-        })?
+        let members = ManifestResolver::packages(
+            &workspace,
+            &Config {
+                packages: Vec::new(),
+                ..config.clone()
+            },
+        )?
         .into_iter()
         .map(|member| {
             Ok((
-                Self::source_path(member.root()),
+                member.root().clone(),
                 ExclusionSet::new(
                     &self
                         .config_from(invocation, sections.of(member.name()))?
@@ -159,8 +168,7 @@ impl<'a> Runner<'a> {
         })
         .collect::<Result<Vec<_>>>()?;
         let readers = NameReaders::new(ReadNames::index(
-            &WorkspaceSources::new(self.source_tree)
-                .read(&Self::source_path(&workspace_root), &members),
+            &WorkspaceSources::new(self.source_tree).read(&workspace_root, &members),
         ));
         let reader = SourceReader::new(self.source_tree);
 
@@ -209,24 +217,24 @@ impl<'a> Runner<'a> {
                 RuleCatalog::unconfigured(&package_config),
             ));
             let exclusions = ExclusionSet::new(&package_config.excludes)?;
-            let root = Self::source_path(package.root());
+            let root = package.root();
             // Read the whole package before judging it. Rules whose subject is
             // the tree -- "there is exactly one all_tests.rs" -- cannot be
             // answered a file at a time, and the file that carries the offence
             // is often the one that does not exist.
-            let listed = self.source_tree.rust_files(&root)?;
-            let (kept, patterns) = exclusions.apply(listed, &root).into_parts();
+            let listed = self.source_tree.rust_files(root)?;
+            let (kept, patterns) = exclusions.apply(listed, root).into_parts();
             let mut files: Vec<SourceFile> = Vec::new();
             let mut found: Vec<Offence> = Vec::new();
             for path in kept {
                 files_scanned += 1;
-                match reader.read(&root, &path) {
+                match reader.read(root, &path) {
                     Ok(file) => files.push(file),
                     Err(offence) => found.push(*offence),
                 }
             }
             if config.fix {
-                let (rewritten, count) = self.repair(&root, files, &registry)?;
+                let (rewritten, count) = self.repair(root, files, &registry)?;
                 files = rewritten;
                 fixed += count;
             }
@@ -353,7 +361,6 @@ impl<'a> Runner<'a> {
             write_baseline: invocation.write_baseline,
             fix: invocation.fix,
             config_file: found.map(|_| directory.join(ConfigFile::NAME)),
-            manifest_path: invocation.manifest_path.clone(),
             max_files_per_directory: section
                 .and_then(|s| s.max_files_per_directory())
                 .or_else(|| found.and_then(|file| file.max_files_per_directory())),
@@ -554,8 +561,8 @@ impl<'a> Runner<'a> {
         path.map(|path| path.as_str().replace('\\', "/"))
     }
 
-    // Where a path cargo or a config file handed over becomes the core's, until
-    // the workspace and the config reach the core as its own paths.
+    // Where a path the config file handed over becomes the core's, until the
+    // config reaches the core in its own paths.
     fn source_path(path: &Path) -> SourcePath {
         SourcePath::new(path.to_string_lossy().replace(MAIN_SEPARATOR, "/"))
     }

@@ -2,5 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+pub mod cargo_workspace_reader_tests;
+pub mod dependency_tables_tests;
 pub mod portable_path_tests;
 pub mod walkdir_source_tree_tests;

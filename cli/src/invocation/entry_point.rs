@@ -2,16 +2,20 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use std::path::Path;
+
 use anyhow::Result;
 use clap::Parser;
 use stern4rust::reporting::run_outcome::RunOutcome;
 use stern4rust::runner::Runner;
 
 use crate::invocation::args::Args;
+use crate::system::cargo_workspace_reader::CargoWorkspaceReader;
 use crate::system::walkdir_source_tree::WalkdirSourceTree;
 
 // The composition root: the command line in, the report out on stdout, a
-// verdict back. The one place the real file system is chosen.
+// verdict back. The one place cargo metadata and the real file system are
+// chosen.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct EntryPoint;
 
@@ -37,7 +41,9 @@ impl EntryPoint {
     {
         let args = Args::parse_from(Args::without_cargo_subcommand(argv));
         let invocation = args.invocation()?;
+        let workspace_reader =
+            CargoWorkspaceReader::new(args.manifest_path().map(Path::to_path_buf));
         let source_tree = WalkdirSourceTree::new();
-        Runner::new(&source_tree).run_reporting(&invocation)
+        Runner::new(&workspace_reader, &source_tree).run_reporting(&invocation)
     }
 }

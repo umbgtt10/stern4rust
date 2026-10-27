@@ -8,22 +8,24 @@
 
 use crate::support::in_memory_source_tree::InMemorySourceTree;
 use crate::support::in_memory_source_tree::path_of;
-use std::path::PathBuf;
+use crate::support::in_memory_workspace_reader::InMemoryWorkspaceReader;
 use stern4rust::runner::Runner;
 use stern4rust::settings::invocation::Invocation;
 
 #[test]
 fn run_reporting_with_a_workspace_that_cannot_be_read_fails() {
     // Arrange
+    let workspace = InMemoryWorkspaceReader::failing();
     let invocation = Invocation {
         manifest_directory: path_of("no/such/workspace"),
-        manifest_path: Some(PathBuf::from("no/such/workspace/Cargo.toml")),
         ..Invocation::default()
     };
 
     // Act
-    let result = Runner::new(&InMemorySourceTree::new()).run_reporting(&invocation);
+    let failure = Runner::new(&workspace, &InMemorySourceTree::new())
+        .run_reporting(&invocation)
+        .expect_err("an unreadable workspace");
 
     // Assert
-    assert!(result.is_err());
+    assert_eq!(failure.to_string(), "not held");
 }

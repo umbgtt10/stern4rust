@@ -2,21 +2,15 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::fs::read_to_string;
-use std::path::Path;
-use std::path::PathBuf;
-
 use anyhow::Result;
 use anyhow::anyhow;
-use cargo_metadata::Metadata;
-use cargo_metadata::MetadataCommand;
-use cargo_metadata::Package;
-use toml::Table;
 
 use crate::finding::model::manifest_dependency::ManifestDependency;
 use crate::settings::config::Config;
-use crate::settings::dependency_tables::DependencyTables;
+use crate::settings::package_description::PackageDescription;
 use crate::settings::scanned_package::ScannedPackage;
+use crate::settings::workspace_description::WorkspaceDescription;
+use crate::source_path::SourcePath;
 
 // Turns the requested packages into the directories to walk.
 //
@@ -40,32 +34,34 @@ impl ManifestResolver {
     // [ADR-ManifestDataIsPerPackage](../../docs/ADRs/ADR-ManifestDataIsPerPackage.md).
     // Every dependency each package's manifest declares, as written, in every
     // table -- the plain three and each under `[target.<cfg>]` -- whether or not
-    // the package sits in a workspace. Empty when the metadata cannot be read,
-    // which `packages` reports on its own.
-    pub fn declared_dependencies(config: &Config) -> Vec<ManifestDependency> {
-        Self::metadata(config)
-            .map(|metadata| Self::declared_by_members(&metadata))
-            .unwrap_or_default()
+    // the package sits in a workspace.
+    pub fn declared_dependencies(workspace: &WorkspaceDescription) -> Vec<ManifestDependency> {
+        workspace
+            .packages
+            .iter()
+            .flat_map(|package| package.declared.iter().cloned())
+            .collect()
     }
 
-    pub fn packages(config: &Config) -> Result<Vec<ScannedPackage>> {
-        let metadata = Self::metadata(config)?;
-        Ok(Self::selected(&metadata, config)?
+    pub fn packages(
+        workspace: &WorkspaceDescription,
+        config: &Config,
+    ) -> Result<Vec<ScannedPackage>> {
+        Ok(Self::selected(workspace, config)?
             .into_iter()
             .map(|package| {
                 ScannedPackage::new(
                     package.name.as_str(),
-                    Self::manifest_dir(package.manifest_path.as_std_path()),
+                    Self::manifest_dir(&package.manifest_path),
                     package.license.clone(),
                 )
             })
             .collect())
     }
 
-    pub fn relative_to(root: &Path, path: &Path) -> String {
+    pub fn relative_to(root: &SourcePath, path: &SourcePath) -> String {
         path.strip_prefix(root)
-            .unwrap_or(path)
-            .to_string_lossy()
+            .unwrap_or(path.as_str())
             .replace('\\', "/")
     }
 
@@ -78,13 +74,14 @@ impl ManifestResolver {
     // `{ workspace = true }` and a spelled-out version look identical once
     // resolved. Target tables are left out: `workspace-dependencies` has never
     // judged them.
-    pub fn workspace_dependencies(config: &Config) -> Option<Vec<ManifestDependency>> {
-        let metadata = Self::metadata(config).ok()?;
-        if !Self::is_workspace(&metadata.workspace_root.as_std_path().join(Self::MANIFEST)) {
+    pub fn workspace_dependencies(
+        workspace: &WorkspaceDescription,
+    ) -> Option<Vec<ManifestDependency>> {
+        if !workspace.declares_workspace {
             return None;
         }
         Some(
-            Self::declared_by_members(&metadata)
+            Self::declared_dependencies(workspace)
                 .into_iter()
                 .filter(|dependency| dependency.target().is_none())
                 .collect(),
@@ -95,12 +92,12 @@ impl ManifestResolver {
     // `[package.<name>]` section is checked against: a section for a member this
     // run is not scanning is ordinary, one for a member that does not exist is a
     // typo.
-    pub fn workspace_package_names(config: &Config) -> Result<Vec<String>> {
-        Ok(Self::metadata(config)?
+    pub fn workspace_package_names(workspace: &WorkspaceDescription) -> Vec<String> {
+        workspace
             .packages
             .iter()
             .map(|package| package.name.to_string())
-            .collect())
+            .collect()
     }
 
     // The directory every manifest path in `workspace_dependencies` is stated
@@ -110,64 +107,28 @@ impl ManifestResolver {
     // still reports the workspace above it, so a caller that assumed otherwise
     // would compare a member-relative path against a workspace-relative one and
     // match nothing.
-    pub fn workspace_root(config: &Config) -> Option<PathBuf> {
-        Self::metadata(config)
-            .ok()
-            .map(|metadata| metadata.workspace_root.as_std_path().to_path_buf())
+    pub fn workspace_root(workspace: &WorkspaceDescription) -> SourcePath {
+        workspace.root.clone()
     }
 
-    // Every member's declarations, each manifest named relative to the
-    // workspace root.
-    fn declared_by_members(metadata: &Metadata) -> Vec<ManifestDependency> {
-        let root = metadata.workspace_root.as_std_path();
-        metadata
-            .packages
-            .iter()
-            .flat_map(|package| {
-                let path = package.manifest_path.as_std_path();
-                Self::declared_in(path, &Self::relative_to(root, path))
-            })
-            .collect()
-    }
-
-    fn declared_in(manifest: &Path, shown: &str) -> Vec<ManifestDependency> {
-        Self::parsed(manifest)
-            .map(|table| DependencyTables::declared(&table, shown))
-            .unwrap_or_default()
-    }
-
-    fn is_workspace(manifest: &Path) -> bool {
-        Self::parsed(manifest).is_some_and(|table| table.contains_key("workspace"))
-    }
-
-    fn manifest_dir(manifest_path: &Path) -> PathBuf {
+    fn manifest_dir(manifest_path: &SourcePath) -> SourcePath {
         manifest_path
             .parent()
-            .map_or_else(|| manifest_path.to_path_buf(), Path::to_path_buf)
+            .unwrap_or_else(|| manifest_path.clone())
     }
 
-    fn metadata(config: &Config) -> Result<Metadata> {
-        let mut command = MetadataCommand::new();
-        command.no_deps();
-        if let Some(manifest_path) = &config.manifest_path.as_deref() {
-            command.manifest_path(manifest_path);
-        }
-        Ok(command.exec()?)
-    }
-
-    fn parsed(manifest: &Path) -> Option<Table> {
-        read_to_string(manifest).ok()?.parse::<Table>().ok()
-    }
-
-    fn selected<'a>(metadata: &'a Metadata, config: &Config) -> Result<Vec<&'a Package>> {
+    fn selected<'a>(
+        workspace: &'a WorkspaceDescription,
+        config: &Config,
+    ) -> Result<Vec<&'a PackageDescription>> {
         if config.packages.is_empty() {
-            return Ok(metadata.packages.iter().collect());
+            return Ok(workspace.packages.iter().collect());
         }
         config
             .packages
             .iter()
             .map(|name| {
-                metadata
+                workspace
                     .packages
                     .iter()
                     .find(|package| package.name.as_str() == name.as_str())

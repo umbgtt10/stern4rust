@@ -100,9 +100,11 @@ name = "cargo-stern4rust"
 version = "0.18.0"
 dependencies = [
  "anyhow",
+ "cargo_metadata",
  "clap",
  "serde_json",
  "stern4rust-core",
+ "toml",
  "walkdir",
 ]
 
@@ -348,7 +350,6 @@ name = "stern4rust-core"
 version = "0.18.0"
 dependencies = [
  "anyhow",
- "cargo_metadata",
  "clap",
  "globset",
  "proc-macro2",

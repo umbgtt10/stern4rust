@@ -132,7 +132,6 @@ impl Args {
                 Some(&self.manifest_directory()),
             )?
             .unwrap_or_default(),
-            manifest_path: self.manifest_path.clone(),
             offence_threshold: self.offence_threshold(),
             packages: self.packages.clone(),
             rules: self.rules().to_vec(),

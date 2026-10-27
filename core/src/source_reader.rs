@@ -2,8 +2,6 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::path::Path;
-
 use crate::reporting::offence::Offence;
 use crate::rules::source::readable_source_rule::ReadableSourceRule;
 use crate::settings::manifest_resolver::ManifestResolver;
@@ -32,8 +30,7 @@ impl<'a> SourceReader<'a> {
     // returned instead of, and an unboxed Err variant that size makes every
     // successful read pay for the failing one.
     pub fn read(&self, root: &SourcePath, path: &SourcePath) -> Result<SourceFile, Box<Offence>> {
-        let relative =
-            ManifestResolver::relative_to(Path::new(root.as_str()), Path::new(path.as_str()));
+        let relative = ManifestResolver::relative_to(root, path);
         match self.source_tree.read_source(path) {
             Ok(contents) => Ok(SourceFile::new(&relative, &contents)),
             Err(error) => Err(Box::new(

@@ -2,14 +2,12 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::path::PathBuf;
-
 use crate::reporting::output_format::OutputFormat;
 use crate::source_path::SourcePath;
 
 // What the command line asked of a run, in the core's terms. The manifest's
 // directory is where `stern4rust.toml` and a default baseline are looked for;
-// the manifest itself is cargo's.
+// the manifest itself is the workspace reader's.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Invocation {
     pub baseline: Option<SourcePath>,
@@ -19,7 +17,6 @@ pub struct Invocation {
     pub header_file: Option<SourcePath>,
     pub list_rules: bool,
     pub manifest_directory: SourcePath,
-    pub manifest_path: Option<PathBuf>,
     pub offence_threshold: Option<usize>,
     pub packages: Vec<String>,
     pub rules: Vec<String>,

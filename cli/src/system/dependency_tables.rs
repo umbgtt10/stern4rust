@@ -5,7 +5,7 @@
 use toml::Table;
 use toml::Value;
 
-use crate::finding::model::manifest_dependency::ManifestDependency;
+use stern4rust::finding::model::manifest_dependency::ManifestDependency;
 
 // Every dependency one manifest declares, as it is written: the three plain
 // tables, then each of them under `[target.<cfg>]`, and for every entry what it

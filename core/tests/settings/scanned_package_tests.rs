@@ -8,8 +8,12 @@
 // declare none, and that is the one case `spdx-matches-manifest` stands down on
 // rather than guesses at.
 
-use std::path::PathBuf;
 use stern4rust::settings::scanned_package::ScannedPackage;
+use stern4rust::source_path::SourcePath;
+
+fn path(text: &str) -> SourcePath {
+    SourcePath::new(text.to_string())
+}
 
 #[test]
 fn agreed_license_of_no_packages_returns_nothing() {
@@ -28,7 +32,7 @@ fn agreed_license_over_four_packages_declaring_one_licence_returns_it() {
     // Arrange
     let packages: Vec<ScannedPackage> = ["a", "b", "c", "d"]
         .iter()
-        .map(|name| ScannedPackage::new(name, PathBuf::from(*name), Some("Apache-2.0".to_string())))
+        .map(|name| ScannedPackage::new(name, path(name), Some("Apache-2.0".to_string())))
         .collect();
 
     // Act
@@ -45,14 +49,10 @@ fn agreed_license_over_four_packages_declaring_one_licence_returns_it() {
 fn agreed_license_where_every_package_declares_the_same_one_returns_it() {
     // Arrange
     let packages = [
-        ScannedPackage::new(
-            "node",
-            PathBuf::from("node"),
-            Some("Apache-2.0".to_string()),
-        ),
+        ScannedPackage::new("node", path("node"), Some("Apache-2.0".to_string())),
         ScannedPackage::new(
             "node-infra",
-            PathBuf::from("node-infra"),
+            path("node-infra"),
             Some("Apache-2.0".to_string()),
         ),
     ];
@@ -68,12 +68,8 @@ fn agreed_license_where_every_package_declares_the_same_one_returns_it() {
 fn agreed_license_where_one_package_declares_nothing_returns_nothing() {
     // Arrange
     let packages = [
-        ScannedPackage::new(
-            "node",
-            PathBuf::from("node"),
-            Some("Apache-2.0".to_string()),
-        ),
-        ScannedPackage::new("other", PathBuf::from("other"), None),
+        ScannedPackage::new("node", path("node"), Some("Apache-2.0".to_string())),
+        ScannedPackage::new("other", path("other"), None),
     ];
 
     // Act
@@ -87,12 +83,8 @@ fn agreed_license_where_one_package_declares_nothing_returns_nothing() {
 fn agreed_license_where_packages_disagree_returns_nothing() {
     // Arrange
     let packages = [
-        ScannedPackage::new("tool", PathBuf::from("tool"), Some("MIT".to_string())),
-        ScannedPackage::new(
-            "node",
-            PathBuf::from("node"),
-            Some("Apache-2.0".to_string()),
-        ),
+        ScannedPackage::new("tool", path("tool"), Some("MIT".to_string())),
+        ScannedPackage::new("node", path("node"), Some("Apache-2.0".to_string())),
     ];
 
     // Act
@@ -107,8 +99,8 @@ fn agreed_license_where_packages_disagree_returns_nothing() {
 #[test]
 fn eq_of_two_packages_differing_only_by_root_is_false() {
     // Arrange
-    let left = ScannedPackage::new("node", PathBuf::from("a"), None);
-    let right = ScannedPackage::new("node", PathBuf::from("b"), None);
+    let left = ScannedPackage::new("node", path("a"), None);
+    let right = ScannedPackage::new("node", path("b"), None);
 
     // Act & Assert
     assert_ne!(left, right);
@@ -117,14 +109,14 @@ fn eq_of_two_packages_differing_only_by_root_is_false() {
 #[test]
 fn new_keeps_the_licence_it_was_given() {
     // Arrange
-    let root = PathBuf::from("core");
+    let root = path("core");
 
     // Act
     let package = ScannedPackage::new("node", root.clone(), Some("Apache-2.0".to_string()));
 
     // Assert
     assert_eq!(package.name(), "node");
-    assert_eq!(package.root(), root);
+    assert_eq!(package.root(), &root);
     assert_eq!(package.license(), Some("Apache-2.0"));
 }
 
@@ -133,7 +125,7 @@ fn new_keeps_the_licence_it_was_given() {
 #[test]
 fn new_without_a_licence_keeps_it_absent() {
     // Arrange & Act
-    let package = ScannedPackage::new("node", PathBuf::from("core"), None);
+    let package = ScannedPackage::new("node", path("core"), None);
 
     // Assert
     assert!(package.license().is_none());

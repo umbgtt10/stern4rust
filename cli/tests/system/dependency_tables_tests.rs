@@ -11,7 +11,7 @@
 // no manifest on disk.
 
 use stern4rust::finding::model::manifest_dependency::ManifestDependency;
-use stern4rust::settings::dependency_tables::DependencyTables;
+use stern4rust_cli::system::dependency_tables::DependencyTables;
 use toml::Table;
 
 const MANIFEST: &str = "core/Cargo.toml";

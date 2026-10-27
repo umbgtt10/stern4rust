@@ -3,3 +3,4 @@
 // SPDX-License-Identifier: MIT
 
 pub mod source_tree;
+pub mod workspace_reader;
