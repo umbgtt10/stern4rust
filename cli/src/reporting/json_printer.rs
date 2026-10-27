@@ -2,13 +2,14 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::reporting::offence::Offence;
-use crate::reporting::offence_threshold::OffenceThreshold;
-use crate::reporting::package_roster::PackageRoster;
+use std::collections::BTreeSet;
+
 use serde_json::Value;
 use serde_json::json;
 use serde_json::to_string_pretty;
-use std::collections::BTreeSet;
+use stern4rust::reporting::offence::Offence;
+use stern4rust::reporting::offence_threshold::OffenceThreshold;
+use stern4rust::reporting::package_roster::PackageRoster;
 
 // The same run as data rather than as a table.
 //
@@ -50,10 +51,6 @@ impl JsonPrinter {
         }
     }
 
-    pub fn print(&self, offences: &[Offence]) {
-        println!("{}", self.render(offences));
-    }
-
     pub fn render(&self, offences: &[Offence]) -> String {
         let broken: BTreeSet<&str> = offences.iter().map(|offence| offence.rule()).collect();
         let shown = self.threshold.kept(offences);
@@ -78,7 +75,7 @@ impl JsonPrinter {
             "rules_skipped": self.skipped,
             "rules_unconfigured": self.unconfigured,
             "packages": self.package_documents(),
-            "offences": shown,
+            "offences": shown.iter().map(Self::offence_document).collect::<Vec<_>>(),
         });
         to_string_pretty(&document).unwrap_or_default()
     }
@@ -150,6 +147,20 @@ impl JsonPrinter {
     // only those whose offences fitted.
     fn excluded_total(&self) -> usize {
         self.exclusions.iter().map(|(_, count)| count).sum()
+    }
+
+    // Every field an offence carries, an absent one as `null`, so a consumer
+    // never has to tell a missing key from an empty one.
+    fn offence_document(offence: &Offence) -> Value {
+        json!({
+            "file": offence.file(),
+            "line": offence.line(),
+            "rule": offence.rule(),
+            "description": offence.description(),
+            "correction": offence.correction(),
+            "subject": offence.subject(),
+            "expected": offence.expected(),
+        })
     }
 
     fn package_documents(&self) -> Vec<Value> {

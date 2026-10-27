@@ -15,11 +15,11 @@
 
 use serde_json::Value;
 use serde_json::from_str;
-use stern4rust::reporting::json_printer::JsonPrinter;
 use stern4rust::reporting::offence::Offence;
 use stern4rust::reporting::offence_threshold::OffenceThreshold;
 use stern4rust::reporting::package_roster::PackageRoster;
 use stern4rust::reporting::unconfigured_rule::UnconfiguredRule;
+use stern4rust_cli::reporting::json_printer::JsonPrinter;
 
 fn parsed(files_scanned: usize, offences: &[Offence]) -> Value {
     from_str(&JsonPrinter::new(files_scanned).render(offences)).expect("valid json")

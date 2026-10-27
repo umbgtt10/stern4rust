@@ -2,9 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::fmt::Debug;
-
-use serde::Serialize;
+use core::fmt::Debug;
 
 use crate::reporting::offence_order::OffenceOrder;
 
@@ -21,7 +19,7 @@ use crate::reporting::offence_order::OffenceOrder;
 // that can say what is wrong can say what to do about it, and making the field
 // optional would let a future rule quietly omit the half of the report that is
 // worth acting on -- the exact shape of silent gap this tool exists to catch.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Offence {
     file: String,
     line: usize,

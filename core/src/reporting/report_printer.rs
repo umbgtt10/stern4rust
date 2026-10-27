@@ -44,10 +44,6 @@ impl ReportPrinter {
         }
     }
 
-    pub fn print(&self, offences: &[Offence]) {
-        println!("{}", self.render(offences));
-    }
-
     // Returns the report rather than writing it, so the shape is assertable in a
     // test instead of being checked for not panicking.
     pub fn render(&self, offences: &[Offence]) -> String {

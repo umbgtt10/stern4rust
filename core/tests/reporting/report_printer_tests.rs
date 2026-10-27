@@ -5,9 +5,10 @@
 // Rendering the report a person reads.
 //
 // render returns the document instead of writing it, which is what lets these
-// assert on what comes out rather than only that nothing panicked. The print_
-// tests below still pin that the writing path survives the shapes it will meet:
-// no offences, one, many, and a path far wider than its column heading.
+// assert on what comes out rather than only that nothing panicked -- including
+// the shapes the writing path used to be pinned against only for not panicking:
+// no offences, one, many, and a path far wider than its column heading. Writing
+// it out is the command line's.
 
 use stern4rust::reporting::offence::Offence;
 use stern4rust::reporting::offence_threshold::OffenceThreshold;
@@ -29,49 +30,6 @@ fn offence(file: &str, line: usize, rule: &'static str) -> Offence {
         "something is wrong".to_string(),
         "do the thing that makes it right".to_string(),
     )
-}
-
-// Columns are sized to their contents, so a path longer than the heading must
-// widen the column rather than overflow it.
-#[test]
-fn print_with_a_path_far_wider_than_its_heading_does_not_panic() {
-    // Arrange
-    let printer = ReportPrinter::new(1);
-    let long = "crates/deeply/nested/package/src/module/submodule/subject.rs";
-
-    // Act & Assert
-    printer.print(&[offence(long, 1234, "header")]);
-}
-
-#[test]
-fn print_with_no_offences_does_not_panic() {
-    // Arrange
-    let printer = ReportPrinter::new(0);
-
-    // Act & Assert
-    printer.print(&[]);
-}
-
-#[test]
-fn print_with_offences_from_several_rules_does_not_panic() {
-    // Arrange
-    let printer = ReportPrinter::new(3);
-
-    // Act & Assert
-    printer.print(&[
-        offence("src/a.rs", 1, "header"),
-        offence("tests/b_tests.rs", 42, "test-file-structure"),
-        offence("src/c.rs", 7, "header"),
-    ]);
-}
-
-#[test]
-fn print_with_one_offence_does_not_panic() {
-    // Arrange
-    let printer = ReportPrinter::new(1);
-
-    // Act & Assert
-    printer.print(&[offence("src/a.rs", 1, "header")]);
 }
 
 // The case a bare total would hide: a pattern naming a tree that has moved or
@@ -436,6 +394,31 @@ fn render_summary_counts_every_offence_even_when_some_are_not_shown() {
     );
 }
 
+// Columns are sized to their contents, so a path longer than the heading must
+// widen the column rather than overflow it.
+#[test]
+fn render_with_a_path_far_wider_than_its_heading_widens_its_column() {
+    // Arrange
+    let printer = ReportPrinter::new(1);
+    let long = "crates/deeply/nested/package/src/module/submodule/subject.rs";
+
+    // Act
+    let report = printer.render(&[offence(long, 1234, "header")]);
+
+    // Assert
+    assert_eq!(
+        report,
+        "stern4rust report\n\
+         \n\
+         file                                                          line  rule    offence\n\
+         ------------------------------------------------------------  ----  ------  ------------------\n\
+         crates/deeply/nested/package/src/module/submodule/subject.rs  1234  header  something is wrong\n\
+         \x20                                                                           fix: do the thing that makes it right\n\
+         \n\
+         summary: files_scanned=1 files_excluded=0 offences=1 baselined=0 fixed=0 rules_broken=1 rules_applied=0 rules_skipped=0 rules_unconfigured=0"
+    );
+}
+
 // Gate scripts across this family parse the summary with a regex. Whatever the
 // roster does above it, the line they read keeps its shape.
 #[test]
@@ -457,6 +440,77 @@ fn render_with_differing_rosters_keeps_the_summary_line_intact() {
     // Assert
     assert!(report.contains("summary: files_scanned=9"));
     assert_eq!(report.matches("summary:").count(), 1);
+}
+
+#[test]
+fn render_with_no_offences_says_every_rule_is_satisfied() {
+    // Arrange
+    let printer = ReportPrinter::new(0);
+
+    // Act
+    let report = printer.render(&[]);
+
+    // Assert
+    assert_eq!(
+        report,
+        "stern4rust report\n\
+         \n\
+         All rules are satisfied.\n\
+         \n\
+         summary: files_scanned=0 files_excluded=0 offences=0 baselined=0 fixed=0 rules_broken=0 rules_applied=0 rules_skipped=0 rules_unconfigured=0"
+    );
+}
+
+#[test]
+fn render_with_offences_from_several_rules_lists_each_with_its_fix() {
+    // Arrange
+    let printer = ReportPrinter::new(3);
+
+    // Act
+    let report = printer.render(&[
+        offence("src/a.rs", 1, "header"),
+        offence("tests/b_tests.rs", 42, "test-file-structure"),
+        offence("src/c.rs", 7, "header"),
+    ]);
+
+    // Assert
+    assert_eq!(
+        report,
+        "stern4rust report\n\
+         \n\
+         file              line  rule                 offence\n\
+         ----------------  ----  -------------------  ------------------\n\
+         src/a.rs             1  header               something is wrong\n\
+         \x20                                            fix: do the thing that makes it right\n\
+         tests/b_tests.rs    42  test-file-structure  something is wrong\n\
+         \x20                                            fix: do the thing that makes it right\n\
+         src/c.rs             7  header               something is wrong\n\
+         \x20                                            fix: do the thing that makes it right\n\
+         \n\
+         summary: files_scanned=3 files_excluded=0 offences=3 baselined=0 fixed=0 rules_broken=2 rules_applied=0 rules_skipped=0 rules_unconfigured=0"
+    );
+}
+
+#[test]
+fn render_with_one_offence_lists_it_with_its_fix() {
+    // Arrange
+    let printer = ReportPrinter::new(1);
+
+    // Act
+    let report = printer.render(&[offence("src/a.rs", 1, "header")]);
+
+    // Assert
+    assert_eq!(
+        report,
+        "stern4rust report\n\
+         \n\
+         file      line  rule    offence\n\
+         --------  ----  ------  ------------------\n\
+         src/a.rs     1  header  something is wrong\n\
+         \x20                       fix: do the thing that makes it right\n\
+         \n\
+         summary: files_scanned=1 files_excluded=0 offences=1 baselined=0 fixed=0 rules_broken=1 rules_applied=0 rules_skipped=0 rules_unconfigured=0"
+    );
 }
 
 #[test]

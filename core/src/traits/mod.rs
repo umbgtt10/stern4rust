@@ -4,5 +4,6 @@
 
 pub mod baseline_store;
 pub mod config_source;
+pub mod report_renderer;
 pub mod source_tree;
 pub mod workspace_reader;

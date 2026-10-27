@@ -9,7 +9,7 @@
 // already reads it, to serve a consumer that has to opt in anyway.
 
 use clap::ValueEnum;
-use stern4rust::reporting::output_format::OutputFormat;
+use stern4rust_cli::invocation::output_format::OutputFormat;
 
 #[test]
 fn default_is_the_table_a_human_reads() {

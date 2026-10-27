@@ -4,4 +4,5 @@
 
 pub mod args;
 pub mod entry_point;
+pub mod output_format;
 pub mod unusable_path;

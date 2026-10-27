@@ -9,8 +9,8 @@
 // to be called stern4rust must survive.
 
 use clap::Parser;
-use stern4rust::reporting::output_format::OutputFormat;
 use stern4rust_cli::invocation::args::Args;
+use stern4rust_cli::invocation::output_format::OutputFormat;
 
 fn argv(parts: &[&str]) -> Vec<String> {
     parts.iter().map(|part| (*part).to_string()).collect()

@@ -2,7 +2,6 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::reporting::output_format::OutputFormat;
 use crate::source_path::SourcePath;
 
 // What the command line asked of a run, in the core's terms. The manifest's
@@ -13,7 +12,6 @@ pub struct Invocation {
     pub baseline: Option<SourcePath>,
     pub excludes: Vec<String>,
     pub fix: bool,
-    pub format: OutputFormat,
     pub header_file: Option<SourcePath>,
     pub list_rules: bool,
     pub manifest_directory: SourcePath,

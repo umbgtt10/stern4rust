@@ -27,21 +27,22 @@ of its API.
   and gains `invocation()`, the new `settings::invocation::Invocation` the
   core reads: what the command line asked, with the manifest's directory,
   where `stern4rust.toml` and a default baseline are looked for.
-- `runner::Runner::run(Args)`, which printed the report, is gone, and
-  `run_reporting(Args)` is `run_reporting(&Invocation)`: it returns the
-  verdict and the report, and printing it is
-  `stern4rust_cli::invocation::entry_point::EntryPoint`'s, the composition
-  root, which also strips cargo's repeated subcommand name and parses the
-  arguments.
+- `runner::Runner` is an object built over the core's five ports, below:
+  `Runner::new(&dyn WorkspaceReader, &dyn SourceTree, &dyn ConfigSource,
+  &dyn BaselineStore, &dyn ReportRenderer)`. `run(Args)`, which printed the
+  report, and `run_reporting(Args)` are `run(&self, &Invocation)`, which
+  returns the verdict and what the run has to say -- the report, the rule
+  listing, or `--write-baseline`'s message, which it used to print. Printing
+  it is `stern4rust_cli::invocation::entry_point::EntryPoint`'s, the
+  composition root, which also strips cargo's repeated subcommand name,
+  parses the arguments and chooses the adapters.
 - `unsafe` code is forbidden in every member and target of the workspace,
   and the core's crate root says so too.
 - `source_walker::SourceWalker` is gone: the new port
   `traits::source_tree::SourceTree` (`contains`, `read_source`, `rust_files`,
   `write_source`) is implemented on disk by
   `stern4rust_cli::system::walkdir_source_tree::WalkdirSourceTree`, and
-  `--fix` writes its repairs through it. `Runner` is built over its ports,
-  `Runner::new(&dyn WorkspaceReader, &dyn SourceTree, &dyn ConfigSource,
-  &dyn BaselineStore)`, and `run_reporting` takes `&self`.
+  `--fix` writes its repairs through it.
 - `source_reader::SourceReader` and `workspace_sources::WorkspaceSources` are
   objects over the tree, `new(&dyn SourceTree)` then `read`, and
   `settings::header_source::HeaderSource::read` takes the tree and the path.
@@ -87,6 +88,19 @@ of its API.
   `settings::adoption::baseline_failure::BaselineFailure`, worded as before.
   `Baseline` no longer implements serde's traits. The library no longer depends
   on toml.
+- What a run says is rendered behind the new port
+  `traits::report_renderer::ReportRenderer` (`render`, `list`), from the new
+  record `reporting::run_report::RunReport`: the table by the core's
+  `reporting::text_report_renderer::TextReportRenderer`, the document by
+  `stern4rust_cli::reporting::json_report_renderer::JsonReportRenderer`.
+  `reporting::output_format` moves to `stern4rust_cli::invocation::output_format`,
+  and `Config` and `Invocation` lose `format`; `reporting::json_printer` moves
+  to `stern4rust_cli::reporting::json_printer` and loses `print`, and the JSON
+  half of `reporting::rule_listing::RuleListing` becomes
+  `stern4rust_cli::reporting::json_rule_listing::JsonRuleListing`, so
+  `RuleListing::render()` takes no format. `ReportPrinter::print` is gone, and
+  `Offence` derives `PartialOrd` and `Ord` instead of serde's `Serialize`. The
+  library no longer depends on serde, serde_json or clap.
 
 ### Changed
 - `adoption` moves under `settings`: the baseline and the exclusions are

@@ -80,7 +80,7 @@ core's tests only.
 | S4 | the `SourceTree` port and `SourcePath`; `SourceReader` and `WorkspaceSources` read through it, `--fix` writes through it; the walker becomes cli's `WalkdirSourceTree` | done |
 | S5 | the `WorkspaceReader` port and core's workspace records; `CargoWorkspaceReader` in cli, with the manifest tables; the workspace described once per run | done |
 | S6 | the `ConfigSource` and `BaselineStore` ports; `TomlConfigSource` and `JsonBaselineStore` in cli; toml leaves core | done |
-| S7 | the `ReportRenderer` port and `RunReport`: the text report in core, the JSON report and the output format in cli; serde, serde_json and clap leave core | |
+| S7 | the `ReportRenderer` port and `RunReport`: the text report in core, the JSON report and the output format in cli; serde, serde_json and clap leave core | done |
 | S8 | `#![no_std]`: alloc imports, typed errors; anyhow leaves core | |
 | S9 | the technology-free gate, first in stage 2 | |
 | S10 | `.cargo/mutants.toml` | |

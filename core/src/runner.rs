@@ -5,14 +5,11 @@
 use crate::finding::model::manifest_dependency::ManifestDependency;
 use crate::finding::model::name_readers::NameReaders;
 use crate::finding::parsing::read_names::ReadNames;
-use crate::reporting::json_printer::JsonPrinter;
 use crate::reporting::offence::Offence;
 use crate::reporting::offence_threshold::OffenceThreshold;
-use crate::reporting::output_format::OutputFormat;
 use crate::reporting::package_roster::PackageRoster;
-use crate::reporting::report_printer::ReportPrinter;
-use crate::reporting::rule_listing::RuleListing;
 use crate::reporting::run_outcome::RunOutcome;
+use crate::reporting::run_report::RunReport;
 use crate::rewriter_registry::RewriterRegistry;
 use crate::rule_catalog::RuleCatalog;
 use crate::rule_registry::RuleRegistry;
@@ -35,6 +32,7 @@ use crate::source_path::SourcePath;
 use crate::source_reader::SourceReader;
 use crate::traits::baseline_store::BaselineStore;
 use crate::traits::config_source::ConfigSource;
+use crate::traits::report_renderer::ReportRenderer;
 use crate::traits::source_tree::SourceTree;
 use crate::traits::workspace_reader::WorkspaceReader;
 use crate::workspace_sources::WorkspaceSources;
@@ -72,6 +70,7 @@ pub struct Runner<'a> {
     source_tree: &'a dyn SourceTree,
     config_source: &'a dyn ConfigSource,
     baseline_store: &'a dyn BaselineStore,
+    renderer: &'a dyn ReportRenderer,
 }
 
 impl<'a> Runner<'a> {
@@ -82,12 +81,14 @@ impl<'a> Runner<'a> {
         source_tree: &'a dyn SourceTree,
         config_source: &'a dyn ConfigSource,
         baseline_store: &'a dyn BaselineStore,
+        renderer: &'a dyn ReportRenderer,
     ) -> Self {
         Self {
             workspace_reader,
             source_tree,
             config_source,
             baseline_store,
+            renderer,
         }
     }
 
@@ -97,12 +98,12 @@ impl<'a> Runner<'a> {
     // Both per-package bugs left the run perfectly Ok while the report
     // contradicted itself, so a test asserting on the outcome could not see
     // either. This is the seam that lets one assert on what was said.
-    pub fn run_reporting(&self, invocation: &Invocation) -> Result<(RunOutcome, String)> {
+    pub fn run(&self, invocation: &Invocation) -> Result<(RunOutcome, String)> {
         // Before anything is read. The listing answers from the registry alone,
         // so it works in a checkout with no manifest worth reading and cannot
         // fail the way a run can.
         if invocation.list_rules {
-            return Ok((RunOutcome::Clean, Self::rule_listing(invocation)));
+            return Ok((RunOutcome::Clean, self.rule_listing()));
         }
         let directory = &invocation.manifest_directory;
         let sections = PackageSections::load(self.config_source, directory)?;
@@ -284,7 +285,7 @@ impl<'a> Runner<'a> {
         if config.write_baseline {
             return self
                 .record(&config, offences)
-                .map(|outcome| (outcome, String::new()));
+                .map(|message| (RunOutcome::Clean, message));
         }
         let baselined = self.baselined(&config, offences)?;
         let summary = BaselineOutcome::new(Vec::new(), baselined.suppressed(), baselined.stale());
@@ -299,9 +300,12 @@ impl<'a> Runner<'a> {
             &Self::merged(excluded),
             &summary,
             &rosters,
-            &offences,
+            offences,
         );
-        Ok((RunOutcome::of(offences.len()), report))
+        Ok((
+            RunOutcome::of(report.offences.len()),
+            self.renderer.render(&report),
+        ))
     }
 
     // A baseline that was asked for and is not there is an error rather than an
@@ -375,7 +379,6 @@ impl<'a> Runner<'a> {
                 ),
             ),
             expected_header,
-            format: invocation.format,
             offence_threshold: OffenceThreshold::new(threshold),
             selection: RuleSelection::new(
                 Self::preferred(
@@ -434,15 +437,21 @@ impl<'a> Runner<'a> {
 
     // Recording is not judging. The run exits clean because nothing was
     // assessed -- the offences were written down, which is what was asked for.
-    fn record(&self, config: &Config, offences: Vec<Offence>) -> Result<RunOutcome> {
+    //
+    // What it says ends with a blank line, as it always has: the caller prints
+    // it the way it prints a report.
+    fn record(&self, config: &Config, offences: Vec<Offence>) -> Result<String> {
         let path = config
             .baseline
             .as_ref()
             .ok_or_else(|| anyhow::anyhow!("--write-baseline needs a path to write to"))?;
         let baseline = Baseline::of(&offences);
         self.baseline_store.save(path, &baseline)?;
-        println!("stern4rust wrote {} offence(s) to {}", baseline.len(), path);
-        Ok(RunOutcome::Clean)
+        Ok(format!(
+            "stern4rust wrote {} offence(s) to {}\n",
+            baseline.len(),
+            path
+        ))
     }
 
     // Rewrites what can be rewritten and hands back the files as they now are,
@@ -485,43 +494,22 @@ impl<'a> Runner<'a> {
         excluded: &ExclusionOutcome,
         baselined: &BaselineOutcome,
         rosters: &[PackageRoster],
-        offences: &[Offence],
-    ) -> String {
-        let threshold = config.offence_threshold;
-        let applied = Self::owned(&registry.names());
-        let skipped = Self::owned(&RuleCatalog::skipped_names(&config.selection));
-        let unconfigured: Vec<(String, String)> = RuleCatalog::unconfigured(config)
-            .into_iter()
-            .map(|rule| (rule.name.to_string(), rule.requirement.to_string()))
-            .collect();
-        let unconfigured_names = Self::owned(&RuleCatalog::unconfigured_names(config));
-        match config.format {
-            OutputFormat::Text => ReportPrinter::new(totals.files_scanned)
-                .with_threshold(threshold)
-                .with_rules(applied.clone(), skipped.clone(), unconfigured.clone())
-                .with_package_rosters(rosters.to_vec())
-                .with_exclusions(excluded.excluded().to_vec())
-                .with_config_file(Self::shown(config.config_file.as_ref()))
-                .with_baseline(
-                    Self::shown(config.baseline.as_ref()),
-                    baselined.suppressed(),
-                    baselined.stale(),
-                )
-                .with_fixed(totals.fixed)
-                .render(offences),
-            OutputFormat::Json => JsonPrinter::new(totals.files_scanned)
-                .with_threshold(threshold)
-                .with_rules(applied, skipped, unconfigured_names)
-                .with_package_rosters(rosters.to_vec())
-                .with_exclusions(excluded.excluded().to_vec())
-                .with_config_file(Self::shown(config.config_file.as_ref()))
-                .with_baseline(
-                    Self::shown(config.baseline.as_ref()),
-                    baselined.suppressed(),
-                    baselined.stale(),
-                )
-                .with_fixed(totals.fixed)
-                .render(offences),
+        offences: Vec<Offence>,
+    ) -> RunReport {
+        RunReport {
+            files_scanned: totals.files_scanned,
+            threshold: config.offence_threshold,
+            applied: Self::owned(&registry.names()),
+            skipped: Self::owned(&RuleCatalog::skipped_names(&config.selection)),
+            unconfigured: RuleCatalog::unconfigured(config),
+            rosters: rosters.to_vec(),
+            exclusions: excluded.excluded().to_vec(),
+            config_file: Self::shown(config.config_file.as_ref()),
+            baseline: Self::shown(config.baseline.as_ref()),
+            suppressed: baselined.suppressed(),
+            stale: baselined.stale(),
+            fixed: totals.fixed,
+            offences,
         }
     }
 
@@ -534,13 +522,13 @@ impl<'a> Runner<'a> {
     // handed a stand-in that nothing ever reads, because a listing missing a
     // rule reads as a tool that does not have it. The first draft supplied only
     // the header and quietly listed twenty.
-    fn rule_listing(invocation: &Invocation) -> String {
+    fn rule_listing(&self) -> String {
         let registry = RuleRegistry::new(RuleCatalog::selected(&Config {
             expected_header: vec![String::new()],
             manifest_license: Some(String::new()),
             ..Config::default()
         }));
-        RuleListing::new(&registry.explanations()).render(invocation.format)
+        self.renderer.list(&registry.explanations())
     }
 
     // A section states its whole list rather than adding to the root's, which is

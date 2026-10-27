@@ -5,7 +5,6 @@
 use crate::finding::model::manifest_dependency::ManifestDependency;
 use crate::finding::model::name_readers::NameReaders;
 use crate::reporting::offence_threshold::OffenceThreshold;
-use crate::reporting::output_format::OutputFormat;
 use crate::settings::rule_selection::RuleSelection;
 use crate::source_path::SourcePath;
 
@@ -33,7 +32,6 @@ pub struct Config {
     pub packages: Vec<String>,
     pub excludes: Vec<String>,
     pub expected_header: Vec<String>,
-    pub format: OutputFormat,
     pub offence_threshold: OffenceThreshold,
     pub selection: RuleSelection,
 }

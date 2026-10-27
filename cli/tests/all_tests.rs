@@ -3,4 +3,5 @@
 // SPDX-License-Identifier: MIT
 
 pub mod invocation;
+pub mod reporting;
 pub mod system;

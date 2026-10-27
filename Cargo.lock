@@ -351,12 +351,9 @@ name = "stern4rust-core"
 version = "0.18.0"
 dependencies = [
  "anyhow",
- "clap",
  "globset",
  "proc-macro2",
  "quote",
- "serde",
- "serde_json",
  "syn 2.0.119",
 ]
 

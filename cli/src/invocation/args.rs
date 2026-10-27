@@ -6,10 +6,10 @@ use std::path::Path;
 use std::path::PathBuf;
 
 use clap::Parser;
-use stern4rust::reporting::output_format::OutputFormat;
 use stern4rust::settings::invocation::Invocation;
 use stern4rust::source_path::SourcePath;
 
+use crate::invocation::output_format::OutputFormat;
 use crate::invocation::unusable_path::UnusablePath;
 use crate::system::portable_path::PortablePath;
 
@@ -132,7 +132,6 @@ impl Args {
             baseline: Self::portable("--baseline", self.baseline())?,
             excludes: self.excludes.clone(),
             fix: self.fix,
-            format: self.format,
             header_file: Self::portable("--header-file", self.header_file())?,
             list_rules: self.list_rules,
             manifest_directory: Self::portable(

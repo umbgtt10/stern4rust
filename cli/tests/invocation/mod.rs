@@ -4,4 +4,5 @@
 
 pub mod args_tests;
 pub mod entry_point_tests;
+pub mod output_format_tests;
 pub mod unusable_path_tests;
