@@ -83,7 +83,7 @@ core's tests only.
 | S7 | the `ReportRenderer` port and `RunReport`: the text report in core, the JSON report and the output format in cli; serde, serde_json and clap leave core | done |
 | S8 | `#![no_std]`: alloc imports, typed errors; anyhow leaves core | done |
 | S9 | the technology-free gate, first in stage 2 | done |
-| S10 | `.cargo/mutants.toml` | |
+| S10 | `.cargo/mutants.toml` | done |
 | S11 | docs, and this record moves to `docs/history/` | |
 
 ## Tests that move

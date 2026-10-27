@@ -24,6 +24,8 @@ of its API.
   run from the workspace root over both published crates' sources; the house
   rules hold all three members to them, and crap4rust, twin4rust and
   iceberg4rust measure both published crates.
+- `.cargo/mutants.toml` scopes cargo-mutants to `core/src`, each mutant tested
+  by core's own tests: 2,931 mutants.
 
 ### Changed (packages)
 - `cargo-stern4rust` is now the command-line crate (`cli/`): the

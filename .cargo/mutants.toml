@@ -1,0 +1,9 @@
+# What cargo-mutants mutates here, for a hand run and for sentinel4rust alike:
+# stern4rust-core, the technology-free rules, against core's own tests only.
+# cli (cargo metadata, the file system, TOML, JSON, clap, stdout) and xtask (the
+# gates) are not mutated. From the workspace root every package is selected and
+# this glob keeps core's files; the baseline then tests only the mutated
+# package, and each mutant runs that package's tests, which test_workspace says
+# outright.
+examine_globs = ["core/src/**/*.rs"]
+test_workspace = false
