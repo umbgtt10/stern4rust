@@ -100,16 +100,9 @@ name = "cargo-stern4rust"
 version = "0.18.0"
 dependencies = [
  "anyhow",
- "cargo_metadata",
  "clap",
- "globset",
- "proc-macro2",
- "quote",
- "serde",
  "serde_json",
- "syn 2.0.119",
- "toml",
- "walkdir",
+ "stern4rust-core",
 ]
 
 [[package]]
@@ -347,6 +340,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6662b5879511e06e8999a8a235d848113e942c9124f211511b16466ee2995f26"
 dependencies = [
  "serde_core",
+]
+
+[[package]]
+name = "stern4rust-core"
+version = "0.18.0"
+dependencies = [
+ "anyhow",
+ "cargo_metadata",
+ "clap",
+ "globset",
+ "proc-macro2",
+ "quote",
+ "serde",
+ "serde_json",
+ "syn 2.0.119",
+ "toml",
+ "walkdir",
 ]
 
 [[package]]

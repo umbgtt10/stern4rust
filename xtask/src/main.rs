@@ -17,9 +17,10 @@ use xtask::gates::stern_self_gate::SternSelfGate;
 use xtask::gates::twin_gate::TwinGate;
 use xtask::process::system_command_runner::SystemCommandRunner;
 
-const CORE_PACKAGE: &str = "cargo-stern4rust";
+const CLI_PACKAGE: &str = "cargo-stern4rust";
+const CORE_PACKAGE: &str = "stern4rust-core";
 const XTASK_PACKAGE: &str = "xtask";
-const DRY_EXCLUDES: [&[&str]; 2] = [&["xtask"], &["core", "tests"]];
+const DRY_EXCLUDES: [&[&str]; 3] = [&["xtask"], &["core", "tests"], &["cli", "tests"]];
 const CRAP_THRESHOLD: &str = "15";
 const ICEBERG_THRESHOLD: &str = "20";
 const DRY_BASELINE: &str = "dry4rust-baseline.json";
@@ -42,19 +43,24 @@ fn run_stage2() -> ExitCode {
     let runner = SystemCommandRunner::new();
     let parser = CrapReportParser::new();
 
-    // Both members. The house rules reach xtask as well, so the crate that runs
+    // Every member. The house rules reach xtask as well, so the crate that runs
     // the gates is held to the rules it exists to enforce.
-    let both = vec![String::from(CORE_PACKAGE), String::from(XTASK_PACKAGE)];
+    let every = vec![
+        String::from(CORE_PACKAGE),
+        String::from(CLI_PACKAGE),
+        String::from(XTASK_PACKAGE),
+    ];
 
     // First, not last. Its corrections are renames, file moves and directory
     // splits, so a layout it is about to reject is one the others would have
     // measured for nothing -- the same reason every sibling repository
     // runs stern4rust ahead of the rest. The PowerShell script ran it last.
+    // Built from this checkout's cli, which holds the binary.
     let stern = SternSelfGate::new(
         &runner,
-        String::from(CORE_PACKAGE),
+        String::from(CLI_PACKAGE),
         manifest_path.clone(),
-        both.clone(),
+        every,
     );
 
     // Second: every declared dependency used, in the section that uses it. Its
@@ -64,15 +70,15 @@ fn run_stage2() -> ExitCode {
 
     // Third, for the same reason stern4rust is first: removing a duplicate
     // moves code between files, which changes what the three behind it measure.
-    // One run from the workspace root over the published crate's source, the
-    // trees it must not judge excluded by full path -- tests repeat their
-    // arrangement by design, and xtask is not published -- against a baseline
-    // of what was already duplicated when the gate arrived, so it fails on what
-    // a change adds. The floor leaves out units whose body is a single call --
-    // the accessors every rule must write and a `check` that hands its two
-    // halves to `SourceItems` -- whose sameness is the `Rule` trait's, not a
-    // copy; a rule set that is open by design would grow those groups with every
-    // rule added.
+    // One run from the workspace root over both published crates' sources, so a
+    // copy from one into the other is seen, the trees it must not judge excluded
+    // by full path -- tests repeat their arrangement by design, and xtask is not
+    // published -- against a baseline of what was already duplicated when the
+    // gate arrived, so it fails on what a change adds. The floor leaves out units
+    // whose body is a single call -- the accessors every rule must write and a
+    // `check` that hands its two halves to `SourceItems` -- whose sameness is the
+    // `Rule` trait's, not a copy; a rule set that is open by design would grow
+    // those groups with every rule added.
     let root = workspace_root();
     let dry = DryGate::new(
         &runner,
@@ -85,22 +91,22 @@ fn run_stage2() -> ExitCode {
         String::from(DRY_MIN_NODES),
     );
 
-    // The published crate only. CRAP scores functions against their coverage,
-    // and the bill being paid here is the tool's rather than xtask's.
-    let core_only = vec![String::from(CORE_PACKAGE)];
+    // The published crates only. CRAP scores functions against their coverage,
+    // and the measuring gates are the tool's own bill rather than xtask's.
+    let published = vec![String::from(CORE_PACKAGE), String::from(CLI_PACKAGE)];
 
     let crap = CrapGate::new(
         &runner,
         &parser,
         manifest_path.clone(),
-        core_only.clone(),
+        published.clone(),
         String::from(CRAP_THRESHOLD),
     );
-    let twin = TwinGate::new(&runner, manifest_path.clone(), core_only.clone());
+    let twin = TwinGate::new(&runner, manifest_path.clone(), published.clone());
     let iceberg = IcebergGate::new(
         &runner,
         manifest_path,
-        core_only,
+        published,
         String::from(ICEBERG_THRESHOLD),
     );
 

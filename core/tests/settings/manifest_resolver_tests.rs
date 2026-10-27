@@ -176,7 +176,7 @@ fn packages_of_an_unknown_package_returns_an_error() {
 #[test]
 fn packages_of_this_crate_by_name_returns_its_directory() {
     // Arrange
-    let config = config_for(&["cargo-stern4rust"]);
+    let config = config_for(&["stern4rust-core"]);
 
     // Act
     let roots = ManifestResolver::packages(&config).expect("resolve");
@@ -192,20 +192,20 @@ fn packages_of_this_crate_by_name_returns_its_directory() {
 #[test]
 fn packages_of_this_crate_carries_the_licence_its_manifest_declares() {
     // Arrange
-    let config = config_for(&["cargo-stern4rust"]);
+    let config = config_for(&["stern4rust-core"]);
 
     // Act
     let packages = ManifestResolver::packages(&config).expect("resolve packages");
 
     // Assert
     assert_eq!(packages.len(), 1);
-    assert_eq!(packages[0].name(), "cargo-stern4rust");
+    assert_eq!(packages[0].name(), "stern4rust-core");
     assert_eq!(packages[0].license(), Some("MIT"));
 }
 
-// This repository is a workspace of two members, so a scan naming no package
-// resolves to both. Asserted by name rather than by count alone: a count of two
-// would still pass if the wrong two came back.
+// This repository is a workspace of three members, so a scan naming no package
+// resolves to all three. Asserted by name rather than by count alone: a count
+// of three would still pass if the wrong three came back.
 #[test]
 fn packages_without_a_named_package_returns_every_workspace_member() {
     // Arrange
@@ -219,8 +219,9 @@ fn packages_without_a_named_package_returns_every_workspace_member() {
         .iter()
         .map(|package| package.name().to_string())
         .collect();
-    assert_eq!(names.len(), 2);
+    assert_eq!(names.len(), 3);
     assert!(names.contains(&String::from("cargo-stern4rust")));
+    assert!(names.contains(&String::from("stern4rust-core")));
     assert!(names.contains(&String::from("xtask")));
 }
 

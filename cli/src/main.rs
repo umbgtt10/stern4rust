@@ -2,19 +2,17 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use std::env::args;
 use std::process::exit;
 
-use clap::Parser;
-use std::env::args;
-use stern4rust::runner::Runner;
-use stern4rust::settings::args::Args;
+use stern4rust_cli::invocation::entry_point::EntryPoint;
 
 // The only place that turns a verdict into an exit code. A failure to run is an
 // Err, which reaches the shell as 1; a broken rule is a successful run with a
 // finding, which is 2. Collapsing the two would make "I could not read your
 // code" indistinguishable from "your code is fine".
 fn main() {
-    match Runner::run(Args::parse_from(Args::without_cargo_subcommand(args()))) {
+    match EntryPoint::new().run(args()) {
         Ok(outcome) => exit(outcome.exit_code()),
         Err(error) => {
             eprintln!("stern4rust: {error:#}");

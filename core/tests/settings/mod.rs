@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: MIT
 
 pub mod adoption;
-pub mod args_tests;
 pub mod config_file_tests;
 pub mod dependency_tables_tests;
 pub mod header_source_tests;

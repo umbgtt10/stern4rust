@@ -21,10 +21,10 @@ use crate::settings::adoption::baseline::Baseline;
 use crate::settings::adoption::baseline_outcome::BaselineOutcome;
 use crate::settings::adoption::exclusion_outcome::ExclusionOutcome;
 use crate::settings::adoption::exclusion_set::ExclusionSet;
-use crate::settings::args::Args;
 use crate::settings::config::Config;
 use crate::settings::config_file::ConfigFile;
 use crate::settings::header_source::HeaderSource;
+use crate::settings::invocation::Invocation;
 use crate::settings::manifest_resolver::ManifestResolver;
 use crate::settings::package_config::PackageConfig;
 use crate::settings::package_sections::PackageSections;
@@ -72,26 +72,21 @@ pub struct Runner;
 impl Runner {
     pub const BASELINE_NAME: &'static str = "stern4rust-baseline.json";
 
-    pub fn run(args: Args) -> Result<RunOutcome> {
-        let (outcome, report) = Self::run_reporting(args)?;
-        println!("{report}");
-        Ok(outcome)
-    }
-
-    // The same run, handing back what it would have printed.
+    // The run, handing back what it found and what it has to say. Printing it
+    // is the caller's.
     //
     // Both per-package bugs left the run perfectly Ok while the report
     // contradicted itself, so a test asserting on the outcome could not see
     // either. This is the seam that lets one assert on what was said.
-    pub fn run_reporting(args: Args) -> Result<(RunOutcome, String)> {
+    pub fn run_reporting(invocation: &Invocation) -> Result<(RunOutcome, String)> {
         // Before anything is read. The listing answers from the registry alone,
         // so it works in a checkout with no manifest worth reading and cannot
         // fail the way a run can.
-        if args.list_rules() {
-            return Ok((RunOutcome::Clean, Self::rule_listing(&args)));
+        if invocation.list_rules {
+            return Ok((RunOutcome::Clean, Self::rule_listing(invocation)));
         }
-        let sections = PackageSections::load(&Self::manifest_directory(args.manifest_path()))?;
-        let config = Self::config_from(&args, None)?;
+        let sections = PackageSections::load(&invocation.manifest_directory)?;
+        let config = Self::config_from(invocation, None)?;
         Self::validate_selection(&config)?;
         let workspace_dependencies = ManifestResolver::workspace_dependencies(&config);
         let declared_dependencies = ManifestResolver::declared_dependencies(&config);
@@ -150,7 +145,9 @@ impl Runner {
         .map(|member| {
             Ok((
                 member.root().to_path_buf(),
-                ExclusionSet::new(&Self::config_from(&args, sections.of(member.name()))?.excludes)?,
+                ExclusionSet::new(
+                    &Self::config_from(invocation, sections.of(member.name()))?.excludes,
+                )?,
             ))
         })
         .collect::<Result<Vec<_>>>()?;
@@ -194,7 +191,7 @@ impl Runner {
                     &workspace_root,
                     package.root(),
                 )),
-                ..Self::config_from(&args, sections.of(package.name()))?
+                ..Self::config_from(invocation, sections.of(package.name()))?
             };
             let registry = RuleRegistry::new(RuleCatalog::selected(&package_config));
             rosters.push(PackageRoster::new(
@@ -298,21 +295,21 @@ impl Runner {
     // would make `--rule header` mean "header plus whatever the file already
     // selected", which is the opposite of what naming one rule means everywhere
     // else in this tool.
-    fn config_from(args: &Args, section: Option<&PackageConfig>) -> Result<Config> {
-        let directory = Self::manifest_directory(args.manifest_path());
-        let file = ConfigFile::load(&directory)?;
+    fn config_from(invocation: &Invocation, section: Option<&PackageConfig>) -> Result<Config> {
+        let directory = &invocation.manifest_directory;
+        let file = ConfigFile::load(directory)?;
         let found = file.as_ref();
-        let header_file = args
-            .header_file()
-            .map(Path::to_path_buf)
-            .or_else(|| section.and_then(|s| s.header_file_from(&directory)))
-            .or_else(|| found.and_then(|file| file.header_file_from(&directory)));
+        let header_file = invocation
+            .header_file
+            .clone()
+            .or_else(|| section.and_then(|s| s.header_file_from(directory)))
+            .or_else(|| found.and_then(|file| file.header_file_from(directory)));
         let expected_header = match &header_file {
             Some(path) => HeaderSource::read(path)?,
             None => Vec::new(),
         };
-        let threshold = args
-            .offence_threshold()
+        let threshold = invocation
+            .offence_threshold
             .or_else(|| found.and_then(|file| file.offence_threshold()))
             .unwrap_or(OffenceThreshold::DEFAULT);
         // The manifest's licence, the workspace's dependencies and the name
@@ -324,42 +321,42 @@ impl Runner {
             // unacceptable if it were invisible; every report that used a
             // baseline names it and states how many offences it hid, so a
             // reader can always see that one is in force.
-            baseline: args
-                .baseline()
-                .map(Path::to_path_buf)
-                .or_else(|| found.and_then(|file| file.baseline_from(&directory)))
-                .or_else(|| Self::discovered_baseline(&directory, args.write_baseline())),
-            write_baseline: args.write_baseline(),
-            fix: args.fix(),
+            baseline: invocation
+                .baseline
+                .clone()
+                .or_else(|| found.and_then(|file| file.baseline_from(directory)))
+                .or_else(|| Self::discovered_baseline(directory, invocation.write_baseline)),
+            write_baseline: invocation.write_baseline,
+            fix: invocation.fix,
             config_file: found.map(|_| directory.join(ConfigFile::NAME)),
-            manifest_path: args.manifest_path().map(Path::to_path_buf),
+            manifest_path: invocation.manifest_path.clone(),
             max_files_per_directory: section
                 .and_then(|s| s.max_files_per_directory())
                 .or_else(|| found.and_then(|file| file.max_files_per_directory())),
             max_subfolders_per_directory: section
                 .and_then(|s| s.max_subfolders_per_directory())
                 .or_else(|| found.and_then(|file| file.max_subfolders_per_directory())),
-            packages: args.packages().to_vec(),
+            packages: invocation.packages.to_vec(),
             excludes: Self::preferred(
-                args.excludes().to_vec(),
+                invocation.excludes.to_vec(),
                 Self::section_or_root(
                     section.map(|s| s.exclude()),
                     found.map(|file| file.exclude()),
                 ),
             ),
             expected_header,
-            format: args.format(),
+            format: invocation.format,
             offence_threshold: OffenceThreshold::new(threshold),
             selection: RuleSelection::new(
                 Self::preferred(
-                    args.rules().to_vec(),
+                    invocation.rules.to_vec(),
                     Self::section_or_root(
                         section.map(|s| s.rules()),
                         found.map(|file| file.rules()),
                     ),
                 ),
                 Self::preferred(
-                    args.skipped_rules().to_vec(),
+                    invocation.skipped_rules.to_vec(),
                     section
                         .and_then(|s| s.skip())
                         .or(found.map(|file| file.skip())),
@@ -375,15 +372,6 @@ impl Runner {
     fn discovered_baseline(directory: &Path, writing: bool) -> Option<PathBuf> {
         let path = directory.join(Self::BASELINE_NAME);
         (writing || path.exists()).then_some(path)
-    }
-
-    // The config lives beside the manifest it configures, so a workspace and a
-    // package in it can hold different ones.
-    fn manifest_directory(manifest_path: Option<&Path>) -> PathBuf {
-        manifest_path
-            .and_then(|path| path.parent())
-            .map(Path::to_path_buf)
-            .unwrap_or_else(|| PathBuf::from("."))
     }
 
     // One package's exclusions say nothing on their own: a pattern matching
@@ -520,13 +508,13 @@ impl Runner {
     // handed a stand-in that nothing ever reads, because a listing missing a
     // rule reads as a tool that does not have it. The first draft supplied only
     // the header and quietly listed twenty.
-    fn rule_listing(args: &Args) -> String {
+    fn rule_listing(invocation: &Invocation) -> String {
         let registry = RuleRegistry::new(RuleCatalog::selected(&Config {
             expected_header: vec![String::new()],
             manifest_license: Some(String::new()),
             ..Config::default()
         }));
-        RuleListing::new(&registry.explanations()).render(args.format())
+        RuleListing::new(&registry.explanations()).render(invocation.format)
     }
 
     // A section states its whole list rather than adding to the root's, which is

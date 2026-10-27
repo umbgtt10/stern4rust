@@ -9,11 +9,84 @@
 // to be called stern4rust must survive.
 
 use clap::Parser;
+use std::path::PathBuf;
 use stern4rust::reporting::output_format::OutputFormat;
-use stern4rust::settings::args::Args;
+use stern4rust_cli::invocation::args::Args;
 
 fn argv(parts: &[&str]) -> Vec<String> {
     parts.iter().map(|part| (*part).to_string()).collect()
+}
+
+#[test]
+fn invocation_carries_every_option_it_was_given() {
+    // Arrange
+    let args = Args::parse_from(argv(&[
+        "cargo-stern4rust",
+        "--manifest-path",
+        "work/Cargo.toml",
+        "--package",
+        "node",
+        "--header-file",
+        "docs/header.txt",
+        "--offence-threshold",
+        "7",
+        "--rule",
+        "header",
+        "--skip",
+        "tests-layout",
+        "--exclude",
+        "vendor/**",
+        "--baseline",
+        "base.json",
+        "--write-baseline",
+        "--fix",
+    ]));
+
+    // Act
+    let invocation = args.invocation();
+
+    // Assert
+    assert_eq!(invocation.manifest_directory, PathBuf::from("work"));
+    assert_eq!(invocation.packages, ["node"]);
+    assert_eq!(
+        invocation.header_file,
+        Some(PathBuf::from("docs/header.txt"))
+    );
+    assert_eq!(invocation.offence_threshold, Some(7));
+    assert_eq!(invocation.rules, ["header"]);
+    assert_eq!(invocation.skipped_rules, ["tests-layout"]);
+    assert_eq!(invocation.excludes, ["vendor/**"]);
+    assert_eq!(invocation.baseline, Some(PathBuf::from("base.json")));
+    assert!(invocation.write_baseline);
+    assert!(invocation.fix);
+    assert!(!invocation.list_rules);
+}
+
+// The config and a default baseline are looked for beside the manifest, and a
+// manifest named without a directory sits in the current one.
+#[test]
+fn invocation_of_a_bare_manifest_name_looks_in_the_current_directory() {
+    // Arrange
+    let args = Args::parse_from(argv(&["cargo-stern4rust", "--manifest-path", "Cargo.toml"]));
+
+    // Act
+    let invocation = args.invocation();
+
+    // Assert
+    assert_eq!(invocation.manifest_directory, PathBuf::from(""));
+}
+
+#[test]
+fn invocation_without_a_manifest_path_looks_in_the_current_directory() {
+    // Arrange
+    let args = Args::parse_from(argv(&["cargo-stern4rust", "--rules"]));
+
+    // Act
+    let invocation = args.invocation();
+
+    // Assert
+    assert_eq!(invocation.manifest_directory, PathBuf::from("."));
+    assert!(invocation.list_rules);
 }
 
 #[test]

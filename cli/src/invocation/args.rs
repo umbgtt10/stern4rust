@@ -2,10 +2,12 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::reporting::output_format::OutputFormat;
-use clap::Parser;
 use std::path::Path;
 use std::path::PathBuf;
+
+use clap::Parser;
+use stern4rust::reporting::output_format::OutputFormat;
+use stern4rust::settings::invocation::Invocation;
 
 #[derive(Clone, Debug, Parser)]
 #[command(name = "cargo-stern4rust")]
@@ -98,10 +100,6 @@ pub struct Args {
 }
 
 impl Args {
-    pub fn baseline(&self) -> Option<&Path> {
-        self.baseline.as_deref()
-    }
-
     pub fn excludes(&self) -> &[String] {
         &self.excludes
     }
@@ -114,8 +112,24 @@ impl Args {
         self.format
     }
 
-    pub fn header_file(&self) -> Option<&Path> {
-        self.header_file.as_deref()
+    // What the core is asked. The config file and a default baseline live
+    // beside the manifest, so the manifest's directory goes in as well.
+    pub fn invocation(&self) -> Invocation {
+        Invocation {
+            baseline: self.baseline().map(Path::to_path_buf),
+            excludes: self.excludes.clone(),
+            fix: self.fix,
+            format: self.format,
+            header_file: self.header_file().map(Path::to_path_buf),
+            list_rules: self.list_rules,
+            manifest_directory: self.manifest_directory(),
+            manifest_path: self.manifest_path.clone(),
+            offence_threshold: self.offence_threshold(),
+            packages: self.packages.clone(),
+            rules: self.rules().to_vec(),
+            skipped_rules: self.skipped_rules.clone(),
+            write_baseline: self.write_baseline,
+        }
     }
 
     pub fn list_rules(&self) -> bool {
@@ -126,16 +140,8 @@ impl Args {
         self.manifest_path.as_deref()
     }
 
-    pub fn offence_threshold(&self) -> Option<usize> {
-        self.offence_threshold
-    }
-
     pub fn packages(&self) -> &[String] {
         &self.packages
-    }
-
-    pub fn rules(&self) -> &[String] {
-        &self.rules
     }
 
     pub fn skipped_rules(&self) -> &[String] {
@@ -162,5 +168,30 @@ impl Args {
 
     pub fn write_baseline(&self) -> bool {
         self.write_baseline
+    }
+
+    fn baseline(&self) -> Option<&Path> {
+        self.baseline.as_deref()
+    }
+
+    fn header_file(&self) -> Option<&Path> {
+        self.header_file.as_deref()
+    }
+
+    // The config lives beside the manifest it configures, so a workspace and a
+    // package in it can hold different ones.
+    fn manifest_directory(&self) -> PathBuf {
+        self.manifest_path()
+            .and_then(|path| path.parent())
+            .map(Path::to_path_buf)
+            .unwrap_or_else(|| PathBuf::from("."))
+    }
+
+    fn offence_threshold(&self) -> Option<usize> {
+        self.offence_threshold
+    }
+
+    fn rules(&self) -> &[String] {
+        &self.rules
     }
 }

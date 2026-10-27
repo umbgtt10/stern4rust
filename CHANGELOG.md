@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed (packages)
+- `cargo-stern4rust` is now the command-line crate (`cli/`): the
+  `cargo-stern4rust` binary and a library, `stern4rust_cli`. The rules'
+  library `stern4rust` is published by a new package, `stern4rust-core`
+  (`core/`); a dependent replaces `cargo-stern4rust` with `stern4rust-core`,
+  and paths under `stern4rust::` stay for what remains there. Both crates
+  share the workspace's version. The library is still not a public API
+  ([ADR-LibrarySurfaceIsNotAnApi](docs/ADRs/ADR-LibrarySurfaceIsNotAnApi.md)).
+- `settings::args::Args` moves to `stern4rust_cli::invocation::args::Args`
+  and gains `invocation()`, the new `settings::invocation::Invocation` the
+  core reads: what the command line asked, with the manifest's directory,
+  where `stern4rust.toml` and a default baseline are looked for.
+- `runner::Runner::run(Args)`, which printed the report, is gone, and
+  `run_reporting(Args)` is `run_reporting(&Invocation)`: it returns the
+  verdict and the report, and printing it is
+  `stern4rust_cli::invocation::entry_point::EntryPoint`'s, the composition
+  root, which also strips cargo's repeated subcommand name and parses the
+  arguments.
+- `unsafe` code is forbidden in every member and target of the workspace,
+  and the core's crate root says so too.
+
 ### Changed
 - `adoption` moves under `settings`: the baseline and the exclusions are
   `settings::adoption::{baseline, baseline_outcome, exclusion,
