@@ -2,7 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::cmp::Ordering;
+use alloc::string::String;
+use core::cmp::Ordering;
 
 use crate::finding::model::layout::member_kind::MemberKind;
 

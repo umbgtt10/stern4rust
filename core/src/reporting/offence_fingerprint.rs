@@ -2,6 +2,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::format;
+use alloc::string::String;
+
 use crate::reporting::offence::Offence;
 
 // What makes two offences the same offence across two runs.

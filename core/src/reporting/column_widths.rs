@@ -2,6 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::string::ToString;
+
 use crate::reporting::offence::Offence;
 
 // How wide each column of the table has to be.

@@ -2,7 +2,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::collections::BTreeSet;
+use alloc::collections::BTreeSet;
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec::Vec;
 
 use syn::Block;
 use syn::Expr;

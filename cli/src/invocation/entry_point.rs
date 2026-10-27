@@ -59,13 +59,13 @@ impl EntryPoint {
             OutputFormat::Text => &text,
             OutputFormat::Json => &json,
         };
-        Runner::new(
+        Ok(Runner::new(
             &workspace_reader,
             &source_tree,
             &config_source,
             &baseline_store,
             renderer,
         )
-        .run(&invocation)
+        .run(&invocation)?)
     }
 }

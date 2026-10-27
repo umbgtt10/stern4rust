@@ -10,6 +10,10 @@
 // qualifier, so the whole path is imported and the call becomes `parse_file`,
 // while `std::env::args` keeps `env` because it says something -- `use std::env`
 // and `env::args`.
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec::Vec;
+
 pub struct QualifiedCall {
     path: String,
     line: usize,

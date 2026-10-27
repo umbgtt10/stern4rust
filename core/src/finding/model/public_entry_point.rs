@@ -14,6 +14,10 @@
 // The receiver does not count. `printer.with_fixed(12)` passes one argument and
 // `pub fn with_fixed(self, fixed: usize)` declares one parameter besides self,
 // so the two match.
+use alloc::format;
+use alloc::string::String;
+use alloc::string::ToString;
+
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PublicEntryPoint {
     name: String,

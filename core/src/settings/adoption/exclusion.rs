@@ -2,10 +2,13 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use anyhow::Context;
-use anyhow::Result;
+use alloc::string::String;
+use alloc::string::ToString;
+
 use globset::Glob;
 use globset::GlobMatcher;
+
+use crate::settings::adoption::exclusion_failure::ExclusionFailure;
 
 // One `--exclude` pattern and the paths it covers.
 //
@@ -25,9 +28,12 @@ pub struct Exclusion {
 }
 
 impl Exclusion {
-    pub fn new(pattern: &str) -> Result<Self> {
+    pub fn new(pattern: &str) -> Result<Self, ExclusionFailure> {
         let matcher = Glob::new(pattern)
-            .with_context(|| format!("`{pattern}` is not a usable exclude pattern"))?
+            .map_err(|cause| ExclusionFailure {
+                pattern: pattern.to_string(),
+                cause,
+            })?
             .compile_matcher();
         Ok(Self {
             pattern: pattern.to_string(),

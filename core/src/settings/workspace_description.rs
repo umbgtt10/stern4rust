@@ -2,6 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::vec::Vec;
+
 use crate::settings::package_description::PackageDescription;
 use crate::source_path::SourcePath;
 

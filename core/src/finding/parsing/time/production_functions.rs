@@ -2,6 +2,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::vec;
+use alloc::vec::Vec;
+
 use syn::Attribute;
 use syn::Block;
 use syn::Ident;

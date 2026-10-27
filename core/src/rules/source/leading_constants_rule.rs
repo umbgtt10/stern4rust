@@ -2,6 +2,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::format;
+use alloc::string::String;
+use alloc::vec::Vec;
+
 use crate::finding::model::layout::constant_layout::ConstantLayout;
 use crate::finding::model::layout::misplaced_constant::MisplacedConstant;
 use crate::finding::parsing::constant_layout_parser::ConstantLayoutParser;

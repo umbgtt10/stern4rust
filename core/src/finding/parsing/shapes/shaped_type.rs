@@ -2,6 +2,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec::Vec;
+
 use crate::finding::parsing::shapes::method_shape::MethodShape;
 use crate::finding::parsing::shapes::type_shape::TypeShape;
 use crate::finding::parsing::shapes::value_traits::ValueTraits;

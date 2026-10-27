@@ -2,6 +2,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::format;
+use alloc::string::String;
+use alloc::vec::Vec;
+
 use crate::finding::model::layout::impl_layout::ImplLayout;
 use crate::finding::parsing::impl_layout_parser::ImplLayoutParser;
 use crate::reporting::offence::Offence;

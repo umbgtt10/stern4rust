@@ -2,6 +2,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::string::ToString;
+use alloc::vec::Vec;
+
 use syn::ImplItem;
 use syn::ImplItemFn;
 use syn::ItemImpl;

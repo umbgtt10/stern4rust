@@ -2,6 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::vec::Vec;
+
 use crate::finding::model::version_sort::VersionSort;
 
 // The imports whose order rustfmt decides rather than the alphabet.

@@ -2,6 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::string::String;
+
 use syn::Expr;
 
 // One field of a type a method body fills, with the value it puts there and the

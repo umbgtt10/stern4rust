@@ -2,6 +2,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::string::String;
+use alloc::vec::Vec;
+
 use crate::source_path::SourcePath;
 
 // What the exclusions did, as well as what survived them.

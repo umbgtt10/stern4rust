@@ -5,6 +5,8 @@
 // A module-level constant or static declared after an item that is neither an
 // import nor a constant: its name, the line naming it, and the lines that move
 // with it -- its attributes and the comment directly above it included.
+use alloc::string::String;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MisplacedConstant {
     name: String,

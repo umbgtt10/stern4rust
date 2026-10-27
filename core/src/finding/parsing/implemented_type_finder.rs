@@ -2,6 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::vec::Vec;
+
 use syn::Item;
 use syn::parse_file;
 

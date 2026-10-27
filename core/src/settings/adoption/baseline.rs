@@ -2,7 +2,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::collections::BTreeMap;
+use alloc::collections::BTreeMap;
+use alloc::string::String;
+use alloc::vec::Vec;
 
 use crate::reporting::offence::Offence;
 use crate::reporting::offence_fingerprint::OffenceFingerprint;

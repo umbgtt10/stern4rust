@@ -2,7 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::iter::once;
+use alloc::vec::Vec;
+use core::iter::once;
 
 use syn::Item;
 use syn::ItemMod;

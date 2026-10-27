@@ -2,6 +2,12 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::format;
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec;
+use alloc::vec::Vec;
+
 use syn::Attribute;
 use syn::Item;
 use syn::parse_file;

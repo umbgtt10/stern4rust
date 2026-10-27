@@ -2,6 +2,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::format;
+use alloc::string::String;
+
 use crate::reporting::rule_explanation::RuleExplanation;
 
 // The rule set as the text a person reads.

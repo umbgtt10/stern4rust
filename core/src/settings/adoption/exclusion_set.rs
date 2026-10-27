@@ -2,9 +2,13 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use anyhow::Result;
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec;
+use alloc::vec::Vec;
 
 use crate::settings::adoption::exclusion::Exclusion;
+use crate::settings::adoption::exclusion_failure::ExclusionFailure;
 use crate::settings::adoption::exclusion_outcome::ExclusionOutcome;
 use crate::source_path::SourcePath;
 
@@ -23,11 +27,11 @@ pub struct ExclusionSet {
 }
 
 impl ExclusionSet {
-    pub fn new(patterns: &[String]) -> Result<Self> {
+    pub fn new(patterns: &[String]) -> Result<Self, ExclusionFailure> {
         let exclusions = patterns
             .iter()
             .map(|pattern| Exclusion::new(pattern))
-            .collect::<Result<Vec<_>>>()?;
+            .collect::<Result<Vec<_>, _>>()?;
         Ok(Self { exclusions })
     }
 

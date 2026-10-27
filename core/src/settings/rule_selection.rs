@@ -12,6 +12,9 @@
 // Naming a rule with --rule makes the selection a whitelist; --skip subtracts
 // from whatever is left. That is the shape clippy, ruff and eslint converge on,
 // so nobody has to learn this one.
+use alloc::string::String;
+use alloc::vec::Vec;
+
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct RuleSelection {
     selected: Vec<String>,

@@ -2,7 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::collections::BTreeSet;
+use alloc::collections::BTreeSet;
+use alloc::string::String;
 
 // A function that belongs to no impl block: its name, the line it is declared
 // on, and the identifiers it uses.

@@ -2,6 +2,11 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::format;
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec::Vec;
+
 use quote::ToTokens;
 use syn::Expr;
 use syn::Path;

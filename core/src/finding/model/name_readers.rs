@@ -2,9 +2,13 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::collections::BTreeMap;
-use std::collections::BTreeSet;
-use std::sync::Arc;
+use alloc::collections::BTreeMap;
+use alloc::collections::BTreeSet;
+use alloc::format;
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::sync::Arc;
+use alloc::vec::Vec;
 
 // Which files of the workspace read each name, asked from inside one package.
 //

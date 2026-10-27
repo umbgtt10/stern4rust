@@ -2,6 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::vec::Vec;
+
 use crate::reporting::offence::Offence;
 use crate::reporting::rule_explanation::RuleExplanation;
 use crate::source_file::SourceFile;

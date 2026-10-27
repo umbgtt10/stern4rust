@@ -2,8 +2,13 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::collections::BTreeMap;
-use std::iter::once;
+use alloc::collections::BTreeMap;
+use alloc::format;
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec;
+use alloc::vec::Vec;
+use core::iter::once;
 
 use syn::ImplItem;
 use syn::Item;

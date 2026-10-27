@@ -2,6 +2,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::string::String;
+use alloc::string::ToString;
+
 use crate::source_path::SourcePath;
 
 // One package about to be walked, and what its manifest says about it.

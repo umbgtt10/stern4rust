@@ -2,6 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::string::String;
+
 use crate::source_file::SourceFile;
 
 // One fixer, the rule it repairs, and nothing else. A fixer runs only where the

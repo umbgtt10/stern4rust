@@ -2,6 +2,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec::Vec;
+
 use crate::reporting::report_printer::ReportPrinter;
 use crate::reporting::rule_explanation::RuleExplanation;
 use crate::reporting::rule_listing::RuleListing;

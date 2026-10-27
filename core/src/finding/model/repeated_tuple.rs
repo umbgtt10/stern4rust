@@ -4,6 +4,8 @@
 
 // A tuple holding two elements of one type, as written: the tuple, and the type
 // only position tells apart.
+use alloc::string::String;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RepeatedTuple {
     pub tuple: String,

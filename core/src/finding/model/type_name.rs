@@ -8,6 +8,10 @@
 // in capitals is one word, ended by the capital that starts the next one, so
 // `HTTPServer` is `http` and `server` rather than one word per letter. A digit
 // stays with the word it follows, and an underscore is a break of its own.
+use alloc::format;
+use alloc::string::String;
+use alloc::vec::Vec;
+
 pub struct TypeName {
     words: Vec<String>,
 }

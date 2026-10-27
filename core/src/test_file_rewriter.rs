@@ -8,7 +8,9 @@ use crate::finding::parsing::test_file_parser::TestFileParser;
 use crate::rules::testing::test_file_structure_rule::TestFileStructureRule;
 use crate::source_file::SourceFile;
 use crate::source_rewriter::SourceRewriter;
-use std::collections::BTreeMap;
+use alloc::collections::BTreeMap;
+use alloc::string::String;
+use alloc::vec::Vec;
 
 // A test file put back into the order the structure rule asks for.
 //

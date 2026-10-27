@@ -11,6 +11,7 @@ pub mod rewriter_registry_tests;
 pub mod rule_catalog_tests;
 pub mod rule_registry_tests;
 pub mod rules;
+pub mod run_failure_tests;
 pub mod runner_tests;
 pub mod settings;
 pub mod source_file_tests;

@@ -2,6 +2,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::string::String;
+use alloc::vec::Vec;
+
 use crate::blank_lines::BlankLines;
 use crate::finding::model::layout::constant_layout::ConstantLayout;
 use crate::finding::parsing::constant_layout_parser::ConstantLayoutParser;

@@ -2,6 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::string::String;
+use alloc::string::ToString;
 use core::fmt::Debug;
 
 use crate::reporting::offence_order::OffenceOrder;

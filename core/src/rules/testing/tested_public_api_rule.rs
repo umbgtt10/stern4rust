@@ -2,7 +2,11 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::collections::BTreeSet;
+use alloc::collections::BTreeSet;
+use alloc::format;
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec::Vec;
 
 use crate::finding::model::public_entry_point::PublicEntryPoint;
 use crate::finding::parsing::call_site_finder::CallSiteFinder;

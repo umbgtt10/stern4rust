@@ -2,8 +2,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::collections::BTreeMap;
-use std::collections::BTreeSet;
+use alloc::collections::BTreeMap;
+use alloc::collections::BTreeSet;
+use alloc::string::String;
+use alloc::string::ToString;
 
 use syn::Item;
 use syn::Macro;

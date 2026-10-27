@@ -14,6 +14,9 @@
 //   - a leading UTF-8 byte order mark is stripped, because editors add one
 //     invisibly and it would otherwise sit in front of the first character of
 //     line 1
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec::Vec;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SourceFile {

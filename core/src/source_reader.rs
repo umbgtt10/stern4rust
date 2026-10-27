@@ -2,6 +2,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::boxed::Box;
+use alloc::format;
+use alloc::string::ToString;
+
 use crate::reporting::offence::Offence;
 use crate::rules::source::readable_source_rule::ReadableSourceRule;
 use crate::settings::manifest_resolver::ManifestResolver;

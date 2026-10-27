@@ -20,7 +20,10 @@
 //! run, `2` rule broken) and the shape of its `--format json` report. See
 //! `docs/ADRs/ADR-LibrarySurfaceIsNotAnApi.md`.
 
+#![no_std]
 #![forbid(unsafe_code)]
+
+extern crate alloc;
 
 pub mod blank_lines;
 pub mod finding;
@@ -32,6 +35,7 @@ pub mod rule;
 pub mod rule_catalog;
 pub mod rule_registry;
 pub mod rules;
+pub mod run_failure;
 pub mod runner;
 pub mod settings;
 pub mod source_file;

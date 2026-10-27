@@ -5,6 +5,8 @@
 // Lines with the blank ones at one end dropped. Where moved lines meet the lines
 // that stay, a fixer drops the blanks on both sides and puts back exactly one,
 // so a gap never grows or vanishes with a move.
+use alloc::vec::Vec;
+
 pub struct BlankLines;
 
 impl BlankLines {

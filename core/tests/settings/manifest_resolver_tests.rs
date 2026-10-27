@@ -11,6 +11,7 @@
 // command line's `CargoWorkspaceReader`, tested there.
 
 use stern4rust::finding::model::manifest_dependency::ManifestDependency;
+use stern4rust::run_failure::RunFailure;
 use stern4rust::settings::config::Config;
 use stern4rust::settings::manifest_resolver::ManifestResolver;
 use stern4rust::settings::package_description::PackageDescription;
@@ -104,6 +105,7 @@ fn packages_of_an_unknown_package_names_it_in_the_error() {
         .expect_err("an unknown package");
 
     // Assert
+    assert!(matches!(&error, RunFailure::PackageNotFound(name) if name == "gamma"));
     assert_eq!(
         error.to_string(),
         "package `gamma` is not in this workspace"

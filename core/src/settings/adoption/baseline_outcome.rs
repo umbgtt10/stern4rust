@@ -2,6 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::vec::Vec;
+
 use crate::reporting::offence::Offence;
 
 // What a baseline let through, and what it hid.

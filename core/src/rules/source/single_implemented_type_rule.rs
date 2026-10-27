@@ -2,6 +2,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::format;
+use alloc::vec::Vec;
+
 use crate::finding::model::file_stem::FileStem;
 use crate::finding::model::implemented_type::ImplementedType;
 use crate::finding::parsing::implemented_type_finder::ImplementedTypeFinder;

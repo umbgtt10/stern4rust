@@ -6,7 +6,10 @@ use crate::reporting::column_widths::ColumnWidths;
 use crate::reporting::offence::Offence;
 use crate::reporting::offence_threshold::OffenceThreshold;
 use crate::reporting::package_roster::PackageRoster;
-use std::collections::BTreeSet;
+use alloc::collections::BTreeSet;
+use alloc::format;
+use alloc::string::String;
+use alloc::vec::Vec;
 
 // One table for every rule. Columns are sized to their contents so the report
 // stays readable when a rule name or a path grows, and the summary line is

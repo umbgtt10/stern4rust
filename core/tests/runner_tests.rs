@@ -18,8 +18,8 @@ use crate::support::in_memory_source_tree::path_of;
 use crate::support::in_memory_workspace_reader::InMemoryWorkspaceReader;
 use crate::support::in_memory_workspace_reader::workspace_of;
 use crate::support::summary_report_renderer::SummaryReportRenderer;
-use anyhow::Error;
 use stern4rust::reporting::run_outcome::RunOutcome;
+use stern4rust::run_failure::RunFailure;
 use stern4rust::runner::Runner;
 use stern4rust::settings::config_file::ConfigFile;
 use stern4rust::settings::invocation::Invocation;
@@ -41,7 +41,7 @@ fn run(
     config: &InMemoryConfigSource,
     baselines: &InMemoryBaselineStore,
     invocation: &Invocation,
-) -> Result<(RunOutcome, String), Error> {
+) -> Result<(RunOutcome, String), RunFailure> {
     Runner::new(workspace, tree, config, baselines, &SummaryReportRenderer).run(invocation)
 }
 
@@ -176,6 +176,7 @@ fn run_with_a_workspace_that_cannot_be_read_fails() {
     .expect_err("an unreadable workspace");
 
     // Assert
+    assert!(matches!(failure, RunFailure::Workspace(_)));
     assert_eq!(failure.to_string(), "not held");
 }
 
@@ -371,6 +372,7 @@ fn run_with_every_rule_skipped_fails_for_want_of_a_rule() {
     .expect_err("no rule left");
 
     // Assert
+    assert!(matches!(failure, RunFailure::NoRules));
     assert_eq!(
         failure.to_string(),
         "no rules are configured, so nothing would be checked -- pass --header-file to enable \

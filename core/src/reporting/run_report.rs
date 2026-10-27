@@ -2,6 +2,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::string::String;
+use alloc::vec::Vec;
+
 use crate::reporting::offence::Offence;
 use crate::reporting::offence_threshold::OffenceThreshold;
 use crate::reporting::package_roster::PackageRoster;

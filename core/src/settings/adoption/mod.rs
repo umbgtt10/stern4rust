@@ -6,5 +6,6 @@ pub mod baseline;
 pub mod baseline_failure;
 pub mod baseline_outcome;
 pub mod exclusion;
+pub mod exclusion_failure;
 pub mod exclusion_outcome;
 pub mod exclusion_set;

@@ -6,6 +6,9 @@
 //
 // The line is the declaration's, because the declaration is what a reader
 // renames or moves.
+use alloc::string::String;
+use alloc::string::ToString;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DeclaredItem {
     name: String,

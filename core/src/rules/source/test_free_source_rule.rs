@@ -2,6 +2,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::format;
+use alloc::string::ToString;
+use alloc::vec::Vec;
+
 use crate::finding::parsing::unit_test_finder::UnitTestFinder;
 use crate::reporting::offence::Offence;
 use crate::reporting::rule_explanation::RuleExplanation;

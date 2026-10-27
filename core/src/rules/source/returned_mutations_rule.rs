@@ -2,7 +2,11 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::ptr;
+use alloc::format;
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec::Vec;
+use core::ptr;
 
 use syn::FnArg;
 use syn::ImplItem;

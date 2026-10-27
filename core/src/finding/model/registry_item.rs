@@ -8,6 +8,9 @@
 // Both halves matter together. A registry with four strays used to produce four
 // rows that were byte-identical and all pointed at line 1 -- a report that
 // claimed a file had four problems while naming none of them.
+use alloc::string::String;
+use alloc::string::ToString;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RegistryItem {
     line: usize,

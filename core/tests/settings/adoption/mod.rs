@@ -5,6 +5,7 @@
 pub mod baseline_failure_tests;
 pub mod baseline_outcome_tests;
 pub mod baseline_tests;
+pub mod exclusion_failure_tests;
 pub mod exclusion_outcome_tests;
 pub mod exclusion_set_tests;
 pub mod exclusion_tests;

@@ -7,6 +7,8 @@ use crate::finding::model::name_readers::NameReaders;
 use crate::reporting::offence_threshold::OffenceThreshold;
 use crate::settings::rule_selection::RuleSelection;
 use crate::source_path::SourcePath;
+use alloc::string::String;
+use alloc::vec::Vec;
 
 // The threshold is an OffenceThreshold rather than a bare usize precisely so
 // this can stay derived. A usize field would default to zero, which this tool

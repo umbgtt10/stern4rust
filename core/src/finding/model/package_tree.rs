@@ -2,7 +2,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::collections::BTreeMap;
+use alloc::collections::BTreeMap;
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec::Vec;
 
 use crate::source_file::SourceFile;
 use crate::source_path::SourcePath;

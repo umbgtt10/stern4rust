@@ -2,6 +2,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::boxed::Box;
+use alloc::string::String;
+use alloc::vec::Vec;
+
 use crate::source_file::SourceFile;
 use crate::source_rewriter::SourceRewriter;
 

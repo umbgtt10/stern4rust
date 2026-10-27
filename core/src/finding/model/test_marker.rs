@@ -2,6 +2,11 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::format;
+use alloc::string::String;
+use alloc::vec;
+use alloc::vec::Vec;
+
 use crate::finding::model::marker_phase::MarkerPhase;
 
 // One AAA marker comment, read as the phases it names.

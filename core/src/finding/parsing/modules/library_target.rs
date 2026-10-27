@@ -2,8 +2,11 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::collections::BTreeMap;
-use std::collections::BTreeSet;
+use alloc::collections::BTreeMap;
+use alloc::collections::BTreeSet;
+use alloc::format;
+use alloc::string::String;
+use alloc::vec;
 
 use crate::finding::parsing::modules::module_declaration_finder::ModuleDeclarationFinder;
 use crate::source_file::SourceFile;

@@ -2,6 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::boxed::Box;
 use core::error::Error;
 use core::fmt;
 

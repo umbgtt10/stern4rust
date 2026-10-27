@@ -2,8 +2,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::cmp::Ordering;
-use std::iter::once;
+use alloc::vec::Vec;
+use core::cmp::Ordering;
+use core::iter::once;
 
 // How the 2024 style edition orders two names: the Rust style guide's version
 // sorting, which rustfmt applies to the segments of an import.

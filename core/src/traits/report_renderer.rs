@@ -2,6 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::string::String;
+
 use crate::reporting::rule_explanation::RuleExplanation;
 use crate::reporting::run_report::RunReport;
 

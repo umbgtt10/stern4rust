@@ -2,6 +2,11 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::boxed::Box;
+use alloc::string::ToString;
+use alloc::vec;
+use alloc::vec::Vec;
+
 use crate::finding::model::manifest_dependency::ManifestDependency;
 use crate::leading_constants_rewriter::LeadingConstantsRewriter;
 use crate::ordered_impl_functions_rewriter::OrderedImplFunctionsRewriter;

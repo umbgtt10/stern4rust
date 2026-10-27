@@ -2,10 +2,12 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::collections::BTreeMap;
+use alloc::collections::BTreeMap;
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec::Vec;
 
-use anyhow::Result;
-
+use crate::run_failure::RunFailure;
 use crate::settings::config_file::ConfigFile;
 use crate::settings::package_config::PackageConfig;
 use crate::source_path::SourcePath;
@@ -32,10 +34,14 @@ impl PackageSections {
     // No file and a file with no sections are the same answer here. They differ
     // only for `ConfigSource::load`, which has to tell a missing file from an
     // unreadable one.
-    pub fn load(config_source: &dyn ConfigSource, directory: &SourcePath) -> Result<Self> {
+    pub fn load(
+        config_source: &dyn ConfigSource,
+        directory: &SourcePath,
+    ) -> Result<Self, RunFailure> {
         Ok(Self::new(
             config_source
-                .load(directory)?
+                .load(directory)
+                .map_err(RunFailure::Config)?
                 .map(ConfigFile::into_packages)
                 .unwrap_or_default(),
         ))
@@ -82,7 +88,7 @@ impl PackageSections {
     // thing to do, and the sections for the others are not typos -- checking
     // against the scan made `--package node` an error in any repository whose
     // root config had sections, which is every repository this exists for.
-    pub fn validate(&self, workspace: &[&str]) -> Result<()> {
+    pub fn validate(&self, workspace: &[&str]) -> Result<(), RunFailure> {
         let unknown: Vec<&str> = self
             .sections
             .keys()
@@ -92,11 +98,9 @@ impl PackageSections {
         if unknown.is_empty() {
             return Ok(());
         }
-        Err(anyhow::anyhow!(
-            "{} configures package(s) that are not in this workspace: {} -- it holds: {}",
-            ConfigFile::NAME,
-            unknown.join(", "),
-            workspace.join(", ")
-        ))
+        Err(RunFailure::UnknownSections {
+            unknown: unknown.iter().map(|name| name.to_string()).collect(),
+            workspace: workspace.iter().map(|name| name.to_string()).collect(),
+        })
     }
 }

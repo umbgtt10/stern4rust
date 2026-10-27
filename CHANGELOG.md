@@ -101,6 +101,13 @@ of its API.
   `RuleListing::render()` takes no format. `ReportPrinter::print` is gone, and
   `Offence` derives `PartialOrd` and `Ord` instead of serde's `Serialize`. The
   library no longer depends on serde, serde_json or clap.
+- The library is `#![no_std]`, with `alloc`, and depends on globset,
+  proc-macro2, quote and syn only: anyhow leaves it. `Runner::run`,
+  `ManifestResolver::packages`, `PackageSections::{load, validate}` and
+  `HeaderSource::read` fail with `run_failure::RunFailure` instead of
+  `anyhow::Error`, and `Exclusion::new` and `ExclusionSet::new` with
+  `settings::adoption::exclusion_failure::ExclusionFailure`. Every message
+  reads as before, over the same cause.
 
 ### Changed
 - `adoption` moves under `settings`: the baseline and the exclusions are

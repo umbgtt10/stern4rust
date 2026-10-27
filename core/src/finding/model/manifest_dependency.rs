@@ -13,6 +13,11 @@
 // workspace -- it carries what it asks of the crate it names: a target, a
 // version requirement, features, default features, optional. Those are what
 // tell a dev-dependency that adds something from one that only repeats.
+use alloc::format;
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec::Vec;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ManifestDependency {
     manifest: String,

@@ -10,6 +10,9 @@
 // in the mirrored test file, while a conditional attribute has to stop being
 // conditional. One instruction would have to cover both, and would say nothing
 // useful about either.
+use alloc::string::String;
+use alloc::string::ToString;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UnitTestSite {
     line: usize,

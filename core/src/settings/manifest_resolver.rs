@@ -2,10 +2,12 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use anyhow::Result;
-use anyhow::anyhow;
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec::Vec;
 
 use crate::finding::model::manifest_dependency::ManifestDependency;
+use crate::run_failure::RunFailure;
 use crate::settings::config::Config;
 use crate::settings::package_description::PackageDescription;
 use crate::settings::scanned_package::ScannedPackage;
@@ -46,7 +48,7 @@ impl ManifestResolver {
     pub fn packages(
         workspace: &WorkspaceDescription,
         config: &Config,
-    ) -> Result<Vec<ScannedPackage>> {
+    ) -> Result<Vec<ScannedPackage>, RunFailure> {
         Ok(Self::selected(workspace, config)?
             .into_iter()
             .map(|package| {
@@ -120,7 +122,7 @@ impl ManifestResolver {
     fn selected<'a>(
         workspace: &'a WorkspaceDescription,
         config: &Config,
-    ) -> Result<Vec<&'a PackageDescription>> {
+    ) -> Result<Vec<&'a PackageDescription>, RunFailure> {
         if config.packages.is_empty() {
             return Ok(workspace.packages.iter().collect());
         }
@@ -132,7 +134,7 @@ impl ManifestResolver {
                     .packages
                     .iter()
                     .find(|package| package.name.as_str() == name.as_str())
-                    .ok_or_else(|| anyhow!("package `{name}` is not in this workspace"))
+                    .ok_or_else(|| RunFailure::PackageNotFound(name.clone()))
             })
             .collect()
     }

@@ -2,10 +2,11 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use anyhow::Context;
-use anyhow::Result;
-use anyhow::anyhow;
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec::Vec;
 
+use crate::run_failure::RunFailure;
 use crate::source_path::SourcePath;
 use crate::traits::source_tree::SourceTree;
 
@@ -31,11 +32,13 @@ impl HeaderSource {
         lines
     }
 
-    pub fn read(source_tree: &dyn SourceTree, path: &SourcePath) -> Result<Vec<String>> {
+    pub fn read(
+        source_tree: &dyn SourceTree,
+        path: &SourcePath,
+    ) -> Result<Vec<String>, RunFailure> {
         let contents = source_tree
             .read_source(path)
-            .map_err(|failure| anyhow!(failure.cause))
-            .with_context(|| format!("failed to read header file {path}"))?;
+            .map_err(RunFailure::HeaderUnreadable)?;
         Ok(Self::parse(&contents))
     }
 }

@@ -2,6 +2,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::string::String;
+use alloc::string::ToString;
+
 use syn::Item;
 use syn::ItemUse;
 use syn::Type;

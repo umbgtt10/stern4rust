@@ -2,6 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::string::String;
+
 use crate::finding::model::public_entry_point::PublicEntryPoint;
 
 // A method in an inherent impl whose visibility is neither `pub` nor private:

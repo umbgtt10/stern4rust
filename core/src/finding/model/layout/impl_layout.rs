@@ -2,6 +2,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::string::String;
+use alloc::vec::Vec;
+
 use crate::finding::model::layout::fix_refusal::FixRefusal;
 use crate::finding::model::layout::impl_member::ImplMember;
 

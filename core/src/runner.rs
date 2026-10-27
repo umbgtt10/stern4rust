@@ -2,6 +2,13 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::collections::BTreeSet;
+use alloc::format;
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec;
+use alloc::vec::Vec;
+
 use crate::finding::model::manifest_dependency::ManifestDependency;
 use crate::finding::model::name_readers::NameReaders;
 use crate::finding::parsing::read_names::ReadNames;
@@ -14,6 +21,7 @@ use crate::rewriter_registry::RewriterRegistry;
 use crate::rule_catalog::RuleCatalog;
 use crate::rule_registry::RuleRegistry;
 use crate::rules::source::header_rule::HeaderRule;
+use crate::run_failure::RunFailure;
 use crate::settings::adoption::baseline::Baseline;
 use crate::settings::adoption::baseline_outcome::BaselineOutcome;
 use crate::settings::adoption::exclusion_outcome::ExclusionOutcome;
@@ -36,8 +44,6 @@ use crate::traits::report_renderer::ReportRenderer;
 use crate::traits::source_tree::SourceTree;
 use crate::traits::workspace_reader::WorkspaceReader;
 use crate::workspace_sources::WorkspaceSources;
-use anyhow::Result;
-use std::collections::HashSet;
 
 // What a scan did, as opposed to what it found.
 //
@@ -98,7 +104,7 @@ impl<'a> Runner<'a> {
     // Both per-package bugs left the run perfectly Ok while the report
     // contradicted itself, so a test asserting on the outcome could not see
     // either. This is the seam that lets one assert on what was said.
-    pub fn run(&self, invocation: &Invocation) -> Result<(RunOutcome, String)> {
+    pub fn run(&self, invocation: &Invocation) -> Result<(RunOutcome, String), RunFailure> {
         // Before anything is read. The listing answers from the registry alone,
         // so it works in a checkout with no manifest worth reading and cannot
         // fail the way a run can.
@@ -109,7 +115,10 @@ impl<'a> Runner<'a> {
         let sections = PackageSections::load(self.config_source, directory)?;
         let config = self.config_from(invocation, None)?;
         Self::validate_selection(&config)?;
-        let workspace = self.workspace_reader.describe()?;
+        let workspace = self
+            .workspace_reader
+            .describe()
+            .map_err(RunFailure::Workspace)?;
         let workspace_dependencies = ManifestResolver::workspace_dependencies(&workspace);
         let declared_dependencies = ManifestResolver::declared_dependencies(&workspace);
         let config = Config {
@@ -142,10 +151,7 @@ impl<'a> Runner<'a> {
         };
         let registry = RuleRegistry::new(RuleCatalog::selected(&config));
         if registry.is_empty() {
-            return Err(anyhow::anyhow!(
-                "no rules are configured, so nothing would be checked -- pass --header-file to \
-                 enable the header rule"
-            ));
+            return Err(RunFailure::NoRules);
         }
 
         let mut offences = Vec::new();
@@ -174,10 +180,11 @@ impl<'a> Runner<'a> {
                     &self
                         .config_from(invocation, sections.of(member.name()))?
                         .excludes,
-                )?,
+                )
+                .map_err(RunFailure::Exclusion)?,
             ))
         })
-        .collect::<Result<Vec<_>>>()?;
+        .collect::<Result<Vec<_>, RunFailure>>()?;
         let readers = NameReaders::new(ReadNames::index(
             &WorkspaceSources::new(self.source_tree).read(&workspace_root, &members),
         ));
@@ -227,13 +234,17 @@ impl<'a> Runner<'a> {
                 Self::owned(&RuleCatalog::skipped_names(&package_config.selection)),
                 RuleCatalog::unconfigured(&package_config),
             ));
-            let exclusions = ExclusionSet::new(&package_config.excludes)?;
+            let exclusions =
+                ExclusionSet::new(&package_config.excludes).map_err(RunFailure::Exclusion)?;
             let root = package.root();
             // Read the whole package before judging it. Rules whose subject is
             // the tree -- "there is exactly one all_tests.rs" -- cannot be
             // answered a file at a time, and the file that carries the offence
             // is often the one that does not exist.
-            let listed = self.source_tree.rust_files(root)?;
+            let listed = self
+                .source_tree
+                .rust_files(root)
+                .map_err(RunFailure::SourceList)?;
             let (kept, patterns) = exclusions.apply(listed, root).into_parts();
             let mut files: Vec<SourceFile> = Vec::new();
             let mut found: Vec<Offence> = Vec::new();
@@ -270,7 +281,7 @@ impl<'a> Runner<'a> {
             // and the exit code both counting the smaller number. A checker that
             // quietly reports less than it found is the failure this tool exists
             // to refuse, and it was doing it to itself.
-            let mut seen = HashSet::new();
+            let mut seen = BTreeSet::new();
             found.retain(|offence| seen.insert(offence.clone()));
             offences.extend(found);
             excluded.push(patterns);
@@ -311,11 +322,19 @@ impl<'a> Runner<'a> {
     // A baseline that was asked for and is not there is an error rather than an
     // empty one. A gate whose baseline path has a typo would otherwise report
     // every existing offence and look like a regression.
-    fn baselined(&self, config: &Config, offences: Vec<Offence>) -> Result<BaselineOutcome> {
+    fn baselined(
+        &self,
+        config: &Config,
+        offences: Vec<Offence>,
+    ) -> Result<BaselineOutcome, RunFailure> {
         let Some(path) = &config.baseline else {
             return Ok(BaselineOutcome::new(offences, 0, 0));
         };
-        Ok(self.baseline_store.load(path)?.apply(offences))
+        Ok(self
+            .baseline_store
+            .load(path)
+            .map_err(RunFailure::Baseline)?
+            .apply(offences))
     }
 
     // The command line wins over the file, every time and per setting. A
@@ -330,9 +349,12 @@ impl<'a> Runner<'a> {
         &self,
         invocation: &Invocation,
         section: Option<&PackageConfig>,
-    ) -> Result<Config> {
+    ) -> Result<Config, RunFailure> {
         let directory = &invocation.manifest_directory;
-        let file = self.config_source.load(directory)?;
+        let file = self
+            .config_source
+            .load(directory)
+            .map_err(RunFailure::Config)?;
         let found = file.as_ref();
         let header_file = invocation
             .header_file
@@ -440,13 +462,12 @@ impl<'a> Runner<'a> {
     //
     // What it says ends with a blank line, as it always has: the caller prints
     // it the way it prints a report.
-    fn record(&self, config: &Config, offences: Vec<Offence>) -> Result<String> {
-        let path = config
-            .baseline
-            .as_ref()
-            .ok_or_else(|| anyhow::anyhow!("--write-baseline needs a path to write to"))?;
+    fn record(&self, config: &Config, offences: Vec<Offence>) -> Result<String, RunFailure> {
+        let path = config.baseline.as_ref().ok_or(RunFailure::NoBaselinePath)?;
         let baseline = Baseline::of(&offences);
-        self.baseline_store.save(path, &baseline)?;
+        self.baseline_store
+            .save(path, &baseline)
+            .map_err(RunFailure::Baseline)?;
         Ok(format!(
             "stern4rust wrote {} offence(s) to {}\n",
             baseline.len(),
@@ -468,7 +489,7 @@ impl<'a> Runner<'a> {
         root: &SourcePath,
         files: Vec<SourceFile>,
         registry: &RuleRegistry,
-    ) -> Result<(Vec<SourceFile>, usize)> {
+    ) -> Result<(Vec<SourceFile>, usize), RunFailure> {
         let applied = registry.names();
         let rewriters = RewriterRegistry::new(RuleCatalog::rewriters());
         let mut repaired = Vec::with_capacity(files.len());
@@ -477,7 +498,9 @@ impl<'a> Runner<'a> {
             match rewriters.rewrite(&file, &applied) {
                 Some(contents) => {
                     let path = root.join(file.relative_path());
-                    self.source_tree.write_source(&path, &contents)?;
+                    self.source_tree
+                        .write_source(&path, &contents)
+                        .map_err(RunFailure::Rewrite)?;
                     repaired.push(SourceFile::new(file.relative_path(), &contents));
                     count += 1;
                 }
@@ -552,23 +575,16 @@ impl<'a> Runner<'a> {
     // matches nothing, and asking for the header rule without a header file is
     // an error rather than an empty run. Both would otherwise look exactly like
     // a run that worked.
-    fn validate_selection(config: &Config) -> Result<()> {
+    fn validate_selection(config: &Config) -> Result<(), RunFailure> {
         let known = RuleCatalog::known_names();
         let unknown = config.selection.unknown_in(&known);
         if !unknown.is_empty() {
-            return Err(anyhow::anyhow!(
-                "unknown rule name(s): {} -- the rules are: {}",
-                unknown.join(", "),
-                known.join(", ")
-            ));
+            return Err(RunFailure::UnknownRules { unknown, known });
         }
         if config.selection.selects_explicitly(HeaderRule::NAME)
             && config.expected_header.is_empty()
         {
-            return Err(anyhow::anyhow!(
-                "--rule {} needs --header-file, otherwise the run would apply no rules at all",
-                HeaderRule::NAME
-            ));
+            return Err(RunFailure::HeaderWithoutFile);
         }
         Ok(())
     }

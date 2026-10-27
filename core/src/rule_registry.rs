@@ -2,6 +2,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::boxed::Box;
+use alloc::vec::Vec;
+
 use crate::reporting::offence::Offence;
 use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;

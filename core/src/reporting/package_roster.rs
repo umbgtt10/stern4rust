@@ -2,6 +2,11 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::format;
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec::Vec;
+
 use crate::reporting::unconfigured_rule::UnconfiguredRule;
 
 // Which rules ran against one package, and which did not.

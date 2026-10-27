@@ -2,6 +2,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::format;
+use alloc::vec::Vec;
+
 use crate::finding::model::manifest_dependency::ManifestDependency;
 use crate::reporting::offence::Offence;
 use crate::reporting::rule_explanation::RuleExplanation;

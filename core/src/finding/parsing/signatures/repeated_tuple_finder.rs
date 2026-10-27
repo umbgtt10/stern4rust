@@ -2,6 +2,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::format;
+use alloc::string::String;
+use alloc::vec::Vec;
+
 use syn::Type;
 use syn::TypeTuple;
 
