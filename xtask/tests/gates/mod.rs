@@ -2,6 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+pub mod boundary_gate_tests;
 pub mod crap_gate_tests;
 pub mod dry_gate_tests;
 pub mod gate_failure_tests;

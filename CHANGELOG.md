@@ -15,6 +15,16 @@ used it. The repository splits into a technology-free core and a cli crate
 (`docs/CORE_CLI_SPLIT.md`), which changes how the library is packaged and much
 of its API.
 
+### Added
+- Stage 2 gains a first gate, "Technology-free core": the core's manifest may
+  name only `globset`, `proc-macro2`, `quote` and `syn`, in any section; its
+  crate root must carry `#![no_std]` and `#![forbid(unsafe_code)]`; and no file
+  under `core/src` or `core/tests` may reach `std::{env,fs,io,net,os,process}`,
+  the printing macros or the file-system methods of `Path`. dry4rust makes one
+  run from the workspace root over both published crates' sources; the house
+  rules hold all three members to them, and crap4rust, twin4rust and
+  iceberg4rust measure both published crates.
+
 ### Changed (packages)
 - `cargo-stern4rust` is now the command-line crate (`cli/`): the
   `cargo-stern4rust` binary and a library, `stern4rust_cli`. The rules'
