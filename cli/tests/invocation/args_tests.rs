@@ -9,7 +9,6 @@
 // to be called stern4rust must survive.
 
 use clap::Parser;
-use std::path::PathBuf;
 use stern4rust::reporting::output_format::OutputFormat;
 use stern4rust_cli::invocation::args::Args;
 
@@ -43,20 +42,23 @@ fn invocation_carries_every_option_it_was_given() {
     ]));
 
     // Act
-    let invocation = args.invocation();
+    let invocation = args.invocation().expect("UTF-8 paths");
 
     // Assert
-    assert_eq!(invocation.manifest_directory, PathBuf::from("work"));
+    assert_eq!(invocation.manifest_directory.as_str(), "work");
     assert_eq!(invocation.packages, ["node"]);
     assert_eq!(
-        invocation.header_file,
-        Some(PathBuf::from("docs/header.txt"))
+        invocation.header_file.as_ref().map(|path| path.as_str()),
+        Some("docs/header.txt")
     );
     assert_eq!(invocation.offence_threshold, Some(7));
     assert_eq!(invocation.rules, ["header"]);
     assert_eq!(invocation.skipped_rules, ["tests-layout"]);
     assert_eq!(invocation.excludes, ["vendor/**"]);
-    assert_eq!(invocation.baseline, Some(PathBuf::from("base.json")));
+    assert_eq!(
+        invocation.baseline.as_ref().map(|path| path.as_str()),
+        Some("base.json")
+    );
     assert!(invocation.write_baseline);
     assert!(invocation.fix);
     assert!(!invocation.list_rules);
@@ -70,10 +72,10 @@ fn invocation_of_a_bare_manifest_name_looks_in_the_current_directory() {
     let args = Args::parse_from(argv(&["cargo-stern4rust", "--manifest-path", "Cargo.toml"]));
 
     // Act
-    let invocation = args.invocation();
+    let invocation = args.invocation().expect("UTF-8 paths");
 
     // Assert
-    assert_eq!(invocation.manifest_directory, PathBuf::from(""));
+    assert_eq!(invocation.manifest_directory.as_str(), "");
 }
 
 #[test]
@@ -82,10 +84,10 @@ fn invocation_without_a_manifest_path_looks_in_the_current_directory() {
     let args = Args::parse_from(argv(&["cargo-stern4rust", "--rules"]));
 
     // Act
-    let invocation = args.invocation();
+    let invocation = args.invocation().expect("UTF-8 paths");
 
     // Assert
-    assert_eq!(invocation.manifest_directory, PathBuf::from("."));
+    assert_eq!(invocation.manifest_directory.as_str(), ".");
     assert!(invocation.list_rules);
 }
 

@@ -3,10 +3,9 @@
 // SPDX-License-Identifier: MIT
 
 use std::collections::BTreeMap;
-use std::path::Path;
-use std::path::PathBuf;
 
 use crate::source_file::SourceFile;
+use crate::source_path::SourcePath;
 
 // The walked files arranged as the directories they sit in.
 //
@@ -21,7 +20,7 @@ use crate::source_file::SourceFile;
 // registries of a directory as one set is what keeps that from being reported
 // as an orphan.
 pub struct PackageTree {
-    directories: BTreeMap<PathBuf, Vec<PathBuf>>,
+    directories: BTreeMap<SourcePath, Vec<SourcePath>>,
 }
 
 impl PackageTree {
@@ -32,14 +31,13 @@ impl PackageTree {
     // rule counting what it contains has to be able to ask about it -- without
     // this, a tree of nothing but subfolders was invisible to the walk.
     pub fn of(files: &[SourceFile]) -> Self {
-        let mut directories: BTreeMap<PathBuf, Vec<PathBuf>> = BTreeMap::new();
+        let mut directories: BTreeMap<SourcePath, Vec<SourcePath>> = BTreeMap::new();
         for file in files {
-            let path = PathBuf::from(file.relative_path().replace('\\', "/"));
-            let parent = path.parent().unwrap_or(Path::new("")).to_path_buf();
+            let path = SourcePath::new(file.relative_path().replace('\\', "/"));
+            let parent = path.parent().unwrap_or_default();
             directories.entry(parent.clone()).or_default().push(path);
             let mut ancestor = parent;
             while let Some(above) = ancestor.parent() {
-                let above = above.to_path_buf();
                 directories.entry(above.clone()).or_default();
                 ancestor = above;
             }
@@ -47,14 +45,14 @@ impl PackageTree {
         Self { directories }
     }
 
-    pub fn directories(&self) -> Vec<&Path> {
-        self.directories.keys().map(PathBuf::as_path).collect()
+    pub fn directories(&self) -> Vec<&SourcePath> {
+        self.directories.keys().collect()
     }
 
     // What the registries of this directory have to declare for everything
     // beside them to be compiled: each sibling module file, and each subfolder
     // that is itself a module.
-    pub fn expected_modules_in(&self, directory: &Path) -> Vec<String> {
+    pub fn expected_modules_in(&self, directory: &SourcePath) -> Vec<String> {
         let mut expected: Vec<String> = self
             .files_in(directory)
             .into_iter()
@@ -66,17 +64,17 @@ impl PackageTree {
         expected
     }
 
-    pub fn files_in(&self, directory: &Path) -> Vec<&Path> {
+    pub fn files_in(&self, directory: &SourcePath) -> Vec<&SourcePath> {
         self.directories
             .get(directory)
-            .map(|paths| paths.iter().map(PathBuf::as_path).collect())
+            .map(|paths| paths.iter().collect())
             .unwrap_or_default()
     }
 
     // The registries of one directory, in REGISTRY_NAMES order, so the offence
     // lands on `lib.rs` rather than `main.rs` when a package has both.
-    pub fn registries_in(&self, directory: &Path) -> Vec<&Path> {
-        let mut found: Vec<&Path> = self
+    pub fn registries_in(&self, directory: &SourcePath) -> Vec<&SourcePath> {
+        let mut found: Vec<&SourcePath> = self
             .files_in(directory)
             .into_iter()
             .filter(|path| Self::is_registry(path))
@@ -88,35 +86,28 @@ impl PackageTree {
     // Every directory the walk saw directly beneath this one. Directories
     // holding no `.rs` file are not keys and so are not counted: the tool
     // cannot see them, and a folder of documentation is nobody's module.
-    pub fn subdirectories_of(&self, directory: &Path) -> Vec<&Path> {
+    pub fn subdirectories_of(&self, directory: &SourcePath) -> Vec<&SourcePath> {
         self.directories
             .keys()
-            .filter(|candidate| candidate.parent() == Some(directory))
-            .map(PathBuf::as_path)
+            .filter(|candidate| candidate.parent().as_ref() == Some(directory))
             .collect()
     }
 
-    fn directory_name(path: &Path) -> Option<String> {
-        path.file_name()
-            .and_then(|name| name.to_str())
-            .map(str::to_string)
+    fn directory_name(path: &SourcePath) -> Option<String> {
+        path.file_name().map(str::to_string)
     }
 
-    fn is_registry(path: &Path) -> bool {
+    fn is_registry(path: &SourcePath) -> bool {
         path.file_name()
-            .and_then(|name| name.to_str())
             .is_some_and(|name| Self::REGISTRY_NAMES.contains(&name))
     }
 
-    fn module_name(path: &Path) -> Option<String> {
-        path.file_stem()
-            .and_then(|stem| stem.to_str())
-            .map(str::to_string)
+    fn module_name(path: &SourcePath) -> Option<String> {
+        path.file_stem().map(str::to_string)
     }
 
-    fn registry_rank(path: &Path) -> usize {
+    fn registry_rank(path: &SourcePath) -> usize {
         path.file_name()
-            .and_then(|name| name.to_str())
             .and_then(|name| Self::REGISTRY_NAMES.iter().position(|known| *known == name))
             .unwrap_or(usize::MAX)
     }
@@ -124,12 +115,12 @@ impl PackageTree {
     // A subfolder is a module only if it has a registry of its own. One without
     // is tests-layout's finding, and reporting it here as undeclared would
     // instruct the reader to declare a folder that cannot be declared yet.
-    fn submodules_of(&self, directory: &Path) -> Vec<String> {
+    fn submodules_of(&self, directory: &SourcePath) -> Vec<String> {
         self.directories
             .keys()
-            .filter(|candidate| candidate.parent() == Some(directory))
+            .filter(|candidate| candidate.parent().as_ref() == Some(directory))
             .filter(|candidate| !self.registries_in(candidate).is_empty())
-            .filter_map(|candidate| Self::directory_name(candidate))
+            .filter_map(Self::directory_name)
             .collect()
     }
 }

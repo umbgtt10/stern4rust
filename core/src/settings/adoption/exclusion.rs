@@ -6,7 +6,6 @@ use anyhow::Context;
 use anyhow::Result;
 use globset::Glob;
 use globset::GlobMatcher;
-use std::path::Path;
 
 // One `--exclude` pattern and the paths it covers.
 //
@@ -36,7 +35,7 @@ impl Exclusion {
         })
     }
 
-    pub fn matches(&self, relative: &Path) -> bool {
+    pub fn matches(&self, relative: &str) -> bool {
         self.matcher.is_match(Self::normalised(relative))
     }
 
@@ -44,7 +43,7 @@ impl Exclusion {
         &self.pattern
     }
 
-    fn normalised(relative: &Path) -> String {
-        relative.to_string_lossy().replace('\\', "/")
+    fn normalised(relative: &str) -> String {
+        relative.replace('\\', "/")
     }
 }

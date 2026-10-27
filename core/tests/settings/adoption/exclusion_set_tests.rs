@@ -12,16 +12,19 @@
 // Patterns are matched against the package-relative path, so the walker's
 // absolute paths have to be reduced against the root before anything is judged.
 
-use std::path::Path;
-use std::path::PathBuf;
 use stern4rust::settings::adoption::exclusion_set::ExclusionSet;
+use stern4rust::source_path::SourcePath;
 
 const ROOT: &str = "/repo";
 
-fn paths(relatives: &[&str]) -> Vec<PathBuf> {
+fn path(text: &str) -> SourcePath {
+    SourcePath::new(text.to_string())
+}
+
+fn paths(relatives: &[&str]) -> Vec<SourcePath> {
     relatives
         .iter()
-        .map(|relative| Path::new(ROOT).join(relative))
+        .map(|relative| path(ROOT).join(relative))
         .collect()
 }
 
@@ -36,7 +39,7 @@ fn apply_attributes_a_doubly_covered_path_to_the_first_pattern_only() {
     let set = set(&["fixture/**", "**/*.rs"]);
 
     // Act
-    let outcome = set.apply(paths(&["fixture/a.rs"]), Path::new(ROOT));
+    let outcome = set.apply(paths(&["fixture/a.rs"]), &path(ROOT));
 
     // Assert
     assert_eq!(outcome.excluded_total(), 1);
@@ -57,7 +60,7 @@ fn apply_counts_what_each_pattern_removed() {
             "vendor/c.rs",
             "src/d.rs",
         ]),
-        Path::new(ROOT),
+        &path(ROOT),
     );
 
     // Assert
@@ -72,7 +75,7 @@ fn apply_keeps_a_path_no_pattern_covers() {
     let set = set(&["fixture/**"]);
 
     // Act
-    let outcome = set.apply(paths(&["fixture/a.rs", "src/b.rs"]), Path::new(ROOT));
+    let outcome = set.apply(paths(&["fixture/a.rs", "src/b.rs"]), &path(ROOT));
 
     // Assert
     assert_eq!(outcome.kept(), paths(&["src/b.rs"]));
@@ -86,7 +89,7 @@ fn apply_reports_a_pattern_that_matched_nothing() {
     let set = set(&["deleted_tree/**"]);
 
     // Act
-    let outcome = set.apply(paths(&["src/a.rs"]), Path::new(ROOT));
+    let outcome = set.apply(paths(&["src/a.rs"]), &path(ROOT));
 
     // Assert
     assert_eq!(outcome.unmatched_patterns(), ["deleted_tree/**"]);
@@ -99,7 +102,7 @@ fn apply_with_no_patterns_keeps_everything() {
     let set = set(&[]);
 
     // Act
-    let outcome = set.apply(paths(&["src/a.rs", "tests/b.rs"]), Path::new(ROOT));
+    let outcome = set.apply(paths(&["src/a.rs", "tests/b.rs"]), &path(ROOT));
 
     // Assert
     assert_eq!(outcome.kept().len(), 2);

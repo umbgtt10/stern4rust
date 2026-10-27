@@ -12,7 +12,6 @@
 // Matching nothing is a legitimate result -- a tree that has since been deleted
 // -- and the two must not be reported the same way.
 
-use std::path::Path;
 use stern4rust::settings::adoption::exclusion::Exclusion;
 
 fn exclusion(pattern: &str) -> Exclusion {
@@ -22,7 +21,7 @@ fn exclusion(pattern: &str) -> Exclusion {
 #[test]
 fn matches_a_path_below_an_excluded_directory_is_true() {
     // Arrange & Act
-    let matched = exclusion("fixture/**").matches(Path::new("fixture/deep/nested/a.rs"));
+    let matched = exclusion("fixture/**").matches("fixture/deep/nested/a.rs");
 
     // Assert
     assert!(matched);
@@ -31,7 +30,7 @@ fn matches_a_path_below_an_excluded_directory_is_true() {
 #[test]
 fn matches_a_path_outside_the_pattern_is_false() {
     // Arrange & Act
-    let matched = exclusion("fixture/**").matches(Path::new("src/a.rs"));
+    let matched = exclusion("fixture/**").matches("src/a.rs");
 
     // Assert
     assert!(!matched);
@@ -41,7 +40,7 @@ fn matches_a_path_outside_the_pattern_is_false() {
 #[test]
 fn matches_a_path_whose_directory_merely_starts_with_the_pattern_is_false() {
     // Arrange & Act
-    let matched = exclusion("fixture/**").matches(Path::new("fixtures_of_mine/a.rs"));
+    let matched = exclusion("fixture/**").matches("fixtures_of_mine/a.rs");
 
     // Assert
     assert!(!matched);
@@ -50,7 +49,7 @@ fn matches_a_path_whose_directory_merely_starts_with_the_pattern_is_false() {
 #[test]
 fn matches_a_wildcard_on_the_file_name_is_true() {
     // Arrange & Act
-    let matched = exclusion("**/*_generated.rs").matches(Path::new("src/deep/thing_generated.rs"));
+    let matched = exclusion("**/*_generated.rs").matches("src/deep/thing_generated.rs");
 
     // Assert
     assert!(matched);
@@ -62,7 +61,7 @@ fn matches_a_wildcard_on_the_file_name_is_true() {
 #[test]
 fn matches_a_windows_separator_path_is_true() {
     // Arrange & Act
-    let matched = exclusion("fixture/**").matches(Path::new(r"fixture\deep\a.rs"));
+    let matched = exclusion("fixture/**").matches(r"fixture\deep\a.rs");
 
     // Assert
     assert!(matched);

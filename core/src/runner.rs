@@ -31,15 +31,14 @@ use crate::settings::package_sections::PackageSections;
 use crate::settings::rule_selection::RuleSelection;
 use crate::settings::scanned_package::ScannedPackage;
 use crate::source_file::SourceFile;
+use crate::source_path::SourcePath;
 use crate::source_reader::SourceReader;
-use crate::source_walker::SourceWalker;
+use crate::traits::source_tree::SourceTree;
 use crate::workspace_sources::WorkspaceSources;
-use anyhow::Context;
 use anyhow::Result;
 use std::collections::HashSet;
-use std::fs::write as write_file;
+use std::path::MAIN_SEPARATOR;
 use std::path::Path;
-use std::path::PathBuf;
 
 // What a scan did, as opposed to what it found.
 //
@@ -67,10 +66,16 @@ struct ScanTotals {
 // unreadable file is a 2, reported against readable-source like any other
 // finding -- it is a fact about the tree, and aborting on it would hide every
 // offence already found in every other file.
-pub struct Runner;
+pub struct Runner<'a> {
+    source_tree: &'a dyn SourceTree,
+}
 
-impl Runner {
+impl<'a> Runner<'a> {
     pub const BASELINE_NAME: &'static str = "stern4rust-baseline.json";
+
+    pub fn new(source_tree: &'a dyn SourceTree) -> Self {
+        Self { source_tree }
+    }
 
     // The run, handing back what it found and what it has to say. Printing it
     // is the caller's.
@@ -78,15 +83,15 @@ impl Runner {
     // Both per-package bugs left the run perfectly Ok while the report
     // contradicted itself, so a test asserting on the outcome could not see
     // either. This is the seam that lets one assert on what was said.
-    pub fn run_reporting(invocation: &Invocation) -> Result<(RunOutcome, String)> {
+    pub fn run_reporting(&self, invocation: &Invocation) -> Result<(RunOutcome, String)> {
         // Before anything is read. The listing answers from the registry alone,
         // so it works in a checkout with no manifest worth reading and cannot
         // fail the way a run can.
         if invocation.list_rules {
             return Ok((RunOutcome::Clean, Self::rule_listing(invocation)));
         }
-        let sections = PackageSections::load(&invocation.manifest_directory)?;
-        let config = Self::config_from(invocation, None)?;
+        let sections = PackageSections::load(Path::new(invocation.manifest_directory.as_str()))?;
+        let config = self.config_from(invocation, None)?;
         Self::validate_selection(&config)?;
         let workspace_dependencies = ManifestResolver::workspace_dependencies(&config);
         let declared_dependencies = ManifestResolver::declared_dependencies(&config);
@@ -144,17 +149,20 @@ impl Runner {
         .into_iter()
         .map(|member| {
             Ok((
-                member.root().to_path_buf(),
+                Self::source_path(member.root()),
                 ExclusionSet::new(
-                    &Self::config_from(invocation, sections.of(member.name()))?.excludes,
+                    &self
+                        .config_from(invocation, sections.of(member.name()))?
+                        .excludes,
                 )?,
             ))
         })
         .collect::<Result<Vec<_>>>()?;
-        let readers = NameReaders::new(ReadNames::index(&WorkspaceSources::read(
-            &workspace_root,
-            &members,
-        )));
+        let readers = NameReaders::new(ReadNames::index(
+            &WorkspaceSources::new(self.source_tree)
+                .read(&Self::source_path(&workspace_root), &members),
+        ));
+        let reader = SourceReader::new(self.source_tree);
 
         for package in &packages {
             // Everything the manifest decides is decided here, by the package
@@ -191,7 +199,7 @@ impl Runner {
                     &workspace_root,
                     package.root(),
                 )),
-                ..Self::config_from(invocation, sections.of(package.name()))?
+                ..self.config_from(invocation, sections.of(package.name()))?
             };
             let registry = RuleRegistry::new(RuleCatalog::selected(&package_config));
             rosters.push(PackageRoster::new(
@@ -201,25 +209,24 @@ impl Runner {
                 RuleCatalog::unconfigured(&package_config),
             ));
             let exclusions = ExclusionSet::new(&package_config.excludes)?;
-            let root = &package.root();
+            let root = Self::source_path(package.root());
             // Read the whole package before judging it. Rules whose subject is
             // the tree -- "there is exactly one all_tests.rs" -- cannot be
             // answered a file at a time, and the file that carries the offence
             // is often the one that does not exist.
-            let (kept, patterns) = exclusions
-                .apply(SourceWalker::walk(root), root)
-                .into_parts();
+            let listed = self.source_tree.rust_files(&root)?;
+            let (kept, patterns) = exclusions.apply(listed, &root).into_parts();
             let mut files: Vec<SourceFile> = Vec::new();
             let mut found: Vec<Offence> = Vec::new();
             for path in kept {
                 files_scanned += 1;
-                match SourceReader::read(root, &path) {
+                match reader.read(&root, &path) {
                     Ok(file) => files.push(file),
                     Err(offence) => found.push(*offence),
                 }
             }
             if config.fix {
-                let (rewritten, count) = Self::repair(root, files, &registry)?;
+                let (rewritten, count) = self.repair(&root, files, &registry)?;
                 files = rewritten;
                 fixed += count;
             }
@@ -281,10 +288,10 @@ impl Runner {
     // empty one. A gate whose baseline path has a typo would otherwise report
     // every existing offence and look like a regression.
     fn baselined(config: &Config, offences: Vec<Offence>) -> Result<BaselineOutcome> {
-        let Some(path) = &config.baseline.as_deref() else {
+        let Some(path) = &config.baseline else {
             return Ok(BaselineOutcome::new(offences, 0, 0));
         };
-        Ok(Baseline::load(path)?.apply(offences))
+        Ok(Baseline::load(Path::new(path.as_str()))?.apply(offences))
     }
 
     // The command line wins over the file, every time and per setting. A
@@ -295,17 +302,30 @@ impl Runner {
     // would make `--rule header` mean "header plus whatever the file already
     // selected", which is the opposite of what naming one rule means everywhere
     // else in this tool.
-    fn config_from(invocation: &Invocation, section: Option<&PackageConfig>) -> Result<Config> {
+    fn config_from(
+        &self,
+        invocation: &Invocation,
+        section: Option<&PackageConfig>,
+    ) -> Result<Config> {
         let directory = &invocation.manifest_directory;
-        let file = ConfigFile::load(directory)?;
+        let on_disk = Path::new(directory.as_str());
+        let file = ConfigFile::load(on_disk)?;
         let found = file.as_ref();
         let header_file = invocation
             .header_file
             .clone()
-            .or_else(|| section.and_then(|s| s.header_file_from(directory)))
-            .or_else(|| found.and_then(|file| file.header_file_from(directory)));
+            .or_else(|| {
+                section
+                    .and_then(|s| s.header_file_from(on_disk))
+                    .map(|path| Self::source_path(&path))
+            })
+            .or_else(|| {
+                found
+                    .and_then(|file| file.header_file_from(on_disk))
+                    .map(|path| Self::source_path(&path))
+            });
         let expected_header = match &header_file {
-            Some(path) => HeaderSource::read(path)?,
+            Some(path) => HeaderSource::read(self.source_tree, path)?,
             None => Vec::new(),
         };
         let threshold = invocation
@@ -324,8 +344,12 @@ impl Runner {
             baseline: invocation
                 .baseline
                 .clone()
-                .or_else(|| found.and_then(|file| file.baseline_from(directory)))
-                .or_else(|| Self::discovered_baseline(directory, invocation.write_baseline)),
+                .or_else(|| {
+                    found
+                        .and_then(|file| file.baseline_from(on_disk))
+                        .map(|path| Self::source_path(&path))
+                })
+                .or_else(|| self.discovered_baseline(directory, invocation.write_baseline)),
             write_baseline: invocation.write_baseline,
             fix: invocation.fix,
             config_file: found.map(|_| directory.join(ConfigFile::NAME)),
@@ -369,9 +393,9 @@ impl Runner {
     // When writing, the default path is the destination whether or not it
     // exists yet. When reading, only an existing file counts -- otherwise every
     // run without a baseline would fail trying to load one.
-    fn discovered_baseline(directory: &Path, writing: bool) -> Option<PathBuf> {
+    fn discovered_baseline(&self, directory: &SourcePath, writing: bool) -> Option<SourcePath> {
         let path = directory.join(Self::BASELINE_NAME);
-        (writing || path.exists()).then_some(path)
+        (writing || self.source_tree.contains(&path)).then_some(path)
     }
 
     // One package's exclusions say nothing on their own: a pattern matching
@@ -407,15 +431,11 @@ impl Runner {
     fn record(config: &Config, offences: Vec<Offence>) -> Result<RunOutcome> {
         let path = config
             .baseline
-            .as_deref()
+            .as_ref()
             .ok_or_else(|| anyhow::anyhow!("--write-baseline needs a path to write to"))?;
         let baseline = Baseline::of(&offences);
-        baseline.save(path)?;
-        println!(
-            "stern4rust wrote {} offence(s) to {}",
-            baseline.len(),
-            path.display()
-        );
+        baseline.save(Path::new(path.as_str()))?;
+        println!("stern4rust wrote {} offence(s) to {}", baseline.len(), path);
         Ok(RunOutcome::Clean)
     }
 
@@ -429,7 +449,8 @@ impl Runner {
     // rule the package skips, or a run did not select, governs nothing, and a
     // fixer must never edit a file no rule governs.
     fn repair(
-        root: &Path,
+        &self,
+        root: &SourcePath,
         files: Vec<SourceFile>,
         registry: &RuleRegistry,
     ) -> Result<(Vec<SourceFile>, usize)> {
@@ -441,8 +462,7 @@ impl Runner {
             match rewriters.rewrite(&file, &applied) {
                 Some(contents) => {
                     let path = root.join(file.relative_path());
-                    write_file(&path, &contents)
-                        .with_context(|| format!("{} could not be rewritten", path.display()))?;
+                    self.source_tree.write_source(&path, &contents)?;
                     repaired.push(SourceFile::new(file.relative_path(), &contents));
                     count += 1;
                 }
@@ -475,9 +495,9 @@ impl Runner {
                 .with_rules(applied.clone(), skipped.clone(), unconfigured.clone())
                 .with_package_rosters(rosters.to_vec())
                 .with_exclusions(excluded.excluded().to_vec())
-                .with_config_file(Self::shown(config.config_file.as_deref()))
+                .with_config_file(Self::shown(config.config_file.as_ref()))
                 .with_baseline(
-                    Self::shown(config.baseline.as_deref()),
+                    Self::shown(config.baseline.as_ref()),
                     baselined.suppressed(),
                     baselined.stale(),
                 )
@@ -488,9 +508,9 @@ impl Runner {
                 .with_rules(applied, skipped, unconfigured_names)
                 .with_package_rosters(rosters.to_vec())
                 .with_exclusions(excluded.excluded().to_vec())
-                .with_config_file(Self::shown(config.config_file.as_deref()))
+                .with_config_file(Self::shown(config.config_file.as_ref()))
                 .with_baseline(
-                    Self::shown(config.baseline.as_deref()),
+                    Self::shown(config.baseline.as_ref()),
                     baselined.suppressed(),
                     baselined.stale(),
                 )
@@ -520,18 +540,24 @@ impl Runner {
     // A section states its whole list rather than adding to the root's, which is
     // the argument already made for the command line against the file, one level
     // down: a reader who wants to know what a package skips reads one list.
-    fn section_or_root<'a>(
-        section: Option<&'a [String]>,
-        root: Option<&'a [String]>,
-    ) -> Option<&'a [String]> {
+    fn section_or_root<'b>(
+        section: Option<&'b [String]>,
+        root: Option<&'b [String]>,
+    ) -> Option<&'b [String]> {
         match section {
             Some(values) if !values.is_empty() => Some(values),
             _ => root,
         }
     }
 
-    fn shown(path: Option<&Path>) -> Option<String> {
-        path.map(|path| path.to_string_lossy().replace('\\', "/"))
+    fn shown(path: Option<&SourcePath>) -> Option<String> {
+        path.map(|path| path.as_str().replace('\\', "/"))
+    }
+
+    // Where a path cargo or a config file handed over becomes the core's, until
+    // the workspace and the config reach the core as its own paths.
+    fn source_path(path: &Path) -> SourcePath {
+        SourcePath::new(path.to_string_lossy().replace(MAIN_SEPARATOR, "/"))
     }
 
     // A misspelled rule name is an error rather than a switch that quietly

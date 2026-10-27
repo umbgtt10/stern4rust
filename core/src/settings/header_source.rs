@@ -2,13 +2,14 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::fs;
-use std::path::Path;
-
 use anyhow::Context;
 use anyhow::Result;
+use anyhow::anyhow;
 
-// Reads the expected header off disk.
+use crate::source_path::SourcePath;
+use crate::traits::source_tree::SourceTree;
+
+// Reads the expected header from the tree.
 //
 // Trailing blank lines are dropped so the file can end with a newline -- every
 // editor adds one -- without the rule then demanding a blank line at the top of
@@ -30,9 +31,11 @@ impl HeaderSource {
         lines
     }
 
-    pub fn read(path: &Path) -> Result<Vec<String>> {
-        let contents = fs::read_to_string(path)
-            .with_context(|| format!("failed to read header file {}", path.display()))?;
+    pub fn read(source_tree: &dyn SourceTree, path: &SourcePath) -> Result<Vec<String>> {
+        let contents = source_tree
+            .read_source(path)
+            .map_err(|failure| anyhow!(failure.cause))
+            .with_context(|| format!("failed to read header file {path}"))?;
         Ok(Self::parse(&contents))
     }
 }

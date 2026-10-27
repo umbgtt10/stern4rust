@@ -14,6 +14,7 @@
 //   - a leading UTF-8 byte order mark is stripped, because editors add one
 //     invisibly and it would otherwise sit in front of the first character of
 //     line 1
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SourceFile {
     relative_path: String,
@@ -57,6 +58,14 @@ impl SourceFile {
 
     // An empty file splits into one empty line, which is not the same as having
     // a line of content.
+    pub fn file_name(&self) -> &str {
+        self.relative_path
+            .split('/')
+            .rfind(|part| !part.is_empty())
+            .filter(|name| *name != "..")
+            .unwrap_or_default()
+    }
+
     pub fn is_empty(&self) -> bool {
         self.lines.iter().all(|line| line.trim().is_empty())
     }

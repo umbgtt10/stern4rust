@@ -13,9 +13,13 @@
 // is a module only when it has a registry of its own -- one without is
 // `tests-layout`'s finding, and declaring it would not compile.
 
-use std::path::Path;
 use stern4rust::finding::model::package_tree::PackageTree;
 use stern4rust::source_file::SourceFile;
+use stern4rust::source_path::SourcePath;
+
+fn path(text: &str) -> SourcePath {
+    SourcePath::new(text.to_string())
+}
 
 fn tree(paths: &[&str]) -> PackageTree {
     let files: Vec<SourceFile> = paths
@@ -40,12 +44,7 @@ fn directories_includes_every_ancestor_not_only_those_holding_files() {
     // Assert
     assert_eq!(
         directories,
-        [
-            Path::new(""),
-            Path::new("src"),
-            Path::new("src/rules"),
-            Path::new("tests")
-        ]
+        [&path(""), &path("src"), &path("src/rules"), &path("tests")]
     );
 }
 
@@ -55,7 +54,7 @@ fn expected_modules_in_counts_a_sibling_file() {
     let tree = tree(&["src/lib.rs", "src/widget.rs"]);
 
     // Act
-    let expected = tree.expected_modules_in(Path::new("src"));
+    let expected = tree.expected_modules_in(&path("src"));
 
     // Assert
     assert_eq!(expected, ["widget"]);
@@ -68,7 +67,7 @@ fn expected_modules_in_counts_a_subfolder_that_has_a_registry() {
     let tree = tree(&["src/lib.rs", "src/rules/mod.rs", "src/rules/alpha.rs"]);
 
     // Act
-    let expected = tree.expected_modules_in(Path::new("src"));
+    let expected = tree.expected_modules_in(&path("src"));
 
     // Assert
     assert_eq!(expected, ["rules"]);
@@ -82,7 +81,7 @@ fn expected_modules_in_ignores_a_subfolder_without_a_registry() {
     let tree = tree(&["src/lib.rs", "src/loose/alpha.rs"]);
 
     // Act
-    let expected = tree.expected_modules_in(Path::new("src"));
+    let expected = tree.expected_modules_in(&path("src"));
 
     // Assert
     assert!(expected.is_empty(), "expected none, got {expected:?}");
@@ -95,7 +94,7 @@ fn expected_modules_in_ignores_the_registries_themselves() {
     let tree = tree(&["src/lib.rs", "src/main.rs"]);
 
     // Act
-    let expected = tree.expected_modules_in(Path::new("src"));
+    let expected = tree.expected_modules_in(&path("src"));
 
     // Assert
     assert!(expected.is_empty(), "expected none, got {expected:?}");
@@ -107,10 +106,10 @@ fn files_in_lists_the_files_of_one_directory() {
     let tree = tree(&["src/lib.rs", "src/widget.rs", "tests/all_tests.rs"]);
 
     // Act
-    let files = tree.files_in(Path::new("src"));
+    let files = tree.files_in(&path("src"));
 
     // Assert
-    assert_eq!(files, [Path::new("src/lib.rs"), Path::new("src/widget.rs")]);
+    assert_eq!(files, [&path("src/lib.rs"), &path("src/widget.rs")]);
 }
 
 #[test]
@@ -119,7 +118,7 @@ fn registries_in_of_a_directory_without_one_is_empty() {
     let tree = tree(&["src/widget.rs"]);
 
     // Act
-    let registries = tree.registries_in(Path::new("src"));
+    let registries = tree.registries_in(&path("src"));
 
     // Assert
     assert!(registries.is_empty(), "expected none, got {registries:?}");
@@ -133,13 +132,10 @@ fn registries_in_puts_lib_ahead_of_main() {
     let tree = tree(&["src/main.rs", "src/lib.rs"]);
 
     // Act
-    let registries = tree.registries_in(Path::new("src"));
+    let registries = tree.registries_in(&path("src"));
 
     // Assert
-    assert_eq!(
-        registries,
-        [Path::new("src/lib.rs"), Path::new("src/main.rs")]
-    );
+    assert_eq!(registries, [&path("src/lib.rs"), &path("src/main.rs")]);
 }
 
 #[test]
@@ -148,8 +144,8 @@ fn subdirectories_of_lists_only_the_directories_directly_beneath() {
     let tree = tree(&["src/lib.rs", "src/rules/mod.rs", "src/rules/deep/mod.rs"]);
 
     // Act
-    let found = tree.subdirectories_of(Path::new("src"));
+    let found = tree.subdirectories_of(&path("src"));
 
     // Assert
-    assert_eq!(found, [Path::new("src/rules")]);
+    assert_eq!(found, [&path("src/rules")]);
 }

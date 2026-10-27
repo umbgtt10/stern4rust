@@ -103,6 +103,7 @@ dependencies = [
  "clap",
  "serde_json",
  "stern4rust-core",
+ "walkdir",
 ]
 
 [[package]]
@@ -356,7 +357,6 @@ dependencies = [
  "serde_json",
  "syn 2.0.119",
  "toml",
- "walkdir",
 ]
 
 [[package]]

@@ -2,13 +2,12 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::path::Path;
-
 use crate::finding::model::package_tree::PackageTree;
 use crate::reporting::offence::Offence;
 use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;
+use crate::source_path::SourcePath;
 
 // A directory holds a number of subfolders a reader can hold in their head.
 //
@@ -36,7 +35,7 @@ impl DirectorySubfolderCountRule {
         Self { limit }
     }
 
-    fn offence(&self, tree: &PackageTree, directory: &Path, found: usize) -> Offence {
+    fn offence(&self, tree: &PackageTree, directory: &SourcePath, found: usize) -> Offence {
         let subject = Self::shown(directory);
         let carrier = tree
             .registries_in(directory)
@@ -59,8 +58,8 @@ impl DirectorySubfolderCountRule {
         .with_subject(&subject)
     }
 
-    fn shown(path: &Path) -> String {
-        let shown = path.to_string_lossy().replace('\\', "/");
+    fn shown(path: &SourcePath) -> String {
+        let shown = path.as_str().replace('\\', "/");
         if shown.is_empty() || shown == "." {
             return "the package root".to_string();
         }

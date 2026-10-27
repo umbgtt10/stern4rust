@@ -15,26 +15,8 @@
       "fingerprint": "28b8ef9870e79af4",
       "members": 2,
       "names": [
-        "ExclusionOutcome::unmatched_patterns",
-        "ReportPrinter::unmatched"
-      ]
-    },
-    {
-      "kind": "exact",
-      "fingerprint": "63720196e094a2dd",
-      "members": 2,
-      "names": [
-        "PackageTree::is_registry",
-        "DirectoryFileCountRule::is_index"
-      ]
-    },
-    {
-      "kind": "exact",
-      "fingerprint": "7b34af5bab1ef09f",
-      "members": 2,
-      "names": [
-        "ReportPrinter::absences",
-        "PackageRoster::absences"
+        "ReportPrinter::unmatched",
+        "ExclusionOutcome::unmatched_patterns"
       ]
     },
     {
@@ -42,8 +24,8 @@
       "fingerprint": "a9c15a997b5c0f97",
       "members": 2,
       "names": [
-        "JsonPrinter::new",
-        "ReportPrinter::new"
+        "ReportPrinter::new",
+        "JsonPrinter::new"
       ]
     },
     {
@@ -52,9 +34,9 @@
       "members": 4,
       "names": [
         "TestFileParser::is_test",
-        "TestFileNamePostfixRule::is_test",
+        "ArrangeActAssertRule::is_test",
         "TestNamingRule::is_test",
-        "ArrangeActAssertRule::is_test"
+        "TestFileNamePostfixRule::is_test"
       ]
     },
     {
@@ -68,20 +50,11 @@
     },
     {
       "kind": "near",
-      "fingerprint": "13f7b6ebe445e10c",
-      "members": 2,
-      "names": [
-        "TestFileItem::new",
-        "RuleExplanation::new"
-      ]
-    },
-    {
-      "kind": "near",
       "fingerprint": "9d82e1e2a2a9288b",
       "members": 2,
       "names": [
-        "<TestNamingRule as Rule>::check",
-        "<ArrangeActAssertRule as Rule>::check"
+        "<ArrangeActAssertRule as Rule>::check",
+        "<TestNamingRule as Rule>::check"
       ]
     }
   ]

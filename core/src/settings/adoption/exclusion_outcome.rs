@@ -2,7 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::path::PathBuf;
+use crate::source_path::SourcePath;
 
 // What the exclusions did, as well as what survived them.
 //
@@ -13,12 +13,12 @@ use std::path::PathBuf;
 // indistinguishable from a run that had nothing to say -- which is the same
 // failure this tool refuses everywhere else.
 pub struct ExclusionOutcome {
-    kept: Vec<PathBuf>,
+    kept: Vec<SourcePath>,
     excluded: Vec<(String, usize)>,
 }
 
 impl ExclusionOutcome {
-    pub fn new(kept: Vec<PathBuf>, excluded: Vec<(String, usize)>) -> Self {
+    pub fn new(kept: Vec<SourcePath>, excluded: Vec<(String, usize)>) -> Self {
         Self { kept, excluded }
     }
 
@@ -30,11 +30,11 @@ impl ExclusionOutcome {
         self.excluded.iter().map(|(_, count)| count).sum()
     }
 
-    pub fn into_parts(self) -> (Vec<PathBuf>, Vec<(String, usize)>) {
+    pub fn into_parts(self) -> (Vec<SourcePath>, Vec<(String, usize)>) {
         (self.kept, self.excluded)
     }
 
-    pub fn kept(&self) -> &[PathBuf] {
+    pub fn kept(&self) -> &[SourcePath] {
         &self.kept
     }
 

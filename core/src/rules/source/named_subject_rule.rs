@@ -2,8 +2,6 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::path::Path;
-
 use syn::Item;
 use syn::parse_file;
 
@@ -53,7 +51,7 @@ impl NamedSubjectRule {
     fn applies_to(file: &SourceFile) -> bool {
         let path = file.relative_path();
         !Self::EXEMPT_ROOTS.iter().any(|root| path.starts_with(root))
-            && !Self::EXEMPT_FILES.contains(&Self::file_name(path))
+            && !Self::EXEMPT_FILES.contains(&file.file_name())
     }
 
     // The candidates in the order the offence names them, and what they are.
@@ -70,13 +68,6 @@ impl NamedSubjectRule {
             .chain(DeclaredItemFinder::types(items))
             .collect();
         (declared, Self::DECLARED)
-    }
-
-    fn file_name(path: &str) -> &str {
-        Path::new(path)
-            .file_name()
-            .and_then(|name| name.to_str())
-            .unwrap_or_default()
     }
 
     fn offence(
@@ -97,7 +88,7 @@ impl NamedSubjectRule {
             self.name(),
             format!(
                 "`{}` is named after none of {kind}: {listed}",
-                Self::file_name(file.relative_path())
+                file.file_name()
             ),
             format!(
                 "rename the file to {}, or rename `{}` after the file",

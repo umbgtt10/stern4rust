@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: MIT
 
 use std::collections::BTreeSet;
-use std::path::Path;
 
 use crate::finding::model::package_tree::PackageTree;
 use crate::finding::parsing::modules::module_declaration_finder::ModuleDeclarationFinder;
@@ -11,6 +10,7 @@ use crate::reporting::offence::Offence;
 use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;
+use crate::source_path::SourcePath;
 
 // A registry declares every file beside it, so nothing in the tree goes
 // uncompiled.
@@ -38,7 +38,7 @@ impl RegistryCompletenessRule {
     // an unreadable registry as declaring nothing would report every file beside
     // it as an orphan -- a page of wrong answers caused by one real one, which
     // readable-source already reports.
-    fn declared_by(files: &[SourceFile], registries: &[&Path]) -> Option<BTreeSet<String>> {
+    fn declared_by(files: &[SourceFile], registries: &[&SourcePath]) -> Option<BTreeSet<String>> {
         let mut declared = BTreeSet::new();
         for path in registries {
             let file = Self::file_at(files, path)?;
@@ -47,8 +47,8 @@ impl RegistryCompletenessRule {
         Some(declared)
     }
 
-    fn file_at<'a>(files: &'a [SourceFile], path: &Path) -> Option<&'a SourceFile> {
-        let wanted = path.to_string_lossy().replace('\\', "/");
+    fn file_at<'a>(files: &'a [SourceFile], path: &SourcePath) -> Option<&'a SourceFile> {
+        let wanted = path.as_str().replace('\\', "/");
         files
             .iter()
             .find(|file| file.relative_path().replace('\\', "/") == wanted)
@@ -57,8 +57,8 @@ impl RegistryCompletenessRule {
     // Reported against the registry rather than the orphan. The orphan is not
     // wrong -- it is a perfectly good file -- and the edit that fixes it is one
     // line in the registry.
-    fn offence(&self, registry: &Path, name: &str) -> Offence {
-        let registry = registry.to_string_lossy().replace('\\', "/");
+    fn offence(&self, registry: &SourcePath, name: &str) -> Offence {
+        let registry = registry.as_str().replace('\\', "/");
         Offence::new(
             &registry,
             1,
@@ -73,7 +73,7 @@ impl RegistryCompletenessRule {
         &self,
         tree: &PackageTree,
         files: &[SourceFile],
-        directory: &Path,
+        directory: &SourcePath,
     ) -> Vec<Offence> {
         let registries = tree.registries_in(directory);
         let Some(primary) = registries.first() else {

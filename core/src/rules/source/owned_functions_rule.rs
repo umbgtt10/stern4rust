@@ -2,8 +2,6 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::path::Path;
-
 use syn::Item;
 use syn::parse_file;
 
@@ -55,7 +53,7 @@ impl OwnedFunctionsRule {
 
     fn applies_to(file: &SourceFile) -> bool {
         !file.relative_path().starts_with(Self::TESTS_ROOT)
-            && !Self::EXEMPT_FILES.contains(&Self::file_name(file))
+            && !Self::EXEMPT_FILES.contains(&file.file_name())
     }
 
     fn correction(
@@ -76,15 +74,8 @@ impl OwnedFunctionsRule {
         )
     }
 
-    fn file_name(file: &SourceFile) -> &str {
-        Path::new(file.relative_path())
-            .file_name()
-            .and_then(|name| name.to_str())
-            .unwrap_or_default()
-    }
-
     fn is_entry_file(file: &SourceFile) -> bool {
-        Self::file_name(file) == Self::ENTRY_FILE
+        file.file_name() == Self::ENTRY_FILE
             || Self::ENTRY_ROOTS
                 .iter()
                 .any(|root| file.relative_path().starts_with(root))

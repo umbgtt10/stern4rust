@@ -2,9 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::path::Path;
-
 use crate::finding::model::type_name::TypeName;
+use crate::source_path::SourcePath;
 
 // A source file's name, as the words it is written in, held against a type it
 // might be named after.
@@ -22,10 +21,8 @@ pub struct FileStem {
 
 impl FileStem {
     pub fn of(relative_path: &str) -> Self {
-        let stem = Path::new(relative_path)
-            .file_stem()
-            .and_then(|stem| stem.to_str())
-            .unwrap_or_default();
+        let path = SourcePath::new(relative_path.to_string());
+        let stem = path.file_stem().unwrap_or_default();
         Self {
             words: stem
                 .split('_')

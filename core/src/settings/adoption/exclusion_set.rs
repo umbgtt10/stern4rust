@@ -3,11 +3,10 @@
 // SPDX-License-Identifier: MIT
 
 use anyhow::Result;
-use std::path::Path;
-use std::path::PathBuf;
 
 use crate::settings::adoption::exclusion::Exclusion;
 use crate::settings::adoption::exclusion_outcome::ExclusionOutcome;
+use crate::source_path::SourcePath;
 
 // Every `--exclude` pattern this run was given, applied to the walked paths.
 //
@@ -32,7 +31,7 @@ impl ExclusionSet {
         Ok(Self { exclusions })
     }
 
-    pub fn apply(&self, paths: Vec<PathBuf>, root: &Path) -> ExclusionOutcome {
+    pub fn apply(&self, paths: Vec<SourcePath>, root: &SourcePath) -> ExclusionOutcome {
         let mut counts = vec![0usize; self.exclusions.len()];
         let mut kept = Vec::new();
         for path in paths {
@@ -54,8 +53,8 @@ impl ExclusionSet {
         self.exclusions.is_empty()
     }
 
-    fn covering(&self, path: &Path, root: &Path) -> Option<usize> {
-        let relative = path.strip_prefix(root).unwrap_or(path);
+    fn covering(&self, path: &SourcePath, root: &SourcePath) -> Option<usize> {
+        let relative = path.strip_prefix(root).unwrap_or(path.as_str());
         self.exclusions
             .iter()
             .position(|exclusion| exclusion.matches(relative))

@@ -2,13 +2,12 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::path::Path;
-
 use crate::finding::model::package_tree::PackageTree;
 use crate::reporting::offence::Offence;
 use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;
+use crate::source_path::SourcePath;
 
 // A directory holds a number of files a reader can hold in their head.
 //
@@ -40,23 +39,22 @@ impl DirectoryFileCountRule {
         Self { limit }
     }
 
-    fn counted_in(tree: &PackageTree, directory: &Path) -> usize {
+    fn counted_in(tree: &PackageTree, directory: &SourcePath) -> usize {
         tree.files_in(directory)
             .into_iter()
             .filter(|path| !Self::is_index(path))
             .count()
     }
 
-    fn is_index(path: &Path) -> bool {
+    fn is_index(path: &SourcePath) -> bool {
         path.file_name()
-            .and_then(|name| name.to_str())
             .is_some_and(|name| Self::INDEXES.contains(&name))
     }
 
     // Reported against the directory's own index where it has one, because that
     // is the file a split has to edit anyway. A directory with no index is named
     // by its path.
-    fn offence(&self, tree: &PackageTree, directory: &Path, found: usize) -> Offence {
+    fn offence(&self, tree: &PackageTree, directory: &SourcePath, found: usize) -> Offence {
         let subject = Self::shown(directory);
         let carrier = tree
             .registries_in(directory)
@@ -80,8 +78,8 @@ impl DirectoryFileCountRule {
         .with_subject(&subject)
     }
 
-    fn shown(path: &Path) -> String {
-        let shown = path.to_string_lossy().replace('\\', "/");
+    fn shown(path: &SourcePath) -> String {
+        let shown = path.as_str().replace('\\', "/");
         if shown.is_empty() || shown == "." {
             return "the package root".to_string();
         }

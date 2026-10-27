@@ -8,9 +8,10 @@ use stern4rust::reporting::run_outcome::RunOutcome;
 use stern4rust::runner::Runner;
 
 use crate::invocation::args::Args;
+use crate::system::walkdir_source_tree::WalkdirSourceTree;
 
 // The composition root: the command line in, the report out on stdout, a
-// verdict back.
+// verdict back. The one place the real file system is chosen.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct EntryPoint;
 
@@ -35,6 +36,8 @@ impl EntryPoint {
         I: IntoIterator<Item = String>,
     {
         let args = Args::parse_from(Args::without_cargo_subcommand(argv));
-        Runner::run_reporting(&args.invocation())
+        let invocation = args.invocation()?;
+        let source_tree = WalkdirSourceTree::new();
+        Runner::new(&source_tree).run_reporting(&invocation)
     }
 }

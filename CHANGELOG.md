@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+The tool's behaviour and command line are unchanged -- its stdout, stderr and
+exit codes are compared byte for byte against 0.18.0 -- with two exceptions:
+a `.rs` file whose name is not UTF-8 now fails the run, naming the file, where
+0.18.0 judged it under a lossy name; and a `--manifest-path`, `--header-file`
+or `--baseline` that is not UTF-8 fails the run naming the flag, where 0.18.0
+used it. The repository splits into a technology-free core and a cli crate
+(`docs/CORE_CLI_SPLIT.md`), which changes how the library is packaged and much
+of its API.
+
 ### Changed (packages)
 - `cargo-stern4rust` is now the command-line crate (`cli/`): the
   `cargo-stern4rust` binary and a library, `stern4rust_cli`. The rules'
@@ -26,6 +35,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   arguments.
 - `unsafe` code is forbidden in every member and target of the workspace,
   and the core's crate root says so too.
+- `source_walker::SourceWalker` is gone: the new port
+  `traits::source_tree::SourceTree` (`contains`, `read_source`, `rust_files`,
+  `write_source`) is implemented on disk by
+  `stern4rust_cli::system::walkdir_source_tree::WalkdirSourceTree`, and
+  `--fix` writes its repairs through it. `Runner` is built over the tree,
+  `Runner::new(&dyn SourceTree)`, and `run_reporting` takes `&self`.
+- `source_reader::SourceReader` and `workspace_sources::WorkspaceSources` are
+  objects over the tree, `new(&dyn SourceTree)` then `read`, and
+  `settings::header_source::HeaderSource::read` takes the tree and the path.
+- Paths in the library are `source_path::SourcePath`, text with `/` as its
+  only separator, which cli converts to at the edge: `Invocation`'s,
+  `Config`'s `baseline` and `config_file`, `ExclusionSet::apply`,
+  `ExclusionOutcome` and `PackageTree`; `Exclusion::matches` takes the
+  relative path as `&str`, and `SourceFile::file_name` is new. A file the tree
+  cannot list or read fails with `source_read_failure::SourceReadFailure`, one
+  it cannot write back with `source_write_failure::SourceWriteFailure`, each
+  worded as before. The library no longer depends on walkdir.
 
 ### Changed
 - `adoption` moves under `settings`: the baseline and the exclusions are

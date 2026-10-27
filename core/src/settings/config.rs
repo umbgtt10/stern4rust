@@ -7,6 +7,7 @@ use crate::finding::model::name_readers::NameReaders;
 use crate::reporting::offence_threshold::OffenceThreshold;
 use crate::reporting::output_format::OutputFormat;
 use crate::settings::rule_selection::RuleSelection;
+use crate::source_path::SourcePath;
 use std::path::PathBuf;
 
 // The threshold is an OffenceThreshold rather than a bare usize precisely so
@@ -20,8 +21,8 @@ use std::path::PathBuf;
 // configured", and each rule supplies its own default.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Config {
-    pub baseline: Option<PathBuf>,
-    pub config_file: Option<PathBuf>,
+    pub baseline: Option<SourcePath>,
+    pub config_file: Option<SourcePath>,
     pub fix: bool,
     pub write_baseline: bool,
     pub manifest_license: Option<String>,

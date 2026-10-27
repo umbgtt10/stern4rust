@@ -36,6 +36,7 @@ workspace = true
 anyhow = { workspace = true }
 clap = { workspace = true }
 stern4rust-core = { workspace = true }
+walkdir = { workspace = true }
 
 [dev-dependencies]
 serde_json = { workspace = true }

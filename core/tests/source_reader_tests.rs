@@ -10,19 +10,26 @@
 // can be enumerated without it, but a single unreadable file is a fact about the
 // tree and the rest of the tree is still worth reporting on.
 
-use std::path::Path;
+use crate::support::in_memory_source_tree::InMemorySourceTree;
+use crate::support::in_memory_source_tree::path_of;
+use stern4rust::source_path::SourcePath;
 use stern4rust::source_reader::SourceReader;
 
 const RULE: &str = "readable-source";
 
-fn root() -> &'static Path {
-    Path::new(env!("CARGO_MANIFEST_DIR"))
+fn root() -> SourcePath {
+    path_of("/repo")
+}
+
+fn tree() -> InMemorySourceTree {
+    InMemorySourceTree::new().with_file("/repo/src/lib.rs", "pub mod rule;\n")
 }
 
 #[test]
 fn read_of_a_file_that_does_not_exist_names_the_readable_source_rule() {
     // Arrange & Act
-    let found = SourceReader::read(root(), &root().join("src/there_is_no_such_file.rs"));
+    let found =
+        SourceReader::new(&tree()).read(&root(), &root().join("src/there_is_no_such_file.rs"));
 
     // Assert
     let offence = found.expect_err("expected an offence");
@@ -37,7 +44,8 @@ fn read_of_a_file_that_does_not_exist_names_the_readable_source_rule() {
 #[test]
 fn read_of_a_file_that_does_not_exist_returns_an_offence() {
     // Arrange & Act
-    let found = SourceReader::read(root(), &root().join("src/there_is_no_such_file.rs"));
+    let found =
+        SourceReader::new(&tree()).read(&root(), &root().join("src/there_is_no_such_file.rs"));
 
     // Assert
     assert!(found.is_err());
@@ -46,7 +54,7 @@ fn read_of_a_file_that_does_not_exist_returns_an_offence() {
 #[test]
 fn read_of_a_readable_file_reports_the_path_relative_to_the_root() {
     // Arrange & Act
-    let found = SourceReader::read(root(), &root().join("src/lib.rs"));
+    let found = SourceReader::new(&tree()).read(&root(), &root().join("src/lib.rs"));
 
     // Assert
     assert_eq!(found.expect("readable").relative_path(), "src/lib.rs");
@@ -55,7 +63,7 @@ fn read_of_a_readable_file_reports_the_path_relative_to_the_root() {
 #[test]
 fn read_of_a_readable_file_returns_its_contents() {
     // Arrange & Act
-    let found = SourceReader::read(root(), &root().join("src/lib.rs"));
+    let found = SourceReader::new(&tree()).read(&root(), &root().join("src/lib.rs"));
 
     // Assert
     assert!(

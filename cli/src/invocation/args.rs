@@ -8,6 +8,10 @@ use std::path::PathBuf;
 use clap::Parser;
 use stern4rust::reporting::output_format::OutputFormat;
 use stern4rust::settings::invocation::Invocation;
+use stern4rust::source_path::SourcePath;
+
+use crate::invocation::unusable_path::UnusablePath;
+use crate::system::portable_path::PortablePath;
 
 #[derive(Clone, Debug, Parser)]
 #[command(name = "cargo-stern4rust")]
@@ -112,24 +116,29 @@ impl Args {
         self.format
     }
 
-    // What the core is asked. The config file and a default baseline live
-    // beside the manifest, so the manifest's directory goes in as well.
-    pub fn invocation(&self) -> Invocation {
-        Invocation {
-            baseline: self.baseline().map(Path::to_path_buf),
+    // What the core is asked, with every path in its terms. The config file and
+    // a default baseline live beside the manifest, so the manifest's directory
+    // goes in as well.
+    pub fn invocation(&self) -> Result<Invocation, UnusablePath> {
+        Ok(Invocation {
+            baseline: Self::portable("--baseline", self.baseline())?,
             excludes: self.excludes.clone(),
             fix: self.fix,
             format: self.format,
-            header_file: self.header_file().map(Path::to_path_buf),
+            header_file: Self::portable("--header-file", self.header_file())?,
             list_rules: self.list_rules,
-            manifest_directory: self.manifest_directory(),
+            manifest_directory: Self::portable(
+                "--manifest-path",
+                Some(&self.manifest_directory()),
+            )?
+            .unwrap_or_default(),
             manifest_path: self.manifest_path.clone(),
             offence_threshold: self.offence_threshold(),
             packages: self.packages.clone(),
             rules: self.rules().to_vec(),
             skipped_rules: self.skipped_rules.clone(),
             write_baseline: self.write_baseline,
-        }
+        })
     }
 
     pub fn list_rules(&self) -> bool {
@@ -189,6 +198,16 @@ impl Args {
 
     fn offence_threshold(&self) -> Option<usize> {
         self.offence_threshold
+    }
+
+    fn portable(flag: &str, path: Option<&Path>) -> Result<Option<SourcePath>, UnusablePath> {
+        path.map(|path| {
+            PortablePath::of(path).ok_or_else(|| UnusablePath {
+                flag: flag.to_string(),
+                shown: path.to_string_lossy().into_owned(),
+            })
+        })
+        .transpose()
     }
 
     fn rules(&self) -> &[String] {
