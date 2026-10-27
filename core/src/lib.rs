@@ -20,7 +20,6 @@
 //! run, `2` rule broken) and the shape of its `--format json` report. See
 //! `docs/ADRs/ADR-LibrarySurfaceIsNotAnApi.md`.
 
-pub mod adoption;
 pub mod blank_lines;
 pub mod finding;
 pub mod leading_constants_rewriter;

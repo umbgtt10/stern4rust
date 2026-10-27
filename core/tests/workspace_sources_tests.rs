@@ -9,7 +9,7 @@ use std::env;
 use std::fs;
 use std::path::Path;
 use std::path::PathBuf;
-use stern4rust::adoption::exclusion_set::ExclusionSet;
+use stern4rust::settings::adoption::exclusion_set::ExclusionSet;
 use stern4rust::workspace_sources::WorkspaceSources;
 
 fn paths(root: &Path, members: &[(&str, &[&str])]) -> Vec<String> {

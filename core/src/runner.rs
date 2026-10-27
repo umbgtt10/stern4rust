@@ -2,10 +2,6 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::adoption::baseline::Baseline;
-use crate::adoption::baseline_outcome::BaselineOutcome;
-use crate::adoption::exclusion_outcome::ExclusionOutcome;
-use crate::adoption::exclusion_set::ExclusionSet;
 use crate::finding::model::manifest_dependency::ManifestDependency;
 use crate::finding::model::name_readers::NameReaders;
 use crate::finding::parsing::read_names::ReadNames;
@@ -21,6 +17,10 @@ use crate::rewriter_registry::RewriterRegistry;
 use crate::rule_catalog::RuleCatalog;
 use crate::rule_registry::RuleRegistry;
 use crate::rules::source::header_rule::HeaderRule;
+use crate::settings::adoption::baseline::Baseline;
+use crate::settings::adoption::baseline_outcome::BaselineOutcome;
+use crate::settings::adoption::exclusion_outcome::ExclusionOutcome;
+use crate::settings::adoption::exclusion_set::ExclusionSet;
 use crate::settings::args::Args;
 use crate::settings::config::Config;
 use crate::settings::config_file::ConfigFile;

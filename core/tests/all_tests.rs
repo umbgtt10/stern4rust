@@ -2,7 +2,6 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-pub mod adoption;
 pub mod blank_lines_tests;
 pub mod finding;
 pub mod leading_constants_rewriter_tests;

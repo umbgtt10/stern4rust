@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+- `adoption` moves under `settings`: the baseline and the exclusions are
+  `settings::adoption::{baseline, baseline_outcome, exclusion,
+  exclusion_outcome, exclusion_set}`, so that the core's source keeps to
+  five folders when its ports arrive in a sixth.
+
 ## [0.18.0] - 2026-10-27
 
 Fourteen rules added, all on by default, so they move what this tool reports

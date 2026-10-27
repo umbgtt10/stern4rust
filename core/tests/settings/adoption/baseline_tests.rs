@@ -15,8 +15,8 @@
 use std::env;
 use std::fs;
 use std::path::PathBuf;
-use stern4rust::adoption::baseline::Baseline;
 use stern4rust::reporting::offence::Offence;
+use stern4rust::settings::adoption::baseline::Baseline;
 
 fn offence(file: &str, line: usize, rule: &'static str, description: &str) -> Offence {
     Offence::new(file, line, rule, description.to_string(), "fix".to_string())

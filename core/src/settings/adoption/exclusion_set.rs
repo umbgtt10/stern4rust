@@ -6,8 +6,8 @@ use anyhow::Result;
 use std::path::Path;
 use std::path::PathBuf;
 
-use crate::adoption::exclusion::Exclusion;
-use crate::adoption::exclusion_outcome::ExclusionOutcome;
+use crate::settings::adoption::exclusion::Exclusion;
+use crate::settings::adoption::exclusion_outcome::ExclusionOutcome;
 
 // Every `--exclude` pattern this run was given, applied to the walked paths.
 //

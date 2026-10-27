@@ -13,9 +13,9 @@ use std::fs::read_to_string;
 use std::fs::write;
 use std::path::Path;
 
-use crate::adoption::baseline_outcome::BaselineOutcome;
 use crate::reporting::offence::Offence;
 use crate::reporting::offence_fingerprint::OffenceFingerprint;
+use crate::settings::adoption::baseline_outcome::BaselineOutcome;
 
 // The offences a repository has already agreed to live with.
 //

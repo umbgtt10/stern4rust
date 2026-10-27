@@ -2,6 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+pub mod adoption;
 pub mod args;
 pub mod config;
 pub mod config_file;

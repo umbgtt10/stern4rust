@@ -13,7 +13,7 @@
 // -- and the two must not be reported the same way.
 
 use std::path::Path;
-use stern4rust::adoption::exclusion::Exclusion;
+use stern4rust::settings::adoption::exclusion::Exclusion;
 
 fn exclusion(pattern: &str) -> Exclusion {
     Exclusion::new(pattern).expect("valid pattern")

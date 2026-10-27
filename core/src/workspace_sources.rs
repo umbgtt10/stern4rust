@@ -5,7 +5,7 @@
 use std::path::Path;
 use std::path::PathBuf;
 
-use crate::adoption::exclusion_set::ExclusionSet;
+use crate::settings::adoption::exclusion_set::ExclusionSet;
 use crate::source_file::SourceFile;
 use crate::source_reader::SourceReader;
 use crate::source_walker::SourceWalker;

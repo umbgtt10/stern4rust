@@ -14,7 +14,7 @@
 
 use std::path::Path;
 use std::path::PathBuf;
-use stern4rust::adoption::exclusion_set::ExclusionSet;
+use stern4rust::settings::adoption::exclusion_set::ExclusionSet;
 
 const ROOT: &str = "/repo";
 

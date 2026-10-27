@@ -8,8 +8,8 @@
 // reporting nothing while hiding four hundred findings would be the most
 // comfortable lie this tool could tell.
 
-use stern4rust::adoption::baseline_outcome::BaselineOutcome;
 use stern4rust::reporting::offence::Offence;
+use stern4rust::settings::adoption::baseline_outcome::BaselineOutcome;
 
 fn offence() -> Offence {
     Offence::new(

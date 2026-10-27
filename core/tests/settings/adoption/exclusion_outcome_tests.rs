@@ -10,7 +10,7 @@
 // alone, from one doing real work.
 
 use std::path::PathBuf;
-use stern4rust::adoption::exclusion_outcome::ExclusionOutcome;
+use stern4rust::settings::adoption::exclusion_outcome::ExclusionOutcome;
 
 fn outcome(excluded: &[(&str, usize)]) -> ExclusionOutcome {
     ExclusionOutcome::new(
