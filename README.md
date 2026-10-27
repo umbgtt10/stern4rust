@@ -22,10 +22,11 @@ across a codebase the moment nobody is checking.
 
 ## This library is not a public API
 
-Depend on the binary. Module paths and signatures in the `stern4rust` library
-may move in any release — everything is `pub` only because this repository
-forbids unit tests, so integration tests must reach it from outside. What is
-promised is the command: its exit codes and its `--format json` report. See
+Depend on the binary. Module paths and signatures in the `stern4rust` library,
+published as `stern4rust-core`, and in `stern4rust_cli` may move in any release
+— everything is `pub` only because this repository forbids unit tests, so
+integration tests must reach it from outside. What is promised is the command:
+its exit codes and its `--format json` report. See
 [ADR-LibrarySurfaceIsNotAnApi](docs/ADRs/ADR-LibrarySurfaceIsNotAnApi.md).
 
 ## Install
@@ -44,19 +45,24 @@ just stage2
 Both must be green before a change is complete, and both run the same way on
 Windows, Linux and macOS. Stage 1 is formatting, clippy and tests — cargo
 built-ins only, so it works on a fresh checkout with none of the tools below
-installed. Stage 2 is `cargo xtask stage2`, which runs, in order: **own rules**,
-`cargo shear` (every declared dependency used), `cargo dry4rust` (no duplication beyond `dry4rust-baseline.json`),
+installed. Stage 2 is `cargo xtask stage2`, which runs, in order: the
+**technology-free core** gate (the core depends on globset, proc-macro2, quote
+and syn alone, is `no_std` and reaches no file system, process, environment or
+stdout), **own rules**, `cargo shear` (every declared dependency used),
+`cargo dry4rust` (no duplication beyond `dry4rust-baseline.json`),
 `cargo crap4rust` (complexity against coverage), `cargo twin4rust` (every source
 file has a mirrored test file) and `cargo iceberg4rust` (file risk).
 
 The own-rules gate runs this tool against itself, built from source rather than
 from an install. A tool that enforces a rule it does not satisfy is not worth
 installing — and a rule this checkout breaks is a rule it is about to publish.
-It covers both workspace members, so `xtask` is held to the rules it exists to
-enforce.
+It covers all three workspace members, so `xtask` is held to the rules it exists
+to enforce.
 
-The repository is a workspace: `core/` is the published crate, `xtask/` runs the
-gates.
+The repository is a workspace: `core/` is the rules, the technology-free crate
+`stern4rust-core`; `cli/` is the command, `cargo-stern4rust`, with the adapters
+the core reaches the machine through; `xtask/` runs the gates. Mutation testing
+(`.cargo/mutants.toml`) is scoped to the core and its own tests.
 
 Everything the two stages need, none of which ships with cargo:
 

@@ -9,27 +9,48 @@ here is scored or thresholded against a formula: a rule is either satisfied or
 it is not. That is why this repository has a `RULES.md` where those have a
 `FORMULA.md`.
 
+## Two crates
+
+The rules and everything that decides a verdict live in `stern4rust-core`
+(`core/`, library `stern4rust`): `#![no_std]`, depending on globset,
+proc-macro2, quote and syn only, and reaching the machine through five ports it
+declares in `core/src/traits/`. The command, `cargo-stern4rust` (`cli/`, library
+`stern4rust_cli`), implements them, parses the arguments, prints and decides the
+exit code. See [ADR-TechnologyFreeCore](ADRs/ADR-TechnologyFreeCore.md).
+
+| port (`core`) | what it answers | implemented by (`cli`) |
+|---|---|---|
+| `SourceTree` | the `.rs` files under a root, in path order, `target/` and `.git/` left out; a file's text; whether a path exists; writing a repaired file back | `WalkdirSourceTree` |
+| `WorkspaceReader` | the workspace, once a run: its root, whether it declares a workspace, each member's name, manifest, licence and declared dependencies | `CargoWorkspaceReader` (`cargo metadata --no-deps`, each member manifest read as TOML through `DependencyTables`) |
+| `ConfigSource` | the `stern4rust.toml` beside a manifest, if any | `TomlConfigSource` |
+| `BaselineStore` | a baseline's counts, and keeping them | `JsonBaselineStore` |
+| `ReportRenderer` | the report and the rule listing as text | `TextReportRenderer` (in `core`), `JsonReportRenderer` |
+
 ## Pipeline
 
 ```
-Args ──▶ Config ──▶ RuleRegistry
+cli: main ──▶ EntryPoint: Args ──▶ Invocation, the adapters, the renderer --format picks
                          │
-ManifestResolver ──▶ package roots
+core: Runner::run(&Invocation)
                          │
-                   SourceWalker  (skips target/ and .git/, nothing else)
+      ConfigSource ──▶ ConfigFile, PackageSections ──▶ Config ──▶ RuleRegistry
                          │
-                   SourceReader  ──▶ SourceFile   or  Offence
+      WorkspaceReader ──▶ WorkspaceDescription ──▶ ManifestResolver ──▶ packages
+                         │
+      SourceTree::rust_files  (skips target/ and .git/, nothing else)
+                         │
+      SourceReader  ──▶ SourceFile   or  Offence
                          │
               ┌──────────┴──────────┐
        rule.check(file)     rule.check_workspace(&files)
               └──────────┬──────────┘
                      Vec<Offence>
                          │
-          dedupe by content, sort by (file, line, rule)
+          dedupe by content, sort by (file, line, rule), BaselineStore
                          │
-              ReportPrinter │ JsonPrinter   (OffenceThreshold caps what prints)
+      RunReport ──▶ ReportRenderer   (OffenceThreshold caps what prints)
                          │
-                    RunOutcome ──▶ exit code
+cli: (RunOutcome, text) ──▶ println, exit code
 ```
 
 The whole package is read before any of it is judged. Six of the rules answer
@@ -43,21 +64,26 @@ happened to return files in.
 
 | Component | Responsibility |
 |---|---|
-| `Args` | clap surface, plus the argv fixup every cargo subcommand needs |
+| `Args` (cli) | clap surface, plus the argv fixup every cargo subcommand needs; builds the `Invocation` |
+| `EntryPoint` (cli) | the composition root: parses, chooses the adapters and the renderer, runs, prints |
+| `Invocation` | what the command line asked, in the core's terms |
 | `Config` | what a run was asked to do, decoupled from how it was asked |
-| `ManifestResolver` | package name → source root, via `cargo_metadata`; also relativises paths |
-| `DependencyTables` | one manifest's dependency entries as written -- plain and `[target.<cfg>]` tables, with each entry's workspace, version, features, default features and optional |
-| `SourceWalker` | every `.rs` path under a root, minus `target/` and `.git/` |
+| `ManifestResolver` | package name → source root, over the `WorkspaceDescription`; also relativises paths |
+| `DependencyTables` (cli) | one manifest's dependency entries as written -- plain and `[target.<cfg>]` tables, with each entry's workspace, version, features, default features and optional |
+| `WalkdirSourceTree` (cli) | every `.rs` path under a root, minus `target/` and `.git/`; reads and writes files |
+| `SourcePath` | a path as text, `/` its only separator -- the core's only path |
 | `SourceReader` | path → `SourceFile`, or an `Offence` if it cannot be read |
 | `SourceFile` | normalised contents: BOM stripped, `\r` stripped, path forward-slashed |
 | `Rule` | the seam: `name`, `check` for one file, `check_workspace` for the set, `is_configured`, `requirement` for why it could not run, `explanation` for what it wants. No method has a default body, so every rule answers all six |
 | `RuleRegistry` | the one place that knows which rules exist |
 | `Offence` | the currency every rule reports in |
 | `OffenceThreshold` | how much of the report is printed |
-| `ReportPrinter` / `JsonPrinter` | the two renderings of a run |
+| `RunReport` | everything a run has to say, before anybody chooses how to say it |
+| `ReportPrinter`, `JsonPrinter` (cli) | the two renderings of a run, behind `TextReportRenderer` and `JsonReportRenderer` |
 | `RuleExplanation` | what one rule wants, in the rule's own words |
-| `RuleListing` | the rule set as a document, in either format -- no run behind it |
+| `RuleListing` / `JsonRuleListing` (cli) | the rule set as text or as a document -- no run behind it |
 | `RunOutcome` | clean or rules-broken, turned into an exit code only by `main` |
+| `RunFailure` | why a run could not judge anything, worded as the run has always worded it |
 
 `src/finding/` is grouped into `model/` (what a rule reasons about) and
 `parsing/` (what turns a file into it), with `tests/finding/` mirroring exactly.
@@ -144,10 +170,13 @@ Windows working copy.
 
 ## CLI layer
 
-`main` does three things: parse argv, call `Runner::run`, and turn the
-`RunOutcome` into an exit code. It is the only place that knows `2` means
-"rule broken" rather than "tool failed", which is what keeps the whole run
-reachable from a test without a process boundary.
+`main` does two things: hand argv to `EntryPoint`, and turn the `RunOutcome`
+into an exit code -- or an `Err` into `stern4rust: {error:#}` and `1`. It is the
+only place that knows `2` means "rule broken" rather than "tool failed", which
+is what keeps the whole run reachable from a test without a process boundary.
+`EntryPoint` parses the arguments, builds the `Invocation`, chooses the
+adapters and the renderer, runs the core and prints what it says; the core
+itself never prints.
 
 `--rules` is the one path that returns before the pipeline above runs at all:
 nothing is walked, read or judged, so it works in a checkout with no manifest

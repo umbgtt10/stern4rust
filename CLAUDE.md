@@ -35,7 +35,7 @@ That means:
 
 ## Quality Gates
 
-### Mandatory after every change to `core/src/` or `core/tests/`
+### Mandatory after every change to `core/`, `cli/` or `xtask/`
 
 Run gates:
 
@@ -53,11 +53,12 @@ a fresh checkout with none of the house tools installed.
 Stage 2 is `cargo xtask stage2` -- a real crate under `xtask/`, gated like any
 other code, rather than a script. Each gate is a `Gate` implementation
 constructed against a `CommandRunner` trait, so the argument lists and the
-failure messages are covered by `xtask`'s own integration tests. It runs six
+failure messages are covered by `xtask`'s own integration tests. It runs seven
 gates, in this order:
 
 | gate | asks |
 |---|---|
+| Technology-free core | does `core` still touch no technology |
 | own rules | does this tool satisfy the rules it enforces |
 | `cargo shear` | is every declared dependency used, in the section that uses it |
 | `cargo dry4rust` | did this change add duplicated code |
@@ -65,13 +66,29 @@ gates, in this order:
 | `cargo twin4rust` | does every source file have a mirrored test file |
 | `cargo iceberg4rust` | is any file's private implementation risk too high |
 
-The own-rules gate runs **first**, where the PowerShell script ran it last. Its
-corrections are renames, file moves and directory splits, so a layout it is
-about to reject is one the others would have measured for nothing -- the
-same reason every sibling repository puts `stern4rust` ahead of the rest. It
-caught a misordered test in `xtask` on its first run in that position.
+The technology-free gate runs **first**. It is the xtask's own -- no tool to
+install -- and asks three things of `core`: that its manifest names only
+`globset`, `proc-macro2`, `quote` and `syn`, in any section (read from `cargo
+metadata --no-deps`; a package missing from the metadata fails); that
+`core/src/lib.rs` carries `#![no_std]` and `#![forbid(unsafe_code)]`, which
+hand `core/src` to the compiler; and that no file under `core/src` or
+`core/tests` reaches `std::{env,fs,io,net,os,process}`, a printing macro or a
+file-system method of `Path`, read with syn so a string literal -- every rule's
+example is one -- is data. The `core/src` scan is a backstop to the compiler;
+`core/tests`, where std is linked, depends on it. Calls inside a macro's
+arguments are not seen, and a method of one's own named like a file-system one
+would be flagged -- which is why the port asking whether a path exists calls it
+`contains`. Its fix is moving code into `cli`, which changes what every gate
+behind it measures, and it takes a second.
 
-cargo-shear runs **second**: its corrections edit manifests only -- a
+The own-rules gate runs **second**, behind the boundary and ahead of the rest,
+where the PowerShell script ran it last. Its corrections are renames, file moves
+and directory splits, so a layout it is about to reject is one the others would
+have measured for nothing -- the same reason every sibling repository puts
+`stern4rust` ahead of the rest. It caught a misordered test in `xtask` on its
+first run in that position.
+
+cargo-shear runs **third**: its corrections edit manifests only -- a
 dependency removed, or moved to the section that uses it -- so they change
 nothing the gates behind it measure, and it takes a second. It runs `--locked`,
 reading the lock file and never writing it, and `--deny-warnings`, so an
@@ -82,11 +99,15 @@ only to switch on a feature, used only by generated code -- goes in
 its reason in the same table's `reasons`; there are none today. Pinned at
 1.14.0, as CI installs it.
 
-`dry4rust` runs **third** for the same reason: removing a duplicate moves code
-between files, which changes what the three behind it measure. It scans
-`core/src` only -- tests repeat their arrangement by design -- and checks with
-zero ceilings against `dry4rust-baseline.json`, the duplication already there
-when the gate arrived. So it fails on what a change adds, not on what it
+`dry4rust` runs **fourth** for the same reason the own rules run early:
+removing a duplicate moves code between files, which changes what the three
+behind it measure. It makes one run from the workspace root over both published
+crates' sources, so a copy from one into the other is seen, with the trees it
+must not judge -- `xtask`, `core/tests`, `cli/tests`; tests repeat their
+arrangement by design -- excluded by full path, because dry4rust matches an
+exclusion as a substring of a file's path and a bare `tests` would also exclude
+a checkout under a directory of that name. It checks with zero ceilings against
+`dry4rust-baseline.json`, the duplication already there when the gate arrived. So it fails on what a change adds, not on what it
 inherited; a duplicate removed is admitted, a copy added to a recorded group is
 not.
 
@@ -101,24 +122,17 @@ which is what this gate first caught.
 
 Re-record the baseline only to drop groups that are gone, never to admit new
 ones, and at the same floor -- a baseline matches only at the floor it was
-recorded at: `cargo dry4rust --path core/src --min-nodes 25 --baseline "$PWD/dry4rust-baseline.json" baseline`.
+recorded at, and over the same trees: `cargo dry4rust --path "$PWD" --exclude "$PWD/xtask" --exclude "$PWD/core/tests" --exclude "$PWD/cli/tests" --min-nodes 25 --baseline "$PWD/dry4rust-baseline.json" baseline`.
 
-`core/src/.dry4rust-ignore.toml` holds the fingerprints, each with its
-reason, of plain constructors -- `Self { a, b, c, d }` -- which
-every object with private fields has, so any two with as many fields look
-alike, and a few with a field more or less nearly alike. dry4rust leaves
-plain constructors out from its next release
-(ADR-PlainConstructorsAreTheStructsShape, in dry4rust); until the gate installs
-it, these entries bridge -- an exact group per field count, a near group across
-counts -- and the file goes when the release does.
-
-It runs `stern4rust` against itself, built from source rather than from whatever
-is installed. A tool that enforces a rule it does not satisfy is not worth
+It runs `stern4rust` against itself, built from this checkout's `cli` rather
+than from whatever is installed. A tool that enforces a rule it does not satisfy is not worth
 installing -- and a rule this checkout breaks is a rule it is about to publish
 -- so every `.rs` file here carries the header in `docs/header.txt`.
 
-Both members are scanned: `cargo-stern4rust` and `xtask`. The crate that runs
-the gates is not exempt from the rules it exists to enforce.
+All three members are scanned: `stern4rust-core`, `cargo-stern4rust` and
+`xtask`. The crate that runs the gates is not exempt from the rules it exists to
+enforce. crap4rust, twin4rust and iceberg4rust measure the two published crates,
+`stern4rust-core` and `cargo-stern4rust`; `xtask` is not their bill.
 
 `cargo install just`
 `cargo install cargo-llvm-cov`
@@ -141,23 +155,35 @@ it simply is not the only way in any more.
 One consequence is worth knowing before writing a test here. Any test that
 needs the *absence* of a config cannot point at this repository's own manifest,
 because a `stern4rust.toml` now sits beside it. `probe_package` in
-`core/tests/runner_tests.rs` builds a package without one for exactly that reason.
+`cli/tests/invocation/entry_point_tests.rs` builds a package without one for
+exactly that reason.
 
 ## Layout
 
-The repository is a workspace: `core/` is the published crate and `xtask/` runs
-the gates. That split is load-bearing rather than tidy-minded. While the crate
-sat at the repository root, its package directory *was* the repository root, so
-a scan of the package walked `xtask/tests/**` and reported its test functions as
-living "in the source tree" -- files belonging to a different package entirely.
-`--package` does not narrow it, because the scope is the directory. Giving each
-crate its own directory is what separates them.
+The repository is a workspace of three members:
 
-Three tests in `core/tests/settings/manifest_resolver_tests.rs` assert facts
-about this repository's own layout, so the split changed their answers rather
-than breaking them: an unnamed scan now resolves to two members, the root now
-declares `[workspace.dependencies]`, and the workspace root is now one directory
-above the crate. All three were renamed to say what they now check.
+| member | what it is |
+|---|---|
+| `core/` | the rules: package `stern4rust-core`, library `stern4rust`. `#![no_std]`, `#![forbid(unsafe_code)]`, no technology -- see "Technology-free core" below. Published. |
+| `cli/` | the command: package `cargo-stern4rust`, library `stern4rust_cli`, binary `cargo-stern4rust`. `Args`, the composition root `EntryPoint`, the JSON report, and every adapter. Published. |
+| `xtask/` | gate orchestration, run as `cargo xtask`. `publish = false`. |
+
+`core` and `cli` share the workspace's `version`. `[workspace.lints.rust]`
+forbids `unsafe_code` in every member and every target; `core` says so at its
+crate root as well.
+
+Giving each crate a directory of its own is load-bearing rather than
+tidy-minded. While the crate sat at the repository root, its package directory
+*was* the repository root, so a scan of the package walked `xtask/tests/**` and
+reported its test functions as living "in the source tree" -- files belonging to
+a different package entirely. `--package` does not narrow it, because the scope
+is the directory. Giving each crate its own directory is what separates them.
+
+Tests in `cli/tests/system/cargo_workspace_reader_tests.rs` assert facts about
+this repository's own layout, so a change to it changes their answers rather
+than breaking them: an unnamed scan resolves to all three members, each named,
+the root declares `[workspace.dependencies]`, and the workspace root is one
+directory above the crate.
 
 ## Architecture
 
@@ -178,10 +204,35 @@ One rule, one file, one implementation.
   trailing carriage return and a leading byte order mark are stripped. Without
   that, every file on a Windows checkout fails a rule that is really about
   content, and never fails on the maintainer's machine.
+- `Runner` (`core/src/runner.rs`) is the run: built over the core's five ports,
+  it reads an `Invocation` -- what the command line asked -- and returns the
+  verdict and what the run has to say. It does not print.
 
 A rule's expected values are **data, not constants**. The header differs by
 repository — MIT here, Apache 2.0 in the etheram repositories — and a rule that
 hardcoded one would be right for exactly one codebase.
+
+## Technology-free core
+
+`core` touches no technology -- no cargo, file system, process, environment,
+argument parsing, serialisation or stdout -- so mutation testing it needs
+nothing but its own tests, which run in under a tenth of a second.
+`.cargo/mutants.toml` scopes cargo-mutants to `core/src`, each mutant tested by
+core's tests only.
+
+Whatever technology core needs is a port: a trait in `core/src/traits/` --
+`SourceTree`, `WorkspaceReader`, `ConfigSource`, `BaselineStore`,
+`ReportRenderer` -- the records it speaks in beside their users
+(`settings/invocation.rs`, `settings/workspace_description.rs`,
+`reporting/run_report.rs`), an in-memory fake for core's tests in
+`core/tests/support/`, and the real adapter in `cli/src/system/` (the JSON
+renderer in `cli/src/reporting/`), composed in `cli`'s `EntryPoint`. A new need
+is the same three pieces: trait, fake, adapter. Paths in core are
+`SourcePath`s, text whose only separator is `/`; `cli`'s `PortablePath`
+converts at the edge, and a path that is not UTF-8 fails the run rather than
+being judged under a lossy name. core's failures are typed (`RunFailure` and the
+failures it wraps) and keep their causes, so `cli`'s `main` prints the same
+chain anyhow always printed.
 
 ## Exit codes
 
@@ -196,7 +247,7 @@ code alike cannot tell "your code has a problem" from "I could not read your
 code", and the second silently passing is how a gate stops meaning anything.
 
 `Runner::run` returns a `RunOutcome` rather than calling `exit`, which is the
-only reason the end-to-end path is reachable from a test. Only `core/src/main.rs`
+only reason the end-to-end path is reachable from a test. Only `cli/src/main.rs`
 turns a verdict into an exit code.
 
 A named package that does not exist is an **error**, not an empty result. A typo
@@ -204,18 +255,20 @@ in a gate script would otherwise scan nothing and report success.
 
 ## Publishing
 
-The crate publishes as `cargo-stern4rust` so cargo resolves `cargo stern4rust`,
-matching `cargo-crap4rust`, `cargo-twin4rust`, `cargo-iceberg4rust` and
-`cargo-dry4rust`. The
-library is `stern4rust`.
+Two crates publish. The command publishes as `cargo-stern4rust` so cargo
+resolves `cargo stern4rust`, matching `cargo-crap4rust`, `cargo-twin4rust`,
+`cargo-iceberg4rust` and `cargo-dry4rust`; it depends on `stern4rust-core`, the
+rules, whose library is `stern4rust`. A release publishes `stern4rust-core`
+first (`cargo publish --workspace` orders them), and every repository's
+`cargo install cargo-stern4rust` keeps working, the package name unchanged.
 
-`core/src/main.rs` strips the repeated subcommand name that cargo inserts as
+`EntryPoint` strips the repeated subcommand name that cargo inserts as
 `argv[1]`; running the binary directly does not repeat it, so the strip is
 conditional. It is also positional — dropping every occurrence would swallow
-`--package stern4rust`. `Args::without_cargo_subcommand` owns that rule and both
-properties are tested.
+`--package stern4rust`. `Args::without_cargo_subcommand`, in
+`cli/src/invocation/args.rs`, owns that rule and both properties are tested.
 
-Before publishing, `cargo publish --dry-run` must succeed.
+Before publishing, `cargo publish --workspace --dry-run` must succeed.
 
 ## Orthogonality, trait surface and cognitive complexity
 

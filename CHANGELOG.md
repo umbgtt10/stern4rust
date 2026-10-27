@@ -12,8 +12,9 @@ a `.rs` file whose name is not UTF-8 now fails the run, naming the file, where
 0.18.0 judged it under a lossy name; and a `--manifest-path`, `--header-file`
 or `--baseline` that is not UTF-8 fails the run naming the flag, where 0.18.0
 used it. The repository splits into a technology-free core and a cli crate
-(`docs/CORE_CLI_SPLIT.md`), which changes how the library is packaged and much
-of its API.
+(`docs/history/[IMPLEMENTED] CORE_CLI_SPLIT.md`, and
+[ADR-TechnologyFreeCore](docs/ADRs/ADR-TechnologyFreeCore.md)), which changes
+how the library is packaged and much of its API.
 
 ### Added
 - Stage 2 gains a first gate, "Technology-free core": the core's manifest may
@@ -106,7 +107,7 @@ of its API.
   `reporting::text_report_renderer::TextReportRenderer`, the document by
   `stern4rust_cli::reporting::json_report_renderer::JsonReportRenderer`.
   `reporting::output_format` moves to `stern4rust_cli::invocation::output_format`,
-  and `Config` and `Invocation` lose `format`; `reporting::json_printer` moves
+  and `Config` loses `format`; `reporting::json_printer` moves
   to `stern4rust_cli::reporting::json_printer` and loses `print`, and the JSON
   half of `reporting::rule_listing::RuleListing` becomes
   `stern4rust_cli::reporting::json_rule_listing::JsonRuleListing`, so

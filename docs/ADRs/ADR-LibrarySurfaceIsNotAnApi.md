@@ -92,15 +92,29 @@ are documented.
 
 ## Enforcement
 
-`src/lib.rs` carries the policy as a crate-level doc comment, so it appears at
-the top of the `docs.rs` page rather than only in a file nobody reads before
-depending on the crate. `README.md` states it beside the install instructions.
+`core/src/lib.rs` carries the policy as a crate-level doc comment, so it appears
+at the top of the `docs.rs` page rather than only in a file nobody reads before
+depending on the crate; `core/README.md` says it again. `README.md` states it beside the install instructions.
 
 There is no test. Nothing about the behaviour of the tool changes, and a test
 asserting that a policy exists would assert only that a comment is present.
 
+## Amendment, 2026-10-28: two crates, one policy
+
+The split into a technology-free core and a command
+([ADR-TechnologyFreeCore](ADR-TechnologyFreeCore.md)) publishes two crates where
+there was one: `stern4rust-core`, whose library is still `stern4rust`, and
+`cargo-stern4rust`, now the command alone, with a library of its own,
+`stern4rust_cli`. The policy holds for both, unchanged: neither library is a
+public API, and the command is what is promised. `stern4rust-core` is published
+only so that `cargo-stern4rust` can depend on it, and its README says so; the
+split itself moved most of the core's paths and signatures, which is the policy
+working as written rather than a breaking change. The changelog calls the moves
+out, as it always has.
+
 ## Related
 
+- [ADR-TechnologyFreeCore](ADR-TechnologyFreeCore.md) — why there are two crates.
 - [ADR-ExitCodeContract](ADR-ExitCodeContract.md) — the interface that *is*
   promised: the exit codes, and the report the binary prints.
 - [R010-ADR-DirectoryFileCountRule](R010-ADR-DirectoryFileCountRule.md) — the

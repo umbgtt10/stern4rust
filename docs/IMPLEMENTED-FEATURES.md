@@ -618,7 +618,9 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
 ### Packaging
 
 - Publishes as `cargo-stern4rust` with a `stern4rust` library, so cargo resolves
-  `cargo stern4rust`.
+  `cargo stern4rust`. Unreleased: the command and the rules become two crates,
+  the library published as `stern4rust-core` -- see the
+  [CHANGELOG](../CHANGELOG.md).
 - `Args::without_cargo_subcommand` — the argv fixup every cargo subcommand
   needs, conditional and positional, so a package named `stern4rust` survives.
 - `[package.<name>]` sections — one `stern4rust.toml` at a workspace root
