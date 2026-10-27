@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-10-27
+
 Fourteen rules added, all on by default, so they move what this tool reports
 about your code once it is released. A function returning a mutable reference, one
 returning a tuple that repeats an element type, a module-level constant declared
