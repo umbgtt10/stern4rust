@@ -15,7 +15,7 @@ resolver = "3"
 # Declared once here; every member takes them with `.workspace = true`, so a
 # version is bumped in one place and no two members can disagree.
 [workspace.package]
-version = "0.18.0"
+version = "0.19.0"
 edition = "2024"
 rust-version = "1.85"
 authors = ["Umberto Gotti <umberto.gotti@umbertogotti.dev>"]
@@ -32,7 +32,7 @@ quote = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 toml = "0.9"
-stern4rust-core = { path = "core", version = "0.18.0" }
+stern4rust-core = { path = "core", version = "0.19.0" }
 syn = { version = "2.0", features = ["full", "parsing", "printing", "visit"] }
 tempfile = "3"
 walkdir = "2.5.0"
