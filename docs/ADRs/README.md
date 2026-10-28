@@ -25,6 +25,9 @@ against and the name is a better identifier than a number would be:
 The split is also legible in a directory listing. Anything with an `R` is a
 rule; anything without is the machinery the rules run on.
 
+**A path an ADR cites is relative to the core package, `core/`,** where the rules and their tests live, as
+it was when the core was the only package; one in the cli or the xtask says so with its `cli/` or `xtask/` prefix.
+
 ## Rules
 
 | ADR | Rule | Decision |

@@ -135,16 +135,17 @@ removing or renaming one is not.
 
 ## Enforcement
 
-`tests/reporting/json_printer_tests.rs` — 13 tests parsing the document back and asserting
-on its structure, including the quote-escaping case and that both optional keys
-are present as `null` when empty.
+`cli/tests/reporting/json_printer_tests.rs` — 18 tests parsing the document back
+and asserting on its structure, including the quote-escaping case and that both
+optional keys are present as `null` when empty.
 
-`tests/report_printer_tests.rs` — 5 `render` tests asserting what comes out,
-including that every offence is followed by exactly one `fix:` line and that the
-line is indented past the columns; plus 4 `print` tests pinning that the writing
-path survives no offences, one, many, and an over-wide path.
+`tests/reporting/report_printer_tests.rs` — 23 `render` tests asserting what
+comes out, including that every offence is followed by exactly one `fix:` line,
+that the line is indented past the columns, and the exact text for no offences,
+one, many, and an over-wide path. The JSON moved to the cli with the core/cli
+split; the text stays in the core.
 
-`tests/offence_tests.rs` pins the sort key and both builders.
+`tests/reporting/offence_tests.rs` pins the sort key and both builders.
 
 `tests/reporting/offence_threshold_tests.rs` — 10 tests covering the default of 100,
 zero meaning unlimited, and that `kept` preserves order. The

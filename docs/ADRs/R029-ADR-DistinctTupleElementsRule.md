@@ -129,16 +129,18 @@ types, a returned callback taking two of one type and a trait impl left alone;
 `tests/` exempt; the unparseable file; `check_workspace`, `is_configured`, the
 name and the requirement.
 
-`tests/finding/parsing/signatures/repeated_tuple_finder_tests.rs` (nine) pins the search:
-top level, wrapped, in a `Vec`, the outer tuple first, lifetimes ignored, an
-alias not resolved, `()` and a callback's parameters not tuples.
-`tests/finding/parsing/signatures/type_walk_tests.rs` (six) pins the walk both type searches
-share, and `tests/finding/model/repeated_tuple_tests.rs` the model.
+`tests/finding/parsing/signatures/repeated_tuple_finder_tests.rs` (nine) pins
+the search: top level, wrapped, in a `Vec`, the outer tuple first, lifetimes
+ignored, an alias not resolved, `()` and a callback's parameters not tuples.
+`tests/finding/parsing/signatures/type_walk_tests.rs` (six) pins the walk both
+type searches share. The model, `src/finding/model/repeated_tuple.rs`, is a
+record since 2026-10-25 -- public fields and nothing of its own to test -- so
+its test file went with its accessors.
 
-`tests/reporting/offence_order_tests.rs` (three) and
-`tests/reporting/unconfigured_rule_tests.rs` (one) pin the two types this
-repository's own offences became; the registry's test of `unconfigured` now
-expects `UnconfiguredRule`s with the same names and requirements.
+`tests/reporting/offence_order_tests.rs` (two) pins the first of the two types
+this repository's own offences became; the second, `UnconfiguredRule`, is a
+record since 2026-10-25, and the registry's test of `unconfigured` expects
+`UnconfiguredRule`s with the same names and requirements.
 
 `tests/rule_registry_tests.rs` -- the four rule-name lists include
 `distinct-tuple-elements` -- and `tests/runner_tests.rs`, whose `--rules`

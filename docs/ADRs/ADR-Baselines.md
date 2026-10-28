@@ -103,7 +103,7 @@ run that uses one says so in the summary and the JSON.
 
 ## Enforcement
 
-`tests/adoption/baseline_tests.rs` — the round trip, forgiving each recorded
+`tests/settings/adoption/baseline_tests.rs` — the round trip, forgiving each recorded
 offence once, forgiving an offence that moved lines, reporting an offence the
 baseline never saw, counting occurrences, the missing file as an error, and a
 file that is not a baseline as an error.

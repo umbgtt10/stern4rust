@@ -155,8 +155,8 @@ what went unregistered.
 `run_with_the_header_rule_selected_but_no_header_file_is_an_error` pin both
 error paths.
 
-`tests/report_printer_tests.rs::render_names_the_rules_that_were_not_applied`
-and `render_of_no_offences_with_a_skipped_rule_says_selected_rules_are_satisfied`
+`tests/reporting/report_printer_tests.rs::render_names_the_rules_that_were_not_applied`
+and `render_of_no_offences_with_a_skipped_rule_says_applied_rules_are_satisfied`
 pin that a partial run cannot read as a complete one — the second asserts the
 absence of the unqualified sentence, not only the presence of the qualified one.
 

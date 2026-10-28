@@ -82,7 +82,7 @@ does as much of its job as remains possible.
 
 ## Enforcement
 
-`tests/run_outcome_tests.rs` pins each code, including that `2` is what a
+`tests/reporting/run_outcome_tests.rs` pins each code, including that `2` is what a
 single offence produces.
 
 `tests/runner_tests.rs::run_against_an_unknown_package_is_an_error` and

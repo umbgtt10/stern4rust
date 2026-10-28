@@ -158,7 +158,8 @@ dependency, a pair written unlike, a build dependency, a dev entry alone), two
 repeats, and the rule's name, configuration, requirement and explanation.
 
 `tests/finding/model/manifest_dependency_tests.rs` -- `repeats`, shape by shape;
-`tests/settings/dependency_tables_tests.rs` -- what is read from the TOML.
+`cli/tests/system/dependency_tables_tests.rs` -- what is read from the TOML,
+since the core/cli split in the cli.
 
 `tests/runner_tests.rs` -- a package outside a workspace reported against its
 `Cargo.toml`, and a six-member workspace stating one member's repeat once.

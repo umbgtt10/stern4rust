@@ -88,12 +88,12 @@ removed skip in the way that matters: the reader asked for it and can see it.
 
 ## Enforcement
 
-`tests/source_walker_tests.rs::walk_finds_a_fixture_package_nested_under_tests`
-and `walk_finds_a_nested_package_holding_its_own_manifest` pin the new
+`cli/tests/system/walkdir_source_tree_tests.rs::rust_files_finds_a_fixture_package_nested_under_tests`
+and `rust_files_finds_a_nested_package_holding_its_own_manifest` pin the new
 behaviour. Both are the inverted forms of the tests that pinned the skip, kept
 rather than deleted so the reversal is legible in the history.
 
-`walk_keeps_the_root_package_even_though_it_holds_a_manifest` survives unchanged
+`rust_files_keeps_the_root_package_even_though_it_holds_a_manifest` survives unchanged
 in what it asserts: it once guarded an exemption from the skip, and now pins
 that no such skip exists to need exempting.
 

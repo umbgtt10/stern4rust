@@ -99,9 +99,9 @@ would silence the rule without changing anything a reader cares about.
 ## Consequences
 
 **An extracted type gains a mirrored test file obligation.** Moving
-`ColumnWidths` into its own file made `twin4rust` require
-`tests/column_widths_tests.rs`, which is a cost — and a fair one, since the
-alternative was a piece of logic with no direct tests at all.
+`ColumnWidths` into its own file made `twin4rust` require its mirrored test
+file, now `tests/reporting/column_widths_tests.rs`, which is a cost — and a fair
+one, since the alternative was a piece of logic with no direct tests at all.
 
 **A one-method helper now costs a file.** That is the intended trade and it will
 occasionally feel heavy for a struct with a single `fn`. The rule's answer is
