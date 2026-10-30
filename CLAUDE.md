@@ -50,6 +50,12 @@ commands -- there is no second definition of the gates to drift out of step.
 Stage 1 is formatting, clippy and tests -- cargo built-ins only, so it works on
 a fresh checkout with none of the house tools installed.
 
+`just stage1` starts with `just sync`: `cargo update`, every dependency to its
+newest compatible version, in the lock file only, while the tools are in
+development. It needs the network. A requirement in a manifest never moves, so a
+published crate's users can still resolve what they could; what it moves is
+committed on its own. Breaking versions are a separate decision, not taken here.
+
 Stage 2 is `cargo xtask stage2` -- a real crate under `xtask/`, gated like any
 other code, rather than a script. Each gate is a `Gate` implementation
 constructed against a `CommandRunner` trait, so the argument lists and the

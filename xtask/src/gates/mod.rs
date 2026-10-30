@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 pub mod boundary_gate;
+pub mod cargo_update_gate;
 pub mod crap_gate;
 pub mod deny_gate;
 pub mod dry_gate;
