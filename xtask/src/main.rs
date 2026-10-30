@@ -13,6 +13,7 @@ use xtask::boundary::package_dependencies::PackageDependencies;
 use xtask::crap::crap_report_parser::CrapReportParser;
 use xtask::gates::boundary_gate::BoundaryGate;
 use xtask::gates::crap_gate::CrapGate;
+use xtask::gates::deny_gate::DenyGate;
 use xtask::gates::dry_gate::DryGate;
 use xtask::gates::gate::Gate;
 use xtask::gates::iceberg_gate::IcebergGate;
@@ -125,6 +126,8 @@ fn run_stage2() -> ExitCode {
     // corrections edit manifests only, so they move nothing the gates behind it
     // measure, and it costs a second.
     let shear = ShearGate::new(&runner, manifest_path.clone());
+    // Last in stage 2: its advisories change without the code changing (see DenyGate).
+    let deny = DenyGate::new(&runner, manifest_path.clone());
 
     // Fourth, for the same reason stern4rust runs early: removing a duplicate
     // moves code between files, which changes what the three behind it measure.
@@ -166,7 +169,9 @@ fn run_stage2() -> ExitCode {
         String::from(ICEBERG_THRESHOLD),
     );
 
-    let gates: Vec<&dyn Gate> = vec![&boundary, &stern, &shear, &dry, &crap, &twin, &iceberg];
+    let gates: Vec<&dyn Gate> = vec![
+        &boundary, &stern, &shear, &dry, &crap, &twin, &iceberg, &deny,
+    ];
 
     match Stage2::new(gates).run() {
         Ok(()) => {
