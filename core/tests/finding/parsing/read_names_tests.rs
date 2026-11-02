@@ -123,12 +123,33 @@ fn of_a_file_matching_on_a_constant_reads_it() {
 }
 
 #[test]
+fn of_a_file_naming_a_path_in_a_serde_attributes_string_reads_it() {
+    // Arrange & Act
+    let read = names(
+        "struct Entry {\n    #[serde(with = \"KindRecord\", skip_serializing_if = \"Vec::is_empty\")]\n    kind: Kind,\n}\n",
+    );
+
+    // Assert
+    assert!(read.contains("KindRecord"), "{read:?}");
+    assert!(read.contains("Vec"), "{read:?}");
+}
+
+#[test]
 fn of_a_file_reading_a_constant_in_a_macro_reads_it() {
     // Arrange & Act
     let read = names("fn t() {\n    assert_eq!(count(), LIMIT);\n}\n");
 
     // Assert
     assert!(read.contains("LIMIT"), "{read:?}");
+}
+
+#[test]
+fn of_a_file_renaming_a_field_in_a_serde_attribute_leaves_the_new_name_out() {
+    // Arrange & Act
+    let read = names("struct Entry {\n    #[serde(rename = \"Window\")]\n    kind: Kind,\n}\n");
+
+    // Assert
+    assert!(!read.contains("Window"), "{read:?}");
 }
 
 #[test]

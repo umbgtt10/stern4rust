@@ -58,6 +58,19 @@ fn check_workspace_of_a_data_enum_named_in_the_public_api_but_declared_in_anothe
 }
 
 #[test]
+fn check_workspace_of_a_data_enum_named_only_by_a_serde_attribute_of_its_only_consumer_living_private_in_it_reports_nothing()
+ {
+    // Arrange & Act
+    let offences = check(&[(
+        "src/entry_record.rs",
+        "#[derive(Serialize, Deserialize)]\npub struct EntryRecord {\n    #[serde(with = \"KindRecord\")]\n    pub kind: Kind,\n}\n\n#[derive(Serialize, Deserialize)]\n#[serde(remote = \"Kind\")]\nenum KindRecord {\n    Exact,\n    Near,\n}\n",
+    )]);
+
+    // Assert
+    assert!(offences.is_empty(), "expected none, got {offences:?}");
+}
+
+#[test]
 fn check_workspace_of_a_data_enum_used_by_two_files_but_declared_in_a_third_reports_it() {
     // Arrange & Act
     let offences = check(&[

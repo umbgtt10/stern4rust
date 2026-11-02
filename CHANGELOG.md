@@ -12,6 +12,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   `impl From<Args> for Config` -- as behaviour, as it already counted the
   same method called on a value. A test converting a record through such an
   impl is no longer reported.
+- A file reads every path a serde attribute spells as a string --
+  `with`, `remote`, `from`, `into`, `try_from`, `default`, `getter`,
+  `serialize_with`, `deserialize_with`, `skip_serializing_if`. `record-home`
+  no longer calls a serde mirror named only by `#[serde(with = "...")]` in its
+  consumer "used nowhere", and so no longer asks for it to be moved back out.
 
 ## [0.20.0] - 2026-11-02
 
