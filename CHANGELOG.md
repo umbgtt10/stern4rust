@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+- `behaviour-tests` counts a call through a path to a trait method the
+  package writes by hand -- `Config::from(args)` beside a hand-written
+  `impl From<Args> for Config` -- as behaviour, as it already counted the
+  same method called on a value. A test converting a record through such an
+  impl is no longer reported.
+
 ## [0.20.0] - 2026-11-02
 
 ### Added

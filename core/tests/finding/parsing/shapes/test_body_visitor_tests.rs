@@ -108,6 +108,23 @@ fn examine_of_a_free_function_through_a_module_path_is_behaviour() {
 }
 
 #[test]
+fn examine_of_a_hand_written_trait_method_through_a_path_is_behaviour() {
+    // Arrange
+    let parsed = parse_file("#[test]\nfn converts() {\n    let window = Window { start: 1 };\n    assert_eq!(Span::from(window).start, 1);\n}\n").expect("valid test file");
+    let (test, helpers, methods) = split(&parsed.items);
+    let surface = PackageSurface::of(&[SourceFile::new(
+        "src/widget.rs",
+        "pub struct Window {\n    pub start: u64,\n}\nimpl From<Window> for Span {\n    fn from(window: Window) -> Self {\n        Span { start: window.start }\n    }\n}\n",
+    )]);
+
+    // Act
+    let subject = TestBodyVisitor::new(&surface, &helpers, &methods).examine(test);
+
+    // Assert
+    assert!(subject.exercises_behaviour);
+}
+
+#[test]
 fn examine_of_a_helper_calling_behaviour_is_behaviour() {
     // Arrange
     let parsed = parse_file("fn ran() -> u64 {\n    Engine.run()\n}\n\n#[test]\nfn reads() {\n    let window = Window { start: ran() };\n    assert_eq!(window.start, 1);\n}\n").expect("valid test file");

@@ -154,9 +154,13 @@ impl<'a: 'ast, 'ast> Visit<'ast> for TestBodyVisitor<'a> {
             match segments.as_slice() {
                 [name] => self.called(name),
                 [.., qualifier, name] => {
-                    if self.surface.is_object(qualifier) || self.surface.is_free_function(name) {
+                    let record = self.surface.is_record(qualifier);
+                    if self.surface.is_object(qualifier)
+                        || self.surface.is_free_function(name)
+                        || (!record && self.surface.is_behaviour_method(name))
+                    {
                         self.behaviour = true;
-                    } else if !self.surface.is_record(qualifier) {
+                    } else if !record {
                         let local_methods = self.local_methods;
                         self.expand(local_methods, "method ", name);
                     }

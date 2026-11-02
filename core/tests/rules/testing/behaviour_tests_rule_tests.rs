@@ -71,6 +71,27 @@ fn check_workspace_of_a_record_test_names_the_record_in_its_description() {
 }
 
 #[test]
+fn check_workspace_of_a_test_converting_through_a_hand_written_from_reports_nothing() {
+    // Arrange
+    let sources = [
+        SourceFile::new(
+            "src/args.rs",
+            "pub struct Args {\n    pub jobs: u32,\n}\nimpl From<Args> for Config {\n    fn from(args: Args) -> Self {\n        Config { jobs: args.jobs }\n    }\n}\n",
+        ),
+        SourceFile::new(
+            "tests/args_tests.rs",
+            "#[test]\nfn from_carries_the_jobs() {\n    assert_eq!(Config::from(Args { jobs: 2 }).jobs, 2);\n}\n",
+        ),
+    ];
+
+    // Act
+    let found = BehaviourTestsRule::new().check_workspace(&sources);
+
+    // Assert
+    assert!(found.is_empty());
+}
+
+#[test]
 fn check_workspace_of_a_test_exercising_behaviour_reports_nothing() {
     // Arrange & Act
     let found = check(&[
