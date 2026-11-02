@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.20.0] - 2026-11-02
+
 ### Added
 - `behaviour-tests`, the thirty-ninth rule: a test under `tests/` that names a
   record of its package and calls nothing of it but records' accessors and
