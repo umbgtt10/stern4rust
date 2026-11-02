@@ -91,6 +91,22 @@ fn sort_key_orders_two_offences_in_the_same_file_by_line() {
     assert!(first.sort_key() < second.sort_key());
 }
 
+#[test]
+fn sort_key_orders_two_offences_on_the_same_line_by_rule() {
+    // Arrange & Act
+    let first = Offence::new("src/a.rs", 3, "header", "x".to_string(), "fix".to_string());
+    let second = Offence::new(
+        "src/a.rs",
+        3,
+        "imported-paths",
+        "x".to_string(),
+        "fix".to_string(),
+    );
+
+    // Assert
+    assert!(first.sort_key() < second.sort_key());
+}
+
 // The correct text, where the rule knows it. This is what turns a report into
 // something that can be applied rather than only read: the header rule knows the
 // whole header, so it can hand it over instead of describing one wrong line.

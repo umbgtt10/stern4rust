@@ -153,6 +153,14 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
   `item2` against `item10`, `a_b` against `aB`, `rad` against `r#ref`.
   [R019](ADRs/R019-ADR-OrderedImportsRule.md)
 
+- **`behaviour-tests`** -- a test under `tests/` that names a record of its
+  package and calls nothing of it but records' accessors and derived traits is
+  reported. `PackageSurface` sorts `src/` into records -- Records of
+  `records-and-objects` writing no trait method by hand -- and behaviour;
+  `TestSubjectFinder` and `TestBodyVisitor` follow a test's helpers, local
+  methods and standard macros. On by default.
+  [R040](ADRs/R040-ADR-BehaviourTestsRule.md)
+
 ### Autofix
 
 - `--fix` repairs `leading-constants` offences too, moving each misplaced

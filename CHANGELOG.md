@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+- `behaviour-tests`, the thirty-ninth rule: a test under `tests/` that names a
+  record of its package and calls nothing of it but records' accessors and
+  derived traits is reported -- it tests the compiler. A type writing a trait
+  method by hand is not a record here, helpers and local methods of the test's
+  file are followed, and a macro outside the standard family counts as
+  behaviour. On by default.
+  ([R040](docs/ADRs/R040-ADR-BehaviourTestsRule.md))
+
+### Changed
+- The tests of `OutputFormat`, `MemberKind` and `OffenceOrder` -- derives
+  alone, seven of them -- give their checks to the behaviour that relies on
+  them: `--format text` and an unknown format to `Args`' tests, the order of
+  two offences on one line to `Offence`'s, a `pub fn` before a constructor to
+  `ordered-impl-functions`'.
+
 ## [0.19.0] - 2026-10-28
 
 The tool's behaviour and command line are unchanged -- its stdout, stderr and

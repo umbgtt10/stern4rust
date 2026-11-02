@@ -434,7 +434,7 @@ fn run_with_rules_lists_every_rule_the_registry_holds() {
 
     // Assert
     assert_eq!(outcome, RunOutcome::Clean);
-    assert_eq!(listing.lines().count(), 38);
+    assert_eq!(listing.lines().count(), 39);
     assert!(listing.starts_with("readable-source\n"), "{listing}");
     assert!(listing.ends_with("header\n"), "{listing}");
 }

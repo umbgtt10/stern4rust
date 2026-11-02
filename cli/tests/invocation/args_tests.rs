@@ -203,6 +203,24 @@ fn parse_from_reads_the_manifest_path() {
 }
 
 #[test]
+fn parse_from_reads_the_text_format() {
+    // Arrange & Act
+    let args = Args::parse_from(argv(&["cargo-stern4rust", "--format", "text"]));
+
+    // Assert
+    assert_eq!(args.format(), OutputFormat::Text);
+}
+
+#[test]
+fn try_parse_from_of_an_unknown_format_is_rejected() {
+    // Arrange & Act
+    let parsed = Args::try_parse_from(argv(&["cargo-stern4rust", "--format", "yaml"]));
+
+    // Assert
+    assert!(parsed.is_err());
+}
+
+#[test]
 fn without_cargo_subcommand_drops_the_name_cargo_inserts() {
     // Arrange
     let args = argv(&["cargo-stern4rust", "stern4rust", "--package", "alpha"]);

@@ -4,7 +4,11 @@
 
 pub mod method_classifier;
 pub mod method_shape;
+pub mod package_surface;
 pub mod shaped_type;
+pub mod test_body_visitor;
+pub mod test_subject;
+pub mod test_subject_finder;
 pub mod type_shape;
 pub mod type_shapes;
 pub mod value_traits;

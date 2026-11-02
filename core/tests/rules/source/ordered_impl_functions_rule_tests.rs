@@ -129,6 +129,22 @@ fn check_a_private_function_before_a_pub_one_reports_it() {
 }
 
 #[test]
+fn check_a_pub_function_before_a_constructor_reports_it() {
+    // Arrange & Act
+    let offences = check(
+        "src/engine.rs",
+        "pub struct Engine;\n\nimpl Engine {\n    pub fn run(&self) {}\n\n    pub fn new() -> Self {\n        Self\n    }\n}\n",
+    );
+
+    // Assert
+    assert_eq!(offences.len(), 1);
+    assert_eq!(
+        offences[0].description(),
+        "`impl Engine` is out of order: `new` belongs before `run`"
+    );
+}
+
+#[test]
 fn check_a_test_file_reports_nothing() {
     // Arrange & Act
     let offences = check(

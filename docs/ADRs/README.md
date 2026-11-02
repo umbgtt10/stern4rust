@@ -70,6 +70,7 @@ it was when the core was the only package; one in the cli or the xtask says so w
 | [R037](R037-ADR-RecordHomeRule.md) | `record-home` | A record or data enum lives private inside its only consumer, or `pub` in a file of its own when it is named in its crate's public API, used nowhere, or used by two or more files or another crate. 31 records and 18 enums move out, 19 and 4 move in. |
 | [R038](R038-ADR-InjectedDependenciesRule.md) | `injected-dependencies` | A type does not build its own dependencies: a field declared as a trait receives only what the caller passed in, in constructors, `Default`, `From` and assignments; a builder -- a type with a consuming `build(self)` -- is the composition mechanism and is not judged. About 15 constructors. |
 | [R039](R039-ADR-DistinctDevDependenciesRule.md) | `distinct-dev-dependencies` | A `[dev-dependencies]` entry repeating a `[dependencies]` entry of its manifest, written alike and adding nothing -- no feature, no default features, not an optional crate -- is an offence; matched on the key, which cargo forces a repeat to share, target tables judged as written, every package judged, workspace or not. Four in the family; a repeat adding `test-util` is left alone. |
+| [R040](R040-ADR-BehaviourTestsRule.md) | `behaviour-tests` | A test that names a record of its package exercises some behaviour of it: one calling nothing but records' accessors and derived traits tests the compiler. |
 
 ## Everything else
 

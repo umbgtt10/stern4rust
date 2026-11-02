@@ -16,7 +16,7 @@ already own correctness. These are the things a reviewer would otherwise have to
 say by hand, every time, forever — and the ones that quietly stop being true
 across a codebase the moment nobody is checking.
 
-> **Status: thirty-eight rules.** The set below is what is implemented and
+> **Status: thirty-nine rules.** The set below is what is implemented and
 > gated. `stern4rust` runs against its own tree on every build, so a rule that
 > would fail this repository cannot be merged into it.
 
@@ -795,6 +795,15 @@ never becomes syntax.
 
 It found six printer builders shipped untested in 0.4.0.
 [R013](docs/ADRs/R013-ADR-TestedPublicApiRule.md)
+
+### `behaviour-tests`
+
+A test that names a record of its package exercises some behaviour of the package. One that calls nothing but the
+record's accessors and derived traits tests the compiler -- that a derived `Default` gives zeros, that a clone equals
+its original -- and its check belongs in the test of the code that uses the record. A type writing a trait method by
+hand, a `fmt` or a `from_str`, is not a record here, and a macro the rule cannot see into counts as behaviour, so a
+test is never accused on a guess. twin4rust asks the same question per file.
+[R040](docs/ADRs/R040-ADR-BehaviourTestsRule.md)
 
 ### `tests-layout`
 

@@ -43,6 +43,7 @@ use crate::rules::source::single_implemented_type_rule::SingleImplementedTypeRul
 use crate::rules::source::test_free_source_rule::TestFreeSourceRule;
 use crate::rules::source::typed_errors_rule::TypedErrorsRule;
 use crate::rules::testing::arrange_act_assert_rule::ArrangeActAssertRule;
+use crate::rules::testing::behaviour_tests_rule::BehaviourTestsRule;
 use crate::rules::testing::test_file_structure_rule::TestFileStructureRule;
 use crate::rules::testing::test_naming_rule::TestNamingRule;
 use crate::rules::testing::tested_public_api_rule::TestedPublicApiRule;
@@ -141,6 +142,7 @@ impl RuleCatalog {
         vec![
             Box::new(ReadableSourceRule::new()),
             Box::new(ArrangeActAssertRule::new()),
+            Box::new(BehaviourTestsRule::new()),
             Box::new(DeclaredByNameRule::new()),
             Box::new(DirectoryFileCountRule::new(
                 config

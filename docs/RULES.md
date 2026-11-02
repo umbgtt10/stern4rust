@@ -1,6 +1,6 @@
 # Rules
 
-Thirty-eight rules, each independent, each naming itself in the report. This is the
+Thirty-nine rules, each independent, each naming itself in the report. This is the
 reference; the reasoning behind each one is in its ADR.
 
 Every offence carries a **correction** as well as a description — what to do,
@@ -9,7 +9,7 @@ without answering it.
 
 Each rule also carries an **explanation** — what it wants, a scrap of source
 that breaks it and the same scrap put right — and that field is required too.
-`cargo stern4rust --rules` prints all thirty-eight, in text or with
+`cargo stern4rust --rules` prints all thirty-nine, in text or with
 `--format json`, without scanning anything. See
 [ADR-RulesExplainThemselves](ADRs/ADR-RulesExplainThemselves.md).
 
@@ -1323,6 +1323,29 @@ whole test tree means the rule **under-reports**: two entry points sharing both
 are indistinguishable, so a test calling one marks both. A call in a test helper
 no test ever invokes still counts. Macro-generated entry points, derived methods
 and trait impls are all outside its idea of an entry point.
+
+## `behaviour-tests`
+
+A test that names a record of its package exercises some behaviour of the package.
+
+A **record** is a type `records-and-objects` calls one that also writes no trait method by hand: its derives are the
+compiler's, but a hand-written `fmt`, `from_str` or `from` is code a test can pin. Data enums count. **Behaviour** is
+every other method the package writes -- an object's or a builder's, a trait impl's, a trait's default -- and every
+free function in `src/`.
+
+A test's calls are those of its body, of the helpers and local methods of its own file it calls, and inside the
+arguments of the standard macros -- `assert!`, `assert_eq!`, `vec!`, `format!` and their family -- parsed as
+expressions, or scanned as tokens where they are not. A call qualified by an object is behaviour and one qualified by
+a record is not; a method call is behaviour when the package writes a method of that name. A macro outside the
+standard family counts as behaviour: its expansion is never seen, and a test is not accused on a guess. See
+[R040](ADRs/R040-ADR-BehaviourTestsRule.md).
+
+| offence | correction |
+|---|---|
+| `` `default_counts_nothing` tests `ReceiptSummary` alone: it calls nothing of its package but a record's accessors and derived traits `` | test the behaviour that uses `ReceiptSummary`, and check there what this test checks |
+
+**Does not catch:** a record's method sharing its name with any method the package writes counts as behaviour, so the
+rule under-reports. A test naming no record is never judged, whatever it calls.
 
 ## `tests-layout`
 

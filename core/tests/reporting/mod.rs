@@ -4,7 +4,6 @@
 
 pub mod column_widths_tests;
 pub mod offence_fingerprint_tests;
-pub mod offence_order_tests;
 pub mod offence_tests;
 pub mod offence_threshold_tests;
 pub mod package_roster_tests;
