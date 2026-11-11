@@ -166,6 +166,26 @@ streamed output says which.
 `cargo install --locked cargo-shear --version 1.14.0`
 `cargo install --locked cargo-deny --version 0.20.2`
 
+### Every commit carries core's scores
+
+The owner's rule of 2026-11-11: every commit message carries the grip and
+braintax of `core`, and their ratio, scored as the commit stages it.
+`.githooks/commit-msg` runs `cargo xtask grip-braintax` on the message's file,
+which writes the scores in as a paragraph of their own above the trailers:
+`core`'s `grip_absolute_total` over its `total_braintax` and their ratio, under
+a title naming the releases of `cargo-grip4rust` and `cargo-braintax4rust` --
+scores of different releases do not compare. The files under `core/` that the
+index holds are exported into a scratch directory and scored there, so nothing
+unstaged counts; `cli` and `xtask` are not scored. An amend scores again, in
+place of the earlier scores; a message with no words is left alone, so git
+still aborts its commit; a scoring that fails stops the commit, and
+`--no-verify` skips it, deliberately. Git runs a repository's own hooks only
+where a clone asks it to: `just hooks`, once a clone, on each machine.
+`cargo xtask grip-braintax` with no file prints the scores.
+
+`cargo install cargo-grip4rust`
+`cargo install cargo-braintax4rust`
+
 cargo-stern4rust is deliberately not in that list; the gate builds it from this
 checkout.
 
