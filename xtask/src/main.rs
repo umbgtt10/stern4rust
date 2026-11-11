@@ -3,14 +3,18 @@
 // SPDX-License-Identifier: MIT
 
 use std::env::args;
+use std::env::temp_dir;
+use std::fs::read_to_string;
+use std::fs::remove_dir_all;
+use std::fs::write;
 use std::path::Path;
 use std::path::PathBuf;
 use std::process::ExitCode;
+use std::process::id;
 use xtask::boundary::boundary_rule::BoundaryRule;
 use xtask::boundary::crate_root_attributes::CrateRootAttributes;
 use xtask::boundary::disk_source_files::DiskSourceFiles;
 use xtask::boundary::package_dependencies::PackageDependencies;
-use xtask::crap::crap_report_parser::CrapReportParser;
 use xtask::gates::boundary_gate::BoundaryGate;
 use xtask::gates::cargo_update_gate::CargoUpdateGate;
 use xtask::gates::crap_gate::CrapGate;
@@ -23,6 +27,9 @@ use xtask::gates::stage2::Stage2;
 use xtask::gates::stern_self_gate::SternSelfGate;
 use xtask::gates::twin_gate::TwinGate;
 use xtask::process::system_command_runner::SystemCommandRunner;
+use xtask::reports::crap_report_parser::CrapReportParser;
+use xtask::reports::scores::core_scorer::CoreScorer;
+use xtask::reports::scores::message_scoring::MessageScoring;
 
 const CLI_PACKAGE: &str = "cargo-stern4rust";
 const CORE_PACKAGE: &str = "stern4rust-core";
@@ -64,8 +71,9 @@ fn main() -> ExitCode {
     match args().nth(1).as_deref() {
         Some("stage2") => run_stage2(),
         Some("sync") => run_sync(),
+        Some("grip-braintax") => run_grip_braintax(),
         _ => {
-            eprintln!("usage: cargo xtask <stage2|sync>");
+            eprintln!("usage: cargo xtask <stage2|sync|grip-braintax>");
             ExitCode::FAILURE
         }
     }
@@ -85,6 +93,34 @@ fn run_sync() -> ExitCode {
             ExitCode::FAILURE
         }
     }
+}
+
+// core's grip and braintax as the commit stages it, written into the commit
+// message whose file the commit-msg hook is handed -- or printed, given none.
+fn run_grip_braintax() -> ExitCode {
+    match grip_braintax() {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(reason) => {
+            eprintln!("\nFailed: {reason}");
+            ExitCode::FAILURE
+        }
+    }
+}
+
+fn grip_braintax() -> Result<(), String> {
+    let scratch = temp_dir().join(format!("xtask-grip-braintax-{}", id()));
+    let runner = SystemCommandRunner::new();
+    let scored = CoreScorer::new(&runner, scratch.to_string_lossy().into_owned()).score();
+    let _ = remove_dir_all(&scratch);
+    let block = scored.map_err(|failure| failure.to_string())?.render();
+    let Some(path) = args().nth(2) else {
+        println!("{block}");
+        return Ok(());
+    };
+    let message =
+        read_to_string(&path).map_err(|error| format!("could not read {path}: {error}"))?;
+    write(&path, MessageScoring::new(block).applied_to(&message))
+        .map_err(|error| format!("could not write {path}: {error}"))
 }
 
 fn run_stage2() -> ExitCode {

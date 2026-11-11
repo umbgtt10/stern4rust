@@ -5,7 +5,7 @@
 // Why crap4rust's output yielded no report: none was there, or the one there
 // did not parse.
 
-use xtask::crap::report_failure::ReportFailure;
+use xtask::reports::report_failure::ReportFailure;
 
 #[test]
 fn to_string_of_a_missing_report_says_none_was_found() {

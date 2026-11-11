@@ -2,10 +2,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::crap::crap_report_parser::CrapReportParser;
 use crate::gates::gate::Gate;
 use crate::gates::gate_failure::GateFailure;
 use crate::process::command_runner::CommandRunner;
+use crate::reports::crap_report_parser::CrapReportParser;
 
 const BINARY: &str = "cargo-crap4rust";
 const STDOUT_TAIL_LINES: usize = 30;

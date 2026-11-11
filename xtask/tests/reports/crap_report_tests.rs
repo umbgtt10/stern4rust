@@ -2,7 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use xtask::crap::crap_report_parser::CrapReportParser;
+use xtask::reports::crap_report_parser::CrapReportParser;
 
 fn report_json(crappy: u32, verdicts: &[&str]) -> String {
     let functions = verdicts

@@ -2,7 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::crap::crap_function::CrapFunction;
+use crate::reports::crap_function::CrapFunction;
 use serde::Deserialize;
 
 #[derive(Debug, Clone, Deserialize)]

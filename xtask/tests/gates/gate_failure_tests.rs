@@ -5,9 +5,9 @@
 // Why a gate failed, one variant per way it can, each said exactly as the run
 // has always reported it.
 
-use xtask::crap::report_failure::ReportFailure;
 use xtask::gates::gate_failure::GateFailure;
 use xtask::process::launch_failure::LaunchFailure;
+use xtask::reports::report_failure::ReportFailure;
 
 #[test]
 fn from_a_launch_failure_is_not_launched() {

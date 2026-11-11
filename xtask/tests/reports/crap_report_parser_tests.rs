@@ -2,7 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use xtask::crap::crap_report_parser::CrapReportParser;
+use xtask::reports::crap_report_parser::CrapReportParser;
 
 const CLEAN_REPORT: &str = r#"{
   "scope_name": "cargo-iceberg4rust",

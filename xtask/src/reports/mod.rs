@@ -2,7 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-pub mod crap_function_tests;
-pub mod crap_report_parser_tests;
-pub mod crap_report_tests;
-pub mod report_failure_tests;
+pub mod crap_function;
+pub mod crap_report;
+pub mod crap_report_parser;
+pub mod report_failure;
+pub mod scores;

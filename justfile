@@ -20,6 +20,11 @@ fmt_mode := if env('CI', '') != '' { '--check' } else { '' }
 default:
     @just --list
 
+# Every commit message gains core's grip and braintax, scored as staged, by the
+# commit-msg hook in .githooks/. Once a clone.
+hooks:
+    git config core.hooksPath .githooks
+
 # The lock file to the newest compatible version of every dependency, while
 # the tools are in development. A cargo built-in, so stage 1 still needs none of
 # the house tools; it does need the network. Commit what it moves on its own.
