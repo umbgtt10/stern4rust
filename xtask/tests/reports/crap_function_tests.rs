@@ -2,7 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use xtask::crap::crap_report_parser::CrapReportParser;
+use xtask::reports::crap_report_parser::CrapReportParser;
 
 fn function_with_verdict(verdict: &str) -> String {
     format!(

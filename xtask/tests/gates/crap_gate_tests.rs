@@ -3,9 +3,9 @@
 // SPDX-License-Identifier: MIT
 
 use crate::process::command_runner_tests::FakeCommandRunner;
-use xtask::crap::crap_report_parser::CrapReportParser;
 use xtask::gates::crap_gate::CrapGate;
 use xtask::gates::gate::Gate;
+use xtask::reports::crap_report_parser::CrapReportParser;
 
 const CLEAN_REPORT: &str = r#"{
   "total_functions": 2,

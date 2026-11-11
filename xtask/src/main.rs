@@ -10,7 +10,6 @@ use xtask::boundary::boundary_rule::BoundaryRule;
 use xtask::boundary::crate_root_attributes::CrateRootAttributes;
 use xtask::boundary::disk_source_files::DiskSourceFiles;
 use xtask::boundary::package_dependencies::PackageDependencies;
-use xtask::crap::crap_report_parser::CrapReportParser;
 use xtask::gates::boundary_gate::BoundaryGate;
 use xtask::gates::cargo_update_gate::CargoUpdateGate;
 use xtask::gates::crap_gate::CrapGate;
@@ -23,6 +22,7 @@ use xtask::gates::stage2::Stage2;
 use xtask::gates::stern_self_gate::SternSelfGate;
 use xtask::gates::twin_gate::TwinGate;
 use xtask::process::system_command_runner::SystemCommandRunner;
+use xtask::reports::crap_report_parser::CrapReportParser;
 
 const CLI_PACKAGE: &str = "cargo-stern4rust";
 const CORE_PACKAGE: &str = "stern4rust-core";

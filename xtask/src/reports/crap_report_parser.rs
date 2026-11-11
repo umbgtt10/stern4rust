@@ -2,8 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::crap::crap_report::CrapReport;
-use crate::crap::report_failure::ReportFailure;
+use crate::reports::crap_report::CrapReport;
+use crate::reports::report_failure::ReportFailure;
 use serde_json::from_str;
 
 const OBJECT_OPEN: &str = "{";
