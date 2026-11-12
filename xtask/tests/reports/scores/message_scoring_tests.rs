@@ -26,6 +26,23 @@ fn applied_to_a_message_already_scored_replaces_its_scores() {
     );
 }
 
+// A last paragraph of prose that happens to hold a colon is not trailers: a
+// trailer's key is one word, letters, digits and dashes.
+#[test]
+fn applied_to_a_message_ending_in_prose_with_a_colon_puts_the_scores_last() {
+    // Arrange
+    let message = "Subject\n\nThe reason it matters: nothing else counts.\n";
+
+    // Act
+    let scored = scoring().applied_to(message);
+
+    // Assert
+    assert_eq!(
+        scored,
+        format!("Subject\n\nThe reason it matters: nothing else counts.\n\n{BLOCK}\n")
+    );
+}
+
 // What git hands the hook of a message a commit was asked for with no words:
 // left as it is, so git aborts the commit as it would.
 #[test]
