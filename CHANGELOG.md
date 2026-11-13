@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.21.0] - 2026-11-13
+
 ### Fixed
 - `imported-paths` checks the arguments of the standard macros -- `assert!`,
   `assert_eq!`, `vec!`, `format!`, `matches!` and the rest of the family
