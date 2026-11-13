@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+- `imported-paths` checks the arguments of the standard macros -- `assert!`,
+  `assert_eq!`, `vec!`, `format!`, `matches!` and the rest of the family
+  `behaviour-tests` reads -- as the code they are. A call or a type reached
+  through a path inside one, or inside one nested in another, is reported at
+  its own line; `syn` had kept them as unparsed tokens, so a test file's
+  assertions went unchecked. A macro's own path, the body of any other macro,
+  and the pattern `matches!` holds -- a pattern, judged nowhere -- are still
+  left alone.
+  ([R008](docs/ADRs/R008-ADR-ImportedPathsRule.md))
+
 ## [0.20.1] - 2026-11-02
 
 ### Fixed

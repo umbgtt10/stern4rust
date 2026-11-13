@@ -297,11 +297,24 @@ Applies to **both** productive and test files -- the only rule so far with no
 `tests/` exemption, because a test file has the same reader and the same list of
 dependencies at its top.
 
-**Does not catch:** paths outside call position. A `let x: std::path::PathBuf` or
-a `std::fmt::Result` return type passes, since the standard is about function and
-method qualifiers. Macros are not checked -- `serde_json::json!(...)` is an
-`ExprMacro`, not a call. And a lowercase-named type or an uppercase-named module
-is judged by its case rather than by what it is.
+The arguments of the **standard macros** -- `assert!`, `assert_eq!`, `vec!`,
+`format!`, `matches!` and the rest of the family `behaviour-tests` reads -- are
+code the file wrote, and are checked as any other code is:
+`assert_eq!(std::string::String::from("a"), "a")` is reported at its own line,
+and so is a path in a macro nested in one. Before, `syn` kept a macro's
+arguments as unparsed tokens and the rule never saw them, which in a test file,
+where most calls sit inside an assertion, left most of the file unchecked.
+
+**Does not catch:** a macro's own path -- `serde_json::json!(...)` is not a
+call. The body of a macro outside the standard family -- `quote!`, `proptest!`,
+`tokio::select!` -- which expands to its author's code: `quote!` spells a
+generated path in full on purpose, and nothing says another macro's body is
+Rust, so it is left alone rather than judged on a guess. A standard macro whose
+body is not a list of expressions is left alone for the same reason. A
+**pattern** is not judged -- `syn::Item::Fn(item) =>` passes in a `match`, an
+`if let` and the pattern `matches!` holds alike; of `matches!`, what it matches
+and its guard are checked. And a lowercase-named type or an uppercase-named
+module is judged by its case rather than by what it is.
 
 ## `test-free-source`
 

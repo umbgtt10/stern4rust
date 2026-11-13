@@ -160,6 +160,12 @@ the known gaps in what *is* built are in [OPEN_POINTS.md](OPEN_POINTS.md).
   `TestSubjectFinder` and `TestBodyVisitor` follow a test's helpers, local
   methods and standard macros. On by default.
   [R040](ADRs/R040-ADR-BehaviourTestsRule.md)
+- **`imported-paths` reads the standard macros' arguments.** A call or a type
+  reached through a path inside `assert!`, `assert_eq!`, `vec!`, `format!` or
+  the rest of the family is reported at its own line, nested macros included;
+  `StandardMacro` holds the family for this rule and `behaviour-tests` alike.
+  Of `matches!`, what it matches and its guard are read, its pattern not;
+  another macro's body is left alone. [R008](ADRs/R008-ADR-ImportedPathsRule.md)
 
 ### Autofix
 

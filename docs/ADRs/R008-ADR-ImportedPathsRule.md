@@ -144,6 +144,39 @@ what the file says, not about what resolves.
 `serde_json::json!` inline path turns out to bother a reader as much as a
 function call does, it is a small change to `visit_expr_macro`.
 
+**Read every macro's body as expressions, as `injected-time` does.** Rejected
+for the arguments (below): `quote!` spells a generated path in full on purpose,
+and a body that happens to parse as expressions is not thereby Rust the file
+wrote. This rule accuses, so it reads only the bodies it knows to be code.
+
+## Amendment (2026-11-13): the standard macros' arguments
+
+Excluding macros excluded more than their paths. `syn` keeps a macro's
+arguments as unparsed tokens, so a call or a type inside `assert!(...)`,
+`vec![...]` or `format!(...)` never reached the visitor -- the rule's blind spot
+rather than a decision. It was found from the outside: `etheram-raft`'s tests
+held six whole-path calls -- `std::string::String::from`,
+`std::vec::Vec::new`, `std::collections::BTreeSet::new` -- every one inside an
+assertion or a `proptest!` block, with a green gate, and its owner took it for
+a difference between productive and test code. It was not: the same call
+outside a macro was reported in both, and inside one in neither.
+
+The arguments of the standard macros are now visited as code -- the twenty
+`behaviour-tests` already reads (`StandardMacro`, shared by both rules), their
+body parsed as a list of expressions or as `vec![element; count]`. Nested
+standard macros are read the same way, and every offence keeps the line its
+tokens were written on. A macro's own path is still not judged, and neither is
+the body of any other macro, nor a standard one whose body is not expressions.
+The tool's own tree held one: `std::path::Path::new` inside an `assert_eq!`.
+
+`matches!` holds a pattern, and a pattern parses as an expression often enough
+to be judged as one: run against the family, the first build reported
+`braintax4rust`'s `matches!(i, syn::TraitItem::Fn(_))` while the same path in
+its `match` arms passed, since the rule judges no pattern. Of `matches!` it now
+reads what is matched and the guard (`StandardMacro::expressions`);
+`behaviour-tests` still reads every argument, as it did. Whether patterns
+should be judged at all is a question of its own, not this amendment's.
+
 ## Enforcement
 
 `tests/rules/source/imported_paths_rule_tests.rs` — 7 tests covering an imported
@@ -156,6 +189,11 @@ independently: unqualified, type-qualified, `Self`-qualified, imported module,
 renamed import, grouped import, descent into function bodies, and macros.
 
 `tests/finding/model/qualified_call_tests.rs` — 5 tests on the two correction shapes.
+
+`tests/finding/parsing/shapes/standard_macro_tests.rs` — the family, named by
+its last segment, and the two bodies it reads; five tests in the finder's file
+and one in the rule's on the arguments -- a call at its own line, a nested
+macro, `vec![element; count]`, a type, and another macro's body left alone.
 
 `just stage2` runs the compiled binary against this crate's own tree, which
 is what surfaced all 15 of its own offences.
