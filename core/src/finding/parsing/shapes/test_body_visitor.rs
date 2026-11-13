@@ -18,14 +18,13 @@ use syn::ExprMethodCall;
 use syn::ItemFn;
 use syn::Macro;
 use syn::Path;
-use syn::Token;
-use syn::punctuated::Punctuated;
 use syn::visit::Visit;
 use syn::visit::visit_expr_call;
 use syn::visit::visit_expr_method_call;
 use syn::visit::visit_path;
 
 use crate::finding::parsing::shapes::package_surface::PackageSurface;
+use crate::finding::parsing::shapes::standard_macro::StandardMacro;
 use crate::finding::parsing::shapes::test_subject::TestSubject;
 
 // One test's walk: its body, the helpers and local methods of its own file it
@@ -42,29 +41,6 @@ pub struct TestBodyVisitor<'a> {
 }
 
 impl<'a> TestBodyVisitor<'a> {
-    const SEEN_MACROS: [&'static str; 20] = [
-        "assert",
-        "assert_eq",
-        "assert_ne",
-        "dbg",
-        "debug_assert",
-        "debug_assert_eq",
-        "debug_assert_ne",
-        "eprint",
-        "eprintln",
-        "format",
-        "matches",
-        "panic",
-        "print",
-        "println",
-        "todo",
-        "unimplemented",
-        "unreachable",
-        "vec",
-        "write",
-        "writeln",
-    ];
-
     pub fn new(
         surface: &'a PackageSurface,
         helpers: &'a BTreeMap<String, &'a Block>,
@@ -178,23 +154,17 @@ impl<'a: 'ast, 'ast> Visit<'ast> for TestBodyVisitor<'a> {
     }
 
     fn visit_macro(&mut self, node: &'ast Macro) {
-        let name = node
-            .path
-            .segments
-            .last()
-            .map(|segment| segment.ident.to_string())
-            .unwrap_or_default();
-        if !Self::SEEN_MACROS.contains(&name.as_str()) {
+        let Some(standard) = StandardMacro::of(node) else {
             self.behaviour = true;
             return;
-        }
-        match node.parse_body_with(Punctuated::<Expr, Token![,]>::parse_terminated) {
-            Ok(arguments) => {
+        };
+        match standard.arguments() {
+            Some(arguments) => {
                 for argument in &arguments {
                     Visit::visit_expr(self, argument);
                 }
             }
-            Err(_) => self.scan_tokens(node.tokens.clone()),
+            None => self.scan_tokens(node.tokens.clone()),
         }
     }
 

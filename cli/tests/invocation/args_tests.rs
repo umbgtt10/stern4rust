@@ -9,6 +9,7 @@
 // to be called stern4rust must survive.
 
 use clap::Parser;
+use std::path::Path;
 use stern4rust_cli::invocation::args::Args;
 use stern4rust_cli::invocation::output_format::OutputFormat;
 
@@ -196,10 +197,7 @@ fn parse_from_reads_the_manifest_path() {
     ]));
 
     // Assert
-    assert_eq!(
-        args.manifest_path(),
-        Some(std::path::Path::new("/tmp/Cargo.toml"))
-    );
+    assert_eq!(args.manifest_path(), Some(Path::new("/tmp/Cargo.toml")));
 }
 
 #[test]

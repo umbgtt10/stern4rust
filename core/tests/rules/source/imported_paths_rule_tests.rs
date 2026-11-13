@@ -18,6 +18,25 @@ fn check(path: &str, body: &str) -> Vec<Offence> {
     ImportedPathsRule::new().check(&SourceFile::new(path, body))
 }
 
+// An assertion's arguments are where a test file reaches for a path most.
+#[test]
+fn check_of_a_call_inside_an_assertion_reports_it() {
+    // Arrange & Act
+    let found = check(
+        "tests/a_tests.rs",
+        "fn outer() {\n    assert_eq!(std::string::String::from(\"a\"), \"a\");\n}\n",
+    );
+
+    // Assert
+    assert_eq!(
+        found
+            .iter()
+            .map(|offence| (offence.line(), offence.correction()))
+            .collect::<Vec<_>>(),
+        [(2, "add `use std::string::String;` and call `String::from`")]
+    );
+}
+
 #[test]
 fn check_of_a_call_qualified_by_an_imported_module_finds_nothing() {
     // Arrange & Act

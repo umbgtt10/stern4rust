@@ -6,6 +6,7 @@ pub mod method_classifier;
 pub mod method_shape;
 pub mod package_surface;
 pub mod shaped_type;
+pub mod standard_macro;
 pub mod test_body_visitor;
 pub mod test_subject;
 pub mod test_subject_finder;

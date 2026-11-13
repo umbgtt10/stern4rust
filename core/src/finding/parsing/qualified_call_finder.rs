@@ -12,6 +12,7 @@ use syn::Expr;
 use syn::ExprCall;
 use syn::Item;
 use syn::ItemImpl;
+use syn::Macro;
 use syn::Path;
 use syn::TypePath;
 use syn::UseTree;
@@ -22,6 +23,7 @@ use syn::visit::Visit;
 use syn::visit::visit_expr_call;
 
 use crate::finding::model::qualified_call::QualifiedCall;
+use crate::finding::parsing::shapes::standard_macro::StandardMacro;
 use crate::source_file::SourceFile;
 
 // The calls a file reaches through a path instead of an import.
@@ -200,5 +202,17 @@ impl<'ast> Visit<'ast> for QualifiedCallFinder {
             self.found.push(call);
         }
         visit_expr_call(self, node);
+    }
+
+    // A standard macro's expressions are code the file wrote, so they answer
+    // the same question; a pattern of `matches!` is left alone as any pattern
+    // is, and another macro's body is its author's.
+    fn visit_macro(&mut self, node: &'ast Macro) {
+        let arguments = StandardMacro::of(node)
+            .and_then(|standard| standard.expressions())
+            .unwrap_or_default();
+        for argument in &arguments {
+            Visit::visit_expr(self, argument);
+        }
     }
 }

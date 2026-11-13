@@ -49,6 +49,52 @@ fn find_ignores_a_macro_invocation() {
     assert!(paths.is_empty(), "expected none, got {paths:?}");
 }
 
+// A macro outside the standard family expands to its author's code, which the
+// syntax tree never shows: its arguments are not judged.
+#[test]
+fn find_of_a_call_inside_a_macro_outside_the_standard_family_returns_nothing() {
+    // Arrange & Act
+    let paths = paths("fn outer() {\n    quote!(std::env::args());\n}\n");
+
+    // Assert
+    assert!(paths.is_empty(), "expected none, got {paths:?}");
+}
+
+// A macro inside a macro's arguments is read as the outer one is.
+#[test]
+fn find_of_a_call_inside_a_nested_standard_macro_returns_its_path() {
+    // Arrange & Act
+    let paths = paths("fn outer() {\n    assert_eq!(vec![syn::parse_file(\"\")].len(), 1);\n}\n");
+
+    // Assert
+    assert_eq!(paths, ["syn::parse_file"]);
+}
+
+#[test]
+fn find_of_a_call_inside_a_repeated_vec_returns_its_path() {
+    // Arrange & Act
+    let paths = paths("fn outer() {\n    let _ = vec![std::string::String::new(); 3];\n}\n");
+
+    // Assert
+    assert_eq!(paths, ["std::string::String::new"]);
+}
+
+// The arguments of a standard macro are code like any other: a call through a
+// path there is reported, at its own line.
+#[test]
+fn find_of_a_call_inside_a_standard_macro_returns_its_path_and_line() {
+    // Arrange & Act
+    let calls =
+        found("fn outer() {\n    assert!(\n        std::env::args().count() > 0\n    );\n}\n");
+
+    // Assert
+    let reported: Vec<(String, usize)> = calls
+        .iter()
+        .map(|call| (call.path().to_string(), call.line()))
+        .collect();
+    assert_eq!(reported, [(String::from("std::env::args"), 3)]);
+}
+
 // A module whose name merely starts like a primitive is still a module.
 #[test]
 fn find_of_a_call_qualified_by_a_module_named_like_a_primitive_returns_the_path() {
@@ -181,6 +227,18 @@ fn find_of_a_multi_segment_call_returns_it() {
     assert_eq!(paths, ["std::env::args"]);
 }
 
+// `matches!` holds a pattern, judged as a pattern is in a `match` -- not at
+// all -- while what it matches is an expression like any other.
+#[test]
+fn find_of_a_path_in_a_matches_pattern_returns_only_what_it_matches() {
+    // Arrange & Act
+    let paths =
+        paths("fn outer() -> bool {\n    matches!(std::env::var(\"A\"), syn::Item::Fn(_))\n}\n");
+
+    // Assert
+    assert_eq!(paths, ["std::env::var"]);
+}
+
 #[test]
 fn find_of_a_renamed_import_uses_the_new_name() {
     // Arrange & Act
@@ -199,6 +257,18 @@ fn find_of_a_self_qualified_call_returns_nothing() {
 
     // Assert
     assert!(paths.is_empty(), "expected none, got {paths:?}");
+}
+
+// A type reached through a path in a standard macro's arguments is the same
+// dependency it is anywhere else.
+#[test]
+fn find_of_a_type_inside_a_standard_macro_returns_its_path() {
+    // Arrange & Act
+    let paths =
+        paths("fn outer() {\n    let _ = format!(\"{}\", size_of::<std::path::PathBuf>());\n}\n");
+
+    // Assert
+    assert_eq!(paths, ["std::path::PathBuf"]);
 }
 
 // A type qualifier is not a path standing in for an import: the type itself was
