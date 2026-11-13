@@ -39,16 +39,6 @@ fn find_descends_into_function_bodies() {
     assert_eq!(paths, ["syn::parse_file"]);
 }
 
-// A macro is not a function, and its path obeys different rules.
-#[test]
-fn find_ignores_a_macro_invocation() {
-    // Arrange & Act
-    let paths = paths("fn outer() {\n    let _ = serde_json::json!({});\n}\n");
-
-    // Assert
-    assert!(paths.is_empty(), "expected none, got {paths:?}");
-}
-
 // A proptest!'s test is no item a parser takes, but its body is a block.
 #[test]
 fn find_of_a_call_inside_a_block_of_another_macro_returns_it_at_its_line() {
@@ -241,6 +231,45 @@ fn find_of_a_grouped_import_covers_each_name() {
 
     // Assert
     assert!(paths.is_empty(), "expected none, got {paths:?}");
+}
+
+// A macro by its name alone, or through one segment the file imported, is
+// left alone as a call is -- and quote!'s own path is judged though its body
+// is not.
+#[test]
+fn find_of_a_macro_by_its_name_or_an_imported_module_returns_only_a_full_path() {
+    // Arrange & Act
+    let paths = paths(
+        "use embassy_logging;\n\nfn outer() {\n    let _ = vec![1];\n    embassy_logging::info!(\"a\");\n    let _ = quote::quote!(::std::env::args());\n}\n",
+    );
+
+    // Assert
+    assert_eq!(paths, ["quote::quote"]);
+}
+
+#[test]
+fn find_of_a_macro_inside_a_standard_macro_returns_it_at_its_line() {
+    // Arrange & Act
+    let found =
+        found("fn outer() {\n    assert_eq!(\n        std::vec![1].len(),\n        1\n    );\n}\n");
+
+    // Assert
+    let at: Vec<(String, usize)> = found
+        .iter()
+        .map(|call| (call.path().to_string(), call.line()))
+        .collect();
+    assert_eq!(at, [(String::from("std::vec"), 3)]);
+}
+
+// A macro reached through a path is a dependency the import list does not
+// name, as a function reached through one is.
+#[test]
+fn find_of_a_macro_reached_through_a_path_returns_it() {
+    // Arrange & Act
+    let paths = paths("fn outer() {\n    let _ = serde_json::json!({});\n}\n");
+
+    // Assert
+    assert_eq!(paths, ["serde_json::json"]);
 }
 
 // Two segments is a route the file spells out at every call site rather than

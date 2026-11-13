@@ -22,6 +22,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   built-ins whose body is tokens or text, are never read. Measured over the
   family: 11 offences in three repositories, all in tests.
   ([R008](docs/ADRs/R008-ADR-ImportedPathsRule.md))
+- `imported-paths` judges a macro's own path as a function's: `std::vec![...]`,
+  `serde_json::json!(...)` and `tokio::select!` are reported, with the import
+  that replaces them -- add `use serde_json::json;` and call `json!`. A macro
+  by its name alone, or through one imported segment, passes. Attributes and
+  derives are no bang invocation and are untouched. Measured over the family:
+  1046 offences in nine repositories, 620 of them `std::vec!`. The rule's
+  summary now says what it covers: anything the file names.
+  ([R008](docs/ADRs/R008-ADR-ImportedPathsRule.md))
 
 ## [0.21.0] - 2026-11-13
 

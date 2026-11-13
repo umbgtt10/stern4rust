@@ -12,7 +12,8 @@ use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;
 use crate::source_file::SourceFile;
 
-// A function is called through a name this file imported, not through a path.
+// Anything this file names is reached through a name it imported, not through a
+// path: a function, a type, a trait, a macro, a variant in a pattern.
 //
 // `use` statements are a file's list of dependencies. A path written inline at
 // the call site is a dependency that never appears on that list, so the list
@@ -82,7 +83,7 @@ impl Rule for ImportedPathsRule {
     fn explanation(&self) -> RuleExplanation {
         RuleExplanation {
             name: self.name(),
-            summary: "A function is called through a name this file imported, not through a path.",
+            summary: "Anything this file names is reached through a name it imported, not through a path.",
             breaks: "let parsed = syn::parse_file(text);",
             instead: "use syn::parse_file;\n\nlet parsed = parse_file(text);",
         }

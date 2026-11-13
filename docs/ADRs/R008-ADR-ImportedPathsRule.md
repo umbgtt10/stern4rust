@@ -220,6 +220,29 @@ offences in three repositories, all in tests -- `postcard` calls in
 `etheram-embassy`'s `proptest!` tests, `std::vec!` and `std::format!` in
 `etheram-raft`'s -- and none in this tool's own tree.
 
+## Amendment (2026-11-13): a macro's own path
+
+The decision above left macros out, judging `serde_json::json!` not worth the
+risk of misreading attribute and derive macros. That risk does not reach this
+visitor: an attribute or a derive is a `syn::Attribute`, never the `syn::Macro`
+a bang invocation is, so judging the path of a `name!(...)`, `name![...]` or
+`name! { ... }` touches neither. And the path is the same dependency a
+function's is: `std::vec![...]` and `tokio::select!` leave the import list as
+wrong as `std::env::args()`.
+
+A macro's own path now answers the question a call's does, through the same
+`offending_path`, and its correction names the macro with its bang
+(`QualifiedCall::macro_invocation`): add `use serde_json::json;` and call
+`json!`. A macro by its name alone and one imported segment pass. The import
+can bring more than the macro -- `use std::vec;` brings the module `vec` too --
+so a correction is checked by a build, not taken on trust.
+
+Measured over the family with a built binary before it was chosen: 1046
+offences in nine repositories, 695 of them in tests. `std::vec!` alone is 620,
+418 of them in `etheram-raft`'s `raft_protocol_tests.rs`; `etheram-ibft-embassy`
+holds 293, mostly its logging macros called through `crate::` and its crates'
+paths. None is in this tool's own tree.
+
 ## Enforcement
 
 `tests/rules/source/imported_paths_rule_tests.rs` — 7 tests covering an imported

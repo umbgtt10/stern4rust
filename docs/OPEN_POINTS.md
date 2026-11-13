@@ -259,29 +259,15 @@ What remains open is the rest of the trade: a lowercase type this crate cannot
 name -- someone's `mod widget` holding `struct widget` -- is still reported, and
 an uppercase-named module still passes.
 
-## `imported-paths` sees no macro's path
+## The xtask's technology-free scan reads no macro's arguments
 
-Since 0.21.0 the rule reads calls, types, implemented traits and the arguments
-of the twenty standard macros, and patterns and other macros' bodies since the
-amendments after it. A path written in full still passes in one place, a green
-gate over the shape the house standard -- *"do not use fully qualified paths"*
--- forbids.
-
-**A macro's own path.** `std::vec![...]`, `std::format!(...)`,
-`alloc::vec![...]`: R008 left macros out for now, judging `serde_json::json!`
-not worth the risk of misreading attribute and derive macros.
-`etheram-raft`'s `raft_protocol_tests.rs` alone holds about four hundred
-`std::vec!` and `std::format!`. The import that replaces one is `use alloc::vec;`
-or `use std::vec;`, which also brings the module -- the macro-namespace
-hazard "Imports are sorted but never packed" measured -- so the correction has
-to be checked to compile, as the primitives' was not at first.
-
-Each turns gates red across the family, as 0.21.0 did -- twenty offences in six
-repositories at its first build, fifteen in four once `matches!`'s pattern was
-left alone. Measure it with the built binary over every repository before
-choosing, rather than estimate it: R008's regex estimate ran 39% low. The
-xtask's technology-free scan has the same blindness inside a macro's
-arguments, as `CLAUDE.md` says, and its fix would be the scan's own.
+The xtask's own technology-free scan -- the boundary gate over `core/` --
+stops at a macro, as `imported-paths` did before its amendments: a technology
+reached inside `assert!(...)` or a `proptest!` body passes it, as `CLAUDE.md`
+says. `imported-paths` now reads the standard macros' arguments, the patterns
+and other macros' bodies where they read as code (`StandardMacro`,
+`MacroBody`); the scan's fix would be its own, the same reading applied to the
+names it forbids.
 
 ## No rule sees a constructor that works a dependency before storing it
 

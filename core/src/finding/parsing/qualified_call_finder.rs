@@ -80,6 +80,12 @@ impl QualifiedCallFinder {
             .collect()
     }
 
+    // A macro's own path, judged as a call's is.
+    fn invoked(&self, node: &Macro) -> Option<QualifiedCall> {
+        self.offending_path(&node.path, node.path.span().start().line)
+            .map(|call| QualifiedCall::macro_invocation(call.path(), call.line()))
+    }
+
     // The one lowercase set that can be known rather than guessed at. The case
     // convention reads `u64` as a module, so `u64::from_le_bytes` was reported
     // with the correction `use u64::from_le_bytes;` -- which does not compile:
@@ -224,11 +230,15 @@ impl<'ast> Visit<'ast> for QualifiedCallFinder {
         visit_expr_call(self, node);
     }
 
-    // A standard macro's expressions are code the file wrote, so they answer
-    // the same question, and the pattern of `matches!` as any pattern does.
-    // Another macro's body answers it where it reads as code -- a list of
-    // expressions, else its blocks -- and quote!'s and the built-ins' never.
+    // A macro's own path names a dependency as a function's does. A standard
+    // macro's expressions are code the file wrote, so they answer the same
+    // question, and the pattern of `matches!` as any pattern does. Another
+    // macro's body answers it where it reads as code -- a list of expressions,
+    // else its blocks -- and quote!'s and the built-ins' never.
     fn visit_macro(&mut self, node: &'ast Macro) {
+        if let Some(found) = self.invoked(node) {
+            self.found.push(found);
+        }
         if let Some(standard) = StandardMacro::of(node) {
             for argument in &standard.expressions().unwrap_or_default() {
                 Visit::visit_expr(self, argument);

@@ -81,6 +81,18 @@ fn check_of_a_generic_argument_reached_through_a_path_reports_it() {
 
 // The correction keeps `env` rather than proposing a bare `args()`.
 #[test]
+fn check_of_a_macro_reached_through_a_path_names_the_import_to_add() {
+    // Arrange & Act
+    let found = check("src/a.rs", "fn outer() -> Vec<u8> {\n    std::vec![1]\n}\n");
+
+    // Assert
+    assert_eq!(found.len(), 1, "{found:?}");
+    assert_eq!(found[0].line(), 2);
+    assert_eq!(found[0].subject(), Some("std::vec"));
+    assert_eq!(found[0].correction(), "add `use std::vec;` and call `vec!`");
+}
+
+#[test]
 fn check_of_a_multi_segment_call_names_the_import_to_add() {
     // Arrange & Act
     let found = check(

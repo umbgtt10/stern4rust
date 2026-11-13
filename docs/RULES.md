@@ -252,7 +252,8 @@ are only meaningful together.
 ## `imported-paths`
 
 Anything this file names -- a function it calls, a type it mentions, a trait it
-implements -- is reached through a name it imported, not through a path.
+implements, a macro it invokes, a variant it matches -- is reached through a
+name it imported, not through a path.
 
 A file's `use` statements are its list of dependencies. `syn::parse_file(...)`
 compiles with nothing in the file mentioning `syn`, so a reader scanning the top
@@ -321,8 +322,15 @@ body is not code the file wrote: `quote!`, `quote_spanned!`, `parse_quote!` and
 compiler's built-ins whose body is tokens or text -- `stringify!`,
 `include_str!`, `concat!`, `env!`, `asm!` and their kind.
 
-**Does not catch:** a macro's own path -- `serde_json::json!(...)` is not a
-call. What another macro's body holds outside a list of expressions and its
+A **macro's own path** names its dependency as a function's does:
+`std::vec![...]`, `serde_json::json!(...)` and `tokio::select! { ... }` are
+reported with the import that replaces them -- add `use serde_json::json;` and
+call `json!`. A macro by its name alone, or through one segment the file
+imported, passes; `quote::quote!`'s path is judged though its body is not.
+`use std::vec;` brings the module `vec` with the macro, so a correction is
+worth a build before it is kept.
+
+**Does not catch:** what another macro's body holds outside a list of expressions and its
 blocks -- a `proptest!` test's strategies, `a in proptest::collection::vec(..)`,
 sit in no block. A standard macro whose body is not a list of expressions is
 left alone. And a lowercase-named type or an uppercase-named module is judged
