@@ -227,16 +227,64 @@ fn find_of_a_multi_segment_call_returns_it() {
     assert_eq!(paths, ["std::env::args"]);
 }
 
-// `matches!` holds a pattern, judged as a pattern is in a `match` -- not at
-// all -- while what it matches is an expression like any other.
+// A variant written in full in a `match` arm leaves the import list as wrong
+// as the same path in a call.
 #[test]
-fn find_of_a_path_in_a_matches_pattern_returns_only_what_it_matches() {
+fn find_of_a_path_in_a_match_arm_pattern_returns_it_at_its_line() {
+    // Arrange & Act
+    let found = found(
+        "fn outer(item: u8) {\n    match item {\n        syn::Item::Fn(_) => {}\n        _ => {}\n    }\n}\n",
+    );
+
+    // Assert
+    let at: Vec<(String, usize)> = found
+        .iter()
+        .map(|call| (call.path().to_string(), call.line()))
+        .collect();
+    assert_eq!(at, [(String::from("syn::Item::Fn"), 3)]);
+}
+
+// `matches!` holds a pattern, judged as a pattern is in a `match`, after
+// what it matches, an expression like any other.
+#[test]
+fn find_of_a_path_in_a_matches_pattern_returns_it_after_what_it_matches() {
     // Arrange & Act
     let paths =
         paths("fn outer() -> bool {\n    matches!(std::env::var(\"A\"), syn::Item::Fn(_))\n}\n");
 
     // Assert
-    assert_eq!(paths, ["std::env::var"]);
+    assert_eq!(paths, ["std::env::var", "syn::Item::Fn"]);
+}
+
+#[test]
+fn find_of_a_path_in_a_struct_pattern_returns_it() {
+    // Arrange & Act
+    let paths = paths("fn outer(item: u8) {\n    let syn::ItemFn { sig, .. } = item;\n}\n");
+
+    // Assert
+    assert_eq!(paths, ["syn::ItemFn"]);
+}
+
+#[test]
+fn find_of_a_path_in_an_if_let_unit_pattern_returns_it() {
+    // Arrange & Act
+    let paths = paths("fn outer(order: u8) {\n    if let std::cmp::Ordering::Less = order {}\n}\n");
+
+    // Assert
+    assert_eq!(paths, ["std::cmp::Ordering::Less"]);
+}
+
+// A pattern answers the question a call does: a type qualifier, and one
+// segment the file imported, are left alone.
+#[test]
+fn find_of_a_pattern_qualified_by_a_type_or_an_imported_module_returns_nothing() {
+    // Arrange & Act
+    let paths = paths(
+        "use std::cmp;\n\nfn outer(order: u8) {\n    match order {\n        Ordering::Less => {}\n        Self::Unit => {}\n        cmp::Ordering => {}\n        None => {}\n    }\n}\n",
+    );
+
+    // Assert
+    assert!(paths.is_empty(), "{paths:?}");
 }
 
 #[test]

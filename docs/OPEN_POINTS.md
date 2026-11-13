@@ -259,22 +259,13 @@ What remains open is the rest of the trade: a lowercase type this crate cannot
 name -- someone's `mod widget` holding `struct widget` -- is still reported, and
 an uppercase-named module still passes.
 
-## `imported-paths` sees no pattern, no macro's path and no other macro's body
+## `imported-paths` sees no macro's path and no other macro's body
 
 Since 0.21.0 the rule reads calls, types, implemented traits and the arguments
-of the twenty standard macros. A path written in full still passes in three
-places, and each is a green gate over the shape the house standard -- *"do not
-use fully qualified paths"* -- forbids.
-
-**A pattern.** `syn::Item::Fn(item) =>` in a `match`, an `if let`, a
-`let ... else`, and the pattern `matches!` holds. None is judged, so 0.21.0
-leaves `matches!`'s pattern alone to agree with the rest: its first build
-reported `braintax4rust`'s `matches!(i, syn::TraitItem::Fn(_))` while the same
-path in that file's `match` arms passed. Extending the rule is the same answer
-asked of the path a `Pat::TupleStruct`, `Pat::Struct` or `Pat::Path` carries
--- `offending_path` already gives it -- and the correction is the same import.
-`braintax4rust` holds such arms over `syn`'s enums, and the family has not been
-measured.
+of the twenty standard macros, and patterns since the amendment after it. A
+path written in full still passes in two places, and each is a green gate over
+the shape the house standard -- *"do not use fully qualified paths"* --
+forbids.
 
 **Another macro's body.** `proptest!`, `prop_assert_eq!`, `tokio::select!`,
 `assert_matches!` and their kind expand to code the syntax tree never shows, so

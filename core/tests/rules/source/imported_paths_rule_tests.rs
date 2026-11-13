@@ -106,6 +106,24 @@ fn check_of_a_path_qualified_call_reports_it() {
 }
 
 #[test]
+fn check_of_a_pattern_reached_through_a_path_names_the_import_to_add() {
+    // Arrange & Act
+    let found = check(
+        "src/a.rs",
+        "fn outer(item: u8) -> bool {\n    if let syn::Item::Fn(_) = item {\n        return true;\n    }\n    false\n}\n",
+    );
+
+    // Assert
+    assert_eq!(found.len(), 1, "{found:?}");
+    assert_eq!(found[0].line(), 2);
+    assert_eq!(found[0].subject(), Some("syn::Item::Fn"));
+    assert_eq!(
+        found[0].correction(),
+        "add `use syn::Item;` and call `Item::Fn`"
+    );
+}
+
+#[test]
 fn check_of_a_return_type_reached_through_a_path_reports_it() {
     // Arrange & Act
     let found = check(

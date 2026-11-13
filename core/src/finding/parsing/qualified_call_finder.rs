@@ -13,6 +13,7 @@ use syn::ExprCall;
 use syn::Item;
 use syn::ItemImpl;
 use syn::Macro;
+use syn::Pat;
 use syn::Path;
 use syn::TypePath;
 use syn::UseTree;
@@ -197,6 +198,24 @@ impl<'ast> Visit<'ast> for QualifiedCallFinder {
         visit::visit_item_impl(self, node);
     }
 
+    // A variant or a struct written in full in a pattern -- a `match` arm, an
+    // `if let`, a `let ... else`, the pattern of `matches!` -- names a
+    // dependency the import list does not, as the same path in a call does.
+    fn visit_pat(&mut self, node: &'ast Pat) {
+        let path = match node {
+            Pat::TupleStruct(pattern) if pattern.qself.is_none() => Some(&pattern.path),
+            Pat::Struct(pattern) if pattern.qself.is_none() => Some(&pattern.path),
+            Pat::Path(pattern) if pattern.qself.is_none() => Some(&pattern.path),
+            _ => None,
+        };
+        if let Some(found) =
+            path.and_then(|path| self.offending_path(path, path.span().start().line))
+        {
+            self.found.push(found);
+        }
+        visit::visit_pat(self, node);
+    }
+
     fn visit_expr_call(&mut self, node: &'ast ExprCall) {
         if let Some(call) = self.offending(node) {
             self.found.push(call);
@@ -205,14 +224,17 @@ impl<'ast> Visit<'ast> for QualifiedCallFinder {
     }
 
     // A standard macro's expressions are code the file wrote, so they answer
-    // the same question; a pattern of `matches!` is left alone as any pattern
-    // is, and another macro's body is its author's.
+    // the same question, and the pattern of `matches!` as any pattern does;
+    // another macro's body is its author's.
     fn visit_macro(&mut self, node: &'ast Macro) {
-        let arguments = StandardMacro::of(node)
-            .and_then(|standard| standard.expressions())
-            .unwrap_or_default();
-        for argument in &arguments {
+        let Some(standard) = StandardMacro::of(node) else {
+            return;
+        };
+        for argument in &standard.expressions().unwrap_or_default() {
             Visit::visit_expr(self, argument);
+        }
+        if let Some(pattern) = standard.pattern() {
+            Visit::visit_pat(self, &pattern);
         }
     }
 }

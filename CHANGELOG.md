@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+- `imported-paths` judges a pattern as it judges a call: the path a
+  tuple-struct, struct or unit pattern carries -- in a `match` arm, an
+  `if let`, a `let ... else`, a parameter and the pattern `matches!` holds --
+  is reported when written in full, `syn::Item::Fn(item) =>` with the
+  correction `use syn::Item;` and `Item::Fn`. A type qualifier and one imported
+  segment pass, as in a call. Measured over the family before it was chosen:
+  58 offences in eight repositories, none in this tool's tree.
+  ([R008](docs/ADRs/R008-ADR-ImportedPathsRule.md))
+
 ## [0.21.0] - 2026-11-13
 
 ### Fixed

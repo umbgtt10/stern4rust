@@ -177,6 +177,25 @@ reads what is matched and the guard (`StandardMacro::expressions`);
 `behaviour-tests` still reads every argument, as it did. Whether patterns
 should be judged at all is a question of its own, not this amendment's.
 
+## Amendment (2026-11-13): patterns
+
+A pattern names a dependency as a call does: `syn::Item::Fn(item) =>` in a
+`match` arm leaves the import list as wrong as `syn::Item::Fn(item)` built in an
+expression, and the house standard is not scoped to expressions. The first
+amendment left `matches!`'s pattern alone only to agree with the `match` arms
+around it, which no part of the rule judged.
+
+The path a pattern carries -- a tuple-struct, a struct and a unit or constant
+pattern alike, in a `match` arm, an `if let`, a `let ... else`, a parameter and
+the pattern `matches!` holds (`StandardMacro::pattern`) -- now answers the same
+question as a call, through the same `offending_path`: a type qualifier and one
+imported segment pass, and the correction is the same import.
+
+Measured before it was chosen, with a built binary over the family's
+twenty repositories, as the first amendment's count asked: 58 offences in
+eight, 25 of them in `braintax4rust` and 13 in `dry4rust` -- arms over `syn`'s
+enums -- and none in this tool's own tree.
+
 ## Enforcement
 
 `tests/rules/source/imported_paths_rule_tests.rs` — 7 tests covering an imported

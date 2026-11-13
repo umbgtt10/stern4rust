@@ -8,6 +8,7 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::iter::once;
 
+use proc_macro2::TokenStream;
 use syn::Error;
 use syn::Expr;
 use syn::Macro;
@@ -77,6 +78,24 @@ impl<'a> StandardMacro<'a> {
         } else {
             self.arguments()
         }
+    }
+
+    // The pattern `matches!` holds, judged as any pattern is; none for another
+    // macro, or a body that holds none.
+    pub fn pattern(&self) -> Option<Pat> {
+        if self.name == "matches" {
+            self.node.parse_body_with(Self::held).ok()
+        } else {
+            None
+        }
+    }
+
+    fn held(input: ParseStream) -> Result<Pat, Error> {
+        input.parse::<Expr>()?;
+        input.parse::<Token![,]>()?;
+        let pattern = Pat::parse_multi_with_leading_vert(input)?;
+        input.parse::<TokenStream>()?;
+        Ok(pattern)
     }
 
     fn matched(input: ParseStream) -> Result<Vec<Expr>, Error> {
