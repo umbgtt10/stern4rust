@@ -49,15 +49,20 @@ fn find_ignores_a_macro_invocation() {
     assert!(paths.is_empty(), "expected none, got {paths:?}");
 }
 
-// A macro outside the standard family expands to its author's code, which the
-// syntax tree never shows: its arguments are not judged.
+// A proptest!'s test is no item a parser takes, but its body is a block.
 #[test]
-fn find_of_a_call_inside_a_macro_outside_the_standard_family_returns_nothing() {
+fn find_of_a_call_inside_a_block_of_another_macro_returns_it_at_its_line() {
     // Arrange & Act
-    let paths = paths("fn outer() {\n    quote!(std::env::args());\n}\n");
+    let found = found(
+        "proptest! {\n    #[test]\n    fn t(a in 0..1u8) {\n        let _ = std::collections::BTreeSet::<u8>::new();\n    }\n}\n",
+    );
 
     // Assert
-    assert!(paths.is_empty(), "expected none, got {paths:?}");
+    let at: Vec<(String, usize)> = found
+        .iter()
+        .map(|call| (call.path().to_string(), call.line()))
+        .collect();
+    assert_eq!(at, [(String::from("std::collections::BTreeSet::new"), 4)]);
 }
 
 // A macro inside a macro's arguments is read as the outer one is.
@@ -93,6 +98,28 @@ fn find_of_a_call_inside_a_standard_macro_returns_its_path_and_line() {
         .map(|call| (call.path().to_string(), call.line()))
         .collect();
     assert_eq!(reported, [(String::from("std::env::args"), 3)]);
+}
+
+// Another macro's body is code where it reads as code: a list of
+// expressions, as prop_assert_eq! holds.
+#[test]
+fn find_of_a_call_inside_another_macro_s_expressions_returns_it() {
+    // Arrange & Act
+    let paths = paths("fn outer() {\n    prop_assert_eq!(std::cmp::max(1, 2), 2);\n}\n");
+
+    // Assert
+    assert_eq!(paths, ["std::cmp::max"]);
+}
+
+// quote! spells a generated path in full on purpose: its body is not code
+// the file wrote, and is not judged.
+#[test]
+fn find_of_a_call_inside_quote_returns_nothing() {
+    // Arrange & Act
+    let paths = paths("fn outer() {\n    quote!(std::env::args());\n}\n");
+
+    // Assert
+    assert!(paths.is_empty(), "expected none, got {paths:?}");
 }
 
 // A module whose name merely starts like a primitive is still a module.

@@ -196,6 +196,30 @@ twenty repositories, as the first amendment's count asked: 58 offences in
 eight, 25 of them in `braintax4rust` and 13 in `dry4rust` -- arms over `syn`'s
 enums -- and none in this tool's own tree.
 
+## Amendment (2026-11-13): other macros' bodies
+
+Nothing in the syntax tree says another macro's body is Rust, and that was the
+reason to leave it alone; but much of it reads as Rust, and a path written in
+full there leaves the import list as wrong as anywhere else.
+`etheram-raft`'s `std::collections::BTreeSet::new` sat in a `proptest!` test's
+body behind a green gate.
+
+A macro outside the standard family (`MacroBody`) is read where it reads as
+code: its body as a list of expressions, as `prop_assert_eq!` holds, else its
+brace groups that parse as blocks, searched for inside any group that is not
+one -- which reaches a `proptest!` test's body and the arms of
+`tokio::select!`. Where nothing parses, nothing is judged, so a body is never
+judged on a guess. Two kinds are never read: `quote!` and its kind, whose
+generated code spells paths in full on purpose, and the compiler's built-ins
+whose body is tokens or text. `time_call_finder`, which reads any macro's body
+as expressions for `injected-time`, stays as it is: a clock in generated code
+is still a clock, while a path in generated code is no import the file owes.
+
+Measured over the family with a built binary before it was chosen: 11
+offences in three repositories, all in tests -- `postcard` calls in
+`etheram-embassy`'s `proptest!` tests, `std::vec!` and `std::format!` in
+`etheram-raft`'s -- and none in this tool's own tree.
+
 ## Enforcement
 
 `tests/rules/source/imported_paths_rule_tests.rs` — 7 tests covering an imported

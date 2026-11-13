@@ -24,6 +24,7 @@ use syn::visit::Visit;
 use syn::visit::visit_expr_call;
 
 use crate::finding::model::qualified_call::QualifiedCall;
+use crate::finding::parsing::shapes::macro_body::MacroBody;
 use crate::finding::parsing::shapes::standard_macro::StandardMacro;
 use crate::source_file::SourceFile;
 
@@ -224,17 +225,30 @@ impl<'ast> Visit<'ast> for QualifiedCallFinder {
     }
 
     // A standard macro's expressions are code the file wrote, so they answer
-    // the same question, and the pattern of `matches!` as any pattern does;
-    // another macro's body is its author's.
+    // the same question, and the pattern of `matches!` as any pattern does.
+    // Another macro's body answers it where it reads as code -- a list of
+    // expressions, else its blocks -- and quote!'s and the built-ins' never.
     fn visit_macro(&mut self, node: &'ast Macro) {
-        let Some(standard) = StandardMacro::of(node) else {
-            return;
-        };
-        for argument in &standard.expressions().unwrap_or_default() {
-            Visit::visit_expr(self, argument);
-        }
-        if let Some(pattern) = standard.pattern() {
-            Visit::visit_pat(self, &pattern);
+        if let Some(standard) = StandardMacro::of(node) {
+            for argument in &standard.expressions().unwrap_or_default() {
+                Visit::visit_expr(self, argument);
+            }
+            if let Some(pattern) = standard.pattern() {
+                Visit::visit_pat(self, &pattern);
+            }
+        } else if let Some(body) = MacroBody::of(node) {
+            match body.expressions() {
+                Some(expressions) => {
+                    for expression in &expressions {
+                        Visit::visit_expr(self, expression);
+                    }
+                }
+                None => {
+                    for block in &body.blocks() {
+                        Visit::visit_block(self, block);
+                    }
+                }
+            }
         }
     }
 }

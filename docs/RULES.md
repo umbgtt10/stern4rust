@@ -312,14 +312,21 @@ reported, with the same correction -- add `use syn::Item;` and call
 `Item::Fn`. A variant qualified by its imported enum, `Item::Fn(_)`, passes, as
 `Item::new()` does.
 
+The body of a macro **outside the standard family** is checked where it reads
+as code: as a list of expressions, as `prop_assert_eq!` and `prop_oneof!` hold;
+else through its brace groups that parse as blocks, as a `proptest!` test's
+body and an arm of `tokio::select!` are. Two kinds are never read, since their
+body is not code the file wrote: `quote!`, `quote_spanned!`, `parse_quote!` and
+`format_ident!`, which spell a generated path in full on purpose, and the
+compiler's built-ins whose body is tokens or text -- `stringify!`,
+`include_str!`, `concat!`, `env!`, `asm!` and their kind.
+
 **Does not catch:** a macro's own path -- `serde_json::json!(...)` is not a
-call. The body of a macro outside the standard family -- `quote!`, `proptest!`,
-`tokio::select!` -- which expands to its author's code: `quote!` spells a
-generated path in full on purpose, and nothing says another macro's body is
-Rust, so it is left alone rather than judged on a guess. A standard macro whose
-body is not a list of expressions is left alone for the same reason. And a
-lowercase-named type or an uppercase-named module is judged by its case rather
-than by what it is.
+call. What another macro's body holds outside a list of expressions and its
+blocks -- a `proptest!` test's strategies, `a in proptest::collection::vec(..)`,
+sit in no block. A standard macro whose body is not a list of expressions is
+left alone. And a lowercase-named type or an uppercase-named module is judged
+by its case rather than by what it is.
 
 ## `test-free-source`
 

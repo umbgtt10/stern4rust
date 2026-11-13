@@ -259,27 +259,13 @@ What remains open is the rest of the trade: a lowercase type this crate cannot
 name -- someone's `mod widget` holding `struct widget` -- is still reported, and
 an uppercase-named module still passes.
 
-## `imported-paths` sees no macro's path and no other macro's body
+## `imported-paths` sees no macro's path
 
 Since 0.21.0 the rule reads calls, types, implemented traits and the arguments
-of the twenty standard macros, and patterns since the amendment after it. A
-path written in full still passes in two places, and each is a green gate over
-the shape the house standard -- *"do not use fully qualified paths"* --
-forbids.
-
-**Another macro's body.** `proptest!`, `prop_assert_eq!`, `tokio::select!`,
-`assert_matches!` and their kind expand to code the syntax tree never shows, so
-nothing says their body is Rust. `etheram-raft`'s
-`std::collections::BTreeSet::new` sat in a `proptest!` test's body, beside the
-`proptest::collection::vec(...)` strategies such a block names. Two ways in:
-widening the family by name, for the macros whose body is a list of
-expressions as the standard ones' is; or reading a non-standard macro's
-brace-delimited groups as blocks where they parse, which reaches a `proptest!`
-test's body. Either must keep `quote!`, `quote_spanned!` and `parse_quote!` out,
-since generated code spells its paths in full on purpose -- often as
-`::std::...` -- and `time_call_finder`, which reads any macro's body as
-expressions, is the counter-example rather than the model: `injected-time`
-reports a clock, and a clock in generated code is still a clock.
+of the twenty standard macros, and patterns and other macros' bodies since the
+amendments after it. A path written in full still passes in one place, a green
+gate over the shape the house standard -- *"do not use fully qualified paths"*
+-- forbids.
 
 **A macro's own path.** `std::vec![...]`, `std::format!(...)`,
 `alloc::vec![...]`: R008 left macros out for now, judging `serde_json::json!`

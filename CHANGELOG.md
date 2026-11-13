@@ -15,6 +15,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   segment pass, as in a call. Measured over the family before it was chosen:
   58 offences in eight repositories, none in this tool's tree.
   ([R008](docs/ADRs/R008-ADR-ImportedPathsRule.md))
+- `imported-paths` reads the body of a macro outside the standard family where
+  it reads as code: as a list of expressions, as `prop_assert_eq!` holds, else
+  its brace groups that parse as blocks, as a `proptest!` test's body and the
+  arms of `tokio::select!` are. `quote!` and its kind, and the compiler's
+  built-ins whose body is tokens or text, are never read. Measured over the
+  family: 11 offences in three repositories, all in tests.
+  ([R008](docs/ADRs/R008-ADR-ImportedPathsRule.md))
 
 ## [0.21.0] - 2026-11-13
 
