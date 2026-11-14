@@ -23,6 +23,12 @@ fn kinds(body: &str) -> Vec<(String, MemberKind)> {
         .collect()
 }
 
+fn layout_of(source: &str) -> ImplLayout {
+    let mut layouts = ImplLayoutParser::parse(&SourceFile::new("src/store.rs", source));
+    assert_eq!(layouts.len(), 1, "expected one impl block");
+    layouts.remove(0)
+}
+
 fn single(body: &str) -> ImplLayout {
     let mut layouts = ImplLayoutParser::parse(&SourceFile::new(
         "src/store.rs",
@@ -96,6 +102,15 @@ fn parse_a_file_that_does_not_parse_finds_nothing() {
 }
 
 #[test]
+fn parse_a_first_member_on_the_opening_line_refuses_the_fix() {
+    // Arrange & Act
+    let layout = layout_of("impl Store { fn a() {}\n}\n");
+
+    // Assert
+    assert_eq!(layout.refusal(), Some(FixRefusal::SharedLine));
+}
+
+#[test]
 fn parse_a_free_comment_between_functions_refuses_the_fix() {
     // Arrange & Act
     let layout = single("    fn b() {}\n\n    // -- queries --\n\n    fn a() {}\n");
@@ -105,12 +120,42 @@ fn parse_a_free_comment_between_functions_refuses_the_fix() {
 }
 
 #[test]
+fn parse_a_function_returning_another_type_is_not_a_constructor() {
+    // Arrange & Act
+    let found = kinds("    pub fn count() -> usize {\n        0\n    }\n");
+
+    // Assert
+    assert_eq!(found, [(String::from("count"), MemberKind::Public)]);
+}
+
+#[test]
+fn parse_a_last_member_on_the_closing_line_refuses_the_fix() {
+    // Arrange & Act
+    let layout = layout_of("impl Store {\n    fn a() {} }\n");
+
+    // Assert
+    assert_eq!(layout.refusal(), Some(FixRefusal::SharedLine));
+}
+
+#[test]
 fn parse_a_macro_among_the_members_refuses_the_fix() {
     // Arrange & Act
     let layout = single("    fn b() {}\n\n    accessors!();\n\n    fn a() {}\n");
 
     // Assert
     assert_eq!(layout.refusal(), Some(FixRefusal::MacroInvocation));
+}
+
+// A string's continuation line can start with `//`: it is the item above's,
+// and the member below starts on its own line.
+#[test]
+fn parse_a_member_below_a_string_ending_on_a_comment_like_line_does_not_claim_it() {
+    // Arrange & Act
+    let layout = single("    const DOC: &str = \"first\n// second\";\n    fn a() {}\n");
+
+    // Assert
+    assert_eq!(layout.members()[1].first_line(), 4);
+    assert_eq!(layout.refusal(), None);
 }
 
 #[test]

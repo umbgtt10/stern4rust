@@ -91,7 +91,10 @@ impl ImplLayoutParser {
         let owner = ItemNaming::implemented_type(&block.self_ty);
         let open_line = block.brace_token.span.open().start().line;
         let close_line = block.brace_token.span.close().start().line;
-        let mut floor = open_line + 1;
+        // The opening brace's line is code, never a comment, so the first
+        // member's block cannot climb past it; each later one stops below the
+        // member above, whose last line can look like a comment.
+        let mut floor = open_line;
         let mut members = Vec::new();
         for item in &block.items {
             let first_line = file.block_start(item.span().start().line, floor);
