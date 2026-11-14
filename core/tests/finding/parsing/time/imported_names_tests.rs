@@ -90,3 +90,23 @@ fn resolve_reads_an_import_inside_a_function_body() {
     // Assert
     assert_eq!(candidates, ["tokio::time::sleep"]);
 }
+
+// An import is read wherever the file writes one: in an inline module, and in
+// a method's body as in a function's.
+#[test]
+fn resolve_reads_an_import_inside_a_module_and_a_methods_body() {
+    // Arrange
+    let names = names(
+        "mod tests {\n    use std::thread::sleep;\n}\n\nstruct Clock;\n\nimpl Clock {\n    fn now() {\n        use std::time::Instant;\n    }\n}\n",
+    );
+
+    // Act
+    let (slept, read) = (
+        names.resolve(&written("sleep")),
+        names.resolve(&written("Instant::now")),
+    );
+
+    // Assert
+    assert_eq!(slept, ["std::thread::sleep"]);
+    assert_eq!(read, ["std::time::Instant::now"]);
+}

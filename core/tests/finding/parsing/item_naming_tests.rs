@@ -132,6 +132,29 @@ fn identifier_of_a_type_alias_returns_its_name() {
 // An impl block declares no name of its own; it belongs to the type it
 // implements, and each caller decides what to say about that.
 #[test]
+fn identifier_of_an_enum_a_trait_and_a_union_returns_each_name() {
+    // Arrange
+    let items = [
+        first_item("enum Mode {\n    Fast,\n}\n"),
+        first_item("trait Port {}\n"),
+        first_item("union Bits {\n    raw: u8,\n}\n"),
+    ];
+
+    // Act
+    let names: Vec<Option<String>> = items.iter().map(ItemNaming::identifier).collect();
+
+    // Assert
+    assert_eq!(
+        names,
+        [
+            Some(String::from("Mode")),
+            Some(String::from("Port")),
+            Some(String::from("Bits")),
+        ]
+    );
+}
+
+#[test]
 fn identifier_of_an_impl_block_is_none() {
     // Arrange
     let item = first_item("impl Widget {}");
