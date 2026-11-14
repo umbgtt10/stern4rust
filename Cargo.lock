@@ -103,7 +103,7 @@ dependencies = [
 
 [[package]]
 name = "cargo-stern4rust"
-version = "0.21.0"
+version = "0.22.0"
 dependencies = [
  "anyhow",
  "cargo_metadata",
@@ -424,7 +424,7 @@ dependencies = [
 
 [[package]]
 name = "stern4rust-core"
-version = "0.21.0"
+version = "0.22.0"
 dependencies = [
  "globset",
  "proc-macro2",
@@ -592,7 +592,7 @@ checksum = "8c3b93199df0ab874cdf0c6a94f0a0dc3423fe41f1cafb62b8bd7b1deb277aef"
 
 [[package]]
 name = "xtask"
-version = "0.21.0"
+version = "0.22.0"
 dependencies = [
  "serde",
  "serde_json",

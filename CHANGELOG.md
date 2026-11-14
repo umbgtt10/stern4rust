@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.22.0] - 2026-11-14
+
 ### Changed
 - `imported-paths` judges a pattern as it judges a call: the path a
   tuple-struct, struct or unit pattern carries -- in a `match` arm, an
