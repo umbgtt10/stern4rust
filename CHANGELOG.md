@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.23.0] - 2026-11-14
+
 ### Fixed
 - `tested-public-api` and `public-or-private` count a call's arguments inside
   a macro without its trailing comma. `combine(first, second,)` -- as rustfmt
