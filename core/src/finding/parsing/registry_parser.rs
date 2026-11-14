@@ -61,17 +61,17 @@ impl RegistryParser {
     // The kind words stay here rather than moving to `ItemNaming`: they are this
     // parser's wording, and every one of them is inside an offence description
     // that baselines are keyed on.
-    fn label(file: &SourceFile, item: &Item, line: usize) -> String {
+    fn label(file: &SourceFile, item: &Item) -> String {
         let Some(kind) = Self::kind(item) else {
-            return format!("`{}`", ItemNaming::source_line(file, line));
+            return format!("`{}`", ItemNaming::code_line(file, item));
         };
         let subject =
-            ItemNaming::identifier(item).unwrap_or_else(|| ItemNaming::source_line(file, line));
+            ItemNaming::identifier(item).unwrap_or_else(|| ItemNaming::code_line(file, item));
         format!("the {kind} `{subject}`")
     }
 
     fn stray(file: &SourceFile, item: &Item) -> RegistryItem {
         let line = item.span().start().line;
-        RegistryItem::new(line, &Self::label(file, item, line))
+        RegistryItem::new(line, &Self::label(file, item))
     }
 }

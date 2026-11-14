@@ -77,10 +77,10 @@ impl UnitTestFinder {
     // The kind words stay here for the same reason they stay in
     // `RegistryParser`: they sit inside offence descriptions, and this one says
     // "module" where that one says "inline module".
-    fn describe(file: &SourceFile, item: &Item, line: usize) -> String {
+    fn describe(file: &SourceFile, item: &Item) -> String {
         match (Self::kind(item), ItemNaming::identifier(item)) {
             (Some(kind), Some(subject)) => format!("{kind} `{subject}`"),
-            _ => format!("`{}`", ItemNaming::source_line(file, line)),
+            _ => format!("`{}`", ItemNaming::code_line(file, item)),
         }
     }
 
@@ -190,7 +190,7 @@ impl UnitTestFinder {
     fn site_of(file: &SourceFile, item: &Item) -> Option<UnitTestSite> {
         let line = item.span().start().line.max(1);
         let attrs = Self::attributes(item);
-        let subject = Self::describe(file, item, line);
+        let subject = Self::describe(file, item);
         let mirror = Self::mirror_of(file.relative_path());
 
         if attrs.iter().any(Self::is_cfg_attr_test) {

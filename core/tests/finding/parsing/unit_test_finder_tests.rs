@@ -112,6 +112,37 @@ fn sites_names_a_test_function_with_its_identifier() {
     assert_eq!(found, ["the test function `checks_something`"]);
 }
 
+// Every kind of item a gate can sit on: those with a kind word named by it,
+// the rest by their first line of code -- never by the gate itself.
+#[test]
+fn sites_names_each_kind_of_gated_item_by_its_kind_or_its_code() {
+    // Arrange
+    let body = "#[cfg(test)]\nconst LIMIT: u8 = 1;\n#[cfg(test)]\nenum Choice {}\n#[cfg(test)]\nextern crate alloc;\n#[cfg(test)]\nextern \"C\" {}\n#[cfg(test)]\nimpl Thing {}\n#[cfg(test)]\nmacro_rules! helper {\n    () => {};\n}\n#[cfg(test)]\nstatic COUNT: u8 = 0;\n#[cfg(test)]\nstruct Probe;\n#[cfg(test)]\ntrait Fake {}\n#[cfg(test)]\ntrait Both = Fake + Send;\n#[cfg(test)]\ntype Alias = u8;\n#[cfg(test)]\nunion Bits {\n    a: u8,\n}\n#[cfg(test)]\nuse std::fmt;\n";
+
+    // Act
+    let found = labels(body);
+
+    // Assert
+    assert_eq!(
+        found,
+        [
+            "the `#[cfg(test)]` constant `LIMIT`",
+            "the `#[cfg(test)]` enum `Choice`",
+            "the `#[cfg(test)]` `extern crate alloc;`",
+            "the `#[cfg(test)]` `extern \"C\" {}`",
+            "the `#[cfg(test)]` `impl Thing {}`",
+            "the `#[cfg(test)]` `macro_rules! helper {`",
+            "the `#[cfg(test)]` static `COUNT`",
+            "the `#[cfg(test)]` struct `Probe`",
+            "the `#[cfg(test)]` trait `Fake`",
+            "the `#[cfg(test)]` `trait Both = Fake + Send;`",
+            "the `#[cfg(test)]` type alias `Alias`",
+            "the `#[cfg(test)]` `union Bits {`",
+            "the `#[cfg(test)]` `use std::fmt;`",
+        ]
+    );
+}
+
 // The shape as it actually appears: the negation nested inside an `all`,
 // alongside a target predicate that has nothing to do with testing.
 #[test]

@@ -40,6 +40,47 @@ fn self_type(source: &str) -> Type {
     }
 }
 
+// Past its attributes, doc comments among them: the line a reader would
+// search the file for.
+#[test]
+fn code_line_of_an_attributed_item_is_its_first_line_of_code() {
+    // Arrange
+    let source = "#[cfg(test)]\n/// What it stands in for.\nimpl Thing {\n    fn f() {}\n}\n";
+    let file = SourceFile::new("src/lib.rs", source);
+
+    // Act
+    let line = ItemNaming::code_line(&file, &first_item(source));
+
+    // Assert
+    assert_eq!(line, "impl Thing {");
+}
+
+#[test]
+fn code_line_of_an_item_sharing_a_line_with_its_attribute_is_that_line() {
+    // Arrange
+    let source = "#[cfg(test)] use std::fmt;\n";
+    let file = SourceFile::new("src/lib.rs", source);
+
+    // Act
+    let line = ItemNaming::code_line(&file, &first_item(source));
+
+    // Assert
+    assert_eq!(line, "#[cfg(test)] use std::fmt;");
+}
+
+#[test]
+fn code_line_of_an_item_without_attributes_is_its_own_line() {
+    // Arrange
+    let source = "\n    extern crate alloc;\n";
+    let file = SourceFile::new("src/lib.rs", source);
+
+    // Act
+    let line = ItemNaming::code_line(&file, &first_item(source));
+
+    // Assert
+    assert_eq!(line, "extern crate alloc;");
+}
+
 #[test]
 fn identifier_of_a_constant_returns_its_name() {
     // Arrange

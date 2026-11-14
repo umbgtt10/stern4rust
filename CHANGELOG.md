@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+- `test-free-source`, `module-registry` and `tests-layout` name an attributed
+  item they have no name or kind word for -- an impl block, an import, an
+  `extern` crate or block, a macro, a trait alias, a union -- by its first line
+  of code. They
+  quoted the line its span starts on, which for a gated item is the gate: every
+  `#[cfg(test)] impl` read "the `#[cfg(test)]` `#[cfg(test)]`".
+
+### Changed
+- `injected-dependencies` follows a chain of locals eight deep, counting the
+  locals alone, as its documentation says: a step into a call, a `?`, a field,
+  a reference or parentheses no longer spends the budget. A chain of eight
+  locals back to a parameter is passed in; seven was the most before.
+
 ## [0.22.0] - 2026-11-14
 
 ### Changed

@@ -77,6 +77,16 @@ fn strays_names_a_type_alias_with_its_identifier() {
 
 // An impl block has no identifier of its own, so it falls back to the line as
 // written rather than being left as a bare "item".
+// Its attribute is not its code: the line named is the one past it.
+#[test]
+fn strays_names_an_attributed_impl_block_by_its_code_rather_than_its_attribute() {
+    // Arrange & Act
+    let found = labels("#[cfg(test)]\nimpl Recorder {}\n");
+
+    // Assert
+    assert_eq!(found, ["the impl block `impl Recorder {}`"]);
+}
+
 #[test]
 fn strays_names_an_impl_block_by_the_line_as_written() {
     // Arrange & Act
