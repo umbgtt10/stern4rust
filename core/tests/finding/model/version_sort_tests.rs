@@ -18,6 +18,20 @@ fn compare_of_a_name_and_its_extension_puts_the_shorter_first() {
     assert_eq!(order, Ordering::Less);
 }
 
+// A number against anything else is ordered by its text: `10` before `b`,
+// though as a value it is longer.
+#[test]
+fn compare_of_a_number_and_a_word_in_the_same_place_orders_them_by_text() {
+    // Arrange & Act
+    let (forward, backward) = (
+        VersionSort::compare("a_10", "a_b"),
+        VersionSort::compare("a_b", "a_10"),
+    );
+
+    // Assert
+    assert_eq!((forward, backward), (Ordering::Less, Ordering::Greater));
+}
+
 // A number is compared by value however many digits it has, so one too long for
 // any integer still sorts.
 #[test]
@@ -86,6 +100,20 @@ fn compare_puts_an_underscore_before_a_capital() {
 
     // Assert
     assert_eq!(order, Ordering::Less);
+}
+
+// The rule on its own: after the equal `a` and `1`, an underscore against a
+// capital, which bytes would order the other way.
+#[test]
+fn compare_puts_an_underscore_before_a_capital_in_the_same_place() {
+    // Arrange & Act
+    let (forward, backward) = (
+        VersionSort::compare("a1_b", "a1B"),
+        VersionSort::compare("a1B", "a1_b"),
+    );
+
+    // Assert
+    assert_eq!((forward, backward), (Ordering::Less, Ordering::Greater));
 }
 
 #[test]
