@@ -104,6 +104,18 @@ fn of_a_pub_item_in_an_inline_module_names_its_types() {
 }
 
 #[test]
+fn of_a_pub_method_of_a_pub_enum_names_its_signature_and_of_a_private_enum_nothing() {
+    // Arrange & Act
+    let found = names(
+        "pub enum Mode {\n    Fast,\n}\n\nimpl Mode {\n    pub fn speed(&self) -> Speed {\n        todo!()\n    }\n}\n\nenum Hidden {\n    Kept,\n}\n\nimpl Hidden {\n    pub fn secret(&self) -> Secret {\n        todo!()\n    }\n}\n",
+    );
+
+    // Assert
+    assert!(found.contains("Speed"), "{found:?}");
+    assert!(!found.contains("Secret"), "{found:?}");
+}
+
+#[test]
 fn of_a_pub_method_of_a_pub_type_names_its_signature_and_a_private_one_does_not() {
     // Arrange & Act
     let found = names(
@@ -137,6 +149,16 @@ fn of_a_pub_structs_pub_field_names_its_type_and_a_private_field_does_not() {
 }
 
 #[test]
+fn of_a_pub_traits_constants_and_type_defaults_name_their_types() {
+    // Arrange & Act
+    let found = names("pub trait Port {\n    const LIMIT: Limit;\n    type Frame = Packet;\n}\n");
+
+    // Assert
+    assert!(found.contains("Limit"), "{found:?}");
+    assert!(found.contains("Packet"), "{found:?}");
+}
+
+#[test]
 fn of_a_pub_traits_methods_name_their_signatures() {
     // Arrange & Act
     let found = names("pub trait Port {\n    fn send(&self, frame: Frame) -> Ack;\n}\n");
@@ -162,6 +184,19 @@ fn of_an_item_in_a_cfg_test_module_names_nothing() {
     // Arrange & Act
     let found =
         names("#[cfg(test)]\nmod tests {\n    pub fn fake() -> Fake {\n        Fake\n    }\n}\n");
+
+    // Assert
+    assert!(found.is_empty(), "{found:?}");
+}
+
+// Every kind an item can hand a type over in, private: an enum's variants, an
+// alias, a constant, a static.
+#[test]
+fn of_private_items_of_every_kind_name_nothing() {
+    // Arrange & Act
+    let found = names(
+        "enum Mode {\n    Fast(Speed),\n}\n\ntype Alias = Target;\n\nconst LIMIT: Limit = Limit;\n\nstatic COUNT: Counter = Counter;\n",
+    );
 
     // Assert
     assert!(found.is_empty(), "{found:?}");
