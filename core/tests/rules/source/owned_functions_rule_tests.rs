@@ -321,6 +321,16 @@ fn check_fn_main_beside_a_type_in_an_entry_file_reports_nothing() {
     assert_eq!(counts, [0, 0]);
 }
 
+// Only an entry file's main is a program's start; elsewhere it is a function.
+#[test]
+fn check_fn_main_beside_a_type_outside_an_entry_file_reports_it() {
+    // Arrange & Act
+    let offences = check("src/engine.rs", &format!("{IMPLEMENTED}\nfn main() {{}}\n"));
+
+    // Assert
+    assert_eq!(subjects(&offences), ["main"]);
+}
+
 // The functions are each file's own, so the tree as a whole has nothing to add.
 #[test]
 fn check_workspace_of_a_tree_with_a_free_function_reports_nothing() {

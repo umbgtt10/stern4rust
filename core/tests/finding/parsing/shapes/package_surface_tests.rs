@@ -78,6 +78,23 @@ fn is_behaviour_method_of_a_trait_impl_method_returns_true() {
     assert!(result);
 }
 
+// A required method has no body to run; a provided one is behaviour.
+#[test]
+fn is_behaviour_method_of_a_traits_methods_is_true_of_a_default_body_alone() {
+    // Arrange
+    let surface =
+        surface("pub trait Port {\n    fn required(&self);\n    fn provided(&self) {}\n}\n");
+
+    // Act
+    let (required, provided) = (
+        surface.is_behaviour_method("required"),
+        surface.is_behaviour_method("provided"),
+    );
+
+    // Assert
+    assert_eq!((required, provided), (false, true));
+}
+
 #[test]
 fn is_behaviour_method_of_an_objects_method_returns_true() {
     // Arrange

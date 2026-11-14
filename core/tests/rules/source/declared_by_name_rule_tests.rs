@@ -51,6 +51,15 @@ fn check_a_file_that_does_not_parse_reports_nothing() {
 }
 
 #[test]
+fn check_a_module_carrying_another_name_value_attribute_reports_nothing() {
+    // Arrange & Act
+    let offences = check("src/lib.rs", "#[doc = \"elsewhere.rs\"]\nmod inner;\n");
+
+    // Assert
+    assert!(offences.is_empty(), "{offences:?}");
+}
+
+#[test]
 fn check_a_module_declared_by_name_reports_nothing() {
     // Arrange & Act
     let offences = check("src/lib.rs", "pub mod alpha;\npub mod beta;\n");

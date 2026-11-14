@@ -114,6 +114,15 @@ fn counts_names_each_fingerprint_with_how_often_it_was_recorded() {
 }
 
 #[test]
+fn is_empty_of_a_baseline_holding_nothing_is_true() {
+    // Arrange & Act
+    let empty = Baseline::of(&[]).is_empty();
+
+    // Assert
+    assert!(empty);
+}
+
+#[test]
 fn len_counts_every_recorded_occurrence() {
     // Arrange & Act
     let baseline = Baseline::of(&[

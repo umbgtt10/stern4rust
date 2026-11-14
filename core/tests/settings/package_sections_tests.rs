@@ -42,6 +42,15 @@ fn skipping(entries: &[(&str, &[&str])]) -> PackageSections {
 }
 
 #[test]
+fn is_empty_with_a_section_is_false() {
+    // Arrange & Act
+    let empty = sections(&["alpha"]).is_empty();
+
+    // Assert
+    assert!(!empty);
+}
+
+#[test]
 fn is_empty_without_any_section_is_true() {
     // Arrange & Act
     let sections = sections(&[]);

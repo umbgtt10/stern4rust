@@ -97,6 +97,15 @@ fn is_port_of_a_standard_trait_through_an_import_is_false() {
 }
 
 #[test]
+fn is_port_of_a_trait_neither_declared_imported_nor_in_the_prelude_is_true() {
+    // Arrange & Act
+    let found = is_port("impl Clock for Engine {}\n", &[]);
+
+    // Assert
+    assert!(found);
+}
+
+#[test]
 fn is_port_of_a_trait_the_package_declares_is_true() {
     // Arrange & Act
     let ports = [

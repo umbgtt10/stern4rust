@@ -394,6 +394,18 @@ fn render_summary_counts_every_offence_even_when_some_are_not_shown() {
     );
 }
 
+#[test]
+fn render_with_a_baseline_every_entry_of_which_matched_states_no_stale_entries() {
+    // Arrange & Act
+    let report = ReportPrinter::new(1)
+        .with_baseline(Some(String::from("stern4rust-baseline.json")), 2, 0)
+        .render(&[]);
+
+    // Assert
+    assert!(report.contains("(2 suppressed)"), "got {report}");
+    assert!(!report.contains("matched nothing"), "got {report}");
+}
+
 // Columns are sized to their contents, so a path longer than the heading must
 // widen the column rather than overflow it.
 #[test]

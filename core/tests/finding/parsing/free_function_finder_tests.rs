@@ -68,6 +68,18 @@ fn among_finds_module_level_and_nested_functions_in_source_order() {
 }
 
 #[test]
+fn among_keeps_a_function_carrying_an_ordinary_attribute() {
+    // Arrange
+    let items = items("#[inline]\nfn helper() {}\n");
+
+    // Act
+    let found = FreeFunctionFinder::among(&items, false);
+
+    // Assert
+    assert_eq!(names(found), ["helper"]);
+}
+
+#[test]
 fn among_keeps_main_outside_an_entry_file() {
     // Arrange
     let items = items("fn main() {}\n");

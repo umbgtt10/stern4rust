@@ -88,6 +88,15 @@ fn strays_names_an_attributed_impl_block_by_its_code_rather_than_its_attribute()
 }
 
 #[test]
+fn strays_names_an_enum_and_a_trait_with_their_identifiers() {
+    // Arrange & Act
+    let found = labels("enum Mode {}\ntrait Port {}\n");
+
+    // Assert
+    assert_eq!(found, ["the enum `Mode`", "the trait `Port`"]);
+}
+
+#[test]
 fn strays_names_an_impl_block_by_the_line_as_written() {
     // Arrange & Act
     let found = labels("struct Recorder;\nimpl Recorder {}\n");

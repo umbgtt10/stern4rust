@@ -49,6 +49,15 @@ fn find_of_a_private_function_counts_nothing() {
     assert!(found.is_empty(), "got {found:?}");
 }
 
+#[test]
+fn find_of_a_private_method_of_a_public_type_counts_nothing() {
+    // Arrange & Act
+    let found = find("pub struct Store;\n\nimpl Store {\n    fn hidden(&self) {}\n}\n");
+
+    // Assert
+    assert!(found.is_empty(), "{found:?}");
+}
+
 // A trait method is a declaration, not an implementation: there is no behaviour
 // behind it to test. Counting it demanded a fake whose only purpose was to be
 // asserted against -- while every real implementation stayed excused, because

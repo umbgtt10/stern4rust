@@ -12,6 +12,15 @@
 use stern4rust::finding::model::public_entry_point::PublicEntryPoint;
 
 #[test]
+fn arity_of_an_entry_point_is_the_count_it_was_given() {
+    // Arrange & Act
+    let arity = PublicEntryPoint::new("with_fixed", 3).arity();
+
+    // Assert
+    assert_eq!(arity, 3);
+}
+
+#[test]
 fn new_keeps_every_field_it_was_given() {
     // Arrange & Act
     let entry = PublicEntryPoint::new("with_fixed", 1);
