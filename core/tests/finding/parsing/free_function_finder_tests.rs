@@ -91,6 +91,20 @@ fn among_leaves_out_an_extern_function() {
     assert!(found.is_empty());
 }
 
+// What gates on test is test code, as every rule reads it, however the
+// predicate is spelled around it.
+#[test]
+fn among_leaves_out_an_item_gated_on_test_among_other_features() {
+    // Arrange
+    let items = items("#[cfg(any(test, feature = \"probe\"))]\nfn helper() {}\n");
+
+    // Act
+    let found = FreeFunctionFinder::among(&items, false);
+
+    // Assert
+    assert!(found.is_empty());
+}
+
 #[test]
 fn among_leaves_out_associated_functions_and_trait_methods() {
     // Arrange

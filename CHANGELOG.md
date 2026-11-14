@@ -19,6 +19,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   `#[cfg(test)] impl` read "the `#[cfg(test)]` `#[cfg(test)]`".
 
 ### Changed
+- What builds into the library leaves out every kind of item a `#[cfg(test)]`
+  sits on -- a function, a constant, a static, a trait, an alias -- as it left
+  out a module, an impl, a struct and an enum. The rules reading it --
+  `record-home`, `records-and-objects`, `injected-dependencies` and
+  `behaviour-tests`, through the type shapes and the package surface -- no
+  longer take a test-only one for library code.
+- `owned-functions` reads a test gate as every other rule does: an item under
+  `#[cfg(any(test, ...))]` is test code, as one under `#[cfg(test)]` was.
 - `injected-dependencies` follows a chain of locals eight deep, counting the
   locals alone, as its documentation says: a step into a call, a `?`, a field,
   a reference or parentheses no longer spends the budget. A chain of eight

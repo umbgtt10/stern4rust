@@ -12,8 +12,8 @@ use syn::spanned::Spanned;
 use crate::finding::model::layout::section::Section;
 use crate::finding::model::layout::test_file_item::TestFileItem;
 use crate::finding::parsing::item_naming::ItemNaming;
+use crate::finding::parsing::unit_test_finder::UnitTestFinder;
 use crate::source_file::SourceFile;
-use syn::Attribute;
 
 // Turns a test file into the list of items the structure rule reasons about.
 //
@@ -49,15 +49,6 @@ impl TestFileParser {
     // `#[test]`, `#[tokio::test]` and any other harness spelled the same way.
     // Matching the last path segment rather than the whole path is what keeps
     // this from having to enumerate test frameworks.
-    fn is_test(attrs: &[Attribute]) -> bool {
-        attrs.iter().any(|attr| {
-            attr.path()
-                .segments
-                .last()
-                .is_some_and(|segment| segment.ident == "test")
-        })
-    }
-
     fn item(file: &SourceFile, item: &Item, floor: usize) -> TestFileItem {
         let span = item.span();
         let first_line = file.block_start(span.start().line, floor);
@@ -88,7 +79,9 @@ impl TestFileParser {
         match item {
             Item::Use(_) => Section::Imports,
             Item::Const(_) | Item::Static(_) => Section::Constants,
-            Item::Fn(function) if Self::is_test(&function.attrs) => Section::Tests,
+            Item::Fn(function) if function.attrs.iter().any(UnitTestFinder::is_test) => {
+                Section::Tests
+            }
             _ => Section::Helpers,
         }
     }

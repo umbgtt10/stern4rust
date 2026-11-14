@@ -6,7 +6,6 @@ use alloc::string::ToString;
 use alloc::vec;
 use alloc::vec::Vec;
 
-use proc_macro2::Delimiter;
 use proc_macro2::Group;
 use proc_macro2::TokenStream;
 use proc_macro2::TokenTree;
@@ -91,7 +90,8 @@ impl<'a> MacroBody<'a> {
     fn blocks_of(group: &Group) -> Vec<Block> {
         let whole = TokenStream::from(TokenTree::Group(group.clone()));
         match parse2::<Block>(whole) {
-            Ok(block) if group.delimiter() == Delimiter::Brace => vec![block],
+            // A block parses only from braces, so a parsed one was braced.
+            Ok(block) => vec![block],
             _ => Self::blocks_in(group.stream()),
         }
     }

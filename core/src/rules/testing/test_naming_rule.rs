@@ -6,14 +6,12 @@ use alloc::format;
 use alloc::string::ToString;
 use alloc::vec::Vec;
 
-use syn::Attribute;
-use syn::Item;
 use syn::ItemFn;
-use syn::parse_file;
 
 use crate::reporting::offence::Offence;
 use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;
+use crate::rules::testing::test_functions::TestFunctions;
 use crate::source_file::SourceFile;
 
 // A test is named `<method>_<conditions>_<result>`.
@@ -37,24 +35,8 @@ pub struct TestNamingRule;
 
 impl TestNamingRule {
     pub const MINIMUM_PARTS: usize = 3;
-    pub const REGISTRIES: [&'static str; 2] = ["all_tests.rs", "mod.rs"];
-    pub const TESTS_ROOT: &'static str = "tests/";
-
     pub fn new() -> Self {
         Self
-    }
-
-    fn applies_to(file: &SourceFile) -> bool {
-        file.is_under(Self::TESTS_ROOT, &Self::REGISTRIES)
-    }
-
-    fn is_test(attrs: &[Attribute]) -> bool {
-        attrs.iter().any(|attr| {
-            attr.path()
-                .segments
-                .last()
-                .is_some_and(|segment| segment.ident == "test")
-        })
     }
 
     fn offence(&self, file: &SourceFile, function: &ItemFn) -> Option<Offence> {
@@ -95,21 +77,7 @@ impl Rule for TestNamingRule {
     }
 
     fn check(&self, file: &SourceFile) -> Vec<Offence> {
-        if !Self::applies_to(file) {
-            return Vec::new();
-        }
-        let Ok(syntax) = parse_file(&file.contents()) else {
-            return Vec::new();
-        };
-        syntax
-            .items
-            .iter()
-            .filter_map(|item| match item {
-                Item::Fn(function) if Self::is_test(&function.attrs) => Some(function),
-                _ => None,
-            })
-            .filter_map(|function| self.offence(file, function))
-            .collect()
+        TestFunctions::judged(file, |function| self.offence(file, function))
     }
 
     fn check_workspace(&self, _files: &[SourceFile]) -> Vec<Offence> {

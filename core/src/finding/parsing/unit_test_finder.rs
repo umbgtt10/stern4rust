@@ -10,6 +10,7 @@ use proc_macro2::TokenTree;
 use quote::ToTokens;
 use syn::Attribute;
 use syn::Item;
+use syn::ItemFn;
 use syn::parse_file;
 use syn::spanned::Spanned;
 
@@ -33,6 +34,29 @@ use proc_macro2::TokenStream;
 pub struct UnitTestFinder;
 
 impl UnitTestFinder {
+    // Where each kind of item keeps its attributes: the one table of it, for
+    // whatever asks whether a gate sits on an item.
+    pub fn attributes(item: &Item) -> &[Attribute] {
+        match item {
+            Item::Const(inner) => &inner.attrs,
+            Item::Enum(inner) => &inner.attrs,
+            Item::ExternCrate(inner) => &inner.attrs,
+            Item::Fn(inner) => &inner.attrs,
+            Item::ForeignMod(inner) => &inner.attrs,
+            Item::Impl(inner) => &inner.attrs,
+            Item::Macro(inner) => &inner.attrs,
+            Item::Mod(inner) => &inner.attrs,
+            Item::Static(inner) => &inner.attrs,
+            Item::Struct(inner) => &inner.attrs,
+            Item::Trait(inner) => &inner.attrs,
+            Item::TraitAlias(inner) => &inner.attrs,
+            Item::Type(inner) => &inner.attrs,
+            Item::Union(inner) => &inner.attrs,
+            Item::Use(inner) => &inner.attrs,
+            _ => &[],
+        }
+    }
+
     // A predicate rather than the literal text, since `any(test, ...)` gates on
     // test just as effectively.
     pub fn is_cfg_test(attr: &Attribute) -> bool {
@@ -53,25 +77,15 @@ impl UnitTestFinder {
         Some(Self::in_items(file, &syntax.items))
     }
 
-    fn attributes(item: &Item) -> &[Attribute] {
-        match item {
-            Item::Const(inner) => &inner.attrs,
-            Item::Enum(inner) => &inner.attrs,
-            Item::ExternCrate(inner) => &inner.attrs,
-            Item::Fn(inner) => &inner.attrs,
-            Item::ForeignMod(inner) => &inner.attrs,
-            Item::Impl(inner) => &inner.attrs,
-            Item::Macro(inner) => &inner.attrs,
-            Item::Mod(inner) => &inner.attrs,
-            Item::Static(inner) => &inner.attrs,
-            Item::Struct(inner) => &inner.attrs,
-            Item::Trait(inner) => &inner.attrs,
-            Item::TraitAlias(inner) => &inner.attrs,
-            Item::Type(inner) => &inner.attrs,
-            Item::Union(inner) => &inner.attrs,
-            Item::Use(inner) => &inner.attrs,
-            _ => &[],
-        }
+    // The functions at the top level of a file that carry a test attribute.
+    pub fn test_functions(items: &[Item]) -> Vec<&ItemFn> {
+        items
+            .iter()
+            .filter_map(|item| match item {
+                Item::Fn(function) if function.attrs.iter().any(Self::is_test) => Some(function),
+                _ => None,
+            })
+            .collect()
     }
 
     // The kind words stay here for the same reason they stay in

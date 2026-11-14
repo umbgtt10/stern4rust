@@ -3,14 +3,13 @@
 // SPDX-License-Identifier: MIT
 
 use alloc::format;
-use alloc::string::String;
-use alloc::string::ToString;
 use alloc::vec::Vec;
 
 use crate::finding::model::package_tree::PackageTree;
 use crate::reporting::offence::Offence;
 use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;
+use crate::rules::layout::directory_label::DirectoryLabel;
 use crate::source_file::SourceFile;
 use crate::source_path::SourcePath;
 
@@ -41,11 +40,11 @@ impl DirectorySubfolderCountRule {
     }
 
     fn offence(&self, tree: &PackageTree, directory: &SourcePath, found: usize) -> Offence {
-        let subject = Self::shown(directory);
+        let subject = DirectoryLabel::of(directory);
         let carrier = tree
             .registries_in(directory)
             .first()
-            .map(|path| Self::shown(path))
+            .map(|path| DirectoryLabel::of(path))
             .unwrap_or_else(|| subject.clone());
         Offence::new(
             &carrier,
@@ -61,14 +60,6 @@ impl DirectorySubfolderCountRule {
             ),
         )
         .with_subject(&subject)
-    }
-
-    fn shown(path: &SourcePath) -> String {
-        let shown = path.as_str().replace('\\', "/");
-        if shown.is_empty() || shown == "." {
-            return "the package root".to_string();
-        }
-        shown
     }
 }
 

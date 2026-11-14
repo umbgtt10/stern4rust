@@ -47,6 +47,18 @@ fn children_of_a_generic_are_its_type_arguments() {
 }
 
 #[test]
+fn children_of_a_parenthesised_type_are_what_it_holds() {
+    // Arrange
+    let parenthesised = ty("(Vec<u8>)");
+
+    // Act
+    let children = TypeWalk::children(&parenthesised);
+
+    // Assert
+    assert_eq!(texts(&children), ["Vec < u8 >"]);
+}
+
+#[test]
 fn children_of_a_plain_path_are_none() {
     // Arrange
     let plain = ty("u64");

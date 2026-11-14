@@ -25,7 +25,6 @@ impl TypeWalk {
             Type::Reference(reference) => vec![&*reference.elem],
             Type::Tuple(tuple) => tuple.elems.iter().collect(),
             Type::Paren(inner) => vec![&*inner.elem],
-            Type::Group(inner) => vec![&*inner.elem],
             Type::Array(array) => vec![&*array.elem],
             Type::Slice(slice) => vec![&*slice.elem],
             Type::Path(path) => path

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 pub mod directory_file_count_rule_tests;
+pub mod directory_label_tests;
 pub mod directory_subfolder_count_rule_tests;
 pub mod module_registry_rule_tests;
 pub mod paired_test_file_rule_tests;

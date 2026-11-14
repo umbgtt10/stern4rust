@@ -12,10 +12,7 @@ use alloc::vec::Vec;
 use proc_macro2::TokenStream;
 use proc_macro2::TokenTree;
 use quote::ToTokens;
-use syn::Attribute;
-use syn::Item;
 use syn::ItemFn;
-use syn::parse_file;
 use syn::spanned::Spanned;
 
 use crate::finding::model::marker_phase::MarkerPhase;
@@ -23,6 +20,7 @@ use crate::finding::model::test_marker::TestMarker;
 use crate::reporting::offence::Offence;
 use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;
+use crate::rules::testing::test_functions::TestFunctions;
 use crate::source_file::SourceFile;
 
 // A test reads `Arrange`, then one or more `Act`/`Assert` pairs.
@@ -55,15 +53,8 @@ use crate::source_file::SourceFile;
 pub struct ArrangeActAssertRule;
 
 impl ArrangeActAssertRule {
-    pub const REGISTRIES: [&'static str; 2] = ["all_tests.rs", "mod.rs"];
-    pub const TESTS_ROOT: &'static str = "tests/";
-
     pub fn new() -> Self {
         Self
-    }
-
-    fn applies_to(file: &SourceFile) -> bool {
-        file.is_under(Self::TESTS_ROOT, &Self::REGISTRIES)
     }
 
     // Comment lines above a marker are folded into it, the same way
@@ -94,15 +85,6 @@ impl ArrangeActAssertRule {
             }
             _ => false,
         }
-    }
-
-    fn is_test(attrs: &[Attribute]) -> bool {
-        attrs.iter().any(|attr| {
-            attr.path()
-                .segments
-                .last()
-                .is_some_and(|segment| segment.ident == "test")
-        })
     }
 
     // Every line any literal occupies. Comments are not tokens, so nothing a
@@ -220,21 +202,7 @@ impl Rule for ArrangeActAssertRule {
     }
 
     fn check(&self, file: &SourceFile) -> Vec<Offence> {
-        if !Self::applies_to(file) {
-            return Vec::new();
-        }
-        let Ok(syntax) = parse_file(&file.contents()) else {
-            return Vec::new();
-        };
-        syntax
-            .items
-            .iter()
-            .filter_map(|item| match item {
-                Item::Fn(function) if Self::is_test(&function.attrs) => Some(function),
-                _ => None,
-            })
-            .flat_map(|function| self.offences_of(file, function))
-            .collect()
+        TestFunctions::judged(file, |function| self.offences_of(file, function))
     }
 
     fn check_workspace(&self, _files: &[SourceFile]) -> Vec<Offence> {

@@ -8,11 +8,11 @@ use alloc::string::ToString;
 use alloc::vec;
 use alloc::vec::Vec;
 
-use syn::Attribute;
 use syn::Item;
 use syn::parse_file;
 
 use crate::finding::parsing::inline_module::InlineModule;
+use crate::finding::parsing::unit_test_finder::UnitTestFinder;
 use crate::reporting::offence::Offence;
 use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;
@@ -58,15 +58,6 @@ impl TestFileNamePostfixRule {
 
     // The last segment is what says so, which is what lets `#[tokio::test]`
     // count without naming any runtime here.
-    fn is_test(attrs: &[Attribute]) -> bool {
-        attrs.iter().any(|attr| {
-            attr.path()
-                .segments
-                .last()
-                .is_some_and(|segment| segment.ident == "test")
-        })
-    }
-
     // Reported at line 1: the offence is the file's name, not any one test in
     // it. The count is named as the evidence for calling it a test file.
     fn offence(&self, file: &SourceFile, found: usize) -> Offence {
@@ -101,7 +92,7 @@ impl TestFileNamePostfixRule {
         items
             .iter()
             .map(|item| match item {
-                Item::Fn(function) if Self::is_test(&function.attrs) => 1,
+                Item::Fn(function) if function.attrs.iter().any(UnitTestFinder::is_test) => 1,
                 Item::Mod(module) => InlineModule::items(module)
                     .map(Self::tests_in)
                     .unwrap_or_default(),

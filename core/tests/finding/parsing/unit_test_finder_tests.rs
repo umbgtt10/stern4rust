@@ -21,6 +21,7 @@ use stern4rust::finding::model::unit_test_site::UnitTestSite;
 use stern4rust::finding::parsing::unit_test_finder::UnitTestFinder;
 use stern4rust::source_file::SourceFile;
 use syn::ItemFn;
+use syn::parse_file;
 use syn::parse_str;
 
 fn corrections(body: &str) -> Vec<String> {
@@ -39,6 +40,23 @@ fn labels(body: &str) -> Vec<String> {
 
 fn sites(body: &str) -> Vec<UnitTestSite> {
     UnitTestFinder::sites(&SourceFile::new("src/subject.rs", body)).expect("parses")
+}
+
+#[test]
+fn attributes_of_an_item_returns_those_written_on_it() {
+    // Arrange
+    let syntax = parse_file("#[cfg(test)]\n#[inline]\nfn probe() {}\n\n#[allow(dead_code)]\nimpl Thing {}\n\nmacro_rules! nothing {\n    () => {};\n}\n")
+        .expect("parses");
+
+    // Act
+    let counts: Vec<usize> = syntax
+        .items
+        .iter()
+        .map(|item| UnitTestFinder::attributes(item).len())
+        .collect();
+
+    // Assert
+    assert_eq!(counts, [2, 1, 0]);
 }
 
 #[test]
@@ -333,4 +351,24 @@ fn sites_reports_the_line_the_item_starts_on() {
 
     // Assert
     assert_eq!(found[0].line(), 3);
+}
+
+// The functions at a file's top level that carry a test attribute, in order;
+// a helper beside them is none.
+#[test]
+fn test_functions_of_items_returns_those_carrying_a_test_attribute() {
+    // Arrange
+    let syntax = parse_file(
+        "#[test]\nfn first() {}\n\nfn helper() {}\n\n#[tokio::test]\nasync fn second() {}\n",
+    )
+    .expect("parses");
+
+    // Act
+    let names: Vec<String> = UnitTestFinder::test_functions(&syntax.items)
+        .iter()
+        .map(|function| function.sig.ident.to_string())
+        .collect();
+
+    // Assert
+    assert_eq!(names, ["first", "second"]);
 }
