@@ -2,6 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+pub mod capturing_report_renderer;
 pub mod in_memory_baseline_store;
 pub mod in_memory_config_source;
 pub mod in_memory_source_tree;
