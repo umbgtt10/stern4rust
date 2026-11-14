@@ -4,6 +4,8 @@
 
 use alloc::string::String;
 use alloc::string::ToString;
+use proc_macro2::TokenTree;
+use quote::ToTokens;
 
 use syn::Item;
 use syn::ItemUse;
@@ -29,6 +31,26 @@ use crate::source_file::SourceFile;
 pub struct ItemNaming;
 
 impl ItemNaming {
+    // An item's first line of code as written, past its attributes -- a doc
+    // comment is one too. A gated item's span starts at its gate, and quoting
+    // the gate names every gated item alike.
+    pub fn code_line(file: &SourceFile, item: &Item) -> String {
+        let mut tokens = item.to_token_stream().into_iter().peekable();
+        while tokens
+            .next_if(|token| matches!(token, TokenTree::Punct(mark) if mark.as_char() == '#'))
+            .is_some()
+        {
+            tokens
+                .next_if(|token| matches!(token, TokenTree::Punct(bang) if bang.as_char() == '!'));
+            tokens.next();
+        }
+        let line = tokens.next().map_or_else(
+            || item.span().start().line,
+            |token| token.span().start().line,
+        );
+        Self::source_line(file, line)
+    }
+
     // None for an item that declares no name of its own: an impl block belongs
     // to the type it implements, and an import names nothing. Each caller says
     // what it wants about those.

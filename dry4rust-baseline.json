@@ -3,20 +3,11 @@
   "entries": [
     {
       "kind": "exact",
-      "fingerprint": "047e51a7d73f9d86",
-      "members": 2,
-      "names": [
-        "DirectorySubfolderCountRule::shown",
-        "DirectoryFileCountRule::shown"
-      ]
-    },
-    {
-      "kind": "exact",
       "fingerprint": "28b8ef9870e79af4",
       "members": 2,
       "names": [
-        "ReportPrinter::unmatched",
-        "ExclusionOutcome::unmatched_patterns"
+        "ExclusionOutcome::unmatched_patterns",
+        "ReportPrinter::unmatched"
       ]
     },
     {
@@ -30,31 +21,11 @@
     },
     {
       "kind": "exact",
-      "fingerprint": "c4062732a9634f22",
-      "members": 4,
-      "names": [
-        "TestFileParser::is_test",
-        "ArrangeActAssertRule::is_test",
-        "TestNamingRule::is_test",
-        "TestFileNamePostfixRule::is_test"
-      ]
-    },
-    {
-      "kind": "exact",
       "fingerprint": "e61072106f123c43",
       "members": 2,
       "names": [
         "DirectorySubfolderCountRule::offence",
         "DirectoryFileCountRule::offence"
-      ]
-    },
-    {
-      "kind": "near",
-      "fingerprint": "9d82e1e2a2a9288b",
-      "members": 2,
-      "names": [
-        "<ArrangeActAssertRule as Rule>::check",
-        "<TestNamingRule as Rule>::check"
       ]
     }
   ]

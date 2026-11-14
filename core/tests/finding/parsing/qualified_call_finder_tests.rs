@@ -112,6 +112,18 @@ fn find_of_a_call_inside_quote_returns_nothing() {
     assert!(paths.is_empty(), "expected none, got {paths:?}");
 }
 
+// An import counts wherever the file writes it, an inline module included.
+#[test]
+fn find_of_a_call_qualified_by_a_module_imported_inside_an_inline_module_returns_nothing() {
+    // Arrange & Act
+    let found = paths(
+        "mod tests {\n    use std::fs;\n\n    fn read() {\n        fs::read_to_string(PATH);\n    }\n}\n",
+    );
+
+    // Assert
+    assert!(found.is_empty(), "{found:?}");
+}
+
 // A module whose name merely starts like a primitive is still a module.
 #[test]
 fn find_of_a_call_qualified_by_a_module_named_like_a_primitive_returns_the_path() {
@@ -341,6 +353,19 @@ fn find_of_a_pattern_qualified_by_a_type_or_an_imported_module_returns_nothing()
 
     // Assert
     assert!(paths.is_empty(), "{paths:?}");
+}
+
+// A pattern written with a qualified path, `<Engine as Store>::EMPTY`, names
+// what no import could shorten.
+#[test]
+fn find_of_a_qualified_pattern_returns_nothing() {
+    // Arrange & Act
+    let found = paths(
+        "fn f(value: Value) {\n    match value {\n        <Engine as store::Store>::EMPTY => {}\n        <Engine as store::Store>::Pair(first, second) => {}\n        <Engine as store::Store>::Entry { key } => {}\n        _ => {}\n    }\n}\n",
+    );
+
+    // Assert
+    assert!(found.is_empty(), "{found:?}");
 }
 
 #[test]

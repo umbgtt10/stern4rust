@@ -95,6 +95,24 @@ fn live_of_items_flattens_inline_modules_and_leaves_test_code_out() {
     assert_eq!(names, ["Kept", "Nested"]);
 }
 
+// A gate leaves out whatever it sits on: a function, a constant, an enum, an
+// impl, as much as a module or a struct.
+#[test]
+fn live_of_items_leaves_out_every_kind_of_gated_item() {
+    // Arrange
+    let syntax = parse_file(
+        "fn kept() {}\n\n#[cfg(test)]\nfn probe() {}\n\n#[cfg(test)]\nconst LIMIT: u8 = 1;\n\n#[cfg(test)]\nenum Mode {}\n\n#[cfg(test)]\nimpl Kept {}\n",
+    )
+    .expect("parses");
+
+    // Act
+    let live = SourceItems::live(&syntax.items);
+
+    // Assert
+    assert_eq!(live.len(), 1);
+    assert!(matches!(live[0], Item::Fn(_)));
+}
+
 #[test]
 fn offences_for_a_file_outside_the_root_returns_nothing() {
     // Arrange

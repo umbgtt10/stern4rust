@@ -82,6 +82,24 @@ fn find_of_a_test_calling_a_helper_that_calls_behaviour_exercises_behaviour() {
     assert!(subjects[0].exercises_behaviour);
 }
 
+// A local method's body is walked as a helper's is, wherever its impl sits --
+// here inside an inline module of the test file.
+#[test]
+fn find_of_a_test_calling_a_local_method_that_calls_behaviour_exercises_behaviour() {
+    // Arrange
+    let file = SourceFile::new(
+        "tests/window_tests.rs",
+        "mod support {\n    pub struct Harness;\n\n    impl Harness {\n        pub fn go(&self) -> u64 {\n            compute(&Window::new(1, vec![]))\n        }\n    }\n}\n\n#[test]\nfn reads() {\n    let window = Window { start: Harness.go(), items: vec![] };\n    assert_eq!(window.start, 1);\n}\n",
+    );
+
+    // Act
+    let subjects = TestSubjectFinder::new(&surface()).find(&file);
+
+    // Assert
+    assert_eq!(subjects.len(), 1);
+    assert!(subjects[0].exercises_behaviour);
+}
+
 #[test]
 fn find_of_a_test_calling_a_records_constructor_names_it_without_behaviour() {
     // Arrange

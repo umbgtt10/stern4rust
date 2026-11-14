@@ -12,10 +12,7 @@ use alloc::vec::Vec;
 use proc_macro2::TokenStream;
 use proc_macro2::TokenTree;
 use quote::ToTokens;
-use syn::Attribute;
-use syn::Item;
 use syn::ItemFn;
-use syn::parse_file;
 use syn::spanned::Spanned;
 
 use crate::finding::model::marker_phase::MarkerPhase;
@@ -23,6 +20,7 @@ use crate::finding::model::test_marker::TestMarker;
 use crate::reporting::offence::Offence;
 use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;
+use crate::rules::testing::test_functions::TestFunctions;
 use crate::source_file::SourceFile;
 
 // A test reads `Arrange`, then one or more `Act`/`Assert` pairs.
@@ -55,48 +53,38 @@ use crate::source_file::SourceFile;
 pub struct ArrangeActAssertRule;
 
 impl ArrangeActAssertRule {
-    pub const REGISTRIES: [&'static str; 2] = ["all_tests.rs", "mod.rs"];
-    pub const TESTS_ROOT: &'static str = "tests/";
-
     pub fn new() -> Self {
         Self
-    }
-
-    fn applies_to(file: &SourceFile) -> bool {
-        file.is_under(Self::TESTS_ROOT, &Self::REGISTRIES)
     }
 
     // Comment lines above a marker are folded into it, the same way
     // `TestFileParser` folds them into the item they document. Without that, a
     // marker that explains itself over two lines reads as a spacing offence --
     // and the explanation is the thing worth keeping.
+    // The scan starts at the marker's own line, a comment like those it climbs
+    // over, so it needs no reckoning of where the line above is.
     fn is_blank_above(file: &SourceFile, line: usize) -> bool {
-        let lines = file.lines();
-        (1..line)
+        file.lines()[..line]
+            .iter()
             .rev()
-            .map(|above| lines[above - 1].trim())
+            .map(|text| text.trim())
             .find(|text| !text.starts_with("//"))
             .is_none_or(str::is_empty)
     }
 
     // Arrange, then one or more Act/Assert pairs. An odd length with Arrange
     // first and clean pairs after is the whole grammar.
+    // An odd tail fails as a pair, so the length needs no rule of its own.
     fn is_legal(phases: &[MarkerPhase]) -> bool {
-        if phases.len() < 3 || phases.len() % 2 == 0 || phases[0] != MarkerPhase::Arrange {
-            return false;
+        match phases.split_first() {
+            Some((MarkerPhase::Arrange, pairs)) => {
+                !pairs.is_empty()
+                    && pairs
+                        .chunks(2)
+                        .all(|pair| pair == [MarkerPhase::Act, MarkerPhase::Assert])
+            }
+            _ => false,
         }
-        phases[1..]
-            .chunks(2)
-            .all(|pair| pair == [MarkerPhase::Act, MarkerPhase::Assert])
-    }
-
-    fn is_test(attrs: &[Attribute]) -> bool {
-        attrs.iter().any(|attr| {
-            attr.path()
-                .segments
-                .last()
-                .is_some_and(|segment| segment.ident == "test")
-        })
     }
 
     // Every line any literal occupies. Comments are not tokens, so nothing a
@@ -214,21 +202,7 @@ impl Rule for ArrangeActAssertRule {
     }
 
     fn check(&self, file: &SourceFile) -> Vec<Offence> {
-        if !Self::applies_to(file) {
-            return Vec::new();
-        }
-        let Ok(syntax) = parse_file(&file.contents()) else {
-            return Vec::new();
-        };
-        syntax
-            .items
-            .iter()
-            .filter_map(|item| match item {
-                Item::Fn(function) if Self::is_test(&function.attrs) => Some(function),
-                _ => None,
-            })
-            .flat_map(|function| self.offences_of(file, function))
-            .collect()
+        TestFunctions::judged(file, |function| self.offences_of(file, function))
     }
 
     fn check_workspace(&self, _files: &[SourceFile]) -> Vec<Offence> {

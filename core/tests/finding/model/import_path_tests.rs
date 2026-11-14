@@ -260,6 +260,17 @@ fn decides_order_of_two_identical_paths_is_false() {
     assert!(!decides);
 }
 
+// Both open lowercase and neither is all capitals: the editions and the
+// alphabet agree on them, mixed case or not.
+#[test]
+fn decides_order_of_two_lowercase_initial_segments_one_of_mixed_case_is_false() {
+    // Arrange & Act
+    let decides = ImportPath::decides_order("use model::alpha;", "use model::aBeta;");
+
+    // Assert
+    assert!(!decides);
+}
+
 // The judgement both import rules ask for: a pair stands where rustfmt decides
 // its order, and otherwise where its paths are in order.
 #[test]

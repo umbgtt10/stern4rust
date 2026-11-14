@@ -43,6 +43,18 @@ fn check_of_a_cfg_test_module_in_src_reports_its_test() {
 }
 
 #[test]
+fn check_of_a_function_in_a_module_nested_in_a_cfg_test_module_reports_it() {
+    // Arrange & Act
+    let offences = check(
+        "src/pool.rs",
+        "#[cfg(test)]\nmod tests {\n    mod helpers {\n        pub fn pause() {\n            std::thread::sleep(PAUSE);\n        }\n    }\n}\n",
+    );
+
+    // Assert
+    assert_eq!(offences.len(), 1, "{offences:?}");
+}
+
+#[test]
 fn check_of_a_helper_that_names_a_temp_directory_from_the_clock_reports_it() {
     // Arrange & Act
     let offences = check(
@@ -55,6 +67,18 @@ fn check_of_a_helper_that_names_a_temp_directory_from_the_clock_reports_it() {
         offences[0].description(),
         "`scratch` reads the clock with `SystemTime::now`; a test's verdict must not depend on how fast the machine is"
     );
+}
+
+#[test]
+fn check_of_a_method_of_an_impl_in_a_cfg_test_module_reports_it() {
+    // Arrange & Act
+    let offences = check(
+        "src/pool.rs",
+        "#[cfg(test)]\nmod tests {\n    struct Clock;\n\n    impl Clock {\n        fn wait() {\n            std::thread::sleep(PAUSE);\n        }\n    }\n}\n",
+    );
+
+    // Assert
+    assert_eq!(offences.len(), 1, "{offences:?}");
 }
 
 #[test]
@@ -75,6 +99,19 @@ fn check_of_a_paused_clock_test_still_reports_the_threads_sleep() {
     let offences = check(
         "tests/timer_tests.rs",
         "#[tokio::test(start_paused = true)]\nasync fn fires() {\n    std::thread::sleep(PAUSE);\n}\n",
+    );
+
+    // Assert
+    assert_eq!(offences.len(), 1, "{offences:?}");
+}
+
+// Only the test attribute's own `start_paused` pauses the clock.
+#[test]
+fn check_of_a_paused_flag_on_another_attribute_reports_tokio_time() {
+    // Arrange & Act
+    let offences = check(
+        "tests/timer_tests.rs",
+        "#[tokio::test]\n#[traced(start_paused = true)]\nasync fn fires() {\n    tokio::time::sleep(PAUSE).await;\n}\n",
     );
 
     // Assert
@@ -180,6 +217,18 @@ fn check_of_a_test_with_two_calls_reports_it_once_at_the_first() {
     );
 }
 
+#[test]
+fn check_of_an_impl_in_production_code_reports_nothing() {
+    // Arrange & Act
+    let offences = check(
+        "src/pool.rs",
+        "pub struct Pool;\n\nimpl Pool {\n    pub fn wait() {\n        std::thread::sleep(PAUSE);\n    }\n}\n",
+    );
+
+    // Assert
+    assert!(offences.is_empty(), "{offences:?}");
+}
+
 // readable-source reports a file that does not parse; this rule has nothing to read in it.
 #[test]
 fn check_of_an_unparseable_file_reports_nothing() {
@@ -188,6 +237,18 @@ fn check_of_an_unparseable_file_reports_nothing() {
 
     // Assert
     assert!(offences.is_empty(), "{offences:?}");
+}
+
+#[test]
+fn check_of_an_unpaused_tokio_test_reports_tokio_time() {
+    // Arrange & Act
+    let offences = check(
+        "tests/timer_tests.rs",
+        "#[tokio::test]\nasync fn fires() {\n    tokio::time::sleep(PAUSE).await;\n}\n",
+    );
+
+    // Assert
+    assert_eq!(offences.len(), 1, "{offences:?}");
 }
 
 #[test]

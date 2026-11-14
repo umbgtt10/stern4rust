@@ -58,7 +58,9 @@ impl ImmutableReturnsRule {
 
     fn is_mut_self(output: &Type) -> bool {
         match output {
-            Type::Reference(reference) if reference.mutability.is_some() => {
+            // Asked only of a return that lends something mutably, so a `&Self`
+            // never reaches here: whichever its mutability, the loan is `Self`.
+            Type::Reference(reference) => {
                 matches!(&*reference.elem, Type::Path(path) if path.path.is_ident("Self"))
             }
             _ => false,

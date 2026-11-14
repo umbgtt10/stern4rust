@@ -105,3 +105,27 @@ impl Error for NotHeld {}
 pub fn path_of(text: &str) -> SourcePath {
     SourcePath::new(String::from(text))
 }
+
+// A failure naming the one beneath it, as a reader's error passing a cause on
+// does.
+pub struct Wrapped {
+    pub cause: NotHeld,
+}
+
+impl fmt::Display for Wrapped {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str("wrapped")
+    }
+}
+
+impl fmt::Debug for Wrapped {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str("Wrapped")
+    }
+}
+
+impl Error for Wrapped {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        Some(&self.cause)
+    }
+}

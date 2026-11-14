@@ -74,3 +74,25 @@ fn find_of_a_path_call_takes_the_last_segment() {
     // Assert
     assert!(found.contains(&"find/1".to_string()), "got {found:?}");
 }
+
+// Inside a macro the arguments are counted from the tokens: one, several, a
+// group holding commas of its own counted as one, and a trailing comma --
+// rustfmt's, on every call laid out one argument a line -- closing the last
+// argument rather than opening another.
+#[test]
+fn find_of_calls_inside_a_macro_counts_their_arguments() {
+    // Arrange
+    let body = "fn t() {\n    assert_eq!(\n        combine(\n            first,\n            second,\n        ),\n        single(only),\n    );\n    assert!(pair((left, right)));\n    assert!(several(a, b, c));\n}\n";
+
+    // Act
+    let found = find(body);
+
+    // Assert
+    for expected in ["combine/2", "single/1", "pair/1", "several/3"] {
+        assert!(
+            found.contains(&expected.to_string()),
+            "{expected} not in {found:?}"
+        );
+    }
+    assert!(!found.contains(&"combine/3".to_string()), "got {found:?}");
+}

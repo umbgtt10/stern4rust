@@ -84,14 +84,11 @@ impl SourceItems {
             .unwrap_or_default()
     }
 
+    // Any kind of item a gate can sit on, read from the one table of where each
+    // kind keeps its attributes.
     fn is_test_only(item: &Item) -> bool {
-        let attrs = match item {
-            Item::Mod(module) => &module.attrs,
-            Item::Impl(block) => &block.attrs,
-            Item::Struct(declared) => &declared.attrs,
-            Item::Enum(declared) => &declared.attrs,
-            _ => return false,
-        };
-        attrs.iter().any(UnitTestFinder::is_cfg_test)
+        UnitTestFinder::attributes(item)
+            .iter()
+            .any(UnitTestFinder::is_cfg_test)
     }
 }

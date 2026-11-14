@@ -39,6 +39,15 @@ fn is_seam_of_a_concrete_type_is_false() {
 }
 
 #[test]
+fn is_seam_of_a_parenthesised_trait_object_is_true() {
+    // Arrange & Act
+    let found = seam("struct App {}", "&(dyn Reporter)");
+
+    // Assert
+    assert!(found);
+}
+
+#[test]
 fn is_seam_of_a_reference_to_a_trait_object_is_true() {
     // Arrange & Act
     let found = seam("struct App<'a> {}", "&'a dyn Port");
@@ -75,6 +84,15 @@ fn is_seam_of_a_type_parameter_bounded_in_a_where_clause_is_true() {
 }
 
 #[test]
+fn is_seam_of_a_type_parameter_bounded_in_a_where_clause_only_by_value_traits_is_false() {
+    // Arrange & Act
+    let found = seam("struct App<T> where T: Clone + Debug { item: T }", "T");
+
+    // Assert
+    assert!(!found);
+}
+
+#[test]
 fn is_seam_of_a_type_parameter_bounded_only_by_value_traits_is_false() {
     // Arrange & Act
     let found = seam("struct Wrapper<T: Clone + Debug> {}", "T");
@@ -90,6 +108,16 @@ fn is_seam_of_a_vector_of_boxed_trait_objects_is_true() {
 
     // Assert
     assert!(found);
+}
+
+// `<Engine>::P` is Engine's own `P`, not the parameter written the same way.
+#[test]
+fn is_seam_of_an_associated_type_sharing_a_bounded_parameters_name_is_false() {
+    // Arrange & Act
+    let found = seam("struct App<P: Reporter> { reporter: P }", "<Engine>::P");
+
+    // Assert
+    assert!(!found);
 }
 
 #[test]

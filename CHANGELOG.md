@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+- `tested-public-api` and `public-or-private` count a call's arguments inside
+  a macro without its trailing comma. `combine(first, second,)` -- as rustfmt
+  lays out a long call one argument a line, inside an `assert_eq!` as anywhere
+  -- counted three, so `combine/2` read as never called.
+- `test-free-source`, `module-registry` and `tests-layout` name an attributed
+  item they have no name or kind word for -- an impl block, an import, an
+  `extern` crate or block, a macro, a trait alias, a union -- by its first line
+  of code. They
+  quoted the line its span starts on, which for a gated item is the gate: every
+  `#[cfg(test)] impl` read "the `#[cfg(test)]` `#[cfg(test)]`".
+
+### Changed
+- What builds into the library leaves out every kind of item a `#[cfg(test)]`
+  sits on -- a function, a constant, a static, a trait, an alias -- as it left
+  out a module, an impl, a struct and an enum. The rules reading it --
+  `record-home`, `records-and-objects`, `injected-dependencies` and
+  `behaviour-tests`, through the type shapes and the package surface -- no
+  longer take a test-only one for library code.
+- `owned-functions` reads a test gate as every other rule does: an item under
+  `#[cfg(any(test, ...))]` is test code, as one under `#[cfg(test)]` was.
+- `injected-dependencies` follows a chain of locals eight deep, counting the
+  locals alone, as its documentation says: a step into a call, a `?`, a field,
+  a reference or parentheses no longer spends the budget. A chain of eight
+  locals back to a parameter is passed in; seven was the most before.
+
 ## [0.22.0] - 2026-11-14
 
 ### Changed

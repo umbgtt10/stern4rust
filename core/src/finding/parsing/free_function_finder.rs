@@ -8,7 +8,6 @@ use alloc::vec::Vec;
 
 use quote::ToTokens;
 use syn::Attribute;
-use syn::Ident;
 use syn::Item;
 use syn::ItemFn;
 use syn::ItemMod;
@@ -18,6 +17,7 @@ use syn::visit::Visit;
 
 use crate::finding::model::free_function::FreeFunction;
 use crate::finding::parsing::identifiers::Identifiers;
+use crate::finding::parsing::unit_test_finder::UnitTestFinder;
 
 // The functions of a file that belong to no impl block.
 //
@@ -72,15 +72,6 @@ impl FreeFunctionFinder {
             || function.attrs.iter().any(Self::requires_free)
     }
 
-    fn is_test_only(attributes: &[Attribute]) -> bool {
-        attributes.iter().any(|attribute| {
-            attribute.path().is_ident("cfg")
-                && attribute
-                    .parse_args::<Ident>()
-                    .is_ok_and(|argument| argument == "test")
-        })
-    }
-
     fn last_segment(path: &Path) -> String {
         path.segments
             .last()
@@ -104,7 +95,7 @@ impl FreeFunctionFinder {
 
 impl<'ast> Visit<'ast> for FreeFunctionFinder {
     fn visit_item_fn(&mut self, function: &'ast ItemFn) {
-        if Self::is_test_only(&function.attrs) {
+        if function.attrs.iter().any(UnitTestFinder::is_cfg_test) {
             return;
         }
         if !self.is_required_free(function) {
@@ -118,7 +109,7 @@ impl<'ast> Visit<'ast> for FreeFunctionFinder {
     }
 
     fn visit_item_mod(&mut self, module: &'ast ItemMod) {
-        if !Self::is_test_only(&module.attrs) {
+        if !module.attrs.iter().any(UnitTestFinder::is_cfg_test) {
             visit::visit_item_mod(self, module);
         }
     }

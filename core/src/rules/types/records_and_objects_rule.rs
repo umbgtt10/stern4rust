@@ -16,7 +16,6 @@ use syn::parse_file;
 use crate::finding::parsing::shapes::shaped_type::ShapedType;
 use crate::finding::parsing::shapes::type_shape::TypeShape;
 use crate::finding::parsing::shapes::type_shapes::TypeShapes;
-use crate::finding::parsing::unit_test_finder::UnitTestFinder;
 use crate::reporting::offence::Offence;
 use crate::reporting::rule_explanation::RuleExplanation;
 use crate::rule::Rule;
@@ -181,10 +180,9 @@ impl RecordsAndObjectsRule {
             .collect()
     }
 
+    // A test-only struct has no shape -- the shapes hold what builds into the
+    // library (`SourceItems::live`) -- and so is never judged.
     fn offence(path: &str, declared: &ItemStruct, shapes: &TypeShapes) -> Option<Offence> {
-        if declared.attrs.iter().any(UnitTestFinder::is_cfg_test) {
-            return None;
-        }
         let name = declared.ident.to_string();
         let shaped = shapes
             .types()
@@ -206,13 +204,11 @@ impl RecordsAndObjectsRule {
                 Item::Struct(declared) => {
                     Self::offence(path, declared, shapes).into_iter().collect()
                 }
-                Item::Mod(module) if !module.attrs.iter().any(UnitTestFinder::is_cfg_test) => {
-                    module
-                        .content
-                        .as_ref()
-                        .map(|(_, inner)| Self::offences_in(path, inner, shapes))
-                        .unwrap_or_default()
-                }
+                Item::Mod(module) => module
+                    .content
+                    .as_ref()
+                    .map(|(_, inner)| Self::offences_in(path, inner, shapes))
+                    .unwrap_or_default(),
                 _ => Vec::new(),
             })
             .collect()

@@ -135,6 +135,24 @@ fn rewrite_leaves_one_blank_line_where_a_constant_was() {
     );
 }
 
+// Blank lines the move leaves behind are closed up; those further down, which
+// the move had nothing to do with, are left as they were.
+#[test]
+fn rewrite_leaves_the_blank_lines_below_the_move_as_they_were() {
+    // Arrange
+    let contents =
+        "pub struct Widget;\n\nconst HIGH: u8 = 9;\n\npub fn a() {}\n\n\npub fn b() {}\n";
+
+    // Act
+    let rewritten = rewrite(contents).expect("rewritten");
+
+    // Assert
+    assert!(
+        rewritten.contains("pub fn a() {}\n\n\npub fn b() {}"),
+        "got {rewritten:?}"
+    );
+}
+
 // A multi-line string is moved as lines, never read.
 #[test]
 fn rewrite_moves_a_constant_holding_rust_in_a_string_whole() {

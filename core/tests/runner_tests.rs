@@ -11,6 +11,7 @@
 // tellable apart: a broken rule is a successful run with a finding, while a run
 // that could not judge anything is an Err.
 
+use crate::support::capturing_report_renderer::CapturingReportRenderer;
 use crate::support::in_memory_baseline_store::InMemoryBaselineStore;
 use crate::support::in_memory_config_source::InMemoryConfigSource;
 use crate::support::in_memory_source_tree::InMemorySourceTree;
@@ -18,7 +19,11 @@ use crate::support::in_memory_source_tree::path_of;
 use crate::support::in_memory_workspace_reader::InMemoryWorkspaceReader;
 use crate::support::in_memory_workspace_reader::workspace_of;
 use crate::support::summary_report_renderer::SummaryReportRenderer;
+use std::collections::BTreeMap;
+use stern4rust::finding::model::manifest_dependency::ManifestDependency;
+use stern4rust::reporting::offence_threshold::OffenceThreshold;
 use stern4rust::reporting::run_outcome::RunOutcome;
+use stern4rust::reporting::run_report::RunReport;
 use stern4rust::run_failure::RunFailure;
 use stern4rust::runner::Runner;
 use stern4rust::settings::config_file::ConfigFile;
@@ -28,11 +33,40 @@ use stern4rust::settings::package_config::PackageConfig;
 const HEADER: &str = "/repo/docs/header.txt";
 const MISORDERED_TESTS: &str = "#[test]\nfn zeta() {}\n\n#[test]\nfn alpha() {}\n";
 
+// The rules each offence of a report broke, in report order.
+fn broken(report: &RunReport) -> Vec<&'static str> {
+    report
+        .offences
+        .iter()
+        .map(|offence| offence.rule())
+        .collect()
+}
+
 fn header_run(rules: &[&str]) -> Invocation {
     Invocation {
         header_file: Some(path_of(HEADER)),
         ..run_of(rules)
     }
+}
+
+// The report of a run, kept whole rather than summarised.
+fn report_of(
+    workspace: &InMemoryWorkspaceReader,
+    tree: &InMemorySourceTree,
+    config: &InMemoryConfigSource,
+    invocation: &Invocation,
+) -> RunReport {
+    let renderer = CapturingReportRenderer::default();
+    Runner::new(
+        workspace,
+        tree,
+        config,
+        &InMemoryBaselineStore::new(),
+        &renderer,
+    )
+    .run(invocation)
+    .expect("a run");
+    renderer.captured()
 }
 
 fn run(
@@ -61,6 +95,91 @@ fn tree() -> InMemorySourceTree {
 
 fn workspace() -> InMemoryWorkspaceReader {
     InMemoryWorkspaceReader::new(workspace_of("/repo", &["alpha"]))
+}
+
+// A workspace of alpha and beta, alpha declaring these dependencies.
+fn workspace_declaring(declared: Vec<ManifestDependency>) -> InMemoryWorkspaceReader {
+    let mut description = workspace_of("/repo", &["alpha", "beta"]);
+    description.packages[0].declared = declared;
+    InMemoryWorkspaceReader::new(description)
+}
+
+#[test]
+fn run_hands_each_package_its_manifest_licence() {
+    // Arrange
+    let tree = InMemorySourceTree::new().with_file(
+        "/repo/alpha/src/lib.rs",
+        "// SPDX-License-Identifier: Apache-2.0\npub fn f() {}\n",
+    );
+
+    // Act
+    let report = report_of(
+        &workspace(),
+        &tree,
+        &InMemoryConfigSource::absent(),
+        &run_of(&["spdx-matches-manifest"]),
+    );
+
+    // Assert
+    assert_eq!(broken(&report), vec!["spdx-matches-manifest"]);
+}
+
+#[test]
+fn run_hands_each_package_the_dependencies_its_manifest_declares() {
+    // Arrange
+    let workspace = workspace_declaring(vec![
+        ManifestDependency::new("alpha/Cargo.toml", "serde", "dependencies", true),
+        ManifestDependency::new("alpha/Cargo.toml", "serde", "dev-dependencies", true),
+    ]);
+
+    // Act
+    let report = report_of(
+        &workspace,
+        &tree(),
+        &InMemoryConfigSource::absent(),
+        &run_of(&["distinct-dev-dependencies"]),
+    );
+
+    // Assert
+    assert_eq!(broken(&report), vec!["distinct-dev-dependencies"]);
+}
+
+#[test]
+fn run_hands_each_package_the_workspace_dependencies_its_manifest_declares() {
+    // Arrange
+    let workspace = workspace_declaring(vec![ManifestDependency::new(
+        "alpha/Cargo.toml",
+        "serde",
+        "dependencies",
+        false,
+    )]);
+
+    // Act
+    let report = report_of(
+        &workspace,
+        &tree(),
+        &InMemoryConfigSource::absent(),
+        &run_of(&["workspace-dependencies"]),
+    );
+
+    // Assert
+    assert_eq!(broken(&report), vec!["workspace-dependencies"]);
+}
+
+#[test]
+fn run_lists_each_packages_rules_in_its_roster() {
+    // Arrange & Act
+    let report = report_of(
+        &workspace(),
+        &tree(),
+        &InMemoryConfigSource::absent(),
+        &run_of(&["arrange-act-assert"]),
+    );
+
+    // Assert
+    assert_eq!(report.rosters.len(), 1);
+    assert_eq!(report.rosters[0].package(), "alpha");
+    assert_eq!(report.rosters[0].applied(), ["arrange-act-assert"]);
 }
 
 #[test]
@@ -107,6 +226,209 @@ fn run_over_a_file_keeping_the_rule_is_clean() {
         report,
         "scanned=1 fixed=0 baselined=0 stale=0 applied=1 config=none\n"
     );
+}
+
+// A constant beta reads is read all the same when the run walks alpha alone:
+// with alpha's own reader, it has two and sits in a constants file.
+#[test]
+fn run_scoped_to_one_package_reads_a_constants_readers_across_every_member() {
+    // Arrange
+    let tree = InMemorySourceTree::new()
+        .with_file("/repo/alpha/src/limits.rs", "pub const LIMIT: u8 = 1;\n")
+        .with_file("/repo/alpha/src/a.rs", "fn a() -> u8 {\n    LIMIT\n}\n")
+        .with_file("/repo/beta/src/b.rs", "fn b() -> u8 {\n    LIMIT\n}\n");
+    let invocation = Invocation {
+        packages: vec![String::from("alpha")],
+        ..run_of(&["shared-constants"])
+    };
+
+    // Act
+    let report = report_of(
+        &workspace_declaring(Vec::new()),
+        &tree,
+        &InMemoryConfigSource::absent(),
+        &invocation,
+    );
+
+    // Assert
+    assert!(broken(&report).is_empty(), "{:?}", report.offences);
+}
+
+#[test]
+fn run_states_a_rule_a_package_section_skips_as_not_applied() {
+    // Arrange
+    let config = InMemoryConfigSource::holding(ConfigFile::new(
+        None,
+        None,
+        PackageConfig::default(),
+        BTreeMap::from([(
+            String::from("alpha"),
+            PackageConfig::default().with_skip(vec![String::from("test-naming")]),
+        )]),
+    ));
+
+    // Act
+    let report = report_of(
+        &workspace(),
+        &tree(),
+        &config,
+        &run_of(&["arrange-act-assert", "test-naming"]),
+    );
+
+    // Assert
+    assert_eq!(report.applied, vec![String::from("arrange-act-assert")]);
+    assert!(report.skipped.contains(&String::from("test-naming")));
+}
+
+#[test]
+fn run_sums_an_exclusions_counts_over_every_package() {
+    // Arrange
+    let tree = InMemorySourceTree::new()
+        .with_file("/repo/alpha/src/generated/x.rs", "pub fn x() {}\n")
+        .with_file("/repo/beta/src/generated/y.rs", "pub fn y() {}\n");
+    let invocation = Invocation {
+        excludes: vec![String::from("**/generated/**")],
+        ..run_of(&["arrange-act-assert"])
+    };
+
+    // Act
+    let report = report_of(
+        &workspace_declaring(Vec::new()),
+        &tree,
+        &InMemoryConfigSource::absent(),
+        &invocation,
+    );
+
+    // Assert
+    assert_eq!(
+        report.exclusions,
+        vec![(String::from("**/generated/**"), 2)]
+    );
+}
+
+// A package section's rules stand in for the root's; a section that states
+// none takes the root's.
+#[test]
+fn run_takes_a_sections_rules_over_the_roots_and_the_roots_where_it_states_none() {
+    // Arrange
+    let config = InMemoryConfigSource::holding(ConfigFile::new(
+        None,
+        None,
+        PackageConfig::new(
+            None,
+            None,
+            None,
+            vec![String::from("test-naming")],
+            None,
+            Vec::new(),
+        ),
+        BTreeMap::from([
+            (
+                String::from("alpha"),
+                PackageConfig::new(
+                    None,
+                    None,
+                    None,
+                    vec![String::from("arrange-act-assert")],
+                    None,
+                    Vec::new(),
+                ),
+            ),
+            (
+                String::from("beta"),
+                PackageConfig::new(
+                    None,
+                    None,
+                    None,
+                    Vec::new(),
+                    None,
+                    vec![String::from("**/none/**")],
+                ),
+            ),
+        ]),
+    ));
+    let invocation = Invocation {
+        manifest_directory: path_of("/repo"),
+        ..Invocation::default()
+    };
+
+    // Act
+    let report = report_of(
+        &workspace_declaring(Vec::new()),
+        &tree(),
+        &config,
+        &invocation,
+    );
+
+    // Assert
+    let applied: Vec<(&str, &[String])> = report
+        .rosters
+        .iter()
+        .map(|roster| (roster.package(), roster.applied()))
+        .collect();
+    assert_eq!(
+        applied,
+        vec![
+            ("alpha", &[String::from("arrange-act-assert")][..]),
+            ("beta", &[String::from("test-naming")][..]),
+        ]
+    );
+}
+
+#[test]
+fn run_takes_the_directory_limits_from_the_config_file() {
+    // Arrange
+    let config = InMemoryConfigSource::holding(ConfigFile::new(
+        None,
+        None,
+        PackageConfig::new(None, Some(1), Some(1), Vec::new(), None, Vec::new()),
+        BTreeMap::new(),
+    ));
+    let tree = InMemorySourceTree::new()
+        .with_file("/repo/alpha/src/lib.rs", "pub fn f() {}\n")
+        .with_file("/repo/alpha/src/other.rs", "pub fn g() {}\n")
+        .with_file("/repo/alpha/src/third.rs", "pub fn h() {}\n")
+        .with_file("/repo/alpha/src/x/a.rs", "pub fn a() {}\n")
+        .with_file("/repo/alpha/src/y/b.rs", "pub fn b() {}\n");
+
+    // Act
+    let report = report_of(
+        &workspace(),
+        &tree,
+        &config,
+        &run_of(&["directory-file-count", "directory-subfolder-count"]),
+    );
+
+    // Assert
+    let mut rules = broken(&report);
+    rules.sort_unstable();
+    rules.dedup();
+    assert_eq!(
+        rules,
+        vec!["directory-file-count", "directory-subfolder-count"]
+    );
+}
+
+#[test]
+fn run_takes_the_offence_threshold_from_the_config_file() {
+    // Arrange
+    let config = InMemoryConfigSource::holding(ConfigFile::new(
+        None,
+        Some(5),
+        PackageConfig::default(),
+        BTreeMap::new(),
+    ));
+
+    // Act
+    let report = report_of(
+        &workspace(),
+        &tree(),
+        &config,
+        &run_of(&["arrange-act-assert"]),
+    );
+
+    // Assert
+    assert_eq!(report.threshold, OffenceThreshold::new(5));
 }
 
 #[test]

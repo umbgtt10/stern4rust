@@ -110,6 +110,15 @@ fn apply_with_no_patterns_keeps_everything() {
 }
 
 #[test]
+fn is_empty_of_a_set_with_a_pattern_is_false() {
+    // Arrange & Act
+    let empty = set(&["fixture/**"]).is_empty();
+
+    // Assert
+    assert!(!empty);
+}
+
+#[test]
 fn is_empty_with_no_patterns_is_true() {
     // Arrange & Act
     let empty = set(&[]).is_empty();

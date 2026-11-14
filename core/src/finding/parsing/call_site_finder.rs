@@ -31,8 +31,8 @@ use crate::source_file::SourceFile;
 // untested.
 //
 // Inside a macro the tokens are counted rather than parsed -- an identifier
-// followed by a parenthesised group, with arity taken from the commas at the
-// group's top level. That is looser than the parsed side and errs toward
+// followed by a parenthesised group, with arity the arguments its top-level
+// commas part. That is looser than the parsed side and errs toward
 // finding a call, which is the safe direction for a rule that would otherwise
 // accuse tested code of being untested.
 pub struct CallSiteFinder {
@@ -49,16 +49,18 @@ impl CallSiteFinder {
         Some(finder.found)
     }
 
+    // An argument is counted where it opens: its first token after the group's
+    // start or a comma. A trailing comma -- rustfmt's, on a call laid out one
+    // argument a line -- closes the last argument and opens none.
     fn arity_of(tokens: TokenStream) -> usize {
-        let mut arguments = 0;
-        let mut any = false;
-        for tree in tokens {
-            match &tree {
-                TokenTree::Punct(punct) if punct.as_char() == ',' => arguments += 1,
-                _ => any = true,
-            }
-        }
-        if any { arguments + 1 } else { 0 }
+        tokens
+            .into_iter()
+            .fold((0, false), |(arguments, open), tree| match tree {
+                TokenTree::Punct(punct) if punct.as_char() == ',' => (arguments, false),
+                _ if open => (arguments, true),
+                _ => (arguments + 1, true),
+            })
+            .0
     }
 
     fn take_tokens(&mut self, tokens: TokenStream) {

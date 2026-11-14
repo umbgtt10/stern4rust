@@ -44,7 +44,6 @@ impl VersionSort {
 
     fn chunk(left: &str, right: &str) -> Ordering {
         match (left == "_", right == "_") {
-            (true, true) => Ordering::Equal,
             (true, false) => Ordering::Less,
             (false, true) => Ordering::Greater,
             _ if Self::is_number(left) && Self::is_number(right) => Self::value(left)
@@ -77,12 +76,13 @@ impl VersionSort {
     }
 
     // The first pair of equal numbers written with different leading zeros: the
-    // one with more of them sorts first.
+    // one with more of them sorts first. Every pair here already compared
+    // equal, so two numbers share a value and the longer is the one with more
+    // zeros, and two other chunks are the same text: comparing lengths says it.
     fn leading_zeros(left: &[&str], right: &[&str]) -> Ordering {
         left.iter()
             .zip(right)
-            .filter(|(one, other)| Self::is_number(one) && Self::is_number(other))
-            .map(|(one, other)| Self::zeros(other).cmp(&Self::zeros(one)))
+            .map(|(one, other)| other.len().cmp(&one.len()))
             .find(|order| order.is_ne())
             .unwrap_or(Ordering::Equal)
     }
@@ -91,9 +91,5 @@ impl VersionSort {
     // value however long they are.
     fn value(number: &str) -> &str {
         number.trim_start_matches('0')
-    }
-
-    fn zeros(number: &str) -> usize {
-        number.len() - Self::value(number).len()
     }
 }

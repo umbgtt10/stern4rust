@@ -73,14 +73,13 @@ impl RecordHomeRule {
         }
     }
 
+    // A test-only struct or enum is never judged: the shapes hold only what
+    // builds into the library (`SourceItems::live`), and only a shaped record
+    // is.
     fn declared(item: &Item) -> Option<(&Ident, &Visibility)> {
         match item {
-            Item::Struct(declared) if !declared.attrs.iter().any(UnitTestFinder::is_cfg_test) => {
-                Some((&declared.ident, &declared.vis))
-            }
-            Item::Enum(declared) if !declared.attrs.iter().any(UnitTestFinder::is_cfg_test) => {
-                Some((&declared.ident, &declared.vis))
-            }
+            Item::Struct(declared) => Some((&declared.ident, &declared.vis)),
+            Item::Enum(declared) => Some((&declared.ident, &declared.vis)),
             _ => None,
         }
     }

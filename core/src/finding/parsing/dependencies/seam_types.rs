@@ -65,7 +65,9 @@ impl SeamTypes {
             Type::TraitObject(_) | Type::ImplTrait(_) => true,
             Type::Reference(reference) => self.is_seam(&reference.elem),
             Type::Paren(inner) => self.is_seam(&inner.elem),
-            Type::Path(path) if path.qself.is_none() => {
+            // A qualified path, `<Engine>::P`, reaches no parameter: syn writes it
+            // with a leading `::`, so it has no bare identifier to be one.
+            Type::Path(path) => {
                 if let Some(name) = path.path.get_ident() {
                     return self.bounded.contains(&name.to_string());
                 }

@@ -68,6 +68,18 @@ fn among_finds_module_level_and_nested_functions_in_source_order() {
 }
 
 #[test]
+fn among_keeps_a_function_carrying_an_ordinary_attribute() {
+    // Arrange
+    let items = items("#[inline]\nfn helper() {}\n");
+
+    // Act
+    let found = FreeFunctionFinder::among(&items, false);
+
+    // Assert
+    assert_eq!(names(found), ["helper"]);
+}
+
+#[test]
 fn among_keeps_main_outside_an_entry_file() {
     // Arrange
     let items = items("fn main() {}\n");
@@ -83,6 +95,20 @@ fn among_keeps_main_outside_an_entry_file() {
 fn among_leaves_out_an_extern_function() {
     // Arrange
     let items = items("pub extern \"C\" fn callback() {}\n");
+
+    // Act
+    let found = FreeFunctionFinder::among(&items, false);
+
+    // Assert
+    assert!(found.is_empty());
+}
+
+// What gates on test is test code, as every rule reads it, however the
+// predicate is spelled around it.
+#[test]
+fn among_leaves_out_an_item_gated_on_test_among_other_features() {
+    // Arrange
+    let items = items("#[cfg(any(test, feature = \"probe\"))]\nfn helper() {}\n");
 
     // Act
     let found = FreeFunctionFinder::among(&items, false);

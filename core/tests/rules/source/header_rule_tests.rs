@@ -137,6 +137,20 @@ fn check_a_file_that_ends_before_the_header_does_reports_its_length() {
     assert!(offences[0].description().contains("header is 3"));
 }
 
+// A file may be its header and nothing else, to its last byte: it ends with
+// the header, not before it.
+#[test]
+fn check_a_file_that_is_the_header_and_nothing_more_reports_nothing() {
+    // Arrange
+    let source = file(HEADER);
+
+    // Act
+    let offences = rule().check(&source);
+
+    // Assert
+    assert!(offences.is_empty(), "{offences:?}");
+}
+
 #[test]
 fn check_a_file_whose_first_line_differs_reports_that_line() {
     // Arrange
@@ -151,6 +165,25 @@ fn check_a_file_whose_first_line_differs_reports_that_line() {
     assert_eq!(offences[0].line(), 1);
     assert_eq!(offences[0].rule(), "header");
     assert_eq!(offences[0].file(), "src/subject.rs");
+}
+
+#[test]
+fn check_a_file_whose_first_line_differs_says_how_to_fix_it_and_what_is_expected() {
+    // Arrange
+    let source = file(&with_body(
+        "// Copyright 2024 Someone Else\n// Licensed under the MIT License\n// SPDX-License-Identifier: MIT",
+    ));
+
+    // Act
+    let offences = rule().check(&source);
+
+    // Assert
+    assert_eq!(offences.len(), 1);
+    assert_eq!(
+        offences[0].correction(),
+        "make the first 3 lines of the file match the expected header"
+    );
+    assert_eq!(offences[0].expected(), Some(HEADER));
 }
 
 // The same file with a trailing newline is a different case: it has a second

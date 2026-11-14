@@ -379,6 +379,38 @@ fn check_workspace_of_a_record_named_only_by_a_pub_method_of_a_type_that_is_not_
     assert!(offences.is_empty(), "expected none, got {offences:?}");
 }
 
+// What the declaring file holds of the type itself -- its declaration, a
+// field of its own type, an impl of it, a test module -- is no use of it:
+// used by nothing else, each sits in a file of its own and reports nothing.
+#[test]
+fn check_workspace_of_a_record_naming_itself_only_in_its_own_items_reports_nothing() {
+    // Arrange
+    let files = [
+        (
+            "src/node.rs",
+            "pub struct Node {\n    pub next: Option<Box<Node>>,\n}\n",
+        ),
+        (
+            "src/tree.rs",
+            "pub enum Tree {\n    Leaf,\n    Branch(Box<Tree>),\n}\n",
+        ),
+        (
+            "src/window.rs",
+            "pub struct Window {\n    pub size: u32,\n}\n\nimpl Default for Window {\n    fn default() -> Self {\n        Window { size: 0 }\n    }\n}\n",
+        ),
+        (
+            "src/span.rs",
+            "pub struct Span {\n    pub start: u32,\n}\n\n#[cfg(test)]\nmod tests {\n    fn probe() -> super::Span {\n        super::Span { start: 0 }\n    }\n}\n",
+        ),
+    ];
+
+    // Act
+    let offences = check(&files);
+
+    // Assert
+    assert!(offences.is_empty(), "expected none, got {offences:?}");
+}
+
 #[test]
 fn check_workspace_of_a_record_used_by_its_declaring_file_and_one_other_counts_both() {
     // Arrange & Act
@@ -395,6 +427,46 @@ fn check_workspace_of_a_record_used_by_its_declaring_file_and_one_other_counts_b
     assert_eq!(
         offences[0].description(),
         "`LogLine` is used by 2 files but declared in `src/parser.rs`"
+    );
+}
+
+#[test]
+fn check_workspace_of_a_record_used_by_one_source_file_and_one_test_counts_both() {
+    // Arrange & Act
+    let offences = check(&[
+        ("src/parser.rs", WINDOW),
+        ("src/layout.rs", "fn lay(window: Window) {}\n"),
+        (
+            "tests/parser_tests.rs",
+            "fn probe() -> Window {\n    Window { size: 1 }\n}\n",
+        ),
+    ]);
+
+    // Assert
+    assert_eq!(offences.len(), 1);
+    assert_eq!(
+        offences[0].description(),
+        "`Window` is used by 2 files but declared in `src/parser.rs`"
+    );
+}
+
+// One user, and that one outside src/: shared, not the user's to hold.
+#[test]
+fn check_workspace_of_a_record_used_by_one_test_but_declared_in_another_file_says_one_file() {
+    // Arrange & Act
+    let offences = check(&[
+        ("src/parser.rs", WINDOW),
+        (
+            "tests/parser_tests.rs",
+            "fn probe() -> Window {\n    Window { size: 1 }\n}\n",
+        ),
+    ]);
+
+    // Assert
+    assert_eq!(offences.len(), 1);
+    assert_eq!(
+        offences[0].description(),
+        "`Window` is used by 1 file but declared in `src/parser.rs`"
     );
 }
 

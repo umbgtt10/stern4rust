@@ -10,6 +10,7 @@ use proc_macro2::TokenTree;
 use quote::ToTokens;
 use syn::Attribute;
 use syn::Item;
+use syn::ItemFn;
 use syn::parse_file;
 use syn::spanned::Spanned;
 
@@ -33,27 +34,9 @@ use proc_macro2::TokenStream;
 pub struct UnitTestFinder;
 
 impl UnitTestFinder {
-    // A predicate rather than the literal text, since `any(test, ...)` gates on
-    // test just as effectively.
-    pub fn is_cfg_test(attr: &Attribute) -> bool {
-        attr.path().is_ident("cfg") && Self::mentions_test(attr)
-    }
-
-    // `#[test]`, `#[tokio::test]` and any other harness spelled the same way.
-    pub fn is_test(attr: &Attribute) -> bool {
-        attr.path()
-            .segments
-            .last()
-            .is_some_and(|segment| segment.ident == "test")
-    }
-
-    // None means the file does not parse. readable-source reports that.
-    pub fn sites(file: &SourceFile) -> Option<Vec<UnitTestSite>> {
-        let syntax = parse_file(&file.contents()).ok()?;
-        Some(Self::in_items(file, &syntax.items))
-    }
-
-    fn attributes(item: &Item) -> &[Attribute] {
+    // Where each kind of item keeps its attributes: the one table of it, for
+    // whatever asks whether a gate sits on an item.
+    pub fn attributes(item: &Item) -> &[Attribute] {
         match item {
             Item::Const(inner) => &inner.attrs,
             Item::Enum(inner) => &inner.attrs,
@@ -74,13 +57,44 @@ impl UnitTestFinder {
         }
     }
 
+    // A predicate rather than the literal text, since `any(test, ...)` gates on
+    // test just as effectively.
+    pub fn is_cfg_test(attr: &Attribute) -> bool {
+        attr.path().is_ident("cfg") && Self::mentions_test(attr)
+    }
+
+    // `#[test]`, `#[tokio::test]` and any other harness spelled the same way.
+    pub fn is_test(attr: &Attribute) -> bool {
+        attr.path()
+            .segments
+            .last()
+            .is_some_and(|segment| segment.ident == "test")
+    }
+
+    // None means the file does not parse. readable-source reports that.
+    pub fn sites(file: &SourceFile) -> Option<Vec<UnitTestSite>> {
+        let syntax = parse_file(&file.contents()).ok()?;
+        Some(Self::in_items(file, &syntax.items))
+    }
+
+    // The functions at the top level of a file that carry a test attribute.
+    pub fn test_functions(items: &[Item]) -> Vec<&ItemFn> {
+        items
+            .iter()
+            .filter_map(|item| match item {
+                Item::Fn(function) if function.attrs.iter().any(Self::is_test) => Some(function),
+                _ => None,
+            })
+            .collect()
+    }
+
     // The kind words stay here for the same reason they stay in
     // `RegistryParser`: they sit inside offence descriptions, and this one says
     // "module" where that one says "inline module".
-    fn describe(file: &SourceFile, item: &Item, line: usize) -> String {
+    fn describe(file: &SourceFile, item: &Item) -> String {
         match (Self::kind(item), ItemNaming::identifier(item)) {
             (Some(kind), Some(subject)) => format!("{kind} `{subject}`"),
-            _ => format!("`{}`", ItemNaming::source_line(file, line)),
+            _ => format!("`{}`", ItemNaming::code_line(file, item)),
         }
     }
 
@@ -190,7 +204,7 @@ impl UnitTestFinder {
     fn site_of(file: &SourceFile, item: &Item) -> Option<UnitTestSite> {
         let line = item.span().start().line.max(1);
         let attrs = Self::attributes(item);
-        let subject = Self::describe(file, item, line);
+        let subject = Self::describe(file, item);
         let mirror = Self::mirror_of(file.relative_path());
 
         if attrs.iter().any(Self::is_cfg_attr_test) {

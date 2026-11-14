@@ -65,7 +65,9 @@ impl PublicEntryPointFinder {
             Item::Fn(function) if Self::is_public(&function.vis) => {
                 vec![Self::of_signature(&function.sig)]
             }
-            Item::Impl(block) if block.trait_.is_none() => block
+            // A trait impl's methods carry no visibility of their own, so none is
+            // pub: the check below leaves them out with the private ones.
+            Item::Impl(block) => block
                 .items
                 .iter()
                 .filter_map(|inner| match inner {

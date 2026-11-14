@@ -201,6 +201,22 @@ fn check_an_act_without_an_assert_reports_it() {
 }
 
 #[test]
+fn check_an_arrange_alone_reports_it() {
+    // Arrange & Act
+    let offences = check(
+        "#[test]\nfn poll_of_a_queue_returns_it() {\n    // Arrange\n    let q = 1;\n    assert_eq!(q, 1);\n}\n",
+    );
+
+    // Assert
+    assert_eq!(offences.len(), 1);
+    assert!(
+        offences[0].description().contains("reads Arrange;"),
+        "got {}",
+        offences[0].description()
+    );
+}
+
+#[test]
 fn check_an_assert_without_an_act_reports_it() {
     // Arrange & Act
     let offences = check(

@@ -61,6 +61,18 @@ fn of_a_trait_declaration_leaves_its_default_bodies_out() {
 }
 
 #[test]
+fn of_an_impl_leaves_its_test_method_out() {
+    // Arrange & Act
+    let found = names(
+        "struct Engine;\n\nimpl Engine {\n    fn run() {}\n\n    #[cfg(test)]\n    fn probe() {}\n}\n",
+        &[],
+    );
+
+    // Assert
+    assert_eq!(found, ["run"]);
+}
+
+#[test]
 fn of_an_impl_of_a_dependencys_port_leaves_its_methods_out() {
     // Arrange & Act
     let found = names(

@@ -21,6 +21,7 @@ use stern4rust::finding::model::unit_test_site::UnitTestSite;
 use stern4rust::finding::parsing::unit_test_finder::UnitTestFinder;
 use stern4rust::source_file::SourceFile;
 use syn::ItemFn;
+use syn::parse_file;
 use syn::parse_str;
 
 fn corrections(body: &str) -> Vec<String> {
@@ -39,6 +40,23 @@ fn labels(body: &str) -> Vec<String> {
 
 fn sites(body: &str) -> Vec<UnitTestSite> {
     UnitTestFinder::sites(&SourceFile::new("src/subject.rs", body)).expect("parses")
+}
+
+#[test]
+fn attributes_of_an_item_returns_those_written_on_it() {
+    // Arrange
+    let syntax = parse_file("#[cfg(test)]\n#[inline]\nfn probe() {}\n\n#[allow(dead_code)]\nimpl Thing {}\n\nmacro_rules! nothing {\n    () => {};\n}\n")
+        .expect("parses");
+
+    // Act
+    let counts: Vec<usize> = syntax
+        .items
+        .iter()
+        .map(|item| UnitTestFinder::attributes(item).len())
+        .collect();
+
+    // Assert
+    assert_eq!(counts, [2, 1, 0]);
 }
 
 #[test]
@@ -110,6 +128,37 @@ fn sites_names_a_test_function_with_its_identifier() {
 
     // Assert
     assert_eq!(found, ["the test function `checks_something`"]);
+}
+
+// Every kind of item a gate can sit on: those with a kind word named by it,
+// the rest by their first line of code -- never by the gate itself.
+#[test]
+fn sites_names_each_kind_of_gated_item_by_its_kind_or_its_code() {
+    // Arrange
+    let body = "#[cfg(test)]\nconst LIMIT: u8 = 1;\n#[cfg(test)]\nenum Choice {}\n#[cfg(test)]\nextern crate alloc;\n#[cfg(test)]\nextern \"C\" {}\n#[cfg(test)]\nimpl Thing {}\n#[cfg(test)]\nmacro_rules! helper {\n    () => {};\n}\n#[cfg(test)]\nstatic COUNT: u8 = 0;\n#[cfg(test)]\nstruct Probe;\n#[cfg(test)]\ntrait Fake {}\n#[cfg(test)]\ntrait Both = Fake + Send;\n#[cfg(test)]\ntype Alias = u8;\n#[cfg(test)]\nunion Bits {\n    a: u8,\n}\n#[cfg(test)]\nuse std::fmt;\n";
+
+    // Act
+    let found = labels(body);
+
+    // Assert
+    assert_eq!(
+        found,
+        [
+            "the `#[cfg(test)]` constant `LIMIT`",
+            "the `#[cfg(test)]` enum `Choice`",
+            "the `#[cfg(test)]` `extern crate alloc;`",
+            "the `#[cfg(test)]` `extern \"C\" {}`",
+            "the `#[cfg(test)]` `impl Thing {}`",
+            "the `#[cfg(test)]` `macro_rules! helper {`",
+            "the `#[cfg(test)]` static `COUNT`",
+            "the `#[cfg(test)]` struct `Probe`",
+            "the `#[cfg(test)]` trait `Fake`",
+            "the `#[cfg(test)]` `trait Both = Fake + Send;`",
+            "the `#[cfg(test)]` type alias `Alias`",
+            "the `#[cfg(test)]` `union Bits {`",
+            "the `#[cfg(test)]` `use std::fmt;`",
+        ]
+    );
 }
 
 // The shape as it actually appears: the negation nested inside an `all`,
@@ -302,4 +351,24 @@ fn sites_reports_the_line_the_item_starts_on() {
 
     // Assert
     assert_eq!(found[0].line(), 3);
+}
+
+// The functions at a file's top level that carry a test attribute, in order;
+// a helper beside them is none.
+#[test]
+fn test_functions_of_items_returns_those_carrying_a_test_attribute() {
+    // Arrange
+    let syntax = parse_file(
+        "#[test]\nfn first() {}\n\nfn helper() {}\n\n#[tokio::test]\nasync fn second() {}\n",
+    )
+    .expect("parses");
+
+    // Act
+    let names: Vec<String> = UnitTestFinder::test_functions(&syntax.items)
+        .iter()
+        .map(|function| function.sig.ident.to_string())
+        .collect();
+
+    // Assert
+    assert_eq!(names, ["first", "second"]);
 }

@@ -5,6 +5,7 @@
 pub mod arrange_act_assert_rule_tests;
 pub mod behaviour_tests_rule_tests;
 pub mod test_file_structure_rule_tests;
+pub mod test_functions_tests;
 pub mod test_naming_rule_tests;
 pub mod tested_public_api_rule_tests;
 pub mod timeless_tests_rule_tests;

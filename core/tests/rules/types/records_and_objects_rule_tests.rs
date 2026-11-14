@@ -415,6 +415,19 @@ fn check_workspace_of_an_object_with_two_fields_names_both() {
 }
 
 #[test]
+fn check_workspace_of_two_structs_in_one_file_judges_each_by_its_own_shape() {
+    // Arrange & Act
+    let offences = check(
+        "src/term.rs",
+        "pub struct Point {\n    pub x: u8,\n}\n\npub struct Term {\n    pub number: u64,\n}\n\nimpl Term {\n    pub fn bump(&mut self) {}\n}\n",
+    );
+
+    // Assert
+    assert_eq!(offences.len(), 1);
+    assert_eq!(offences[0].subject(), Some("Term"));
+}
+
+#[test]
 fn explanation_shows_a_getter_only_record_and_the_record_it_should_be() {
     // Arrange & Act
     let explanation = RecordsAndObjectsRule::new().explanation();

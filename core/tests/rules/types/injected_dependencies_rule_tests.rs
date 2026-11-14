@@ -142,6 +142,22 @@ fn check_workspace_of_a_constructor_filling_a_trait_field_from_a_built_local_nam
     );
 }
 
+// Only another constructor is handed what it composes; a helper that returns
+// no App is no constructor.
+#[test]
+fn check_workspace_of_a_constructor_handing_a_built_part_to_a_helper_reports_nothing() {
+    // Arrange & Act
+    let offences = check(&[(
+        "src/app.rs",
+        &app(
+            "impl App {\n    pub fn new(reporter: Box<dyn Reporter>, size: usize) -> Self {\n        Self::announce(Box::new(StdoutReporter::new()));\n        Self { reporter, size }\n    }\n\n    fn announce(reporter: Box<dyn Reporter>) {}\n}\n",
+        ),
+    )]);
+
+    // Assert
+    assert!(offences.is_empty(), "{offences:?}");
+}
+
 #[test]
 fn check_workspace_of_a_constructor_handing_a_built_part_to_another_constructor_says_what_to_do() {
     // Arrange & Act

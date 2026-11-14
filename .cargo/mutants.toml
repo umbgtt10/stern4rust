@@ -7,3 +7,16 @@
 # outright.
 examine_globs = ["core/src/**/*.rs"]
 test_workspace = false
+
+# Mutants no test can catch, each with why.
+#
+# A rule judging files one by one answers check_workspace with Vec::new(), and
+# a rule judging the tree answers check so; `vec![]` is the same value. The core is no_std, so the macro compiles only
+# in a file that imports alloc::vec for its own use: these seven rules do, and
+# the mutant builds there and changes nothing; in the others it does not
+# build. Named rule by rule, because a rule whose answer is not empty has the
+# same mutant, and catches it.
+exclude_re = [
+    "<impl Rule for (ArrangeActAssertRule|HeaderRule|ImmutableReturnsRule|ReadableSourceRule|SpdxMatchesManifestRule|TestFileNamePostfixRule|TimelessTestsRule)>::check_workspace -> Vec<Offence> with vec!\\[\\]",
+    "<impl Rule for TestsLayoutRule>::check -> Vec<Offence> with vec!\\[\\]",
+]

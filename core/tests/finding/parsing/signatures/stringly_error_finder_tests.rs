@@ -100,3 +100,12 @@ fn first_in_a_string_outside_any_result_finds_nothing() {
     // Assert
     assert_eq!(found, None);
 }
+
+#[test]
+fn first_in_another_type_of_two_arguments_finds_nothing() {
+    // Arrange & Act
+    let found = first_in("HashMap<String, String>");
+
+    // Assert
+    assert_eq!(found, None);
+}

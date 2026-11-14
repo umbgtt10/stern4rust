@@ -137,3 +137,66 @@ fn shape_of_a_with_step_replacing_one_field_is_a_step() {
     // Assert
     assert_eq!(shape, MethodShape::Step);
 }
+
+// Each of a getter's conditions alone missing: a mutable borrow, a negation,
+// a field read handed an argument.
+#[test]
+fn shape_of_each_near_miss_of_a_getter_is_behaviour() {
+    // Arrange
+    let sources = [
+        "pub fn name(&self) -> &mut String {\n    &mut self.name\n}",
+        "pub fn off(&self) -> bool {\n    !self.on\n}",
+        "pub fn name(&self) -> String {\n    self.name.clone(1)\n}",
+    ];
+
+    // Act
+    let shapes: Vec<MethodShape> = sources.iter().map(|source| shape(source)).collect();
+
+    // Assert
+    assert_eq!(shapes, [MethodShape::Behaviour; 3]);
+}
+
+// Each of a plain constructor's conditions alone missing: another type's
+// literal, its own type called with a computed value, another function
+// called with the parameters, another item of its type's path, another type
+// returned, a receiver taken.
+#[test]
+fn shape_of_each_near_miss_of_a_plain_constructor_is_behaviour() {
+    // Arrange
+    let sources = [
+        "pub fn new(name: String) -> Self {\n    Other { name }\n}",
+        "pub fn new(value: u64) -> Self {\n    Self(value + 1)\n}",
+        "pub fn new(value: u64) -> Self {\n    wrap(value)\n}",
+        "pub fn new() -> Self {\n    Widget::DEFAULT\n}",
+        "pub fn new(name: String) -> Other {\n    Self { name }\n}",
+        "pub fn new(self, name: String) -> Self {\n    Self { name }\n}",
+    ];
+
+    // Act
+    let shapes: Vec<MethodShape> = sources.iter().map(|source| shape(source)).collect();
+
+    // Assert
+    assert_eq!(shapes, [MethodShape::Behaviour; 6]);
+}
+
+// Each of a step's conditions alone missing: a borrowed receiver, a second
+// parameter, a rest other than self, another type, a second field, a field
+// computed rather than handed over.
+#[test]
+fn shape_of_each_near_miss_of_a_step_is_behaviour() {
+    // Arrange
+    let sources = [
+        "pub fn with_size(&self, size: u32) -> Self {\n    Self { size, ..self }\n}",
+        "pub fn with_size(self, size: u32, unit: u8) -> Self {\n    Self { size, ..self }\n}",
+        "pub fn with_size(self, size: u32) -> Self {\n    Self { size, ..other }\n}",
+        "pub fn with_size(self, size: u32) -> Self {\n    Other { size, ..self }\n}",
+        "pub fn with_size(self, size: u32) -> Self {\n    Self { size, count: size, ..self }\n}",
+        "pub fn with_size(self, size: u32) -> Self {\n    Self { size: size + 1, ..self }\n}",
+    ];
+
+    // Act
+    let shapes: Vec<MethodShape> = sources.iter().map(|source| shape(source)).collect();
+
+    // Assert
+    assert_eq!(shapes, [MethodShape::Behaviour; 6]);
+}

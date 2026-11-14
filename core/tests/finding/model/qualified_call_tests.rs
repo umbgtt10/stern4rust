@@ -12,6 +12,15 @@
 
 use stern4rust::finding::model::qualified_call::QualifiedCall;
 
+#[test]
+fn call_of_a_five_segment_path_keeps_its_last_two() {
+    // Arrange & Act
+    let call = QualifiedCall::new("alpha::beta::gamma::delta::run", 1).call();
+
+    // Assert
+    assert_eq!(call, "delta::run");
+}
+
 // A macro is called with its bang, kept on the name the correction leaves.
 #[test]
 fn call_of_a_macro_ends_in_its_bang() {
