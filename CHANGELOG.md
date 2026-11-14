@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Fixed
+- `tested-public-api` and `public-or-private` count a call's arguments inside
+  a macro without its trailing comma. `combine(first, second,)` -- as rustfmt
+  lays out a long call one argument a line, inside an `assert_eq!` as anywhere
+  -- counted three, so `combine/2` read as never called.
 - `test-free-source`, `module-registry` and `tests-layout` name an attributed
   item they have no name or kind word for -- an impl block, an import, an
   `extern` crate or block, a macro, a trait alias, a union -- by its first line
