@@ -13,6 +13,7 @@ use syn::ExprCall;
 use syn::Item;
 use syn::ItemImpl;
 use syn::Macro;
+use syn::Pat;
 use syn::Path;
 use syn::TypePath;
 use syn::UseTree;
@@ -23,6 +24,7 @@ use syn::visit::Visit;
 use syn::visit::visit_expr_call;
 
 use crate::finding::model::qualified_call::QualifiedCall;
+use crate::finding::parsing::shapes::macro_body::MacroBody;
 use crate::finding::parsing::shapes::standard_macro::StandardMacro;
 use crate::source_file::SourceFile;
 
@@ -76,6 +78,12 @@ impl QualifiedCallFinder {
                 _ => Vec::new(),
             })
             .collect()
+    }
+
+    // A macro's own path, judged as a call's is.
+    fn invoked(&self, node: &Macro) -> Option<QualifiedCall> {
+        self.offending_path(&node.path, node.path.span().start().line)
+            .map(|call| QualifiedCall::macro_invocation(call.path(), call.line()))
     }
 
     // The one lowercase set that can be known rather than guessed at. The case
@@ -197,6 +205,24 @@ impl<'ast> Visit<'ast> for QualifiedCallFinder {
         visit::visit_item_impl(self, node);
     }
 
+    // A variant or a struct written in full in a pattern -- a `match` arm, an
+    // `if let`, a `let ... else`, the pattern of `matches!` -- names a
+    // dependency the import list does not, as the same path in a call does.
+    fn visit_pat(&mut self, node: &'ast Pat) {
+        let path = match node {
+            Pat::TupleStruct(pattern) if pattern.qself.is_none() => Some(&pattern.path),
+            Pat::Struct(pattern) if pattern.qself.is_none() => Some(&pattern.path),
+            Pat::Path(pattern) if pattern.qself.is_none() => Some(&pattern.path),
+            _ => None,
+        };
+        if let Some(found) =
+            path.and_then(|path| self.offending_path(path, path.span().start().line))
+        {
+            self.found.push(found);
+        }
+        visit::visit_pat(self, node);
+    }
+
     fn visit_expr_call(&mut self, node: &'ast ExprCall) {
         if let Some(call) = self.offending(node) {
             self.found.push(call);
@@ -204,15 +230,35 @@ impl<'ast> Visit<'ast> for QualifiedCallFinder {
         visit_expr_call(self, node);
     }
 
-    // A standard macro's expressions are code the file wrote, so they answer
-    // the same question; a pattern of `matches!` is left alone as any pattern
-    // is, and another macro's body is its author's.
+    // A macro's own path names a dependency as a function's does. A standard
+    // macro's expressions are code the file wrote, so they answer the same
+    // question, and the pattern of `matches!` as any pattern does. Another
+    // macro's body answers it where it reads as code -- a list of expressions,
+    // else its blocks -- and quote!'s and the built-ins' never.
     fn visit_macro(&mut self, node: &'ast Macro) {
-        let arguments = StandardMacro::of(node)
-            .and_then(|standard| standard.expressions())
-            .unwrap_or_default();
-        for argument in &arguments {
-            Visit::visit_expr(self, argument);
+        if let Some(found) = self.invoked(node) {
+            self.found.push(found);
+        }
+        if let Some(standard) = StandardMacro::of(node) {
+            for argument in &standard.expressions().unwrap_or_default() {
+                Visit::visit_expr(self, argument);
+            }
+            if let Some(pattern) = standard.pattern() {
+                Visit::visit_pat(self, &pattern);
+            }
+        } else if let Some(body) = MacroBody::of(node) {
+            match body.expressions() {
+                Some(expressions) => {
+                    for expression in &expressions {
+                        Visit::visit_expr(self, expression);
+                    }
+                }
+                None => {
+                    for block in &body.blocks() {
+                        Visit::visit_block(self, block);
+                    }
+                }
+            }
         }
     }
 }

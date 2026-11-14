@@ -18,6 +18,24 @@ fn check(path: &str, body: &str) -> Vec<Offence> {
     ImportedPathsRule::new().check(&SourceFile::new(path, body))
 }
 
+#[test]
+fn check_of_a_call_inside_a_proptest_body_reports_it() {
+    // Arrange & Act
+    let found = check(
+        "tests/a_tests.rs",
+        "proptest! {\n    #[test]\n    fn t(a in 0..1u8) {\n        prop_assert!(std::env::args().count() > usize::from(a));\n    }\n}\n",
+    );
+
+    // Assert
+    assert_eq!(found.len(), 1, "{found:?}");
+    assert_eq!(found[0].line(), 4);
+    assert_eq!(found[0].subject(), Some("std::env::args"));
+    assert_eq!(
+        found[0].correction(),
+        "add `use std::env;` and call `env::args`"
+    );
+}
+
 // An assertion's arguments are where a test file reaches for a path most.
 #[test]
 fn check_of_a_call_inside_an_assertion_reports_it() {
@@ -63,6 +81,18 @@ fn check_of_a_generic_argument_reached_through_a_path_reports_it() {
 
 // The correction keeps `env` rather than proposing a bare `args()`.
 #[test]
+fn check_of_a_macro_reached_through_a_path_names_the_import_to_add() {
+    // Arrange & Act
+    let found = check("src/a.rs", "fn outer() -> Vec<u8> {\n    std::vec![1]\n}\n");
+
+    // Assert
+    assert_eq!(found.len(), 1, "{found:?}");
+    assert_eq!(found[0].line(), 2);
+    assert_eq!(found[0].subject(), Some("std::vec"));
+    assert_eq!(found[0].correction(), "add `use std::vec;` and call `vec!`");
+}
+
+#[test]
 fn check_of_a_multi_segment_call_names_the_import_to_add() {
     // Arrange & Act
     let found = check(
@@ -102,6 +132,24 @@ fn check_of_a_path_qualified_call_reports_it() {
     assert_eq!(
         found[0].correction(),
         "add `use syn::parse_file;` and call `parse_file`"
+    );
+}
+
+#[test]
+fn check_of_a_pattern_reached_through_a_path_names_the_import_to_add() {
+    // Arrange & Act
+    let found = check(
+        "src/a.rs",
+        "fn outer(item: u8) -> bool {\n    if let syn::Item::Fn(_) = item {\n        return true;\n    }\n    false\n}\n",
+    );
+
+    // Assert
+    assert_eq!(found.len(), 1, "{found:?}");
+    assert_eq!(found[0].line(), 2);
+    assert_eq!(found[0].subject(), Some("syn::Item::Fn"));
+    assert_eq!(
+        found[0].correction(),
+        "add `use syn::Item;` and call `Item::Fn`"
     );
 }
 

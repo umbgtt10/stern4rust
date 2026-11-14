@@ -2,6 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+pub mod macro_body_tests;
 pub mod method_classifier_tests;
 pub mod package_surface_tests;
 pub mod shaped_type_tests;

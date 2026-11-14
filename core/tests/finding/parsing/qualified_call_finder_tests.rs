@@ -39,25 +39,20 @@ fn find_descends_into_function_bodies() {
     assert_eq!(paths, ["syn::parse_file"]);
 }
 
-// A macro is not a function, and its path obeys different rules.
+// A proptest!'s test is no item a parser takes, but its body is a block.
 #[test]
-fn find_ignores_a_macro_invocation() {
+fn find_of_a_call_inside_a_block_of_another_macro_returns_it_at_its_line() {
     // Arrange & Act
-    let paths = paths("fn outer() {\n    let _ = serde_json::json!({});\n}\n");
+    let found = found(
+        "proptest! {\n    #[test]\n    fn t(a in 0..1u8) {\n        let _ = std::collections::BTreeSet::<u8>::new();\n    }\n}\n",
+    );
 
     // Assert
-    assert!(paths.is_empty(), "expected none, got {paths:?}");
-}
-
-// A macro outside the standard family expands to its author's code, which the
-// syntax tree never shows: its arguments are not judged.
-#[test]
-fn find_of_a_call_inside_a_macro_outside_the_standard_family_returns_nothing() {
-    // Arrange & Act
-    let paths = paths("fn outer() {\n    quote!(std::env::args());\n}\n");
-
-    // Assert
-    assert!(paths.is_empty(), "expected none, got {paths:?}");
+    let at: Vec<(String, usize)> = found
+        .iter()
+        .map(|call| (call.path().to_string(), call.line()))
+        .collect();
+    assert_eq!(at, [(String::from("std::collections::BTreeSet::new"), 4)]);
 }
 
 // A macro inside a macro's arguments is read as the outer one is.
@@ -93,6 +88,28 @@ fn find_of_a_call_inside_a_standard_macro_returns_its_path_and_line() {
         .map(|call| (call.path().to_string(), call.line()))
         .collect();
     assert_eq!(reported, [(String::from("std::env::args"), 3)]);
+}
+
+// Another macro's body is code where it reads as code: a list of
+// expressions, as prop_assert_eq! holds.
+#[test]
+fn find_of_a_call_inside_another_macro_s_expressions_returns_it() {
+    // Arrange & Act
+    let paths = paths("fn outer() {\n    prop_assert_eq!(std::cmp::max(1, 2), 2);\n}\n");
+
+    // Assert
+    assert_eq!(paths, ["std::cmp::max"]);
+}
+
+// quote! spells a generated path in full on purpose: its body is not code
+// the file wrote, and is not judged.
+#[test]
+fn find_of_a_call_inside_quote_returns_nothing() {
+    // Arrange & Act
+    let paths = paths("fn outer() {\n    quote!(std::env::args());\n}\n");
+
+    // Assert
+    assert!(paths.is_empty(), "expected none, got {paths:?}");
 }
 
 // A module whose name merely starts like a primitive is still a module.
@@ -216,6 +233,45 @@ fn find_of_a_grouped_import_covers_each_name() {
     assert!(paths.is_empty(), "expected none, got {paths:?}");
 }
 
+// A macro by its name alone, or through one segment the file imported, is
+// left alone as a call is -- and quote!'s own path is judged though its body
+// is not.
+#[test]
+fn find_of_a_macro_by_its_name_or_an_imported_module_returns_only_a_full_path() {
+    // Arrange & Act
+    let paths = paths(
+        "use embassy_logging;\n\nfn outer() {\n    let _ = vec![1];\n    embassy_logging::info!(\"a\");\n    let _ = quote::quote!(::std::env::args());\n}\n",
+    );
+
+    // Assert
+    assert_eq!(paths, ["quote::quote"]);
+}
+
+#[test]
+fn find_of_a_macro_inside_a_standard_macro_returns_it_at_its_line() {
+    // Arrange & Act
+    let found =
+        found("fn outer() {\n    assert_eq!(\n        std::vec![1].len(),\n        1\n    );\n}\n");
+
+    // Assert
+    let at: Vec<(String, usize)> = found
+        .iter()
+        .map(|call| (call.path().to_string(), call.line()))
+        .collect();
+    assert_eq!(at, [(String::from("std::vec"), 3)]);
+}
+
+// A macro reached through a path is a dependency the import list does not
+// name, as a function reached through one is.
+#[test]
+fn find_of_a_macro_reached_through_a_path_returns_it() {
+    // Arrange & Act
+    let paths = paths("fn outer() {\n    let _ = serde_json::json!({});\n}\n");
+
+    // Assert
+    assert_eq!(paths, ["serde_json::json"]);
+}
+
 // Two segments is a route the file spells out at every call site rather than
 // stating once at the top.
 #[test]
@@ -227,16 +283,64 @@ fn find_of_a_multi_segment_call_returns_it() {
     assert_eq!(paths, ["std::env::args"]);
 }
 
-// `matches!` holds a pattern, judged as a pattern is in a `match` -- not at
-// all -- while what it matches is an expression like any other.
+// A variant written in full in a `match` arm leaves the import list as wrong
+// as the same path in a call.
 #[test]
-fn find_of_a_path_in_a_matches_pattern_returns_only_what_it_matches() {
+fn find_of_a_path_in_a_match_arm_pattern_returns_it_at_its_line() {
+    // Arrange & Act
+    let found = found(
+        "fn outer(item: u8) {\n    match item {\n        syn::Item::Fn(_) => {}\n        _ => {}\n    }\n}\n",
+    );
+
+    // Assert
+    let at: Vec<(String, usize)> = found
+        .iter()
+        .map(|call| (call.path().to_string(), call.line()))
+        .collect();
+    assert_eq!(at, [(String::from("syn::Item::Fn"), 3)]);
+}
+
+// `matches!` holds a pattern, judged as a pattern is in a `match`, after
+// what it matches, an expression like any other.
+#[test]
+fn find_of_a_path_in_a_matches_pattern_returns_it_after_what_it_matches() {
     // Arrange & Act
     let paths =
         paths("fn outer() -> bool {\n    matches!(std::env::var(\"A\"), syn::Item::Fn(_))\n}\n");
 
     // Assert
-    assert_eq!(paths, ["std::env::var"]);
+    assert_eq!(paths, ["std::env::var", "syn::Item::Fn"]);
+}
+
+#[test]
+fn find_of_a_path_in_a_struct_pattern_returns_it() {
+    // Arrange & Act
+    let paths = paths("fn outer(item: u8) {\n    let syn::ItemFn { sig, .. } = item;\n}\n");
+
+    // Assert
+    assert_eq!(paths, ["syn::ItemFn"]);
+}
+
+#[test]
+fn find_of_a_path_in_an_if_let_unit_pattern_returns_it() {
+    // Arrange & Act
+    let paths = paths("fn outer(order: u8) {\n    if let std::cmp::Ordering::Less = order {}\n}\n");
+
+    // Assert
+    assert_eq!(paths, ["std::cmp::Ordering::Less"]);
+}
+
+// A pattern answers the question a call does: a type qualifier, and one
+// segment the file imported, are left alone.
+#[test]
+fn find_of_a_pattern_qualified_by_a_type_or_an_imported_module_returns_nothing() {
+    // Arrange & Act
+    let paths = paths(
+        "use std::cmp;\n\nfn outer(order: u8) {\n    match order {\n        Ordering::Less => {}\n        Self::Unit => {}\n        cmp::Ordering => {}\n        None => {}\n    }\n}\n",
+    );
+
+    // Assert
+    assert!(paths.is_empty(), "{paths:?}");
 }
 
 #[test]

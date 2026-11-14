@@ -12,6 +12,19 @@
 
 use stern4rust::finding::model::qualified_call::QualifiedCall;
 
+// A macro is called with its bang, kept on the name the correction leaves.
+#[test]
+fn call_of_a_macro_ends_in_its_bang() {
+    // Arrange & Act
+    let calls = [
+        QualifiedCall::macro_invocation("std::vec", 1).call(),
+        QualifiedCall::macro_invocation("core::arch::global_asm", 1).call(),
+    ];
+
+    // Assert
+    assert_eq!(calls, ["vec!", "arch::global_asm!"]);
+}
+
 #[test]
 fn call_of_a_three_segment_path_keeps_the_module_qualifier() {
     // Arrange & Act
@@ -30,6 +43,21 @@ fn call_of_a_two_segment_path_is_the_function_alone() {
     assert_eq!(call, "parse_file");
 }
 
+// `use syn;` would be legal and useless: the call site would be unchanged.
+// The macro's own name is imported as a function's is, and with it
+// whatever else the path names -- `use std::vec;` brings the module too.
+#[test]
+fn import_of_a_macro_is_its_path_split_as_a_function_s() {
+    // Arrange & Act
+    let imports = [
+        QualifiedCall::macro_invocation("std::vec", 1).import(),
+        QualifiedCall::macro_invocation("core::arch::global_asm", 1).import(),
+    ];
+
+    // Assert
+    assert_eq!(imports, ["std::vec", "core::arch"]);
+}
+
 #[test]
 fn import_of_a_three_segment_path_stops_before_the_function() {
     // Arrange & Act
@@ -39,7 +67,6 @@ fn import_of_a_three_segment_path_stops_before_the_function() {
     assert_eq!(import, "std::env");
 }
 
-// `use syn;` would be legal and useless: the call site would be unchanged.
 #[test]
 fn import_of_a_two_segment_path_is_the_whole_path() {
     // Arrange & Act

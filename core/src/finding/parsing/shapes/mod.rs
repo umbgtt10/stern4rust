@@ -2,6 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+pub mod macro_body;
 pub mod method_classifier;
 pub mod method_shape;
 pub mod package_surface;

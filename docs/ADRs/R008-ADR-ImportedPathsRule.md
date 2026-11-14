@@ -177,6 +177,72 @@ reads what is matched and the guard (`StandardMacro::expressions`);
 `behaviour-tests` still reads every argument, as it did. Whether patterns
 should be judged at all is a question of its own, not this amendment's.
 
+## Amendment (2026-11-13): patterns
+
+A pattern names a dependency as a call does: `syn::Item::Fn(item) =>` in a
+`match` arm leaves the import list as wrong as `syn::Item::Fn(item)` built in an
+expression, and the house standard is not scoped to expressions. The first
+amendment left `matches!`'s pattern alone only to agree with the `match` arms
+around it, which no part of the rule judged.
+
+The path a pattern carries -- a tuple-struct, a struct and a unit or constant
+pattern alike, in a `match` arm, an `if let`, a `let ... else`, a parameter and
+the pattern `matches!` holds (`StandardMacro::pattern`) -- now answers the same
+question as a call, through the same `offending_path`: a type qualifier and one
+imported segment pass, and the correction is the same import.
+
+Measured before it was chosen, with a built binary over the family's
+twenty repositories, as the first amendment's count asked: 58 offences in
+eight, 25 of them in `braintax4rust` and 13 in `dry4rust` -- arms over `syn`'s
+enums -- and none in this tool's own tree.
+
+## Amendment (2026-11-13): other macros' bodies
+
+Nothing in the syntax tree says another macro's body is Rust, and that was the
+reason to leave it alone; but much of it reads as Rust, and a path written in
+full there leaves the import list as wrong as anywhere else.
+`etheram-raft`'s `std::collections::BTreeSet::new` sat in a `proptest!` test's
+body behind a green gate.
+
+A macro outside the standard family (`MacroBody`) is read where it reads as
+code: its body as a list of expressions, as `prop_assert_eq!` holds, else its
+brace groups that parse as blocks, searched for inside any group that is not
+one -- which reaches a `proptest!` test's body and the arms of
+`tokio::select!`. Where nothing parses, nothing is judged, so a body is never
+judged on a guess. Two kinds are never read: `quote!` and its kind, whose
+generated code spells paths in full on purpose, and the compiler's built-ins
+whose body is tokens or text. `time_call_finder`, which reads any macro's body
+as expressions for `injected-time`, stays as it is: a clock in generated code
+is still a clock, while a path in generated code is no import the file owes.
+
+Measured over the family with a built binary before it was chosen: 11
+offences in three repositories, all in tests -- `postcard` calls in
+`etheram-embassy`'s `proptest!` tests, `std::vec!` and `std::format!` in
+`etheram-raft`'s -- and none in this tool's own tree.
+
+## Amendment (2026-11-13): a macro's own path
+
+The decision above left macros out, judging `serde_json::json!` not worth the
+risk of misreading attribute and derive macros. That risk does not reach this
+visitor: an attribute or a derive is a `syn::Attribute`, never the `syn::Macro`
+a bang invocation is, so judging the path of a `name!(...)`, `name![...]` or
+`name! { ... }` touches neither. And the path is the same dependency a
+function's is: `std::vec![...]` and `tokio::select!` leave the import list as
+wrong as `std::env::args()`.
+
+A macro's own path now answers the question a call's does, through the same
+`offending_path`, and its correction names the macro with its bang
+(`QualifiedCall::macro_invocation`): add `use serde_json::json;` and call
+`json!`. A macro by its name alone and one imported segment pass. The import
+can bring more than the macro -- `use std::vec;` brings the module `vec` too --
+so a correction is checked by a build, not taken on trust.
+
+Measured over the family with a built binary before it was chosen: 1046
+offences in nine repositories, 695 of them in tests. `std::vec!` alone is 620,
+418 of them in `etheram-raft`'s `raft_protocol_tests.rs`; `etheram-ibft-embassy`
+holds 293, mostly its logging macros called through `crate::` and its crates'
+paths. None is in this tool's own tree.
+
 ## Enforcement
 
 `tests/rules/source/imported_paths_rule_tests.rs` — 7 tests covering an imported

@@ -9,7 +9,8 @@
 // the two shapes differ: `syn::parse_file` has nothing worth keeping as a
 // qualifier, so the whole path is imported and the call becomes `parse_file`,
 // while `std::env::args` keeps `env` because it says something -- `use std::env`
-// and `env::args`.
+// and `env::args`. A macro splits as a function does, and is called with its
+// bang: `use serde_json::json;` and `json!`.
 use alloc::string::String;
 use alloc::string::ToString;
 use alloc::vec::Vec;
@@ -17,13 +18,22 @@ use alloc::vec::Vec;
 pub struct QualifiedCall {
     path: String,
     line: usize,
+    invoked: bool,
 }
 
 impl QualifiedCall {
+    pub fn macro_invocation(path: &str, line: usize) -> Self {
+        Self {
+            invoked: true,
+            ..Self::new(path, line)
+        }
+    }
+
     pub fn new(path: &str, line: usize) -> Self {
         Self {
             path: path.to_string(),
             line,
+            invoked: false,
         }
     }
 
@@ -31,10 +41,12 @@ impl QualifiedCall {
     // the last two when a module qualifier is worth keeping.
     pub fn call(&self) -> String {
         let segments = self.segments();
-        if segments.len() <= 2 {
-            return segments.last().copied().unwrap_or_default().to_string();
-        }
-        segments[segments.len() - 2..].join("::")
+        let call = if segments.len() <= 2 {
+            segments.last().copied().unwrap_or_default().to_string()
+        } else {
+            segments[segments.len() - 2..].join("::")
+        };
+        if self.invoked { call + "!" } else { call }
     }
 
     // What to import so that at most one imported segment is left at the call.

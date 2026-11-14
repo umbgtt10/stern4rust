@@ -10,6 +10,7 @@ use stern4rust::finding::parsing::shapes::standard_macro::StandardMacro;
 use syn::Expr;
 use syn::ExprMacro;
 use syn::Macro;
+use syn::Pat;
 use syn::parse_str;
 
 fn listed(expressions: Option<Vec<Expr>>) -> Option<Vec<String>> {
@@ -144,4 +145,40 @@ fn of_a_standard_macro_reached_through_a_path_returns_it() {
 
     // Assert
     assert!(standard.is_some());
+}
+
+#[test]
+fn pattern_of_a_macro_other_than_matches_returns_none() {
+    // Arrange
+    let node = macro_of("assert_eq!(a, b)");
+
+    // Act
+    let pattern = StandardMacro::of(&node)
+        .expect("a standard macro")
+        .pattern();
+
+    // Assert
+    assert_eq!(
+        pattern.map(|pattern| pattern.to_token_stream().to_string()),
+        None
+    );
+}
+
+#[test]
+fn pattern_of_matches_returns_the_pattern_it_holds() {
+    // Arrange
+    let node = macro_of("matches!(item, syn::Item::Fn(_) | syn::Item::Const(_) if ready)");
+
+    // Act
+    let pattern: Option<Pat> = StandardMacro::of(&node)
+        .expect("a standard macro")
+        .pattern();
+
+    // Assert
+    assert_eq!(
+        pattern.map(|pattern| pattern.to_token_stream().to_string()),
+        Some(String::from(
+            "syn :: Item :: Fn (_) | syn :: Item :: Const (_)"
+        ))
+    );
 }

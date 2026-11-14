@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+- `imported-paths` judges a pattern as it judges a call: the path a
+  tuple-struct, struct or unit pattern carries -- in a `match` arm, an
+  `if let`, a `let ... else`, a parameter and the pattern `matches!` holds --
+  is reported when written in full, `syn::Item::Fn(item) =>` with the
+  correction `use syn::Item;` and `Item::Fn`. A type qualifier and one imported
+  segment pass, as in a call. Measured over the family before it was chosen:
+  58 offences in eight repositories, none in this tool's tree.
+  ([R008](docs/ADRs/R008-ADR-ImportedPathsRule.md))
+- `imported-paths` reads the body of a macro outside the standard family where
+  it reads as code: as a list of expressions, as `prop_assert_eq!` holds, else
+  its brace groups that parse as blocks, as a `proptest!` test's body and the
+  arms of `tokio::select!` are. `quote!` and its kind, and the compiler's
+  built-ins whose body is tokens or text, are never read. Measured over the
+  family: 11 offences in three repositories, all in tests.
+  ([R008](docs/ADRs/R008-ADR-ImportedPathsRule.md))
+- `imported-paths` judges a macro's own path as a function's: `std::vec![...]`,
+  `serde_json::json!(...)` and `tokio::select!` are reported, with the import
+  that replaces them -- add `use serde_json::json;` and call `json!`. A macro
+  by its name alone, or through one imported segment, passes. Attributes and
+  derives are no bang invocation and are untouched. Measured over the family:
+  1046 offences in nine repositories, 620 of them `std::vec!`. The rule's
+  summary now says what it covers: anything the file names.
+  ([R008](docs/ADRs/R008-ADR-ImportedPathsRule.md))
+
 ## [0.21.0] - 2026-11-13
 
 ### Fixed
