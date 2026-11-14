@@ -51,6 +51,17 @@ fn of_a_method_chain_names_each_call_without_its_arguments() {
     assert_eq!(found, "Self::all().into_iter().filter().collect()");
 }
 
+// A path is named by its segments, its generic arguments left off as a call's
+// arguments are.
+#[test]
+fn of_a_path_with_generic_arguments_names_its_segments_alone() {
+    // Arrange & Act
+    let found = text("Cache::<u8>::EMPTY");
+
+    // Assert
+    assert_eq!(found, "Cache::EMPTY");
+}
+
 #[test]
 fn of_a_struct_literal_names_its_type() {
     // Arrange & Act
@@ -67,6 +78,15 @@ fn of_a_unit_value_names_it() {
 
     // Assert
     assert_eq!(found, "NoOpCoordinator");
+}
+
+#[test]
+fn of_a_value_in_parentheses_or_borrowed_names_the_value() {
+    // Arrange & Act
+    let found = (text("(Concrete)"), text("&Concrete"));
+
+    // Assert
+    assert_eq!(found, (String::from("Concrete"), String::from("Concrete")));
 }
 
 #[test]

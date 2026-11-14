@@ -64,6 +64,38 @@ fn surface() -> PackageSurface {
     )])
 }
 
+// A record's own function is the record's, whatever another type names the
+// same way.
+#[test]
+fn examine_of_a_behaviour_methods_name_qualified_by_a_record_is_not_behaviour() {
+    // Arrange
+    let parsed = parse_file("#[test]\nfn reads() {\n    let window = Window { start: 1 };\n    assert_eq!(Window::run(window), 1);\n}\n").expect("valid test file");
+    let (test, helpers, methods) = split(&parsed.items);
+    let surface = surface();
+
+    // Act
+    let subject = TestBodyVisitor::new(&surface, &helpers, &methods).examine(test);
+
+    // Assert
+    assert!(!subject.exercises_behaviour);
+}
+
+// A pattern with a guard is no list of expressions, so the macro is scanned as
+// tokens -- into their groups, the guard's parentheses among them.
+#[test]
+fn examine_of_a_call_in_a_group_of_a_scanned_macro_is_behaviour() {
+    // Arrange
+    let parsed = parse_file("#[test]\nfn reads() {\n    let window = Window { start: 1 };\n    assert!(matches!(window, Window { .. } if (compute(1) > 0)));\n}\n").expect("valid test file");
+    let (test, helpers, methods) = split(&parsed.items);
+    let surface = surface();
+
+    // Act
+    let subject = TestBodyVisitor::new(&surface, &helpers, &methods).examine(test);
+
+    // Assert
+    assert!(subject.exercises_behaviour);
+}
+
 #[test]
 fn examine_of_a_call_qualified_by_a_record_is_not_behaviour() {
     // Arrange
@@ -105,6 +137,20 @@ fn examine_of_a_free_function_through_a_module_path_is_behaviour() {
 
     // Assert
     assert!(subject.exercises_behaviour);
+}
+
+#[test]
+fn examine_of_a_function_named_but_not_called_in_a_scanned_macro_is_not_behaviour() {
+    // Arrange
+    let parsed = parse_file("#[test]\nfn reads() {\n    let window = Window { start: 1 };\n    assert!(matches!(window, Window { .. } if (compute == compute)));\n}\n").expect("valid test file");
+    let (test, helpers, methods) = split(&parsed.items);
+    let surface = surface();
+
+    // Act
+    let subject = TestBodyVisitor::new(&surface, &helpers, &methods).examine(test);
+
+    // Assert
+    assert!(!subject.exercises_behaviour);
 }
 
 #[test]

@@ -88,6 +88,24 @@ fn parse_a_constant_below_a_comment_and_an_attribute_spans_all_three() {
     assert_eq!(constant.last_line(), 5);
 }
 
+// A string's continuation line can start with `//`: it is the constant above's,
+// and the constant below starts on its own line.
+#[test]
+fn parse_a_constant_below_a_string_ending_on_a_comment_like_line_does_not_claim_it() {
+    // Arrange
+    let file = SourceFile::new(
+        "src/lib.rs",
+        "pub fn lead() {}\n\nconst DOC: &str = \"first\n// second\";\nconst NEXT: u8 = 1;\n",
+    );
+
+    // Act
+    let layout = ConstantLayoutParser::parse(&file).expect("two constants out of place");
+
+    // Assert
+    assert_eq!(layout.misplaced()[1].first_line(), 5);
+    assert_eq!(layout.refusal(), None);
+}
+
 #[test]
 fn parse_a_constant_on_the_line_of_the_item_it_follows_refuses_the_fix() {
     // Arrange

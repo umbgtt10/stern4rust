@@ -42,7 +42,9 @@ impl ConstantLayoutParser {
         let items = parse_file(&file.contents()).ok()?.items;
         let leader = items.iter().position(Self::leads)?;
         let firsts = Self::first_lines(file, &items);
-        let misplaced: Vec<MisplacedConstant> = (leader + 1..items.len())
+        // From the leader on: the leader is no constant, so it is never one of
+        // them.
+        let misplaced: Vec<MisplacedConstant> = (leader..items.len())
             .filter_map(|at| Self::misplaced(&items[at], firsts[at]))
             .collect();
         if misplaced.is_empty() {
@@ -163,7 +165,7 @@ impl ConstantLayoutParser {
             return Some(FixRefusal::OpeningComment);
         }
         let crowded = Self::after_another(items, firsts, leader)
-            || (leader + 1..items.len()).any(|at| {
+            || (leader..items.len()).any(|at| {
                 Self::constant(&items[at]).is_some()
                     && (Self::after_another(items, firsts, at)
                         || Self::before_another(items, firsts, at))
