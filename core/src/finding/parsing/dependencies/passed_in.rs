@@ -35,7 +35,9 @@ use crate::finding::parsing::dependencies::built_text::BuiltText;
 // pattern over a tuple by position, any other pattern each of its names to the
 // whole value -- and a local shadows a parameter of its name. A name rebound in
 // its own initialiser reads the binding before, so `let parts = parts.into()`
-// follows the earlier `parts`; a chain of locals is followed only so far.
+// follows the earlier `parts`. A chain of locals is followed eight deep and no
+// further: a local bound to two others, each bound to two more, would have the
+// work double with every one.
 pub struct PassedIn {
     owner: String,
     parameters: BTreeSet<String>,
@@ -151,24 +153,23 @@ impl PassedIn {
         relays && self.holds_within(&call.receiver, before, left)
     }
 
+    // `left` is how many more locals may be followed: a step into a value
+    // costs nothing, a jump to the binding of a local one.
     fn holds_within(&self, value: &Expr, before: usize, left: usize) -> bool {
-        if left == 0 {
-            return false;
-        }
         match value {
             Expr::Path(_) => match self.bound(value, before) {
-                Some((at, init)) => self.holds_within(init, at, left - 1),
+                Some((at, init)) => left > 0 && self.holds_within(init, at, left - 1),
                 None => {
                     let named = BuiltText::of(value);
                     self.parameters.contains(&named) || Self::EMPTY.contains(&named.as_str())
                 }
             },
-            Expr::Call(call) => self.holds_call(call, before, left - 1),
-            Expr::MethodCall(call) => self.holds_relayed(call, before, left - 1),
-            Expr::Try(attempt) => self.holds_within(&attempt.expr, before, left - 1),
-            Expr::Field(field) => self.holds_within(&field.base, before, left - 1),
-            Expr::Reference(reference) => self.holds_within(&reference.expr, before, left - 1),
-            Expr::Paren(inner) => self.holds_within(&inner.expr, before, left - 1),
+            Expr::Call(call) => self.holds_call(call, before, left),
+            Expr::MethodCall(call) => self.holds_relayed(call, before, left),
+            Expr::Try(attempt) => self.holds_within(&attempt.expr, before, left),
+            Expr::Field(field) => self.holds_within(&field.base, before, left),
+            Expr::Reference(reference) => self.holds_within(&reference.expr, before, left),
+            Expr::Paren(inner) => self.holds_within(&inner.expr, before, left),
             Expr::Macro(invocation) => {
                 invocation.mac.path.is_ident("vec") && invocation.mac.tokens.is_empty()
             }
@@ -194,7 +195,6 @@ impl PassedIn {
                         .flat_map(|(_, inner)| Self::names(inner)),
                 )
                 .collect(),
-            Pat::Type(typed) => Self::names(&typed.pat),
             Pat::Reference(reference) => Self::names(&reference.pat),
             Pat::Paren(inner) => Self::names(&inner.pat),
             Pat::Struct(fields) => fields

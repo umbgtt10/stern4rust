@@ -17,8 +17,25 @@ use syn::ItemFn;
 use syn::parse_str;
 
 const METHOD: &str = "fn new(port: Box<dyn Port>, deps: Deps) -> Self {\n    let shared = Arc::new(port);\n    let built = StdoutReporter::new();\n    let looped = Box::new(Concrete);\n    let looped = Some(looped);\n    let Parts { store, .. } = deps;\n    let (first, second) = (port, Concrete);\n    let parts = Self::validated(port)?;\n    let parts = parts.into_parts();\n    todo!()\n}";
+const PATTERNS: &str = "fn new(port: Box<dyn Port>, ports: Vec<Port>, pair: (Port, Port), wrapped: Wrapper) -> Self {\n    let &referenced = &port;\n    let (parenthesised) = port;\n    let [first_of_many, ..] = ports;\n    let (left, right) = pair;\n    let Wrapper(inner) = wrapped;\n    let (typed, untyped): (Box<dyn Port>, Concrete) = (port, Concrete);\n    let (lone, ..) = (port, Concrete, Concrete);\n    todo!()\n}";
 const SHADOWING: &str =
     "fn new(port: Box<dyn Port>) -> Self {\n    let port = Box::new(Concrete);\n    todo!()\n}";
+
+// A method whose locals chain back to its parameter, each bound to the one
+// before: `let link1 = port; let link2 = link1; ...`.
+fn chained(links: usize) -> String {
+    let lets: String = (1..=links)
+        .map(|n| {
+            let previous = if n == 1 {
+                String::from("port")
+            } else {
+                format!("link{}", n - 1)
+            };
+            format!("    let link{n} = {previous};\n")
+        })
+        .collect();
+    format!("fn new(port: Box<dyn Port>) -> Self {{\n{lets}    todo!()\n}}")
+}
 
 fn holds(value: &str) -> bool {
     holds_in(METHOD, value)
@@ -46,6 +63,73 @@ fn holds_of_a_binding_destructured_from_a_parameter_is_true() {
 
     // Assert
     assert!(found);
+}
+
+// A tuple pattern of another length than its tuple, as one with a rest,
+// binds each name to the whole tuple, which nothing passed in is.
+#[test]
+fn holds_of_a_binding_from_a_tuple_pattern_of_another_length_is_false() {
+    // Arrange & Act
+    let found = holds_in(PATTERNS, "lone");
+
+    // Assert
+    assert!(!found);
+}
+
+#[test]
+fn holds_of_a_binding_in_each_destructuring_pattern_is_true() {
+    // Arrange
+    let bindings = [
+        "referenced",
+        "parenthesised",
+        "first_of_many",
+        "left",
+        "inner",
+        "typed",
+    ];
+
+    // Act
+    let refused: Vec<&str> = bindings
+        .into_iter()
+        .filter(|binding| !holds_in(PATTERNS, binding))
+        .collect();
+
+    // Assert
+    assert!(refused.is_empty(), "refused {refused:?}");
+}
+
+// A chain of locals is followed eight locals deep, and no further.
+#[test]
+fn holds_of_a_chain_of_as_many_locals_as_are_followed_is_true() {
+    // Arrange
+    let source = chained(8);
+
+    // Act
+    let found = holds_in(&source, "link8");
+
+    // Assert
+    assert!(found);
+}
+
+#[test]
+fn holds_of_a_chain_one_local_longer_than_is_followed_is_false() {
+    // Arrange
+    let source = chained(9);
+
+    // Act
+    let found = holds_in(&source, "link9");
+
+    // Assert
+    assert!(!found);
+}
+
+#[test]
+fn holds_of_a_filled_vector_or_another_empty_macro_is_false() {
+    // Arrange & Act
+    let found = (holds("vec![port]"), holds("format!()"));
+
+    // Assert
+    assert_eq!(found, (false, false));
 }
 
 #[test]
@@ -102,6 +186,7 @@ fn holds_of_a_parameter_in_each_passed_in_shape_is_true() {
         "Arc::clone(&port)",
         "port.into()",
         "Some(Box::new(port))",
+        "(port)",
     ];
 
     // Act
