@@ -141,6 +141,29 @@ fn rewriters_repair_a_test_file_where_test_file_structure_applies() {
 
 // The header rule cannot hold until it is told what the header says, so it joins
 // the set only once there is one to compare against.
+// A rule that runs on nothing supplied needs nothing, and says so: `None`, the
+// requirement of a rule that is never unconfigured (Rule::requirement). A
+// requirement on one would print beside a rule that never waits for it.
+#[test]
+fn selected_of_a_config_supplying_nothing_holds_only_rules_stating_no_requirement() {
+    // Arrange
+    let config = Config::default();
+
+    // Act
+    let rules = RuleCatalog::selected(&config);
+
+    // Assert
+    let stating: Vec<(&str, &str)> = rules
+        .iter()
+        .filter_map(|rule| rule.requirement().map(|need| (rule.name(), need)))
+        .collect();
+    assert!(stating.is_empty(), "{stating:?}");
+    assert_eq!(
+        rules.len(),
+        RuleCatalog::known_names().len() - RuleCatalog::unconfigured_names(&config).len()
+    );
+}
+
 #[test]
 fn selected_with_a_header_keeps_the_header_rule_alongside_the_others() {
     // Arrange & Act
