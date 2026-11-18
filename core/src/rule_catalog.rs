@@ -161,7 +161,7 @@ impl RuleCatalog {
             Box::new(ImmutableReturnsRule::new()),
             Box::new(ImplementedInOneFileRule::new()),
             Box::new(ImportedPathsRule::new()),
-            Box::new(InjectedDependenciesRule::new()),
+            Box::new(InjectedDependenciesRule::new(config.value_markers.clone())),
             Box::new(InjectedTimeRule::new()),
             Box::new(LeadingConstantsRule::new()),
             Box::new(ModuleRegistryRule::new()),

@@ -228,6 +228,30 @@ fn run_over_a_file_keeping_the_rule_is_clean() {
     );
 }
 
+// A marker trait alpha declares bounds data in beta all the same: beta's
+// constructor building a field of it breaks nothing.
+#[test]
+fn run_over_a_member_reads_the_marker_traits_another_member_declares() {
+    // Arrange
+    let tree = InMemorySourceTree::new()
+        .with_file("/repo/alpha/src/peer_id.rs", "pub trait PeerId: Copy + Eq {}\n")
+        .with_file(
+            "/repo/beta/src/offer.rs",
+            "pub struct Offer<P: PeerId> {\n    from: P,\n}\n\nimpl<P: PeerId> Offer<P> {\n    pub fn of(message: &Message<P>) -> Self {\n        Self { from: message.from }\n    }\n}\n",
+        );
+
+    // Act
+    let report = report_of(
+        &workspace_declaring(Vec::new()),
+        &tree,
+        &InMemoryConfigSource::absent(),
+        &run_of(&["injected-dependencies"]),
+    );
+
+    // Assert
+    assert!(broken(&report).is_empty(), "{:?}", report.offences);
+}
+
 // A constant beta reads is read all the same when the run walks alpha alone:
 // with alpha's own reader, it has two and sits in a constants file.
 #[test]

@@ -7,6 +7,8 @@
 // an Rc, an Arc, an Option, a Vec or a reference. A concrete type is not one.
 
 use stern4rust::finding::parsing::dependencies::seam_types::SeamTypes;
+use stern4rust::finding::parsing::dependencies::value_markers::ValueMarkers;
+use stern4rust::source_file::SourceFile;
 use syn::ItemStruct;
 use syn::Type;
 use syn::parse_str;
@@ -14,7 +16,7 @@ use syn::parse_str;
 fn seam(declaration: &str, ty: &str) -> bool {
     let declared: ItemStruct = parse_str(declaration).expect("parses");
     let checked: Type = parse_str(ty).expect("parses");
-    SeamTypes::of(&[&declared.generics]).is_seam(&checked)
+    SeamTypes::of(&[&declared.generics], &ValueMarkers::default()).is_seam(&checked)
 }
 
 #[test]
@@ -72,6 +74,25 @@ fn is_seam_of_a_type_parameter_bounded_by_a_trait_is_true() {
 
     // Assert
     assert!(found);
+}
+
+// A marker trait over value traits says how its values are copied and
+// compared, as the value traits do: a parameter it bounds is data.
+#[test]
+fn is_seam_of_a_type_parameter_bounded_by_a_value_marker_is_false() {
+    // Arrange
+    let declared: ItemStruct = parse_str("struct Offer<P: PeerId> { from: P }").expect("parses");
+    let markers = ValueMarkers::of(&[SourceFile::new(
+        "src/peer_id.rs",
+        "pub trait PeerId: Copy + Eq {}\n",
+    )]);
+
+    // Act
+    let found =
+        SeamTypes::of(&[&declared.generics], &markers).is_seam(&parse_str("P").expect("parses"));
+
+    // Assert
+    assert!(!found);
 }
 
 #[test]

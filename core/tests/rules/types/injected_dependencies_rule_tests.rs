@@ -8,6 +8,7 @@
 // constructor of its type, and every `self.field = ...` elsewhere. A builder --
 // a type whose `build(self)` returns another type -- composes, and is not judged.
 
+use stern4rust::finding::parsing::dependencies::value_markers::ValueMarkers;
 use stern4rust::reporting::offence::Offence;
 use stern4rust::rule::Rule;
 use stern4rust::rules::types::injected_dependencies_rule::InjectedDependenciesRule;
@@ -25,7 +26,7 @@ fn check(files: &[(&str, &str)]) -> Vec<Offence> {
         .iter()
         .map(|(path, contents)| SourceFile::new(path, contents))
         .collect();
-    InjectedDependenciesRule::new().check_workspace(&sources)
+    InjectedDependenciesRule::new(ValueMarkers::of(&sources)).check_workspace(&sources)
 }
 
 #[test]
@@ -39,7 +40,7 @@ fn check_of_a_single_file_reports_nothing() {
     );
 
     // Act
-    let offences = InjectedDependenciesRule::new().check(&file);
+    let offences = InjectedDependenciesRule::new(ValueMarkers::default()).check(&file);
 
     // Assert
     assert!(offences.is_empty(), "expected none, got {offences:?}");
@@ -82,6 +83,52 @@ fn check_workspace_of_a_constructor_building_a_field_in_two_arms_reports_it_once
     // Assert
     assert_eq!(offences.len(), 1);
     assert_eq!(offences[0].line(), 9);
+}
+
+// A marker over a trait that declares behaviour opens a seam all the same.
+#[test]
+fn check_workspace_of_a_constructor_building_a_field_of_a_marker_over_behaviour_reports_it() {
+    // Arrange & Act
+    let offences = check(&[
+        (
+            "src/tagged.rs",
+            "pub trait Store {\n    fn get(&self) -> u8;\n}\n\npub trait Tagged: Store {}\n",
+        ),
+        (
+            "src/app.rs",
+            "pub struct App<S: Tagged> {\n    store: S,\n}\n\nimpl<S: Tagged> App<S> {\n    pub fn new() -> Self {\n        Self { store: S::default() }\n    }\n}\n",
+        ),
+    ]);
+
+    // Assert
+    assert_eq!(
+        offences
+            .iter()
+            .map(|offence| (offence.file(), offence.line()))
+            .collect::<Vec<_>>(),
+        vec![("src/app.rs", 7)]
+    );
+}
+
+// A parameter bounded by a marker trait over value traits is data the type
+// carries, as one bounded by the value traits themselves is: a constructor
+// may build it.
+#[test]
+fn check_workspace_of_a_constructor_building_a_field_of_a_value_marker_reports_nothing() {
+    // Arrange & Act
+    let offences = check(&[
+        (
+            "src/peer_id.rs",
+            "pub trait PeerId: Copy + Eq {}\n\nimpl PeerId for u64 {}\n",
+        ),
+        (
+            "src/offer.rs",
+            "pub struct Offer<P: PeerId> {\n    from: P,\n    members: Vec<P>,\n}\n\nimpl<P: PeerId> Offer<P> {\n    pub fn of(message: &Message<P>) -> Self {\n        Self { from: message.from, members: message.members.clone() }\n    }\n}\n",
+        ),
+    ]);
+
+    // Assert
+    assert!(offences.is_empty(), "{offences:?}");
 }
 
 #[test]
@@ -395,7 +442,7 @@ fn check_workspace_of_an_impl_in_another_file_reports_it_there() {
 #[test]
 fn explanation_shows_a_constructor_building_its_part_and_the_one_taking_it() {
     // Arrange & Act
-    let explanation = InjectedDependenciesRule::new().explanation();
+    let explanation = InjectedDependenciesRule::new(ValueMarkers::default()).explanation();
 
     // Assert
     assert_eq!(explanation.name, RULE);
@@ -410,7 +457,7 @@ fn explanation_shows_a_constructor_building_its_part_and_the_one_taking_it() {
 #[test]
 fn is_configured_for_a_rule_that_needs_nothing_returns_true() {
     // Arrange & Act
-    let configured = InjectedDependenciesRule::new().is_configured();
+    let configured = InjectedDependenciesRule::new(ValueMarkers::default()).is_configured();
 
     // Assert
     assert!(configured);
@@ -419,7 +466,7 @@ fn is_configured_for_a_rule_that_needs_nothing_returns_true() {
 #[test]
 fn name_is_the_kebab_case_rule_name_used_in_the_report() {
     // Arrange & Act
-    let name = InjectedDependenciesRule::new().name();
+    let name = InjectedDependenciesRule::new(ValueMarkers::default()).name();
 
     // Assert
     assert_eq!(name, RULE);
@@ -428,7 +475,7 @@ fn name_is_the_kebab_case_rule_name_used_in_the_report() {
 #[test]
 fn requirement_of_a_rule_that_needs_nothing_is_none() {
     // Arrange & Act
-    let requirement = InjectedDependenciesRule::new().requirement();
+    let requirement = InjectedDependenciesRule::new(ValueMarkers::default()).requirement();
 
     // Assert
     assert!(requirement.is_none());
