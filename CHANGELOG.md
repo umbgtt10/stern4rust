@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.24.0] - 2026-11-18
+
 ### Changed
 - `injected-dependencies` takes a type parameter bounded by a *value marker* for
   data, as it takes one bounded by the value traits: a value marker is a trait a
@@ -15,6 +17,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   `from: P` from a message, was reported as building a dependency. The markers
   are read from every member once, so one member's marker bounds another's
   parameters.
+- **Breaking, for the library:** `InjectedDependenciesRule::new` takes the
+  workspace's `ValueMarkers`, `SeamTypes::of` takes them beside the generics,
+  and `Config` carries them, `value_markers`.
 
 ## [0.23.0] - 2026-11-14
 
