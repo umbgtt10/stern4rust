@@ -6,3 +6,4 @@ pub mod built_text_tests;
 pub mod dependency_fills_tests;
 pub mod passed_in_tests;
 pub mod seam_types_tests;
+pub mod value_markers_tests;

@@ -1,6 +1,6 @@
 # R038-ADR-InjectedDependenciesRule
 
-- **Status:** Accepted, 2026-10-25
+- **Status:** Accepted, 2026-10-25; amended 2026-11-18 -- a parameter bounded by a value marker is data
 - **Date:** 2026-10-25
 
 ## Context
@@ -139,3 +139,15 @@ builder from an object.
   fetched.
 - [R027-ADR-OrderedImplFunctionsRule](R027-ADR-OrderedImplFunctionsRule.md) -- what a constructor is.
 - [R022-ADR-ReturnedMutationsRule](R022-ADR-ReturnedMutationsRule.md) -- amended for constructors storing a `&mut`.
+
+## Amendment, 2026-11-18: value markers
+
+faction made its peer id generic: `trait PeerId: Copy + Eq + Debug + Send {}`, a marker the unsigned integers implement,
+and types such as `Offer<P: PeerId>` holding `from: P`. Every constructor computing such a field -- `Offer::of` reading
+it from a message, a step chaining one more peer onto a list -- was reported as building a dependency, and no rewrite
+passed: the rule follows a value through locals and into the type's other constructors, as it should for a real part.
+A trait with no items that rests only on value traits says how its values are copied and compared, as the value traits
+do, and nothing they do; a parameter it bounds is data. Such traits -- *value markers*, a marker over a marker among
+them -- are read from every member of the workspace once, as `NameReaders` are, since one member declares the marker
+and another bounds its parameters by it. A trait that declares a method, or rests on one that does, opens a seam as
+before; one no member declares, from another crate, is judged as before.

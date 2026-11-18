@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+- `injected-dependencies` takes a type parameter bounded by a *value marker* for
+  data, as it takes one bounded by the value traits: a value marker is a trait a
+  member of the workspace declares with no items, its every supertrait a value
+  trait or another value marker -- `trait PeerId: Copy + Eq + Debug + Send {}`.
+  A constructor computing a field of such a parameter, `Offer::of` reading
+  `from: P` from a message, was reported as building a dependency. The markers
+  are read from every member once, so one member's marker bounds another's
+  parameters.
+
 ## [0.23.0] - 2026-11-14
 
 ### Fixed

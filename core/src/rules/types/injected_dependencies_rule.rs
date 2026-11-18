@@ -25,6 +25,7 @@ use crate::finding::parsing::dependencies::built_text::BuiltText;
 use crate::finding::parsing::dependencies::dependency_fills::DependencyFills;
 use crate::finding::parsing::dependencies::passed_in::PassedIn;
 use crate::finding::parsing::dependencies::seam_types::SeamTypes;
+use crate::finding::parsing::dependencies::value_markers::ValueMarkers;
 use crate::finding::parsing::impl_blocks::ImplBlocks;
 use crate::finding::parsing::impl_layout_parser::ImplLayoutParser;
 use crate::finding::parsing::shapes::type_shape::TypeShape;
@@ -61,15 +62,17 @@ struct SeamedType {
 // is not judged: its product's constructor is.
 //
 // See [R038-ADR-InjectedDependenciesRule](../../../../docs/ADRs/R038-ADR-InjectedDependenciesRule.md).
-pub struct InjectedDependenciesRule;
+pub struct InjectedDependenciesRule {
+    markers: ValueMarkers,
+}
 
 impl InjectedDependenciesRule {
     pub const NAME: &'static str = "injected-dependencies";
     pub const SOURCE_ROOT: &'static str = "src/";
     const COMPOSING: [&'static str; 3] = ["Default", "From", "TryFrom"];
 
-    pub fn new() -> Self {
-        Self
+    pub fn new(markers: ValueMarkers) -> Self {
+        Self { markers }
     }
 
     fn assigned(path: &str, owner: &str, method: &ImplItemFn, seamed: &SeamedType) -> Vec<Offence> {
@@ -97,6 +100,7 @@ impl InjectedDependenciesRule {
     }
 
     fn constructed(
+        &self,
         path: &str,
         owner: &str,
         method: &ImplItemFn,
@@ -132,7 +136,7 @@ impl InjectedDependenciesRule {
                 let Some(target) = seamed.constructors.get(&delegation.target) else {
                     return Vec::new();
                 };
-                let seams = SeamTypes::of(&[&seamed.generics, &target.generics]);
+                let seams = SeamTypes::of(&[&seamed.generics, &target.generics], &self.markers);
                 Self::parameter_types(target)
                     .into_iter()
                     .zip(&delegation.arguments)
@@ -160,7 +164,12 @@ impl InjectedDependenciesRule {
         built.chain(handed).collect()
     }
 
-    fn declared(path: &str, items: &[Item], shapes: &TypeShapes) -> Vec<(String, SeamedType)> {
+    fn declared(
+        &self,
+        path: &str,
+        items: &[Item],
+        shapes: &TypeShapes,
+    ) -> Vec<(String, SeamedType)> {
         SourceItems::live(items)
             .into_iter()
             .filter_map(|item| match item {
@@ -175,7 +184,7 @@ impl InjectedDependenciesRule {
                 })
             })
             .filter_map(|declared| {
-                let fields = Self::seam_fields(declared);
+                let fields = self.seam_fields(declared);
                 (!fields.is_empty()).then(|| {
                     (
                         declared.ident.to_string(),
@@ -190,7 +199,12 @@ impl InjectedDependenciesRule {
             .collect()
     }
 
-    fn judged(path: &str, block: &ItemImpl, seamed: &BTreeMap<String, SeamedType>) -> Vec<Offence> {
+    fn judged(
+        &self,
+        path: &str,
+        block: &ItemImpl,
+        seamed: &BTreeMap<String, SeamedType>,
+    ) -> Vec<Offence> {
         let Some(owner) = ImplBlocks::target(&block.self_ty) else {
             return Vec::new();
         };
@@ -214,7 +228,7 @@ impl InjectedDependenciesRule {
                 let constructor =
                     block.trait_.is_none() && ImplLayoutParser::is_constructor(method, &owner);
                 if composing || constructor {
-                    Self::constructed(path, &owner, method, seamed_type)
+                    self.constructed(path, &owner, method, seamed_type)
                 } else if method.sig.receiver().is_some() {
                     Self::assigned(path, &owner, method, seamed_type)
                 } else {
@@ -245,8 +259,8 @@ impl InjectedDependenciesRule {
         Offence::new(path, line, Self::NAME, description, correction).with_subject(subject)
     }
 
-    fn seam_fields(declared: &ItemStruct) -> BTreeSet<String> {
-        let seams = SeamTypes::of(&[&declared.generics]);
+    fn seam_fields(&self, declared: &ItemStruct) -> BTreeSet<String> {
+        let seams = SeamTypes::of(&[&declared.generics], &self.markers);
         declared
             .fields
             .iter()
@@ -261,10 +275,14 @@ impl InjectedDependenciesRule {
             .collect()
     }
 
-    fn seamed(parsed: &[(String, Vec<Item>)], shapes: &TypeShapes) -> BTreeMap<String, SeamedType> {
+    fn seamed(
+        &self,
+        parsed: &[(String, Vec<Item>)],
+        shapes: &TypeShapes,
+    ) -> BTreeMap<String, SeamedType> {
         let declared: BTreeMap<String, SeamedType> = parsed
             .iter()
-            .flat_map(|(path, items)| Self::declared(path, items, shapes))
+            .flat_map(|(path, items)| self.declared(path, items, shapes))
             .collect();
         parsed
             .iter()
@@ -290,7 +308,7 @@ impl InjectedDependenciesRule {
 
 impl Default for InjectedDependenciesRule {
     fn default() -> Self {
-        Self::new()
+        Self::new(ValueMarkers::default())
     }
 }
 
@@ -318,7 +336,7 @@ impl Rule for InjectedDependenciesRule {
                     .map(|syntax| (file.relative_path().to_string(), syntax.items))
             })
             .collect();
-        let seamed = Self::seamed(&parsed, &shapes);
+        let seamed = self.seamed(&parsed, &shapes);
         parsed
             .iter()
             .flat_map(|(path, items)| {
@@ -328,7 +346,7 @@ impl Rule for InjectedDependenciesRule {
                         Item::Impl(block) => Some(block),
                         _ => None,
                     })
-                    .flat_map(|block| Self::judged(path, block, &seamed))
+                    .flat_map(|block| self.judged(path, block, &seamed))
                     .collect::<Vec<_>>()
             })
             .collect()

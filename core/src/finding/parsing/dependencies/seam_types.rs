@@ -16,15 +16,16 @@ use syn::WherePredicate;
 use syn::punctuated::Punctuated;
 use syn::token::Plus;
 
-use crate::finding::parsing::shapes::value_traits::ValueTraits;
+use crate::finding::parsing::dependencies::value_markers::ValueMarkers;
 
 // Which types are seams: a trait object, an `impl Trait`, or a type parameter
 // bounded by a trait -- inline or in a `where` clause -- as they are or wrapped in
 // a Box, an Rc, an Arc, an Option, a Vec or a reference.
 //
-// A parameter bounded only by value traits -- `T: Clone + Debug` -- is data the
-// type carries, not a seam it opens; its bound says how it is copied or printed,
-// not what it does.
+// A parameter bounded only by value traits -- `T: Clone + Debug` -- or by a
+// marker trait resting on them, `P: PeerId` (`ValueMarkers`), is data the type
+// carries, not a seam it opens; its bound says how it is copied or printed, not
+// what it does.
 pub struct SeamTypes {
     bounded: BTreeSet<String>,
 }
@@ -32,12 +33,12 @@ pub struct SeamTypes {
 impl SeamTypes {
     const WRAPPERS: [&'static str; 5] = ["Arc", "Box", "Option", "Rc", "Vec"];
 
-    pub fn of(generics: &[&Generics]) -> Self {
+    pub fn of(generics: &[&Generics], markers: &ValueMarkers) -> Self {
         let inline = generics
             .iter()
             .flat_map(|declared| declared.params.iter())
             .filter_map(|param| match param {
-                GenericParam::Type(declared) if Self::is_behaviour(&declared.bounds) => {
+                GenericParam::Type(declared) if Self::is_behaviour(&declared.bounds, markers) => {
                     Some(declared.ident.to_string())
                 }
                 _ => None,
@@ -47,7 +48,7 @@ impl SeamTypes {
             .filter_map(|declared| declared.where_clause.as_ref())
             .flat_map(|clause| clause.predicates.iter())
             .filter_map(|predicate| match predicate {
-                WherePredicate::Type(bound) if Self::is_behaviour(&bound.bounds) => {
+                WherePredicate::Type(bound) if Self::is_behaviour(&bound.bounds, markers) => {
                     match &bound.bounded_ty {
                         Type::Path(path) => path.path.get_ident().map(ToString::to_string),
                         _ => None,
@@ -80,13 +81,13 @@ impl SeamTypes {
         }
     }
 
-    fn is_behaviour(bounds: &Punctuated<TypeParamBound, Plus>) -> bool {
+    fn is_behaviour(bounds: &Punctuated<TypeParamBound, Plus>, markers: &ValueMarkers) -> bool {
         bounds.iter().any(|bound| match bound {
             TypeParamBound::Trait(declared) => declared
                 .path
                 .segments
                 .last()
-                .is_some_and(|last| !ValueTraits::contains(&last.ident.to_string())),
+                .is_some_and(|last| !markers.is_value(&last.ident.to_string())),
             _ => false,
         })
     }

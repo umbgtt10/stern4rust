@@ -1621,7 +1621,12 @@ a builder, a test.
 - **A field declared as a trait** has a type that is, or wraps in `Box`, `Rc`,
   `Arc`, `Option`, `Vec` or a reference, a `dyn Trait`, or a type parameter
   bounded -- inline or in a `where` clause -- by a trait outside the value
-  traits.
+  traits and the value markers.
+- **A value marker** is a trait some member of the workspace declares with no
+  items, its every supertrait a value trait or another value marker:
+  `trait PeerId: Copy + Eq + Debug + Send {}`. A parameter bounded by one is an
+  identifier or a quantity the type carries, as one bounded by the value traits
+  themselves is; it opens no seam. A trait no member declares is not one.
 - **Passed in** is a parameter, as it is or as `Some(p)`, `Box::new(p)`,
   `Rc::new(p)`, `Arc::new(p)`, `p.clone()`, `Rc::clone(&p)`, `Arc::clone(&p)`
   or `p.into()`, or a parameter's field; `None`, `Vec::new()` or `vec![]`; or a

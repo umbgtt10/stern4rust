@@ -11,6 +11,7 @@ use alloc::vec::Vec;
 
 use crate::finding::model::manifest_dependency::ManifestDependency;
 use crate::finding::model::name_readers::NameReaders;
+use crate::finding::parsing::dependencies::value_markers::ValueMarkers;
 use crate::finding::parsing::read_names::ReadNames;
 use crate::reporting::offence::Offence;
 use crate::reporting::offence_threshold::OffenceThreshold;
@@ -185,9 +186,10 @@ impl<'a> Runner<'a> {
             ))
         })
         .collect::<Result<Vec<_>, RunFailure>>()?;
-        let readers = NameReaders::new(ReadNames::index(
-            &WorkspaceSources::new(self.source_tree).read(&workspace_root, &members),
-        ));
+        let workspace_files =
+            WorkspaceSources::new(self.source_tree).read(&workspace_root, &members);
+        let readers = NameReaders::new(ReadNames::index(&workspace_files));
+        let markers = ValueMarkers::of(&workspace_files);
         let reader = SourceReader::new(self.source_tree);
 
         for package in &packages {
@@ -225,6 +227,7 @@ impl<'a> Runner<'a> {
                     &workspace_root,
                     package.root(),
                 )),
+                value_markers: markers.clone(),
                 ..self.config_from(invocation, sections.of(package.name()))?
             };
             let registry = RuleRegistry::new(RuleCatalog::selected(&package_config));
